@@ -1,0 +1,72 @@
+modules = ["go-1.21", "web", "nodejs-20", "bash", "postgresql-16"]
+
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+packages = ["systemdUkify", "lsof"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Frontend Dev Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend Agents Server"
+
+[[workflows.workflow]]
+name = "Frontend Dev Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "Backend Agents Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && npm run dev"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3001
+externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
+
+[[ports]]
+localPort = 5002
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build:deploy"]
+run = ["npm", "run", "start:production"]
+
+[userenv]
+
+[userenv.shared]
+BACKEND_PORT = "3001"

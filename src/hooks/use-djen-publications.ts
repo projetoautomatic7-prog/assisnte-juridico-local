@@ -1,0 +1,264 @@
+/**
+ * Hook personalizado para gerenciar publicações DJEN
+ * Reduz complexidade cognitiva do componente principal
+ *
+ * Estratégia de fallback:
+ * 1. Tenta buscar do backend (/api/expedientes)
+ * 2. Se falhar, tenta buscar diretamente da API DJEN via navegador
+ *    (resolve problema de geobloqueio quando backend está fora do Brasil)
+ */
+
+import { useState, useCallback } from "react";
+import type { DJENPublication } from "@/types/djen-publication";
+import {
+  buscarDJENNoBrowser,
+  type DJENSearchParams,
+} from "@/services/djen-browser-capture";
+
+interface ExpedientesResponse {
+  success: boolean;
+  expedientes: DJENPublication[];
+  count: number;
+  lastCheck: string | null;
+  lawyersConfigured: number;
+  message?: string;
+}
+
+interface MonitoredLawyer {
+  id: string;
+  name: string;
+  oab: string;
+  enabled: boolean;
+}
+
+const DEFAULT_LAWYERS: MonitoredLawyer[] = [
+  {
+    id: "thiago-bodevan-veiga",
+    name: "Thiago Bodevan Veiga",
+    oab: "184404/MG",
+    enabled: true,
+  },
+];
+
+async function fetchFromBackend(
+  baseUrl: string,
+  maxItems: number,
+  filter: "all" | "unread"
+): Promise<ExpedientesResponse> {
+  const statusParam = filter === "unread" ? "&status=unread" : "";
+  const response = await fetch(
+    `${baseUrl}/api/expedientes?limit=${maxItems * 2}${statusParam}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function fetchMonitoredLawyers(
+  baseUrl: string
+): Promise<MonitoredLawyer[]> {
+  try {
+    const response = await fetch(`${baseUrl}/api/lawyers`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.lawyers || [];
+  } catch {
+    return [];
+  }
+}
+
+function parseOAB(oab: string): { numero?: string; uf?: string } {
+  if (!oab) return {};
+
+  const normalized = oab.trim().toUpperCase();
+
+  const matchNumericUF = /(\d+)\s?[/-]\s?([A-Z]{2})/i.exec(normalized);
+  if (matchNumericUF) {
+    return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
+  }
+
+  const matchUFNumeric = /([A-Z]{2})\s?[/-]?\s?(\d+)/i.exec(normalized);
+  if (matchUFNumeric) {
+    return { numero: matchUFNumeric[2], uf: matchUFNumeric[1].toUpperCase() };
+  }
+
+  const matchOABPattern = /OAB\s*[/-]?\s*([A-Z]{2})\s*(\d+)/i.exec(normalized);
+  if (matchOABPattern) {
+    return { numero: matchOABPattern[2], uf: matchOABPattern[1].toUpperCase() };
+  }
+
+  const matchNumeric = /^(\d+)$/.exec(normalized);
+  if (matchNumeric) {
+    return { numero: matchNumeric[1] };
+  }
+
+  return {};
+}
+
+async function fetchFromBrowserDirect(
+  baseUrl: string,
+  maxItems: number
+): Promise<{
+  expedientes: DJENPublication[];
+  lawyersConfigured: number;
+  isGeoBlocked?: boolean;
+  error?: string;
+}> {
+  let lawyers = await fetchMonitoredLawyers(baseUrl);
+  
+  if (lawyers.length === 0) {
+    const stored = localStorage.getItem("monitored-lawyers");
+    if (stored) {
+      try {
+        lawyers = JSON.parse(stored);
+      } catch {
+        lawyers = [];
+      }
+    }
+  }
+  
+  if (lawyers.length === 0) {
+    lawyers = DEFAULT_LAWYERS;
+    localStorage.setItem("monitored-lawyers", JSON.stringify(DEFAULT_LAWYERS));
+    console.log("[DJEN Browser] Usando advogados padrão:", DEFAULT_LAWYERS.map(l => l.name).join(", "));
+  }
+  
+  const enabledLawyers = lawyers.filter((l) => l.enabled);
+
+  if (enabledLawyers.length === 0) {
+    return {
+      expedientes: [],
+      lawyersConfigured: 0,
+    };
+  }
+
+  const allPublications: DJENPublication[] = [];
+
+  for (const lawyer of enabledLawyers) {
+    const { numero, uf } = parseOAB(lawyer.oab);
+
+    if (!numero) {
+      console.warn(`[DJEN Browser] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
+      continue;
+    }
+
+    if (!uf) {
+      console.warn(`[DJEN Browser] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`);
+      continue;
+    }
+
+    const params: DJENSearchParams = {
+      numeroOab: numero,
+      ufOab: uf,
+      meio: "D",
+    };
+
+    const result = await buscarDJENNoBrowser(params);
+
+    if (result.isGeoBlocked) {
+      return {
+        expedientes: [],
+        lawyersConfigured: enabledLawyers.length,
+        isGeoBlocked: true,
+        error: result.error,
+      };
+    }
+
+    if (result.success) {
+      const converted: DJENPublication[] = result.publicacoes.map((pub) => ({
+        id: pub.id || crypto.randomUUID(),
+        tribunal: pub.siglaTribunal,
+        data: pub.dataDisponibilizacao,
+        tipo: pub.tipoComunicacao || "Intimação",
+        teor: pub.texto,
+        numeroProcesso: pub.numeroProcesso,
+        orgao: pub.nomeOrgao,
+        lawyerName: lawyer.name,
+        matchType: "oab" as const,
+        source: "DJEN-Browser",
+        createdAt: new Date().toISOString(),
+        notified: false,
+      }));
+      allPublications.push(...converted);
+    }
+
+    if (enabledLawyers.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  }
+
+  return {
+    expedientes: allPublications.slice(0, maxItems),
+    lawyersConfigured: enabledLawyers.length,
+  };
+}
+
+export function useDJENPublications(maxItems: number, filter: "all" | "unread") {
+  const [publications, setPublications] = useState<DJENPublication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastCheck, setLastCheck] = useState<string | null>(null);
+  const [lawyersCount, setLawyersCount] = useState(0);
+  const [isGeoBlocked, setIsGeoBlocked] = useState(false);
+
+  const fetchPublications = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setIsGeoBlocked(false);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+
+      try {
+        const data = await fetchFromBackend(baseUrl, maxItems, filter);
+
+        if (data.success) {
+          setPublications(data.expedientes.slice(0, maxItems));
+          setLastCheck(data.lastCheck);
+          setLawyersCount(data.lawyersConfigured);
+          return;
+        }
+      } catch (backendError) {
+        console.warn(
+          "[DJENWidget] Backend indisponível, tentando browser-direct:",
+          backendError
+        );
+      }
+
+      console.log("[DJENWidget] Tentando busca direta via navegador...");
+      const browserResult = await fetchFromBrowserDirect(baseUrl, maxItems);
+
+      if (browserResult.isGeoBlocked) {
+        setIsGeoBlocked(true);
+        setError(
+          browserResult.error ||
+            "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
+        );
+        setLawyersCount(browserResult.lawyersConfigured);
+        return;
+      }
+
+      setPublications(browserResult.expedientes);
+      setLawyersCount(browserResult.lawyersConfigured);
+      setLastCheck(new Date().toISOString());
+    } catch (err) {
+      console.error("[DJENWidget] Fetch error:", err);
+      setError("Não foi possível carregar publicações");
+    } finally {
+      setLoading(false);
+    }
+  }, [maxItems, filter]);
+
+  return {
+    publications,
+    loading,
+    error,
+    lastCheck,
+    lawyersCount,
+    fetchPublications,
+    isGeoBlocked,
+  };
+}
