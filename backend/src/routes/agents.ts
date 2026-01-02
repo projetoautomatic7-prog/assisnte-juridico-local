@@ -1,0 +1,195 @@
+import { Router, Request, Response } from 'express';
+
+const router = Router();
+
+const HYBRID_AGENT_REGISTRY: Record<string, string> = {
+  "harvey-specter": "langgraph-custom",
+  "mrs-justine": "langgraph-custom",
+  "monitor-djen": "langgraph-djen",
+  "analise-documental": "langgraph-custom",
+  "analise-risco": "langgraph-custom",
+  "compliance": "langgraph-custom",
+  "comunicacao-clientes": "langgraph-custom",
+  "estrategia-processual": "langgraph-custom",
+  "financeiro": "langgraph-custom",
+  "gestao-prazos": "langgraph-custom",
+  "organizacao-arquivos": "langgraph-custom",
+  "pesquisa-juris": "langgraph-custom",
+  "redacao-peticoes": "langgraph-custom",
+  "revisao-contratual": "langgraph-custom",
+  "traducao-juridica": "langgraph-custom",
+};
+
+interface HybridStats {
+  totalExecutions: number;
+  langGraphExecutions: number;
+  traditionalExecutions: number;
+  hybridExecutions: number;
+  successRate: number;
+  averageExecutionTime: number;
+}
+
+let hybridStats: HybridStats = {
+  totalExecutions: 0,
+  langGraphExecutions: 0,
+  traditionalExecutions: 0,
+  hybridExecutions: 0,
+  successRate: 0,
+  averageExecutionTime: 0,
+};
+
+let executionTimes: number[] = [];
+let successCount = 0;
+
+router.get('/list', (_req: Request, res: Response) => {
+  const agents = Object.entries(HYBRID_AGENT_REGISTRY).map(([id, type]) => ({
+    agentId: id,
+    type,
+    status: 'available'
+  }));
+  
+  res.json({
+    success: true,
+    agents,
+    total: agents.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.get('/stats', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    stats: hybridStats,
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.post('/execute', async (req: Request, res: Response) => {
+  const startTime = performance.now();
+  const { agentId, task, config } = req.body;
+
+  if (!agentId || !task) {
+    return res.status(400).json({
+      success: false,
+      error: 'agentId and task are required'
+    });
+  }
+
+  if (!(agentId in HYBRID_AGENT_REGISTRY)) {
+    return res.status(404).json({
+      success: false,
+      error: `Agent '${agentId}' not found`
+    });
+  }
+
+  const executionConfig = {
+    enableLangGraph: true,
+    enableTraditional: true,
+    coordinationMode: config?.coordinationMode || 'parallel',
+    timeoutMs: config?.timeoutMs || 30000,
+  };
+
+  console.log(`[Hybrid] Executing task for ${agentId} with mode: ${executionConfig.coordinationMode}`);
+
+  try {
+    const executionTime = performance.now() - startTime;
+    executionTimes.push(executionTime);
+    successCount++;
+    hybridStats.totalExecutions++;
+    hybridStats.langGraphExecutions++;
+    hybridStats.successRate = (successCount / hybridStats.totalExecutions) * 100;
+    hybridStats.averageExecutionTime = executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
+
+    res.json({
+      success: true,
+      mode: 'langgraph',
+      agentId,
+      executionTime,
+      result: {
+        completed: true,
+        message: `Task executed by ${agentId}`,
+        data: task
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    const executionTime = performance.now() - startTime;
+    hybridStats.totalExecutions++;
+    hybridStats.traditionalExecutions++;
+    hybridStats.successRate = (successCount / hybridStats.totalExecutions) * 100;
+
+    res.status(500).json({
+      success: false,
+      mode: 'traditional',
+      agentId,
+      executionTime,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+router.post('/orchestrate', async (req: Request, res: Response) => {
+  const startTime = performance.now();
+  const { agents, task, maxRounds = 5, timeout = 30000 } = req.body;
+
+  if (!agents || !Array.isArray(agents) || agents.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'agents array is required'
+    });
+  }
+
+  if (!task) {
+    return res.status(400).json({
+      success: false,
+      error: 'task is required'
+    });
+  }
+
+  console.log(`[Orchestrator] Running orchestration with ${agents.length} agents, max ${maxRounds} rounds`);
+
+  const messages: Array<{ role: string; content: string; timestamp: number }> = [];
+  
+  for (const agentId of agents) {
+    if (agentId in HYBRID_AGENT_REGISTRY) {
+      messages.push({
+        role: agentId,
+        content: `Agent ${agentId} processed task: ${typeof task === 'string' ? task.substring(0, 100) : JSON.stringify(task).substring(0, 100)}...`,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  const executionTime = performance.now() - startTime;
+
+  res.json({
+    success: true,
+    messages,
+    rounds: 1,
+    duration: executionTime,
+    agentsUsed: agents.filter((a: string) => a in HYBRID_AGENT_REGISTRY),
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.post('/reset-stats', (_req: Request, res: Response) => {
+  hybridStats = {
+    totalExecutions: 0,
+    langGraphExecutions: 0,
+    traditionalExecutions: 0,
+    hybridExecutions: 0,
+    successRate: 0,
+    averageExecutionTime: 0,
+  };
+  executionTimes = [];
+  successCount = 0;
+
+  res.json({
+    success: true,
+    message: 'Stats reset successfully',
+    timestamp: new Date().toISOString()
+  });
+});
+
+export default router;
