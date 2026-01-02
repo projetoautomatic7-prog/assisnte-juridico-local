@@ -883,7 +883,15 @@ Apelado(a): {{apelado.nome}}</p>
       "NUMERO_OAB",
       "LISTA_DOCUMENTOS",
     ],
-    tags: ["revisional", "contrato bancário", "consumidor", "juros abusivos", "CDC", "banco", "financiamento"],
+    tags: [
+      "revisional",
+      "contrato bancário",
+      "consumidor",
+      "juros abusivos",
+      "CDC",
+      "banco",
+      "financiamento",
+    ],
     conteudo: `<h1 style="text-align: center;">AÇÃO REVISIONAL DE CONTRATO BANCÁRIO</h1>
 
 <h2 style="text-align: center;">EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA {{VARA}} DA COMARCA DE {{COMARCA}}/{{UF}}</h2>

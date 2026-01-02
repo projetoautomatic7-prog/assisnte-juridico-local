@@ -10,10 +10,7 @@
 
 import { useState, useCallback } from "react";
 import type { DJENPublication } from "@/types/djen-publication";
-import {
-  buscarDJENNoBrowser,
-  type DJENSearchParams,
-} from "@/services/djen-browser-capture";
+import { buscarDJENNoBrowser, type DJENSearchParams } from "@/services/djen-browser-capture";
 
 interface ExpedientesResponse {
   success: boolean;
@@ -46,9 +43,7 @@ async function fetchFromBackend(
   filter: "all" | "unread"
 ): Promise<ExpedientesResponse> {
   const statusParam = filter === "unread" ? "&status=unread" : "";
-  const response = await fetch(
-    `${baseUrl}/api/expedientes?limit=${maxItems * 2}${statusParam}`
-  );
+  const response = await fetch(`${baseUrl}/api/expedientes?limit=${maxItems * 2}${statusParam}`);
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
@@ -57,9 +52,7 @@ async function fetchFromBackend(
   return response.json();
 }
 
-async function fetchMonitoredLawyers(
-  baseUrl: string
-): Promise<MonitoredLawyer[]> {
+async function fetchMonitoredLawyers(baseUrl: string): Promise<MonitoredLawyer[]> {
   try {
     const response = await fetch(`${baseUrl}/api/lawyers`);
     if (!response.ok) return [];
@@ -108,7 +101,7 @@ async function fetchFromBrowserDirect(
   error?: string;
 }> {
   let lawyers = await fetchMonitoredLawyers(baseUrl);
-  
+
   if (lawyers.length === 0) {
     const stored = localStorage.getItem("monitored-lawyers");
     if (stored) {
@@ -119,13 +112,16 @@ async function fetchFromBrowserDirect(
       }
     }
   }
-  
+
   if (lawyers.length === 0) {
     lawyers = DEFAULT_LAWYERS;
     localStorage.setItem("monitored-lawyers", JSON.stringify(DEFAULT_LAWYERS));
-    console.log("[DJEN Browser] Usando advogados padrão:", DEFAULT_LAWYERS.map(l => l.name).join(", "));
+    console.log(
+      "[DJEN Browser] Usando advogados padrão:",
+      DEFAULT_LAWYERS.map((l) => l.name).join(", ")
+    );
   }
-  
+
   const enabledLawyers = lawyers.filter((l) => l.enabled);
 
   if (enabledLawyers.length === 0) {
@@ -146,7 +142,9 @@ async function fetchFromBrowserDirect(
     }
 
     if (!uf) {
-      console.warn(`[DJEN Browser] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`);
+      console.warn(
+        `[DJEN Browser] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
+      );
       continue;
     }
 
@@ -222,10 +220,7 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
           return;
         }
       } catch (backendError) {
-        console.warn(
-          "[DJENWidget] Backend indisponível, tentando browser-direct:",
-          backendError
-        );
+        console.warn("[DJENWidget] Backend indisponível, tentando browser-direct:", backendError);
       }
 
       console.log("[DJENWidget] Tentando busca direta via navegador...");

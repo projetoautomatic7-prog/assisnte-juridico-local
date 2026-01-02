@@ -62,7 +62,7 @@ export function useAICommands(): UseAICommandsReturn {
       if (rateLimitTimerRef.current) {
         clearTimeout(rateLimitTimerRef.current);
       }
-      
+
       // Set timer to re-enable requests after waitTime
       rateLimitTimerRef.current = setTimeout(() => {
         setCanRequest(true);
@@ -94,11 +94,7 @@ export function useAICommands(): UseAICommandsReturn {
   }, []);
 
   const executeCommand = useCallback(
-    async (
-      command: AICommand,
-      texto: string,
-      onChunk: (chunk: string) => void
-    ): Promise<void> => {
+    async (command: AICommand, texto: string, onChunk: (chunk: string) => void): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

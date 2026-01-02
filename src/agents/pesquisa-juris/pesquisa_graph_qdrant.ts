@@ -21,7 +21,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
     const qdrantUrl = import.meta.env.VITE_QDRANT_URL;
     const qdrantApiKey = import.meta.env.VITE_QDRANT_API_KEY;
     const qdrantCollection = import.meta.env.VITE_QDRANT_COLLECTION_NAME;
-    
+
     const qdrantConfig = {
       url: typeof qdrantUrl === "string" ? qdrantUrl : "",
       apiKey: typeof qdrantApiKey === "string" ? qdrantApiKey : "",

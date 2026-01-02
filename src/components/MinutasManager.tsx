@@ -844,7 +844,10 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                           </Badge>
                         )}
                         {!canAIRequest && aiWaitTime > 0 && (
-                          <Badge variant="outline" className="ml-2 text-orange-600 border-orange-500">
+                          <Badge
+                            variant="outline"
+                            className="ml-2 text-orange-600 border-orange-500"
+                          >
                             <Clock className="h-3 w-3 mr-1" />
                             Aguarde {Math.ceil(aiWaitTime / 1000)}s
                           </Badge>

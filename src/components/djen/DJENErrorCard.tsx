@@ -35,9 +35,7 @@ export function DJENErrorCard({
             <AlertDescription className="text-amber-600 dark:text-amber-300">
               A API do DJEN só aceita requisições do Brasil.
               <br />
-              <span className="text-xs">
-                Verifique sua conexão ou utilize uma VPN brasileira.
-              </span>
+              <span className="text-xs">Verifique sua conexão ou utilize uma VPN brasileira.</span>
             </AlertDescription>
           </Alert>
         ) : (

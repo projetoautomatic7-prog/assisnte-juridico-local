@@ -479,13 +479,15 @@ export default function DJENPublicationsWidget({
   // Auto-cadastro automático quando novas publicações são encontradas
   useEffect(() => {
     if (publications.length === 0 || autoRegistering) return;
-    
+
     const unregisteredPubs = publications.filter(
       (pub) => pub.numeroProcesso && !isAlreadyRegistered(pub)
     );
-    
+
     if (unregisteredPubs.length > 0) {
-      console.log(`[DJEN Auto-Cadastro] Cadastrando ${unregisteredPubs.length} processo(s) automaticamente...`);
+      console.log(
+        `[DJEN Auto-Cadastro] Cadastrando ${unregisteredPubs.length} processo(s) automaticamente...`
+      );
       handleAutoRegisterAll(publications).catch((err) =>
         console.error("[DJEN Auto-Cadastro] Erro:", err)
       );
