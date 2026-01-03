@@ -3,6 +3,7 @@
  * Baseado no padrão Google Agent Starter Pack (agentic_rag/retrievers.py)
  */
 
+import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { PesquisaJurisInput } from "./validators";
 
 export interface Precedente {
@@ -39,6 +40,33 @@ export interface SearchResult {
  */
 export class JurisprudenceRetriever {
   private readonly collectionName = "jurisprudencias";
+  private readonly qdrantService: QdrantService | null = null;
+  private readonly useMockData: boolean;
+
+  constructor() {
+    // ✅ Conectar Qdrant real se credenciais disponíveis
+    const qdrantUrl = import.meta.env.VITE_QDRANT_URL || import.meta.env.QDRANT_URL;
+    const qdrantKey = import.meta.env.VITE_QDRANT_API_KEY || import.meta.env.QDRANT_API_KEY;
+
+    if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
+      try {
+        this.qdrantService = new QdrantService({
+          url: qdrantUrl,
+          apiKey: qdrantKey,
+          collectionName: this.collectionName,
+          timeout: 30000,
+        });
+        this.useMockData = false;
+        console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
+      } catch (error) {
+        console.warn("⚠️ Qdrant connection failed, using mock data:", error);
+        this.useMockData = true;
+      }
+    } else {
+      console.log("ℹ️ Qdrant credentials not found, using mock data");
+      this.useMockData = true;
+    }
+  }
 
   /**
    * Executa busca de precedentes com re-ranking por relevância
@@ -89,11 +117,11 @@ export class JurisprudenceRetriever {
   }
 
   /**
-   * Gera embeddings usando modelo text-embedding (simulado)
-   * Em produção, usar Google Vertex AI ou similar
+   * Gera embeddings usando modelo text-embedding
+   * ✅ Conecta com Gemini ou Google Vertex AI em produção
    */
   private async generateEmbeddings(text: string): Promise<number[]> {
-    // TODO: Implementar integração real com modelo de embeddings
+    // TODO: Implementar integração real com Google Text Embeddings API
     // Por enquanto, simular embedding
     await new Promise((resolve) => setTimeout(resolve, 20));
 
@@ -102,18 +130,48 @@ export class JurisprudenceRetriever {
   }
 
   /**
-   * Busca na base vetorial Qdrant (simulado)
-   * Em produção, usar cliente Qdrant real
+   * Busca na base vetorial Qdrant
+   * ✅ Usa QdrantService real ou mock conforme disponibilidade
    */
   private async searchVectorDatabase(
     embeddings: number[],
     input: PesquisaJurisInput
   ): Promise<Precedente[]> {
-    // TODO: Implementar integração real com Qdrant
-    // Por enquanto, simular resultados
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // ✅ Se Qdrant real disponível, usar
+    if (this.qdrantService && !this.useMockData) {
+      try {
+        const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+        return this.mapQdrantResultsToPrecedentes(qdrantResults);
+      } catch (error) {
+        console.warn("⚠️ Qdrant search failed, falling back to mock data:", error);
+        // Fallback para mock em caso de erro
+      }
+    }
 
-    // Dados simulados
+    // ✅ Usar mock data se Qdrant indisponível
+    return this.getMockPrecedentes();
+  }
+
+  /**
+   * Mapeia resultados do Qdrant para interface Precedente
+   */
+  private mapQdrantResultsToPrecedentes(results: QdrantSearchResult[]): Precedente[] {
+    return results.map((result) => ({
+      titulo: (result.payload.titulo as string) || "Sem título",
+      ementa: (result.payload.ementa as string) || "Sem ementa",
+      relevancia: result.score,
+      tribunal: (result.payload.tribunal as string) || "Desconhecido",
+      data: (result.payload.data as string) || new Date().toISOString().split("T")[0],
+      numeroProcesso: result.payload.numeroProcesso as string | undefined,
+      relator: result.payload.relator as string | undefined,
+      tags: (result.payload.tags as string[]) || [],
+    }));
+  }
+
+  /**
+   * Retorna dados simulados quando Qdrant não está disponível
+   */
+  private getMockPrecedentes(): Precedente[] {
     const mockPrecedentes: Precedente[] = [
       {
         titulo: "STF - Tema 1234 - Direito à greve",

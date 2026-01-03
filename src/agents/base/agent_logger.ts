@@ -3,6 +3,8 @@
  * Baseado no padrão Google Agent Starter Pack
  */
 
+import { isProduction } from "@/lib/env-utils";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogContext {
@@ -32,7 +34,7 @@ class AgentLogger {
 
   constructor() {
     this.enableConsole = true; // Sempre habilitar console em dev
-    this.enableSentry = import.meta.env.PROD; // Sentry apenas em produção
+    this.enableSentry = isProduction(); // Sentry apenas em produção
   }
 
   /**

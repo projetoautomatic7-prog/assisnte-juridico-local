@@ -229,6 +229,30 @@ Acesse: **Deployments → Analytics**
 
 ---
 
+## 🔄 **Compartilhamento de Código Frontend/Backend:**
+
+O backend pode importar código do frontend (agentes, libs) usando path aliases.
+
+### **Configuração:**
+
+1. **Backend tsconfig.json** usa `--tsconfig ../tsconfig.json` para herdar aliases
+2. **Variáveis de ambiente** devem funcionar em ambos os contextos:
+   - Use `src/lib/env-utils.ts` para acesso seguro
+   - `getEnvVar("KEY")` busca em `process.env` e `import.meta.env`
+   - `isDevelopment()` / `isProduction()` para verificar ambiente
+
+### **Exemplo:**
+```typescript
+import { getEnvVar, isDevelopment } from "@/lib/env-utils";
+
+const apiKey = getEnvVar("GEMINI_API_KEY"); // Busca GEMINI_API_KEY ou VITE_GEMINI_API_KEY
+if (isDevelopment()) {
+  console.log("Modo desenvolvimento");
+}
+```
+
+---
+
 ## 📝 **Notas Importantes:**
 
 1. **Backend serve tudo em produção** (API + Frontend)
@@ -236,6 +260,7 @@ Acesse: **Deployments → Analytics**
 3. **NODE_ENV=production** ativa otimizações
 4. **dist/** precisa existir antes do deploy
 5. **Secrets do Replit** são injetados automaticamente
+6. **Código compartilhado** deve usar `@/lib/env-utils` para variáveis de ambiente
 
 ---
 
@@ -247,5 +272,5 @@ Acesse: **Deployments → Analytics**
 
 ---
 
-**Última atualização:** 2 de janeiro de 2026  
-**Versão da configuração:** 2.0
+**Última atualização:** 3 de janeiro de 2026  
+**Versão da configuração:** 2.1

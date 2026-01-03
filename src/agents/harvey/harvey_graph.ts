@@ -3,6 +3,19 @@ import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
 import { callGemini } from "@/lib/gemini-service";
 import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { validateHarveyInput, ValidationError } from "./validators";
+import {
+  HARVEY_SYSTEM_PROMPT,
+  generateAnalysisPrompt,
+  generateUrgencyPrompt,
+  formatErrorMessage,
+} from "./templates";
+import {
+  logger,
+  logAgentExecution,
+  logStructuredError,
+  logValidationError,
+} from "../base/agent_logger";
 
 export class HarveyAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
@@ -24,54 +37,99 @@ export class HarveyAgent extends LangGraphAgent {
       async (span) => {
         let current = updateState(state, { currentStep: "harvey:start" });
 
-        const task = (state.data.task as string) || "Análise estratégica geral do escritório";
-
-        span?.setAttribute("harvey.task", task);
-
-        const systemPrompt = `Você é Harvey Specter, estrategista jurídico sênior.
-
-RESPONSABILIDADES:
-- Analisar estratégias jurídicas complexas
-- Identificar riscos e oportunidades em processos
-- Fornecer visão macro sobre casos jurídicos
-- Sugerir táticas processuais eficazes
-
-DIRETRIZES:
-- Seja direto, confiante e objetivo
-- Use terminologia jurídica precisa
-- Cite legislação quando relevante (CF/88, CPC/15, CC/02)
-- Pense como um advogado de elite
-- Responda SEMPRE em português brasileiro
-
-TAREFA:
-${task}`;
-
+        // ✅ MELHORIA 1: Validação de inputs
+        let validatedInput;
         try {
-          const response = await callGemini(systemPrompt, {
+          validatedInput = validateHarveyInput(state.data || {});
+          logAgentExecution("Harvey Specter", "input_validated", {
+            task: validatedInput.task.substring(0, 100),
+            urgency: validatedInput.urgency,
+            hasContext: !!validatedInput.context,
+          });
+        } catch (error) {
+          if (error instanceof ValidationError) {
+            logValidationError(
+              "Harvey Specter",
+              error.field,
+              error.message,
+              error.receivedValue
+            );
+
+            const errorMsg = formatErrorMessage("ValidationError", error.message, {
+              task: state.data?.task as string | undefined,
+              step: "input_validation",
+            });
+
+            return this.addAgentMessage(
+              updateState(current, {
+                currentStep: "harvey:validation_error",
+                completed: false,
+                error: error.message,
+              }),
+              errorMsg
+            );
+          }
+          throw error;
+        }
+
+        const { task, processNumber, context, urgency } = validatedInput;
+
+        span?.setAttribute("harvey.task", task.substring(0, 200));
+        span?.setAttribute("harvey.urgency", urgency);
+        if (processNumber) span?.setAttribute("harvey.process_number", processNumber);
+
+        // ✅ MELHORIA 2: Usar templates separados
+        const systemPrompt = HARVEY_SYSTEM_PROMPT;
+        const analysisPrompt =
+          generateAnalysisPrompt(task, context, processNumber) +
+          generateUrgencyPrompt(urgency || "medium");
+
+        // ✅ MELHORIA 3: Error handling estruturado
+        try {
+          logAgentExecution("Harvey Specter", "calling_gemini", {
+            promptLength: analysisPrompt.length,
+          });
+
+          const response = await callGemini(systemPrompt + "\n\n" + analysisPrompt, {
             temperature: 0.6,
             maxOutputTokens: 4096,
           });
 
           if (response.error) {
+            logStructuredError("Harvey Specter", "GeminiAPIError", response.error, {
+              task: task.substring(0, 100),
+              processNumber,
+            });
+
             span?.setAttribute("gen_ai.error", response.error);
             span?.setStatus({ code: 2, message: response.error });
 
-            current = updateState(current, {
-              currentStep: "harvey:error",
-              data: {
-                ...current.data,
-                error: response.error,
-              },
-              completed: false,
+            const errorMsg = formatErrorMessage("GeminiAPIError", response.error, {
+              task,
+              processNumber,
+              step: "gemini_call",
             });
 
-            return this.addAgentMessage(current, `Erro ao processar análise estratégica: ${response.error}`);
+            return this.addAgentMessage(
+              updateState(current, {
+                currentStep: "harvey:error",
+                data: { ...current.data, error: response.error },
+                completed: false,
+              }),
+              errorMsg
+            );
           }
 
           const result = response.text;
+          const tokensUsed = response.metadata?.totalTokens || 0;
+
+          logAgentExecution("Harvey Specter", "analysis_completed", {
+            responseLength: result.length,
+            tokensUsed,
+          });
 
           span?.setAttribute("gen_ai.response.length", result.length);
-          span?.setAttribute("gen_ai.usage.total_tokens", response.metadata?.totalTokens || 0);
+          span?.setAttribute("gen_ai.usage.total_tokens", tokensUsed);
           span?.setStatus({ code: 1, message: "ok" });
 
           current = updateState(current, {
@@ -86,21 +144,35 @@ ${task}`;
 
           return this.addAgentMessage(current, result);
         } catch (error) {
-          console.error("[Harvey] Erro ao executar agente:", error);
+          // ✅ MELHORIA 2: Error handling estruturado seguindo padrão Google
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorStack = error instanceof Error ? error.stack : undefined;
 
-          span?.setAttribute("gen_ai.error", error instanceof Error ? error.message : "Erro desconhecido");
-          span?.setStatus({ code: 2, message: "error" });
-
-          current = updateState(current, {
-            currentStep: "harvey:error",
-            data: {
-              ...current.data,
-              error: error instanceof Error ? error.message : "Erro desconhecido",
-            },
-            completed: false,
+          logStructuredError("Harvey Specter", errorType, errorMessage, {
+            task: task.substring(0, 100),
+            processNumber,
+            currentStep: current.currentStep,
+            errorStack,
           });
 
-          return this.addAgentMessage(current, "Erro ao processar análise estratégica.");
+          span?.setAttribute("gen_ai.error", errorMessage);
+          span?.setStatus({ code: 2, message: "error" });
+
+          const errorMsg = formatErrorMessage(errorType, errorMessage, {
+            task,
+            processNumber,
+            step: current.currentStep,
+          });
+
+          return this.addAgentMessage(
+            updateState(current, {
+              currentStep: "harvey:error",
+              data: { ...current.data, error: errorMessage },
+              completed: false,
+            }),
+            errorMsg
+          );
         }
       }
     );

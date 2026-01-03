@@ -1,25 +1,24 @@
+import {
+  createChatSpan,
+  createExecuteToolSpan,
+  createInvokeAgentSpan,
+} from "@/lib/sentry-gemini-integration-v2";
+import {
+  logAgentExecution,
+  logStructuredError,
+  logValidationError
+} from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import {
-  createInvokeAgentSpan,
-  createExecuteToolSpan,
-  createChatSpan,
-} from "@/lib/sentry-gemini-integration-v2";
-import { validatePesquisaInput, ValidationError } from "./validators";
 import { JurisprudenceRetriever, formatPrecedentes } from "./retrievers";
 import {
   PESQUISA_JURIS_SYSTEM_PROMPT,
-  generateSearchQueryPrompt,
   formatErrorMessage,
   formatResultsSummary,
+  generateSearchQueryPrompt,
 } from "./templates";
-import {
-  logger,
-  logAgentExecution,
-  logStructuredError,
-  logValidationError,
-} from "../base/agent_logger";
+import { ValidationError, validatePesquisaInput } from "./validators";
 
 export class PesquisaJurisAgent extends LangGraphAgent {
   private readonly retriever: JurisprudenceRetriever;
