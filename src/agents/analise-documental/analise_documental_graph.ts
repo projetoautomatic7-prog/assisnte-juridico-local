@@ -1,7 +1,10 @@
+import { createExecuteToolSpan, createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan, createExecuteToolSpan } from "@/lib/sentry-gemini-integration-v2";
+import { formatAnalysisResult, formatErrorMessage, formatFallbackMessage } from "./templates";
+import { validateAnaliseDocumentalInput, ValidationError } from "./validators";
 
 export class AnaliseDocumentalAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
@@ -22,14 +25,16 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "analise-documental:start" });
+        try {
+          let current = updateState(state, { currentStep: "analise-documental:validate" });
 
-        // Extrair dados do documento
-        const documentoTexto = (state.data?.documentoTexto as string) || "";
-        const tipoDocumento = (state.data?.tipoDocumento as string) || "genérico";
+          // Step 0: Validate inputs
+          const validatedInput = validateAnaliseDocumentalInput(state.data || {});
 
-        span?.setAttribute("analise.tipo_documento", tipoDocumento);
-        span?.setAttribute("analise.texto_length", documentoTexto.length);
+          span?.setAttribute("analise.tipo_documento", validatedInput.tipoDocumento);
+          span?.setAttribute("analise.texto_length", validatedInput.documentoTexto.length);
+
+          current = updateState(current, { currentStep: "analise-documental:extract" });
 
         // Executar análise com tool (entity extraction)
         const entitiesExtracted = await createExecuteToolSpan(
@@ -42,8 +47,8 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
             toolName: "entity_extraction",
             toolType: "function",
             toolInput: JSON.stringify({
-              texto: documentoTexto.substring(0, 200), // Amostra
-              tipo: tipoDocumento,
+              texto: validatedInput.documentoTexto.substring(0, 200), // Amostra
+              tipo: validatedInput.tipoDocumento,
             }),
           },
           async (toolSpan) => {
@@ -72,22 +77,50 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
           })
         );
 
-        current = updateState(current, {
-          currentStep: "analise-documental:extracted",
-          data: {
-            ...current.data,
-            entities: entitiesExtracted,
-            tipoDocumento,
-          },
-          completed: true,
-        });
+          current = updateState(current, {
+            currentStep: "analise-documental:extracted",
+            data: {
+              ...current.data,
+              entities: entitiesExtracted,
+              tipoDocumento: validatedInput.tipoDocumento,
+            },
+            completed: true,
+          });
 
-        span?.setStatus({ code: 1, message: "ok" });
+          span?.setStatus({ code: 1, message: "ok" });
 
-        return this.addAgentMessage(
-          current,
-          `Análise documental concluída: ${entitiesExtracted.partes.length} partes, ${entitiesExtracted.datas.length} datas, ${entitiesExtracted.valores.length} valores extraídos`
-        );
+          const resultMessage = formatAnalysisResult(
+            validatedInput.tipoDocumento,
+            entitiesExtracted,
+            validatedInput.documentoTexto.length
+          );
+
+          return this.addAgentMessage(current, resultMessage);
+        } catch (error) {
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (error instanceof ValidationError) {
+            logValidationError("Análise Documental", error.field, error.message, error.receivedValue);
+          } else {
+            logStructuredError("Análise Documental", errorType, errorMessage, {
+              tipoDocumento: (state.data?.tipoDocumento as string) || undefined,
+              step: state.currentStep,
+            });
+          }
+
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
+
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, {
+                  tipoDocumento: (state.data?.tipoDocumento as string) || undefined,
+                })
+              : formatFallbackMessage();
+
+          return this.addAgentMessage(state, fallbackMessage);
+        }
       }
     );
   }

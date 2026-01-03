@@ -1,8 +1,11 @@
+import { generatePeticao } from "@/lib/gemini-service";
+import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
-import { generatePeticao } from "@/lib/gemini-service";
+import { formatErrorMessage, formatFallbackMessage, formatPetitionResult } from "./templates";
+import { validateRedacaoPeticoesInput, ValidationError } from "./validators";
 
 export class RedacaoPeticoesAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
@@ -23,51 +26,69 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "redacao:start" });
+        try {
+          let current = updateState(state, { currentStep: "redacao:validate" });
 
-        // Extrair dados para redação
-        const tipo = (state.data?.tipo as string) || "petição inicial";
-        const detalhes = (state.data?.detalhes as string) || "Detalhes não fornecidos";
+          // Step 0: Validate inputs
+          const validatedInput = validateRedacaoPeticoesInput(state.data || {});
 
-        span?.setAttribute("gen_ai.petition.type", tipo);
-        span?.setAttribute("gen_ai.petition.details_length", detalhes.length);
+          span?.setAttribute("gen_ai.petition.type", validatedInput.tipo);
+          span?.setAttribute("gen_ai.petition.details_length", validatedInput.detalhes.length);
 
-        // Chamar Gemini para gerar petição
-        const geminiResponse = await generatePeticao(tipo, detalhes);
+          // Step 1: Generate petition
+          current = updateState(current, { currentStep: "redacao:generate" });
+          const geminiResponse = await generatePeticao(validatedInput.tipo, validatedInput.detalhes);
 
-        if (geminiResponse.error) {
-          span?.setAttribute("gen_ai.error", geminiResponse.error);
-          span?.setStatus({ code: 2, message: geminiResponse.error });
+          if (geminiResponse.error) {
+            throw new Error(geminiResponse.error);
+          }
+
+          const draft = geminiResponse.text;
+
+          span?.setAttribute("gen_ai.response.length", draft.length);
+          span?.setAttribute("gen_ai.response.model", geminiResponse.metadata?.model || "unknown");
+          span?.setAttribute("gen_ai.usage.total_tokens", geminiResponse.metadata?.totalTokens || 0);
 
           current = updateState(current, {
-            currentStep: "redacao:error",
-            error: geminiResponse.error,
+            currentStep: "redacao:done",
+            data: {
+              ...current.data,
+              draft,
+              metadata: geminiResponse.metadata,
+            },
             completed: true,
           });
 
-          return current;
+          const resultMessage = formatPetitionResult(
+            validatedInput.tipo,
+            draft.length,
+            geminiResponse.metadata?.totalTokens
+          );
+
+          return this.addAgentMessage(current, resultMessage);
+        } catch (error) {
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (error instanceof ValidationError) {
+            logValidationError("Redação Petições", error.field, error.message, error.receivedValue);
+          } else {
+            logStructuredError("Redação Petições", errorType, errorMessage, {
+              tipo: (state.data?.tipo as string) || undefined,
+              step: state.currentStep,
+            });
+          }
+
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
+
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, { tipo: (state.data?.tipo as string) || undefined })
+              : formatFallbackMessage((state.data?.tipo as string) || undefined);
+
+          return this.addAgentMessage(state, fallbackMessage);
         }
-
-        const draft = geminiResponse.text;
-
-        span?.setAttribute("gen_ai.response.length", draft.length);
-        span?.setAttribute("gen_ai.response.model", geminiResponse.metadata?.model || "unknown");
-        span?.setAttribute("gen_ai.usage.total_tokens", geminiResponse.metadata?.totalTokens || 0);
-
-        current = updateState(current, {
-          currentStep: "redacao:done",
-          data: {
-            ...current.data,
-            draft,
-            metadata: geminiResponse.metadata,
-          },
-          completed: true,
-        });
-
-        return this.addAgentMessage(
-          current,
-          `Redação: rascunho gerado com sucesso (${draft.length} caracteres)`
-        );
       }
     );
   }

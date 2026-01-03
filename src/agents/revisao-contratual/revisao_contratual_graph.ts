@@ -1,11 +1,14 @@
+import {
+    createChatSpan,
+    createExecuteToolSpan,
+    createInvokeAgentSpan,
+} from "@/lib/sentry-gemini-integration-v2";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import {
-  createInvokeAgentSpan,
-  createChatSpan,
-  createExecuteToolSpan,
-} from "@/lib/sentry-gemini-integration-v2";
+import { formatErrorMessage, formatFallbackMessage, formatReviewResult } from "./templates";
+import { validateRevisaoContratualInput, ValidationError } from "./validators";
 
 export class RevisaoContratualAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
@@ -26,16 +29,17 @@ export class RevisaoContratualAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "revisao-contratual:start" });
+        try {
+          let current = updateState(state, { currentStep: "revisao-contratual:validate" });
 
-        // Extrair dados do contrato
-        const contratoTexto = (state.data?.contratoTexto as string) || "";
-        const tipoContrato = (state.data?.tipoContrato as string) || "prestação de serviços";
-        const partes = (state.data?.partes as string[]) || [];
+          // Step 0: Validate inputs
+          const validatedInput = validateRevisaoContratualInput(state.data || {});
 
-        span?.setAttribute("revisao.tipo_contrato", tipoContrato);
-        span?.setAttribute("revisao.texto_length", contratoTexto.length);
-        span?.setAttribute("revisao.partes_count", partes.length);
+          span?.setAttribute("revisao.tipo_contrato", validatedInput.tipoContrato);
+          span?.setAttribute("revisao.texto_length", validatedInput.contratoTexto.length);
+          span?.setAttribute("revisao.partes_count", validatedInput.partes?.length || 0);
+
+          current = updateState(current, { currentStep: "revisao-contratual:extract" });
 
         // 1. Usar tool para extrair cláusulas do contrato
         const clausulas = await createExecuteToolSpan(
@@ -48,8 +52,8 @@ export class RevisaoContratualAgent extends LangGraphAgent {
             toolName: "extract_contract_clauses",
             toolType: "function",
             toolInput: JSON.stringify({
-              texto: contratoTexto.substring(0, 500),
-              tipo: tipoContrato,
+              texto: validatedInput.contratoTexto.substring(0, 500),
+              tipo: validatedInput.tipoContrato,
             }),
           },
           async (toolSpan) => {
@@ -102,7 +106,7 @@ export class RevisaoContratualAgent extends LangGraphAgent {
             },
             {
               role: "user",
-              content: `Analise as seguintes cláusulas de contrato de ${tipoContrato}:
+              content: `Analise as seguintes cláusulas de contrato de ${validatedInput.tipoContrato}:
 
 ${clausulas.map((c) => `Cláusula ${c.numero} (${c.titulo}): ${c.texto}`).join("\n\n")}
 
@@ -165,10 +169,39 @@ Identifique:
 
         span?.setStatus({ code: 1, message: "ok" });
 
-        return this.addAgentMessage(
-          current,
-          `Revisão concluída: ${analise.totalProblemas} problema(s) identificado(s) (${analise.problemasAlta} alta severidade) - ${analise.recomendacao}`
+        const resultMessage = formatReviewResult(
+          validatedInput.tipoContrato,
+          clausulas.length,
+          analise.totalProblemas,
+          validatedInput.contratoTexto.length
         );
+
+        return this.addAgentMessage(current, resultMessage);
+      } catch (error) {
+        const errorType = error instanceof Error ? error.name : "UnknownError";
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        if (error instanceof ValidationError) {
+          logValidationError("Revisão Contratual", error.field, error.message, error.receivedValue);
+        } else {
+          logStructuredError("Revisão Contratual", errorType, errorMessage, {
+            tipoContrato: (state.data?.tipoContrato as string) || undefined,
+            step: state.currentStep,
+          });
+        }
+
+        span?.setStatus({ code: 2, message: errorMessage });
+        span?.setAttribute("error.type", errorType);
+
+        const fallbackMessage =
+          error instanceof ValidationError
+            ? formatErrorMessage(errorType, errorMessage, {
+                tipoContrato: (state.data?.tipoContrato as string) || undefined,
+              })
+            : formatFallbackMessage((state.data?.tipoContrato as string) || undefined);
+
+        return this.addAgentMessage(state, fallbackMessage);
+      }
       }
     );
   }

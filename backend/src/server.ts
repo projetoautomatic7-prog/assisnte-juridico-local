@@ -7,6 +7,7 @@ import { inicializarTabelaExpedientes } from "./db/expedientes.js";
 import agentsRouter from "./routes/agents.js";
 import aiCommandsRouter from "./routes/ai-commands.js";
 import djenRouter from "./routes/djen.js";
+import editorRouter from "./routes/editor.js";
 import kvRouter from "./routes/kv.js";
 import llmStreamRouter from "./routes/llm-stream.js";
 import llmRouter from "./routes/llm.js";
@@ -68,6 +69,7 @@ app.use("/api/minutas", minutasRouter);
 app.use("/api/ai", aiCommandsRouter);
 app.use("/api/llm-stream", llmStreamRouter);
 app.use("/api/djen", djenRouter);
+app.use("/api/editor", editorRouter);
 
 // Serve static files in production
 const isProduction = process.env.NODE_ENV === "production";
