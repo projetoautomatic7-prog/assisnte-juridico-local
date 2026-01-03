@@ -36,46 +36,74 @@
 }
 
 /* CKEditor wrapper */
-.professional-editor-page .ck-editor {
+.professional-editor-page .ck.ck-editor {
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
   background: white;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  overflow: hidden;
+}
+
+.professional-editor-page .ck.ck-editor__top {
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.professional-editor-page .ck.ck-editor__main {
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Toolbar do CKEditor */
-.professional-editor-page .ck-toolbar {
+.professional-editor-page .ck.ck-toolbar {
   background: hsl(var(--muted) / 0.5) !important;
-  border-bottom: 1px solid hsl(var(--border)) !important;
+  border: none !important;
   border-radius: 0 !important;
   padding: 0.25rem 0.5rem !important;
   flex-wrap: wrap !important;
 }
 
-.professional-editor-page .ck-toolbar__items {
+.professional-editor-page .ck.ck-toolbar__items {
   gap: 0.125rem !important;
   flex-wrap: wrap !important;
 }
 
-.professional-editor-page .ck-button {
+.professional-editor-page .ck.ck-button {
   border-radius: var(--radius) !important;
   padding: 0.25rem !important;
   min-width: 28px !important;
   min-height: 28px !important;
+  border: none !important;
+  background: transparent !important;
 }
 
-.professional-editor-page .ck-button:hover {
+.professional-editor-page .ck.ck-button:hover {
   background: hsl(var(--muted)) !important;
 }
 
-.professional-editor-page .ck-button.ck-on {
+.professional-editor-page .ck.ck-button.ck-on {
   background: hsl(var(--primary) / 0.15) !important;
   color: hsl(var(--primary)) !important;
 }
 
+/* Dropdowns do CKEditor */
+.professional-editor-page .ck.ck-dropdown__button {
+  border: none !important;
+  background: transparent !important;
+}
+
+.professional-editor-page .ck.ck-dropdown__panel {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+}
+
 /* Área editável */
-.professional-editor-page .ck-editor__editable {
+.professional-editor-page .ck.ck-editor__editable,
+.professional-editor-page .ck-editor__editable.ck-focused,
+.professional-editor-page .ck.ck-editor__editable_inline {
   padding: 1rem 1.5rem !important;
   min-height: 300px !important;
   max-height: 400px !important;
@@ -87,14 +115,18 @@
   background: white !important;
   border: none !important;
   outline: none !important;
-}
-
-.professional-editor-page .ck-editor__editable:focus {
-  outline: none !important;
   box-shadow: none !important;
 }
 
+.professional-editor-page .ck.ck-editor__editable:focus,
+.professional-editor-page .ck.ck-editor__editable.ck-focused {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* Placeholder */
+.professional-editor-page .ck.ck-placeholder::before,
 .professional-editor-page .ck-placeholder::before {
   color: hsl(var(--muted-foreground)) !important;
   font-style: italic !important;
