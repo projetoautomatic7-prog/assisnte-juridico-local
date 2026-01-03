@@ -156,6 +156,7 @@ router.post("/execute", async (req: Request, res: Response) => {
       };
     }
 
+    const executionTime = performance.now() - startTime;
     executionTimes.push(executionTime);
     successCount++;
     hybridStats.totalExecutions++;
@@ -251,6 +252,37 @@ router.post("/reset-stats", (_req: Request, res: Response) => {
     success: true,
     message: "Stats reset successfully",
     timestamp: new Date().toISOString(),
+  });
+});
+
+router.get("/health", async (_req: Request, res: Response) => {
+  const agentHealthChecks: Record<string, { status: string; circuitBreaker?: string; errorRate?: number }> = {};
+
+  for (const agentId of Object.keys(HYBRID_AGENT_REGISTRY)) {
+    agentHealthChecks[agentId] = {
+      status: "available",
+      circuitBreaker: "closed",
+      errorRate: hybridStats.totalExecutions > 0
+        ? (1 - hybridStats.successRate / 100)
+        : 0,
+    };
+  }
+
+  const overallHealth = {
+    status: hybridStats.successRate >= 90 ? "healthy"
+      : hybridStats.successRate >= 70 ? "degraded"
+      : "unhealthy",
+    totalAgents: Object.keys(HYBRID_AGENT_REGISTRY).length,
+    activeAgents: Object.keys(agentHealthChecks).length,
+    stats: hybridStats,
+    agents: agentHealthChecks,
+    geminiConfigValid: !!process.env.VITE_GEMINI_API_KEY || !!process.env.GEMINI_API_KEY,
+    timestamp: new Date().toISOString(),
+  };
+
+  res.json({
+    success: true,
+    ...overallHealth,
   });
 });
 
