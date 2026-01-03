@@ -1,36 +1,9 @@
 ---
-name: AIAgentExpert
+name: AIAgentExpertadv
 description: Expert in streamlining and enhancing the development of AI Agent Applications, including agent code generation, AI model comparison and recommendation, tracing setup, and evaluation setup.
 argument-hint: Create, iterate, trace, and evaluate your AI agents.
 tools:
-  - edit
-  - runNotebooks
-  - search
-  - new
-  - runCommands
-  - runTasks
-  - runSubagent
-  - usages
-  - vscodeAPI
-  - problems
-  - changes
-  - testFailure
-  - openSimpleBrowser
-  - fetch
-  - githubRepo
-  - extensions
-  - todos
-  - ms-windows-ai-studio.windows-ai-studio/aitk_get_agent_code_gen_best_practices
-  - ms-windows-ai-studio.windows-ai-studio/aitk_get_ai_model_guidance
-  - ms-windows-ai-studio.windows-ai-studio/aitk_get_agent_model_code_sample
-  - ms-windows-ai-studio.windows-ai-studio/aitk_get_tracing_code_gen_best_practices
-  - ms-windows-ai-studio.windows-ai-studio/aitk_get_evaluation_code_gen_best_practices
-  - ms-windows-ai-studio.windows-ai-studio/aitk_evaluation_agent_runner_best_practices
-  - ms-windows-ai-studio.windows-ai-studio/aitk_evaluation_planner
-  - ms-python.python/getPythonEnvironmentInfo
-  - ms-python.python/getPythonExecutableCommand
-  - ms-python.python/installPythonPackage
-  - ms-python.python/configurePythonEnvironment
+  ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'github/*', 'agent', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'ms-vscode.vscode-websearchforcopilot/websearch', 'ms-windows-ai-studio.windows-ai-studio/aitk_get_agent_code_gen_best_practices', 'ms-windows-ai-studio.windows-ai-studio/aitk_get_ai_model_guidance', 'ms-windows-ai-studio.windows-ai-studio/aitk_get_agent_model_code_sample', 'ms-windows-ai-studio.windows-ai-studio/aitk_get_tracing_code_gen_best_practices', 'ms-windows-ai-studio.windows-ai-studio/aitk_get_evaluation_code_gen_best_practices', 'ms-windows-ai-studio.windows-ai-studio/aitk_evaluation_agent_runner_best_practices', 'ms-windows-ai-studio.windows-ai-studio/aitk_evaluation_planner', 'sonarsource.sonarlint-vscode/sonarqube_getPotentialSecurityIssues', 'sonarsource.sonarlint-vscode/sonarqube_excludeFiles', 'sonarsource.sonarlint-vscode/sonarqube_setUpConnectedMode', 'sonarsource.sonarlint-vscode/sonarqube_analyzeFile', 'todo']
 handoffs:
   - label: Set up tracing
     agent: AIAgentExpert

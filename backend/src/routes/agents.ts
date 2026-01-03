@@ -1,4 +1,35 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from "express";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Imports dinâmicos dos agentes (evita problemas de path com ESM)
+let runHarvey: any;
+let runJustine: any;
+
+// Carregar agentes de forma assíncrona
+async function loadAgents() {
+  try {
+    // Path relativo a partir de backend/src/routes → workspace root
+    const agentsPath = resolve(__dirname, "../../../src/agents");
+
+    const harveyModule = await import(`${agentsPath}/harvey/harvey_graph.js`);
+    runHarvey = harveyModule.runHarvey;
+
+    const justineModule = await import(`${agentsPath}/justine/justine_graph.js`);
+    runJustine = justineModule.runJustine;
+
+    console.log("[Agents] ✅ Agentes reais carregados (Harvey + Justine)");
+  } catch (error) {
+    console.error("[Agents] ❌ Erro ao carregar agentes:", error);
+    console.warn("[Agents] ⚠️  Usando modo stub (IA desabilitada)");
+  }
+}
+
+// Carregar agentes na inicialização
+loadAgents();
 
 const router = Router();
 
@@ -8,10 +39,10 @@ const HYBRID_AGENT_REGISTRY: Record<string, string> = {
   "monitor-djen": "langgraph-djen",
   "analise-documental": "langgraph-custom",
   "analise-risco": "langgraph-custom",
-  "compliance": "langgraph-custom",
+  compliance: "langgraph-custom",
   "comunicacao-clientes": "langgraph-custom",
   "estrategia-processual": "langgraph-custom",
-  "financeiro": "langgraph-custom",
+  financeiro: "langgraph-custom",
   "gestao-prazos": "langgraph-custom",
   "organizacao-arquivos": "langgraph-custom",
   "pesquisa-juris": "langgraph-custom",
@@ -41,76 +72,105 @@ let hybridStats: HybridStats = {
 let executionTimes: number[] = [];
 let successCount = 0;
 
-router.get('/list', (_req: Request, res: Response) => {
+router.get("/list", (_req: Request, res: Response) => {
   const agents = Object.entries(HYBRID_AGENT_REGISTRY).map(([id, type]) => ({
     agentId: id,
     type,
-    status: 'available'
+    status: "available",
   }));
-  
+
   res.json({
     success: true,
     agents,
     total: agents.length,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-router.get('/stats', (_req: Request, res: Response) => {
+router.get("/stats", (_req: Request, res: Response) => {
   res.json({
     success: true,
     stats: hybridStats,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-router.post('/execute', async (req: Request, res: Response) => {
+router.post("/execute", async (req: Request, res: Response) => {
   const startTime = performance.now();
   const { agentId, task, config } = req.body;
 
   if (!agentId || !task) {
     return res.status(400).json({
       success: false,
-      error: 'agentId and task are required'
+      error: "agentId and task are required",
     });
   }
 
   if (!(agentId in HYBRID_AGENT_REGISTRY)) {
     return res.status(404).json({
       success: false,
-      error: `Agent '${agentId}' not found`
+      error: `Agent '${agentId}' not found`,
     });
   }
 
   const executionConfig = {
     enableLangGraph: true,
     enableTraditional: true,
-    coordinationMode: config?.coordinationMode || 'parallel',
+    coordinationMode: config?.coordinationMode || "parallel",
     timeoutMs: config?.timeoutMs || 30000,
   };
 
-  console.log(`[Hybrid] Executing task for ${agentId} with mode: ${executionConfig.coordinationMode}`);
+  console.log(
+    `[Hybrid] Executing task for ${agentId} with mode: ${executionConfig.coordinationMode}`
+  );
 
   try {
-    const executionTime = performance.now() - startTime;
+    let result;
+
+    // Executar agente real baseado no ID
+    if (agentId === "harvey-specter" && runHarvey) {
+      const agentResult = await runHarvey({ task });
+      result = {
+        completed: agentResult.completed,
+        message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
+        data: agentResult.data,
+        steps: agentResult.messages.length,
+        aiPowered: true,
+      };
+    } else if (agentId === "mrs-justine" && runJustine) {
+      const agentResult = await runJustine({ task });
+      result = {
+        completed: agentResult.completed,
+        message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
+        data: agentResult.data,
+        steps: agentResult.messages.length,
+        aiPowered: true,
+      };
+    } else {
+      // Outros agentes ainda são stubs
+      result = {
+        completed: true,
+        message: `Task executed by ${agentId} (stub)`,
+        data: { task, note: "Este agente ainda não foi implementado com IA real" },
+        aiPowered: false,
+      };
+    }
+
     executionTimes.push(executionTime);
     successCount++;
     hybridStats.totalExecutions++;
     hybridStats.langGraphExecutions++;
     hybridStats.successRate = (successCount / hybridStats.totalExecutions) * 100;
-    hybridStats.averageExecutionTime = executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
+    hybridStats.averageExecutionTime =
+      executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
 
     res.json({
       success: true,
-      mode: 'langgraph',
+      mode: "langgraph",
       agentId,
       executionTime,
-      result: {
-        completed: true,
-        message: `Task executed by ${agentId}`,
-        data: task
-      },
-      timestamp: new Date().toISOString()
+      result,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     const executionTime = performance.now() - startTime;
@@ -120,43 +180,45 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     res.status(500).json({
       success: false,
-      mode: 'traditional',
+      mode: "traditional",
       agentId,
       executionTime,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
     });
   }
 });
 
-router.post('/orchestrate', async (req: Request, res: Response) => {
+router.post("/orchestrate", async (req: Request, res: Response) => {
   const startTime = performance.now();
   const { agents, task, maxRounds = 5, timeout = 30000 } = req.body;
 
   if (!agents || !Array.isArray(agents) || agents.length === 0) {
     return res.status(400).json({
       success: false,
-      error: 'agents array is required'
+      error: "agents array is required",
     });
   }
 
   if (!task) {
     return res.status(400).json({
       success: false,
-      error: 'task is required'
+      error: "task is required",
     });
   }
 
-  console.log(`[Orchestrator] Running orchestration with ${agents.length} agents, max ${maxRounds} rounds`);
+  console.log(
+    `[Orchestrator] Running orchestration with ${agents.length} agents, max ${maxRounds} rounds`
+  );
 
   const messages: Array<{ role: string; content: string; timestamp: number }> = [];
-  
+
   for (const agentId of agents) {
     if (agentId in HYBRID_AGENT_REGISTRY) {
       messages.push({
         role: agentId,
-        content: `Agent ${agentId} processed task: ${typeof task === 'string' ? task.substring(0, 100) : JSON.stringify(task).substring(0, 100)}...`,
-        timestamp: Date.now()
+        content: `Agent ${agentId} processed task: ${typeof task === "string" ? task.substring(0, 100) : JSON.stringify(task).substring(0, 100)}...`,
+        timestamp: Date.now(),
       });
     }
   }
@@ -169,11 +231,11 @@ router.post('/orchestrate', async (req: Request, res: Response) => {
     rounds: 1,
     duration: executionTime,
     agentsUsed: agents.filter((a: string) => a in HYBRID_AGENT_REGISTRY),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-router.post('/reset-stats', (_req: Request, res: Response) => {
+router.post("/reset-stats", (_req: Request, res: Response) => {
   hybridStats = {
     totalExecutions: 0,
     langGraphExecutions: 0,
@@ -187,8 +249,8 @@ router.post('/reset-stats', (_req: Request, res: Response) => {
 
   res.json({
     success: true,
-    message: 'Stats reset successfully',
-    timestamp: new Date().toISOString()
+    message: "Stats reset successfully",
+    timestamp: new Date().toISOString(),
   });
 });
 

@@ -32,8 +32,14 @@ jobs:
         id: scan
         uses: alstr/todo-to-issue-action@v4
         with:
+          # Pattern para detectar TODOs (regex)
+          TODO_PATTERN: "(TODO|FIXME|BUG|HACK|SECURITY|JURIDICO|LGPD)"
+
           # Criar issues automaticamente
           AUTO_ASSIGN: true
+
+          # Atualizar issues existentes ao invés de criar duplicatas
+          UPDATE_EXISTING: true
 
           # Labels automáticas - INCLUI auto-copilot para delegação automática!
           LABEL: "auto-created,needs-triage,auto-copilot"

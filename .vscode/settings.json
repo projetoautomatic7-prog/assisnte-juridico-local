@@ -54,6 +54,82 @@
   ],
 
   // ========================================
+  // 🐍 PYTHON & JUPYTER CONFIGURATION
+  // ========================================
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv-1/bin/python",
+  "python.terminal.activateEnvironment": true,
+
+  // Jupyter Settings (Official Configuration)
+  "jupyter.allowUnauthorizedRemoteConnection": false,
+  "jupyter.askForKernelRestart": true,
+  "jupyter.askForLargeDataFrames": true,
+  "jupyter.completionTriggerCharacters": {
+    "bash": ["$", "{"],
+    "java": [".", "@", "#"],
+    "javascript": [".", "\"", "'", "/", "@"],
+    "python": [".", "%", "'", "\""],
+    "julia": ["."],
+    "r": ["[", "(", ",", "$", "@", "\"", "'"],
+    "rust": [".", ":"],
+    "scala": ["."],
+    "typescript": [".", "\"", "'", "/", "@", "<"]
+  },
+  "jupyter.debugJustMyCode": true,
+  "jupyter.debugpyDistPath": "",
+  "jupyter.disableJupyterAutoStart": false,
+  "jupyter.enableExtendedKernelCompletions": false,
+  "jupyter.enableExtendedPythonKernelCompletions": false,
+  "jupyter.enableKernelCompletions": true,
+  "jupyter.excludeUserSitePackages": false,
+  "jupyter.executionAnalysis.enabled": false,
+  "jupyter.experiments.enabled": true,
+  "jupyter.experiments.optInto": [],
+  "jupyter.experiments.optOutFrom": [],
+  "jupyter.exportWithOutputEnabled": false,
+  "jupyter.formatStackTraces": false,
+  "jupyter.interactiveWindow.cellMarker.codeRegex": "^(#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",
+  "jupyter.interactiveWindow.cellMarker.decorateCells": "currentCell",
+  "jupyter.interactiveWindow.cellMarker.default": "# %%",
+  "jupyter.interactiveWindow.cellMarker.markdownRegex": "^(#\\s*%%\\s*\\[markdown\\]|#\\s*\\<markdowncell\\>)",
+  "jupyter.interactiveWindow.codeLens.commands": "jupyter.runcell, jupyter.runallcellsabove, jupyter.debugcell",
+  "jupyter.interactiveWindow.codeLens.debugCommands": "jupyter.debugcontinue, jupyter.debugstop, jupyter.debugstepover",
+  "jupyter.interactiveWindow.codeLens.enable": true,
+  "jupyter.interactiveWindow.codeLens.enableGotoCell": true,
+  "jupyter.interactiveWindow.creationMode": "multiple",
+  "jupyter.interactiveWindow.notebookRepl": false,
+  "jupyter.interactiveWindow.splitRunFileIntoCells": true,
+  "jupyter.interactiveWindow.textEditor.autoAddNewCell": true,
+  "jupyter.interactiveWindow.textEditor.autoMoveToNextCell": true,
+  "jupyter.interactiveWindow.textEditor.cellFolding": true,
+  "jupyter.interactiveWindow.textEditor.executeSelection": false,
+  "jupyter.interactiveWindow.textEditor.magicCommandsAsComments": false,
+  "jupyter.interactiveWindow.textEditor.normalizeSelection": false,
+  "jupyter.interactiveWindow.viewColumn": "secondGroup",
+  "jupyter.jupyterCommandLineArguments": [],
+  "jupyter.jupyterInterruptTimeout": 10000,
+  "jupyter.jupyterLaunchRetries": 3,
+  "jupyter.jupyterLaunchTimeout": 60000,
+  "jupyter.kernels.excludePythonEnvironments": [],
+  "jupyter.kernels.trusted": [],
+  "jupyter.logging.level": "info",
+  "jupyter.logKernelOutputSeparately": false,
+  "jupyter.notebookFileRoot": "${fileDirname}",
+  "jupyter.pythonCompletionTriggerCharacters": ".%'\"",
+  "jupyter.pythonExportMethod": "direct",
+  "jupyter.runStartupCommands": "",
+  "jupyter.showOutlineButtonInNotebookToolbar": true,
+  "jupyter.showVariableViewWhenDebugging": false,
+  "jupyter.stopOnFirstLineWhileDebugging": true,
+  "jupyter.themeMatplotlibPlots": false,
+  "jupyter.useDefaultConfigForJupyter": true,
+  "jupyter.variableExplorerExclude": "module;function;builtin_function_or_method;ABCMeta;type;ModelMetaclass",
+  "jupyter.widgetScriptSources": [],
+
+  // ========================================
+  // 🛠️ CONFIGURAÇÕES GERAIS
+  // ========================================
+
+  // ========================================
   // 🐰 CODERABBIT - AI CODE REVIEW
   // ========================================
 
@@ -75,6 +151,21 @@
 
   // Copilot Instructions customizadas para SonarQube fixes
   "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+
+  // ========================================
+  // 🎫 GITHUB ISSUES - CRIAÇÃO AUTOMÁTICA
+  // ========================================
+
+  // Triggers para criar issues automaticamente
+  "githubIssues.createIssueTriggers": [
+    "TODO",
+    "FIXME",
+    "BUG",
+    "HACK",
+    "SECURITY",
+    "JURIDICO",
+    "LGPD"
+  ],
 
   // ========================================
   // 📝 EDITOR - AUTOMAÇÃO E FORMATAÇÃO
@@ -394,5 +485,11 @@
   "agentSonar.serverUrl": "https://sonarcloud.io",
   "agentSonar.projectKey": "portprojetoautomacao-debug_assistente-jur-dico-principalrepli",
   "agentSonar.defaultIssueLimit": 20,
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": false
 }

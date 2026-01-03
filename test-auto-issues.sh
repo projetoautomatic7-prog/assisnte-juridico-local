@@ -1,7 +1,8 @@
 #!/bin/bash
 # Script de teste para validar sistema de issues automático
 
-set -e
+# Não parar em erros para continuar todos os testes
+set +e
 
 # Colors
 GREEN='\033[0;32m'
@@ -23,9 +24,9 @@ test_case() {
   local name="$1"
   local command="$2"
   local expected="$3"
-  
+
   echo -e "${BLUE}Testing: $name${NC}"
-  
+
   if eval "$command" | grep -q "$expected"; then
     echo -e "${GREEN}✅ PASS: $name${NC}\n"
     ((TESTS_PASSED++))
@@ -103,7 +104,11 @@ fi
 echo -e "${YELLOW}🎯 Teste 7: Validar pattern do GitHub Action${NC}"
 if grep -q "TODO_PATTERN" .github/workflows/auto-create-issues.yml; then
   PATTERN_LINE=$(grep "TODO_PATTERN" .github/workflows/auto-create-issues.yml)
-  if echo "$PATTERN_LINE" | grep -q "TODO.*FIXME.*JURIDICO.*SECURITY"; then
+  # Verificar se contém as palavras-chave principais (ordem não importa)
+  if echo "$PATTERN_LINE" | grep -q "TODO" && \
+     echo "$PATTERN_LINE" | grep -q "FIXME" && \
+     echo "$PATTERN_LINE" | grep -q "JURIDICO" && \
+     echo "$PATTERN_LINE" | grep -q "SECURITY"; then
     echo -e "${GREEN}✅ PASS: Pattern do GitHub Action configurado corretamente${NC}\n"
     ((TESTS_PASSED++))
   else

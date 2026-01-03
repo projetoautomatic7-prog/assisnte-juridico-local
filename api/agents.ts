@@ -40,7 +40,7 @@ function _requireAuth(req: VercelRequest): boolean {
       req.headers.host?.includes("vercel.app") === true;
   }
 
-  if (!authHeader.startsWith("Bearer ")) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
   }
 
