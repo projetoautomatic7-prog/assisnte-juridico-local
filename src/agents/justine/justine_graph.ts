@@ -3,6 +3,14 @@ import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
 import { callGemini } from "@/lib/gemini-service";
 import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { validateJustineInput, ValidationError } from "./validators";
+import {
+  JUSTINE_SYSTEM_PROMPT,
+  generateIntimationAnalysisPrompt,
+  formatErrorMessage,
+  formatFallbackMessage,
+} from "./templates";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 
 export class JustineAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
@@ -22,34 +30,20 @@ export class JustineAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "justine:start" });
-
-        const task = (state.data.task as string) || "Analisar intimações e publicações do DJEN";
-
-        span?.setAttribute("justine.task", task);
-
-        const systemPrompt = `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
-
-RESPONSABILIDADES:
-- Analisar intimações do Diário de Justiça Eletrônico (DJEN)
-- Extrair informações críticas (prazos, decisões, despachos)
-- Identificar ações urgentes necessárias
-- Classificar prioridade das publicações
-- Detectar riscos de preclusão ou perda de prazo
-
-DIRETRIZES:
-- Seja precisa e detalhista na análise
-- Destaque prazos peremptórios com urgência
-- Cite artigos do CPC/15 relacionados aos prazos
-- Use linguagem técnica mas clara
-- Sempre mencione a data limite para manifestação
-- Responda SEMPRE em português brasileiro
-
-TAREFA:
-${task}`;
-
         try {
-          const response = await callGemini(systemPrompt, {
+          let current = updateState(state, { currentStep: "justine:validate" });
+
+          // Step 0: Validate inputs
+          const validatedInput = validateJustineInput(state.data || {});
+
+          span?.setAttribute("justine.task", validatedInput.task.substring(0, 100));
+          span?.setAttribute("justine.priority", validatedInput.priority || "medium");
+          span?.setAttribute("justine.publications_count", validatedInput.publications?.length || 0);
+
+          // Step 1: Generate analysis prompt
+          current = updateState(current, { currentStep: "justine:analyze" });
+          
+          const fullPrompt = `${JUSTINE_SYSTEM_PROMPT}\n\n${generateIntimationAnalysisPrompt(validatedInput.task)}`;
             temperature: 0.3,
             maxOutputTokens: 4096,
           });
@@ -89,21 +83,35 @@ ${task}`;
 
           return this.addAgentMessage(current, result);
         } catch (error) {
-          console.error("[Justine] Erro ao executar agente:", error);
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
 
-          span?.setAttribute("gen_ai.error", error instanceof Error ? error.message : "Erro desconhecido");
-          span?.setStatus({ code: 2, message: "error" });
+          if (error instanceof ValidationError) {
+            logValidationError(
+              "Mrs. Justine",
+              error.field,
+              error.message,
+              error.receivedValue
+            );
+          } else {
+            logStructuredError("Mrs. Justine", errorType, errorMessage, {
+              task: (state.data?.task as string)?.substring(0, 100) || undefined,
+              step: state.currentStep,
+            });
+          }
 
-          current = updateState(current, {
-            currentStep: "justine:error",
-            data: {
-              ...current.data,
-              error: error instanceof Error ? error.message : "Erro desconhecido",
-            },
-            completed: false,
-          });
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
 
-          return this.addAgentMessage(current, "Erro ao processar análise de intimações.");
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, {
+                  task: (state.data?.task as string) || undefined,
+                  step: state.currentStep,
+                })
+              : formatFallbackMessage((state.data?.task as string) || undefined);
+
+          return this.addAgentMessage(state, fallbackMessage);
         }
       }
     );

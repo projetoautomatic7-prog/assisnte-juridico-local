@@ -11,18 +11,18 @@
  * - Input validation with structured error handling
  */
 
+import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
-import { validateMonitorDJENInput, ValidationError } from "./validators";
 import {
-  formatMonitoringSummary,
-  formatErrorMessage,
-  formatFallbackMessage,
-  formatCriticalPublication,
+    formatCriticalPublication,
+    formatErrorMessage,
+    formatFallbackMessage,
+    formatMonitoringSummary,
 } from "./templates";
-import { logStructuredError, logValidationError } from "../base/agent_logger";
+import { validateMonitorDJENInput, ValidationError } from "./validators";
 
 export interface DJENPublication {
   id: string;
@@ -56,12 +56,19 @@ export class DJENMonitorAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        // Step 1: Fetch publications
-        let currentState = updateState(state, { currentStep: "fetching_publications" });
+        try {
+          // Step 0: Validate inputs
+          const validatedInput = validateMonitorDJENInput(state.data || {});
+          span?.setAttribute("djen.lawyer_oab", validatedInput.lawyerOAB || "default");
+          span?.setAttribute("djen.courts", validatedInput.courts?.join(",") || "all");
+          span?.setAttribute("djen.auto_register", validatedInput.autoRegister || false);
 
-        const startFetch = Date.now();
-        const publications = await this.fetchPublications(signal);
-        const fetchDuration = Date.now() - startFetch;
+          // Step 1: Fetch publications
+          let currentState = updateState(state, { currentStep: "fetching_publications" });
+
+          const startFetch = Date.now();
+          const publications = await this.fetchPublications(signal, validatedInput);
+          const fetchDuration = Date.now() - startFetch;
 
         // Adicionar métricas ao span
         span?.setAttribute("djen.publications_found", publications.length);
@@ -98,6 +105,12 @@ export class DJENMonitorAgent extends LangGraphAgent {
         // Step 3: Determinar ação baseada em publicações críticas
         if (criticalPublications.length > 0) {
           span?.setAttribute("djen.action", "escalate_to_justine");
+          
+          // Log critical publications
+          criticalPublications.forEach((pub) => {
+            console.log(formatCriticalPublication(pub));
+          });
+          
           currentState = updateState(currentState, {
             currentStep: "escalate",
             data: {
@@ -110,33 +123,38 @@ export class DJENMonitorAgent extends LangGraphAgent {
           span?.setAttribute("djen.action", "no_action_needed");
         }
 
-          // Step 4: Complete
-          currentState = updateState(currentState, {
-            currentStep: "completed",
-            completed: true,
-          });
+        // Step 4: Complete
+        currentState = updateState(currentState, {
+          currentStep: "completed",
+          completed: true,
+        });
 
-          span?.setStatus({ code: 1, message: "ok" });
+        span?.setStatus({ code: 1, message: "ok" });
 
-          const summaryMessage = formatMonitoringSummary(
-            publications.length,
-            criticalPublications.length,
-            courtDistribution,
-            fetchDuration
-          );
+        const summaryMessage = formatMonitoringSummary(
+          publications.length,
+          criticalPublications.length,
+          courtDistribution,
+          fetchDuration
+        );
 
-          return this.addAgentMessage(currentState, summaryMessage);
+        return this.addAgentMessage(currentState, summaryMessage);
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Monitor DJEN", error);
+            logValidationError(
+              "Monitor DJEN",
+              error.field,
+              error.message,
+              error.receivedValue
+            );
           } else {
             logStructuredError("Monitor DJEN", errorType, errorMessage, {
               lawyerOAB: (state.data?.lawyerOAB as string) || undefined,
               courts: (state.data?.courts as string[]) || undefined,
-              step: currentState.currentStep,
+              step: state.currentStep,
             });
           }
 
@@ -148,11 +166,11 @@ export class DJENMonitorAgent extends LangGraphAgent {
               ? formatErrorMessage(errorType, errorMessage, {
                   lawyerOAB: (state.data?.lawyerOAB as string) || undefined,
                   courts: (state.data?.courts as string[]) || undefined,
-                  step: currentState.currentStep,
+                  step: state.currentStep,
                 })
               : formatFallbackMessage((state.data?.lawyerOAB as string) || undefined);
 
-          return this.addAgentMessage(currentState, fallbackMessage);
+          return this.addAgentMessage(state, fallbackMessage);
         }
       }
     );
