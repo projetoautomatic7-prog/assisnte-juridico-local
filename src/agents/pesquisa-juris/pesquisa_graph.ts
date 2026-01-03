@@ -6,8 +6,29 @@ import {
   createExecuteToolSpan,
   createChatSpan,
 } from "@/lib/sentry-gemini-integration-v2";
+import { validatePesquisaInput, ValidationError } from "./validators";
+import { JurisprudenceRetriever, formatPrecedentes } from "./retrievers";
+import {
+  PESQUISA_JURIS_SYSTEM_PROMPT,
+  generateSearchQueryPrompt,
+  formatErrorMessage,
+  formatResultsSummary,
+} from "./templates";
+import {
+  logger,
+  logAgentExecution,
+  logStructuredError,
+  logValidationError,
+} from "../base/agent_logger";
 
 export class PesquisaJurisAgent extends LangGraphAgent {
+  private readonly retriever: JurisprudenceRetriever;
+
+  constructor(config?: ConstructorParameters<typeof LangGraphAgent>[0]) {
+    super(config);
+    this.retriever = new JurisprudenceRetriever();
+  }
+
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Pesquisa Jurisprudencial
     return createInvokeAgentSpan(
@@ -28,127 +49,187 @@ export class PesquisaJurisAgent extends LangGraphAgent {
       async (span) => {
         let current = updateState(state, { currentStep: "pesquisa-juris:start" });
 
-        // Extrair parâmetros de pesquisa
-        const tema = (state.data?.tema as string) || "direitos trabalhistas";
-        const tribunal = (state.data?.tribunal as string) || "todos";
-        const dataInicio = (state.data?.dataInicio as string) || "2020-01-01";
-
-        span?.setAttribute("pesquisa.tema", tema);
-        span?.setAttribute("pesquisa.tribunal", tribunal);
-        span?.setAttribute("pesquisa.data_inicio", dataInicio);
-
-        // 1. Usar LLM para gerar query de busca otimizada
-        const queryGerada = await createChatSpan(
-          {
-            agentName: "Pesquisa Jurisprudencial",
-            system: "gemini",
-            model: "gemini-2.5-pro",
-            temperature: 0.4,
-          },
-          [
-            {
-              role: "system",
-              content:
-                "Você é um especialista em pesquisa jurisprudencial. Gere queries de busca otimizadas.",
-            },
-            {
-              role: "user",
-              content: `Gere uma query de busca para: ${tema} (tribunal: ${tribunal})`,
-            },
-          ],
-          async (chatSpan) => {
-            // Simular geração de query
-            await new Promise((resolve) => setTimeout(resolve, 25));
-
-            const query = `"${tema}" AND tribunal:${tribunal} AND data:>${dataInicio}`;
-
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([query]));
-            chatSpan?.setAttribute("gen_ai.usage.total_tokens", 150);
-
-            return query;
-          }
-        );
-
-        span?.setAttribute("pesquisa.query_gerada", queryGerada);
-
-        // 2. Executar busca em base de jurisprudência (tool calling)
-        const resultados = await createExecuteToolSpan(
-          {
-            agentName: "Pesquisa Jurisprudencial",
-            system: "gemini",
-            model: "gemini-2.5-pro",
-          },
-          {
-            toolName: "search_jurisprudence_database",
-            toolType: "datastore",
-            toolInput: JSON.stringify({
-              query: queryGerada,
-              limit: 10,
-              relevance_threshold: 0.7,
-            }),
-          },
-          async (toolSpan) => {
-            // Simular busca em base vetorial/Qdrant
-            await new Promise((resolve) => setTimeout(resolve, 50));
-
-            const precedentes = [
-              {
-                titulo: "STF - Tema 1234 - Direito à greve",
-                ementa: "É constitucional o exercício do direito de greve...",
-                relevancia: 0.92,
-                tribunal: "STF",
-                data: "2023-05-15",
-              },
-              {
-                titulo: "STJ - REsp 987654 - Adicional de insalubridade",
-                ementa: "O adicional de insalubridade deve ser calculado...",
-                relevancia: 0.85,
-                tribunal: "STJ",
-                data: "2023-08-22",
-              },
-              {
-                titulo: "TST - RR 555666 - Horas extras",
-                ementa: "Configurada a prestação de horas extras...",
-                relevancia: 0.78,
-                tribunal: "TST",
-                data: "2024-02-10",
-              },
-            ];
-
-            toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(precedentes));
-            toolSpan?.setAttribute("search.results_count", precedentes.length);
-            toolSpan?.setAttribute(
-              "search.avg_relevance",
-              precedentes.reduce((acc, p) => acc + p.relevancia, 0) / precedentes.length
+        // ✅ MELHORIA 1: Validação de inputs
+        let validatedInput;
+        try {
+          validatedInput = validatePesquisaInput(state.data || {});
+          logAgentExecution("Pesquisa Jurisprudencial", "input_validated", {
+            tema: validatedInput.tema,
+            tribunal: validatedInput.tribunal,
+            limit: validatedInput.limit,
+          });
+        } catch (error) {
+          if (error instanceof ValidationError) {
+            logValidationError(
+              "Pesquisa Jurisprudencial",
+              error.field,
+              error.message,
+              error.receivedValue
             );
 
-            return precedentes;
+            const errorMsg = formatErrorMessage("ValidationError", error.message, {
+              tema: state.data?.tema as string | undefined,
+              tribunal: state.data?.tribunal as string | undefined,
+              step: "input_validation",
+            });
+
+            return this.addAgentMessage(
+              updateState(current, {
+                currentStep: "pesquisa-juris:validation_error",
+                completed: false,
+                error: error.message,
+              }),
+              errorMsg
+            );
           }
-        );
+          throw error; // Re-throw unexpected errors
+        }
 
-        span?.setAttribute("pesquisa.resultados_encontrados", resultados.length);
-        span?.setAttribute(
-          "pesquisa.tribunais_encontrados",
-          [...new Set(resultados.map((r) => r.tribunal))].join(", ")
-        );
+        span?.setAttribute("pesquisa.tema", validatedInput.tema);
+        span?.setAttribute("pesquisa.tribunal", validatedInput.tribunal);
+        span?.setAttribute("pesquisa.data_inicio", validatedInput.dataInicio);
 
-        current = updateState(current, {
-          currentStep: "pesquisa-juris:results",
-          data: {
-            ...current.data,
-            query: queryGerada,
-            precedentes: resultados,
-            totalResultados: resultados.length,
-          },
-          completed: true,
-        });
+        // ✅ MELHORIA 2: Error handling estruturado com try-catch
+        try {
+          logAgentExecution("Pesquisa Jurisprudencial", "generating_search_query");
 
-        span?.setStatus({ code: 1, message: "ok" });
+          // 1. Usar LLM para gerar query de busca otimizada
+          const queryGerada = await createChatSpan(
+            {
+              agentName: "Pesquisa Jurisprudencial",
+              system: "gemini",
+              model: "gemini-2.5-pro",
+              temperature: 0.4,
+            },
+            [
+              {
+                role: "system",
+                content: PESQUISA_JURIS_SYSTEM_PROMPT,
+              },
+              {
+                role: "user",
+                content: generateSearchQueryPrompt(validatedInput.tema, validatedInput.tribunal || "todos"),
+              },
+            ],
+            async (chatSpan) => {
+              // Simular geração de query
+              await new Promise((resolve) => setTimeout(resolve, 25));
 
-        return this.addAgentMessage(
-          current,
-          `Pesquisa jurisprudencial concluída: ${resultados.length} precedentes encontrados (STF, STJ, TST)`
-        );
+              const query = `"${validatedInput.tema}" AND tribunal:${validatedInput.tribunal} AND data:>${validatedInput.dataInicio}`;
+
+              chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([query]));
+              chatSpan?.setAttribute("gen_ai.usage.total_tokens", 150);
+
+              return query;
+            }
+          );
+
+          span?.setAttribute("pesquisa.query_gerada", queryGerada);
+          logAgentExecution("Pesquisa Jurisprudencial", "query_generated", { query: queryGerada });
+
+          // ✅ MELHORIA 3: Usar retriever separado com re-ranking
+          logAgentExecution("Pesquisa Jurisprudencial", "searching_database");
+
+          const searchResults = await createExecuteToolSpan(
+            {
+              agentName: "Pesquisa Jurisprudencial",
+              system: "gemini",
+              model: "gemini-2.5-pro",
+            },
+            {
+              toolName: "search_jurisprudence_database",
+              toolType: "datastore",
+              toolInput: JSON.stringify({
+                tema: validatedInput.tema,
+                tribunal: validatedInput.tribunal,
+                limit: validatedInput.limit,
+                relevanceThreshold: validatedInput.relevanceThreshold,
+              }),
+            },
+            async (toolSpan) => {
+              const results = await this.retriever.search(validatedInput);
+
+              toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(results.precedentes));
+              toolSpan?.setAttribute("search.results_count", results.totalFound);
+              toolSpan?.setAttribute("search.avg_relevance", results.avgRelevance);
+              toolSpan?.setAttribute("search.execution_time_ms", results.executionTimeMs);
+
+              return results;
+            }
+          );
+
+          const { precedentes, totalFound, avgRelevance, executionTimeMs } = searchResults;
+          const tribunaisEncontrados = [...new Set(precedentes.map((p) => p.tribunal))];
+
+          span?.setAttribute("pesquisa.resultados_encontrados", totalFound);
+          span?.setAttribute("pesquisa.avg_relevance", avgRelevance);
+          span?.setAttribute("pesquisa.tribunais_encontrados", tribunaisEncontrados.join(", "));
+          span?.setAttribute("pesquisa.execution_time_ms", executionTimeMs);
+
+          logAgentExecution("Pesquisa Jurisprudencial", "search_completed", {
+            totalFound,
+            avgRelevance,
+            executionTimeMs,
+          });
+
+          // Formatar precedentes usando template
+          const precedentesFormatados = formatPrecedentes(precedentes);
+          const resumo = formatResultsSummary(
+            totalFound,
+            avgRelevance,
+            tribunaisEncontrados,
+            executionTimeMs
+          );
+
+          current = updateState(current, {
+            currentStep: "pesquisa-juris:results",
+            data: {
+              ...current.data,
+              query: queryGerada,
+              precedentes,
+              totalResultados: totalFound,
+              avgRelevance,
+              executionTimeMs,
+            },
+            completed: true,
+          });
+
+          span?.setStatus({ code: 1, message: "ok" });
+
+          return this.addAgentMessage(
+            current,
+            `${resumo}\n\n---\n\n${precedentesFormatados}`
+          );
+        } catch (error) {
+          // ✅ MELHORIA 2: Error handling estruturado seguindo padrão Google
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorStack = error instanceof Error ? error.stack : undefined;
+
+          logStructuredError("Pesquisa Jurisprudencial", errorType, errorMessage, {
+            tema: validatedInput.tema,
+            tribunal: validatedInput.tribunal,
+            currentStep: current.currentStep,
+            errorStack,
+          });
+
+          span?.setStatus({ code: 2, message: errorMessage });
+
+          const errorMsg = formatErrorMessage(errorType, errorMessage, {
+            tema: validatedInput.tema,
+            tribunal: validatedInput.tribunal,
+            step: current.currentStep,
+          });
+
+          return this.addAgentMessage(
+            updateState(current, {
+              currentStep: "pesquisa-juris:error",
+              completed: false,
+              error: errorMessage,
+            }),
+            errorMsg
+          );
+        }
       }
     );
   }

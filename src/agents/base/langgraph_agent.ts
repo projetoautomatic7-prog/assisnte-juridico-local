@@ -96,17 +96,26 @@ export abstract class LangGraphAgent {
       let wasDegraded = false;
 
       if (this.config.enableCircuitBreaker) {
+        let capturedError: unknown = null;
+
         result = await this.circuitBreaker.execute(
           async () => {
-            if (!this.config.enableSentryTracing) {
-              return await this.executeInternal(state);
+            try {
+              if (!this.config.enableSentryTracing) {
+                return await this.executeInternal(state);
+              }
+              return await this.executeWithTracing(state);
+            } catch (err) {
+              capturedError = err;
+              throw err;
             }
-            return await this.executeWithTracing(state);
           },
           this.config.enableGracefulDegradation
             ? () => {
                 wasDegraded = true;
-                this.lastError = classifyGeminiError(new Error("Circuit breaker fallback"));
+                this.lastError = capturedError
+                  ? classifyGeminiError(capturedError)
+                  : classifyGeminiError(new Error("Circuit breaker open - service unavailable"));
                 return this.createFallbackState(state, this.lastError);
               }
             : undefined

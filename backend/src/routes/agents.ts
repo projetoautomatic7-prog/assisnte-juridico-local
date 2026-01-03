@@ -72,6 +72,106 @@ let hybridStats: HybridStats = {
 let executionTimes: number[] = [];
 let successCount = 0;
 
+type ExecutionOutcome = "success" | "failure" | "degraded";
+
+interface AgentMetrics {
+  executions: number;
+  successes: number;
+  failures: number;
+  degradedExecutions: number;
+  totalLatencyMs: number;
+  lastSuccess?: number;
+  lastFailure?: number;
+  lastDegradation?: number;
+  lastError?: { code: string; message: string; recoverable?: boolean };
+  circuitBreakerState: "closed" | "open" | "half-open";
+}
+
+const perAgentMetrics: Map<string, AgentMetrics> = new Map();
+
+function getAgentMetrics(agentId: string): AgentMetrics {
+  if (!perAgentMetrics.has(agentId)) {
+    perAgentMetrics.set(agentId, {
+      executions: 0,
+      successes: 0,
+      failures: 0,
+      degradedExecutions: 0,
+      totalLatencyMs: 0,
+      circuitBreakerState: "closed",
+    });
+  }
+  return perAgentMetrics.get(agentId)!;
+}
+
+function recordAgentExecution(
+  agentId: string,
+  outcome: ExecutionOutcome,
+  latencyMs: number,
+  error?: { code: string; message: string; recoverable?: boolean }
+): void {
+  const metrics = getAgentMetrics(agentId);
+
+  metrics.executions++;
+  metrics.totalLatencyMs += latencyMs;
+
+  switch (outcome) {
+    case "success":
+      metrics.successes++;
+      metrics.lastSuccess = Date.now();
+      break;
+    case "degraded":
+      metrics.degradedExecutions++;
+      metrics.lastDegradation = Date.now();
+      if (error) metrics.lastError = error;
+      break;
+    case "failure":
+      metrics.failures++;
+      metrics.lastFailure = Date.now();
+      if (error) metrics.lastError = error;
+      break;
+  }
+
+  const failureRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+  if (failureRate > 0.5) {
+    metrics.circuitBreakerState = "open";
+  } else if (failureRate > 0.1 || metrics.degradedExecutions > 3) {
+    metrics.circuitBreakerState = "half-open";
+  } else {
+    metrics.circuitBreakerState = "closed";
+  }
+}
+
+function getAgentHealthStatus(agentId: string): {
+  status: "healthy" | "degraded" | "unhealthy";
+  circuitBreaker: "closed" | "open" | "half-open";
+  errorRate: number;
+  degradedRate: number;
+  avgLatencyMs: number;
+  lastError?: { code: string; message: string; recoverable?: boolean };
+} {
+  const metrics = getAgentMetrics(agentId);
+
+  const errorRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+  const degradedRate = metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
+  const avgLatencyMs = metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
+
+  let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (errorRate > 0.5) {
+    status = "unhealthy";
+  } else if (errorRate > 0.1 || degradedRate > 0.3) {
+    status = "degraded";
+  }
+
+  return {
+    status,
+    circuitBreaker: metrics.circuitBreakerState,
+    errorRate,
+    degradedRate,
+    avgLatencyMs,
+    lastError: metrics.lastError,
+  };
+}
+
 router.get("/list", (_req: Request, res: Response) => {
   const agents = Object.entries(HYBRID_AGENT_REGISTRY).map(([id, type]) => ({
     agentId: id,
@@ -165,12 +265,27 @@ router.post("/execute", async (req: Request, res: Response) => {
     hybridStats.averageExecutionTime =
       executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
 
+    const isDegraded = result.data?.degraded === true || result.data?.fallbackUsed === true;
+    const outcome: ExecutionOutcome = isDegraded ? "degraded" : "success";
+
+    recordAgentExecution(
+      agentId,
+      outcome,
+      executionTime,
+      isDegraded && result.data?.structuredError ? {
+        code: result.data.structuredError.code || "UNKNOWN",
+        message: result.data.structuredError.message || "Unknown error",
+        recoverable: result.data.structuredError.recoverable,
+      } : undefined
+    );
+
     res.json({
       success: true,
       mode: "langgraph",
       agentId,
       executionTime,
       result,
+      degraded: isDegraded,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -179,12 +294,20 @@ router.post("/execute", async (req: Request, res: Response) => {
     hybridStats.traditionalExecutions++;
     hybridStats.successRate = (successCount / hybridStats.totalExecutions) * 100;
 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    recordAgentExecution(agentId, "failure", executionTime, {
+      code: "EXECUTION_ERROR",
+      message: errorMessage,
+      recoverable: true,
+    });
+
     res.status(500).json({
       success: false,
       mode: "traditional",
       agentId,
       executionTime,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
       timestamp: new Date().toISOString(),
     });
   }
@@ -256,35 +379,15 @@ router.post("/reset-stats", (_req: Request, res: Response) => {
 });
 
 router.get("/health", async (_req: Request, res: Response) => {
-  const agentHealthChecks: Record<string, {
-    status: string;
-    circuitBreaker?: string;
-    errorRate?: number;
-    degradedRate?: number;
-    avgLatencyMs?: number;
-    lastError?: { code: string; message: string; recoverable?: boolean };
-  }> = {};
+  const agentHealthChecks: Record<string, ReturnType<typeof getAgentHealthStatus>> = {};
 
   for (const agentId of Object.keys(HYBRID_AGENT_REGISTRY)) {
-    agentHealthChecks[agentId] = {
-      status: "available",
-      circuitBreaker: "closed",
-      errorRate: 0,
-      degradedRate: 0,
-      avgLatencyMs: 0,
-    };
+    agentHealthChecks[agentId] = getAgentHealthStatus(agentId);
   }
 
   const totalExecutions = hybridStats.totalExecutions;
   const successRate = hybridStats.successRate || 100;
   const errorRate = totalExecutions > 0 ? (1 - successRate / 100) : 0;
-
-  let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
-  if (successRate < 50) {
-    overallStatus = "unhealthy";
-  } else if (successRate < 90) {
-    overallStatus = "degraded";
-  }
 
   const unhealthyAgents = Object.entries(agentHealthChecks)
     .filter(([_, health]) => health.status === "unhealthy")
@@ -293,6 +396,13 @@ router.get("/health", async (_req: Request, res: Response) => {
   const degradedAgents = Object.entries(agentHealthChecks)
     .filter(([_, health]) => health.status === "degraded")
     .map(([id]) => id);
+
+  let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (unhealthyAgents.length > 0 || successRate < 50) {
+    overallStatus = "unhealthy";
+  } else if (degradedAgents.length > 0 || successRate < 90) {
+    overallStatus = "degraded";
+  }
 
   const overallHealth = {
     status: overallStatus,
