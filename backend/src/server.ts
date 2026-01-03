@@ -8,7 +8,9 @@ import agentsRouter from "./routes/agents.js";
 import aiCommandsRouter from "./routes/ai-commands.js";
 import djenRouter from "./routes/djen.js";
 import editorRouter from "./routes/editor.js";
+import expedientesRouter from "./routes/expedientes.js";
 import kvRouter from "./routes/kv.js";
+import lawyersRouter from "./routes/lawyers.js";
 import llmStreamRouter from "./routes/llm-stream.js";
 import llmRouter from "./routes/llm.js";
 import minutasRouter from "./routes/minutas.js";
@@ -70,10 +72,14 @@ app.use("/api/ai", aiCommandsRouter);
 app.use("/api/llm-stream", llmStreamRouter);
 app.use("/api/djen", djenRouter);
 app.use("/api/editor", editorRouter);
+app.use("/api/expedientes", expedientesRouter);
+app.use("/api/lawyers", lawyersRouter);
 
 // Serve static files in production
 const isProduction = process.env.NODE_ENV === "production";
-const distPath = path.resolve(__dirname, "../../dist");
+// In production, compiled server runs from backend/dist/backend/src/server.js
+// So we need to go up 4 levels to reach the root dist/ folder
+const distPath = path.resolve(__dirname, "../../../../dist");
 
 if (isProduction) {
   console.log(`📂 Serving static files from: ${distPath}`);

@@ -19,8 +19,14 @@ export function getEnvVar(key: EnvKey, fallback?: string): string | undefined {
   // Try process.env first (Node.js / backend)
   if (typeof process !== "undefined" && process.env) {
     // Try both with and without VITE_ prefix
-    const value = process.env[key] || process.env[`VITE_${key}`];
+    let value = process.env[key] || process.env[`VITE_${key}`];
     if (value) return value;
+
+    // Special handling for GEMINI_API_KEY - also check GOOGLE_API_KEY
+    if (key === "GEMINI_API_KEY" || key === "VITE_GEMINI_API_KEY") {
+      value = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+      if (value) return value;
+    }
   }
 
   // Try import.meta.env (Vite / frontend)

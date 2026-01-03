@@ -12,7 +12,7 @@
     "build": "tsc && vite build",
     "build:backend": "cd backend && npm install && npm run build",
     "build:deploy": "npm install && npm run build && npm run build:backend",
-    "start:production": "NODE_ENV=production node backend/dist/server.js",
+    "start:production": "NODE_ENV=production node backend/dist/backend/src/server.js",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint 'src/**/*.{ts,tsx}' 'api/**/*.ts' --ext ts,tsx --report-unused-disable-directives --max-warnings 150 --ignore-pattern 'coverage-api/**' --quiet",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "lint:sarif": "eslint . --ext ts,tsx --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif",
