@@ -196,47 +196,69 @@ export abstract class LangGraphAgent {
   }
 }
 3️⃣ Harvey Specter (src/agents/harvey/harvey_graph.ts)
-import Anthropic from "@anthropic-ai/sdk";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
+
+const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent";
+
 export class HarveyAgent extends LangGraphAgent {
   protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
     let current = updateState(state, { currentStep: "harvey:start" });
     const task = (state.data.task as string) || "Análise estratégica geral do escritório";
+    
     try {
-      const response = await anthropic.messages.create(
-        {
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
-          system: `Você é Harvey Specter, estrategista jurídico sênior.
+      const systemPrompt = `Você é Harvey Specter, estrategista jurídico sênior.
+
 RESPONSABILIDADES:
 - Analisar estratégias jurídicas complexas
 - Identificar riscos e oportunidades em processos
 - Fornecer visão macro sobre casos jurídicos
 - Sugerir táticas processuais eficazes
+
 DIRETRIZES:
 - Seja direto, confiante e objetivo
 - Use terminologia jurídica precisa
 - Cite legislação quando relevante (CF/88, CPC/15, CC/02)
 - Pense como um advogado de elite
-- Responda SEMPRE em português brasileiro`,
-          messages: [{ role: "user", content: task }],
-        },
-        { signal }
+- Responda SEMPRE em português brasileiro`;
+
+      const response = await fetch(
+        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${systemPrompt}\n\nTAREFA: ${task}` }]
+              }
+            ],
+            generationConfig: {
+              maxOutputTokens: 4096,
+              temperature: 0.7
+            }
+          }),
+          signal
+        }
       );
-      const result =
-        response.content[0].type === "text"
-          ? response.content[0].text
-          : "Resposta não textual recebida";
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "Resposta não disponível";
+      const tokensUsed = data.usageMetadata?.totalTokenCount;
+
       current = updateState(current, {
         currentStep: "harvey:analysis_complete",
-        data: { ...current.data, summary: result, usage: response.usage },
+        data: { ...current.data, summary: result, usage: { totalTokens: tokensUsed } },
         completed: true,
       });
+      
       return this.addAgentMessage(current, result);
     } catch (error) {
       console.error("[Harvey] Erro ao executar agente:", error);
@@ -264,49 +286,71 @@ export async function runHarvey(data: Record<string, unknown> = {}): Promise<Age
   return agent.execute(initialState);
 }
 4️⃣ Mrs. Justine (src/agents/justine/justine_graph.ts)
-import Anthropic from "@anthropic-ai/sdk";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
+
+const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent";
+
 export class JustineAgent extends LangGraphAgent {
   protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
     let current = updateState(state, { currentStep: "justine:start" });
     const task = (state.data.task as string) || "Analisar intimações e publicações do DJEN";
+    
     try {
-      const response = await anthropic.messages.create(
-        {
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
-          system: `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
+      const systemPrompt = `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
+
 RESPONSABILIDADES:
 - Analisar intimações do Diário de Justiça Eletrônico (DJEN)
 - Extrair informações críticas (prazos, decisões, despachos)
 - Identificar ações urgentes necessárias
 - Classificar prioridade das publicações
 - Detectar riscos de preclusão ou perda de prazo
+
 DIRETRIZES:
 - Seja precisa e detalhista na análise
 - Destaque prazos peremptórios com urgência
 - Cite artigos do CPC/15 relacionados aos prazos
 - Use linguagem técnica mas clara
 - Sempre mencione a data limite para manifestação
-- Responda SEMPRE em português brasileiro`,
-          messages: [{ role: "user", content: task }],
-        },
-        { signal }
+- Responda SEMPRE em português brasileiro`;
+
+      const response = await fetch(
+        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${systemPrompt}\n\nTAREFA: ${task}` }]
+              }
+            ],
+            generationConfig: {
+              maxOutputTokens: 4096,
+              temperature: 0.3
+            }
+          }),
+          signal
+        }
       );
-      const result =
-        response.content[0].type === "text"
-          ? response.content[0].text
-          : "Resposta não textual recebida";
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "Resposta não disponível";
+      const tokensUsed = data.usageMetadata?.totalTokenCount;
+
       current = updateState(current, {
         currentStep: "justine:intimations_extracted",
-        data: { ...current.data, analysis: result, found: 1, usage: response.usage },
+        data: { ...current.data, analysis: result, found: 1, usage: { totalTokens: tokensUsed } },
         completed: true,
       });
+      
       return this.addAgentMessage(current, result);
     } catch (error) {
       console.error("[Justine] Erro ao executar agente:", error);
@@ -518,12 +562,21 @@ export default router;
 Aspecto	Valor
 Total de Agentes	15
 Framework	LangGraph + TypeScript
-LLM Principal	Anthropic Claude (claude-sonnet-4)
-LLM Secundário	Google Gemini 2.5 Pro
+LLM Principal	Google Gemini 2.5 Pro
+LLM para RAG	Google Gemini (text-embedding-004)
 Observabilidade	Sentry AI Monitoring + OpenTelemetry
 Retry Policy	3 tentativas com backoff exponencial
 Timeout	30 segundos (padrão), 60s (DJEN)
 Estado	Imutável via spread operators
+Vector DB	Qdrant Cloud (768 dimensões)
+
+🔄 ATUALIZAÇÃO: Todos os agentes foram padronizados para usar Google Gemini API
+- Modelo: gemini-2.5-pro
+- Endpoint: https://generativelanguage.googleapis.com/v1/models/
+- Configuração: VITE_GEMINI_API_KEY ou GEMINI_API_KEY
+- Temperature: 0.3-0.7 (dependendo do agente)
+- Max Tokens: 2048-4096 (dependendo da complexidade)
+
 Todos os códigos estão copiados acima. Se precisar de algum arquivo adicional específico, me avise!
 
 Checkpoint made
