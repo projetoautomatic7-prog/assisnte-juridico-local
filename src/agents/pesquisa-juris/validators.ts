@@ -12,8 +12,18 @@ export interface PesquisaJurisInput {
   relevanceThreshold?: number;
 }
 
-const TRIBUNAIS_VALIDOS = ["STF", "STJ", "TST", "TRF1", "TRF2", "TRF3", "TRF4", "TRF5", "todos"] as const;
-type TribunalValido = typeof TRIBUNAIS_VALIDOS[number];
+const TRIBUNAIS_VALIDOS = [
+  "STF",
+  "STJ",
+  "TST",
+  "TRF1",
+  "TRF2",
+  "TRF3",
+  "TRF4",
+  "TRF5",
+  "todos",
+] as const;
+type TribunalValido = (typeof TRIBUNAIS_VALIDOS)[number];
 
 export class ValidationError extends Error {
   constructor(
@@ -28,11 +38,11 @@ export class ValidationError extends Error {
 
 /**
  * Valida os inputs para pesquisa jurisprudencial
- * 
+ *
  * @param data - Dados recebidos do usuário
  * @returns Inputs validados e normalizados
  * @throws {ValidationError} Se validação falhar
- * 
+ *
  * @example
  * ```typescript
  * const validated = validatePesquisaInput({
@@ -47,27 +57,15 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
   const tema = data.tema;
 
   if (!tema) {
-    throw new ValidationError(
-      "Campo 'tema' é obrigatório",
-      "tema",
-      tema
-    );
+    throw new ValidationError("Campo 'tema' é obrigatório", "tema", tema);
   }
 
   if (typeof tema !== "string") {
-    throw new ValidationError(
-      "Campo 'tema' deve ser uma string",
-      "tema",
-      tema
-    );
+    throw new ValidationError("Campo 'tema' deve ser uma string", "tema", tema);
   }
 
   if (tema.length < 3) {
-    throw new ValidationError(
-      "Campo 'tema' deve ter pelo menos 3 caracteres",
-      "tema",
-      tema
-    );
+    throw new ValidationError("Campo 'tema' deve ter pelo menos 3 caracteres", "tema", tema);
   }
 
   if (tema.length > 500) {
@@ -121,27 +119,15 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
   const limit = data.limit as number | undefined;
   if (limit !== undefined) {
     if (typeof limit !== "number" || !Number.isInteger(limit)) {
-      throw new ValidationError(
-        "Campo 'limit' deve ser um número inteiro",
-        "limit",
-        limit
-      );
+      throw new ValidationError("Campo 'limit' deve ser um número inteiro", "limit", limit);
     }
 
     if (limit < 1) {
-      throw new ValidationError(
-        "Campo 'limit' deve ser maior que 0",
-        "limit",
-        limit
-      );
+      throw new ValidationError("Campo 'limit' deve ser maior que 0", "limit", limit);
     }
 
     if (limit > 50) {
-      throw new ValidationError(
-        "Campo 'limit' não pode exceder 50 (performance)",
-        "limit",
-        limit
-      );
+      throw new ValidationError("Campo 'limit' não pode exceder 50 (performance)", "limit", limit);
     }
   }
 

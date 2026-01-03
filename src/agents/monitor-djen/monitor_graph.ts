@@ -17,10 +17,10 @@ import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
 import {
-    formatCriticalPublication,
-    formatErrorMessage,
-    formatFallbackMessage,
-    formatMonitoringSummary,
+  formatCriticalPublication,
+  formatErrorMessage,
+  formatFallbackMessage,
+  formatMonitoringSummary,
 } from "./templates";
 import { validateMonitorDJENInput, ValidationError } from "./validators";
 
@@ -70,86 +70,81 @@ export class DJENMonitorAgent extends LangGraphAgent {
           const publications = await this.fetchPublications(signal, validatedInput);
           const fetchDuration = Date.now() - startFetch;
 
-        // Adicionar métricas ao span
-        span?.setAttribute("djen.publications_found", publications.length);
-        span?.setAttribute("djen.fetch_duration_ms", fetchDuration);
-        span?.setAttribute("djen.scan_timestamp", new Date().toISOString());
+          // Adicionar métricas ao span
+          span?.setAttribute("djen.publications_found", publications.length);
+          span?.setAttribute("djen.fetch_duration_ms", fetchDuration);
+          span?.setAttribute("djen.scan_timestamp", new Date().toISOString());
 
-        // Analisar publicações críticas (com número de processo)
-        const criticalPublications = publications.filter((p) => p.processNumber);
-        const courtDistribution = publications.reduce(
-          (acc, p) => {
-            acc[p.court] = (acc[p.court] || 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        );
+          // Analisar publicações críticas (com número de processo)
+          const criticalPublications = publications.filter((p) => p.processNumber);
+          const courtDistribution = publications.reduce(
+            (acc, p) => {
+              acc[p.court] = (acc[p.court] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
 
-        span?.setAttribute("djen.critical_count", criticalPublications.length);
-        span?.setAttribute("djen.courts_found", Object.keys(courtDistribution).join(", "));
-        span?.setAttribute("djen.court_distribution", JSON.stringify(courtDistribution));
+          span?.setAttribute("djen.critical_count", criticalPublications.length);
+          span?.setAttribute("djen.courts_found", Object.keys(courtDistribution).join(", "));
+          span?.setAttribute("djen.court_distribution", JSON.stringify(courtDistribution));
 
-        // Step 2: Process publications
-        currentState = updateState(currentState, {
-          currentStep: "processing_publications",
-          data: {
-            ...currentState.data,
-            publications,
-            criticalPublications,
-            courtDistribution,
-            fetchedAt: Date.now(),
-            fetchDuration,
-          },
-        });
-
-        // Step 3: Determinar ação baseada em publicações críticas
-        if (criticalPublications.length > 0) {
-          span?.setAttribute("djen.action", "escalate_to_justine");
-          
-          // Log critical publications
-          criticalPublications.forEach((pub) => {
-            console.log(formatCriticalPublication(pub));
-          });
-          
+          // Step 2: Process publications
           currentState = updateState(currentState, {
-            currentStep: "escalate",
+            currentStep: "processing_publications",
             data: {
               ...currentState.data,
-              action: "escalate",
-              targetAgent: "justine",
+              publications,
+              criticalPublications,
+              courtDistribution,
+              fetchedAt: Date.now(),
+              fetchDuration,
             },
           });
-        } else {
-          span?.setAttribute("djen.action", "no_action_needed");
-        }
 
-        // Step 4: Complete
-        currentState = updateState(currentState, {
-          currentStep: "completed",
-          completed: true,
-        });
+          // Step 3: Determinar ação baseada em publicações críticas
+          if (criticalPublications.length > 0) {
+            span?.setAttribute("djen.action", "escalate_to_justine");
 
-        span?.setStatus({ code: 1, message: "ok" });
+            // Log critical publications
+            criticalPublications.forEach((pub) => {
+              console.log(formatCriticalPublication(pub));
+            });
 
-        const summaryMessage = formatMonitoringSummary(
-          publications.length,
-          criticalPublications.length,
-          courtDistribution,
-          fetchDuration
-        );
+            currentState = updateState(currentState, {
+              currentStep: "escalate",
+              data: {
+                ...currentState.data,
+                action: "escalate",
+                targetAgent: "justine",
+              },
+            });
+          } else {
+            span?.setAttribute("djen.action", "no_action_needed");
+          }
 
-        return this.addAgentMessage(currentState, summaryMessage);
+          // Step 4: Complete
+          currentState = updateState(currentState, {
+            currentStep: "completed",
+            completed: true,
+          });
+
+          span?.setStatus({ code: 1, message: "ok" });
+
+          const summaryMessage = formatMonitoringSummary(
+            publications.length,
+            criticalPublications.length,
+            courtDistribution,
+            fetchDuration
+          );
+
+          return this.addAgentMessage(currentState, summaryMessage);
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError(
-              "Monitor DJEN",
-              error.field,
-              error.message,
-              error.receivedValue
-            );
+            logValidationError("Monitor DJEN", error.field, error.message, error.receivedValue);
           } else {
             logStructuredError("Monitor DJEN", errorType, errorMessage, {
               lawyerOAB: (state.data?.lawyerOAB as string) || undefined,

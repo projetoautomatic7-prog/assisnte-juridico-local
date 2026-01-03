@@ -9,13 +9,19 @@ export interface OrganizacaoArquivosInput {
 }
 
 export class ValidationError extends Error {
-  constructor(message: string, public field: string, public receivedValue: unknown) {
+  constructor(
+    message: string,
+    public field: string,
+    public receivedValue: unknown
+  ) {
     super(message);
     this.name = "ValidationError";
   }
 }
 
-export function validateOrganizacaoArquivosInput(data: Record<string, unknown>): OrganizacaoArquivosInput {
+export function validateOrganizacaoArquivosInput(
+  data: Record<string, unknown>
+): OrganizacaoArquivosInput {
   const arquivos = data.arquivos;
   if (!Array.isArray(arquivos) || arquivos.length === 0) {
     throw new ValidationError("Campo 'arquivos' deve ser um array não-vazio", "arquivos", arquivos);

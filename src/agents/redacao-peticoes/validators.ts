@@ -23,11 +23,18 @@ export class ValidationError extends Error {
   }
 }
 
-const TIPOS_PETICAO_VALIDOS = ["petição inicial", "contestação", "réplica", "apelação", "agravo", "embargos"] as const;
+const TIPOS_PETICAO_VALIDOS = [
+  "petição inicial",
+  "contestação",
+  "réplica",
+  "apelação",
+  "agravo",
+  "embargos",
+] as const;
 
 export function validateRedacaoPeticoesInput(data: Record<string, unknown>): RedacaoPeticoesInput {
   const tipo = (data.tipo as string) || "petição inicial";
-  if (!TIPOS_PETICAO_VALIDOS.includes(tipo as typeof TIPOS_PETICAO_VALIDOS[number])) {
+  if (!TIPOS_PETICAO_VALIDOS.includes(tipo as (typeof TIPOS_PETICAO_VALIDOS)[number])) {
     throw new ValidationError(
       `Campo 'tipo' deve ser: ${TIPOS_PETICAO_VALIDOS.join(", ")}`,
       "tipo",
@@ -53,7 +60,7 @@ export function validateRedacaoPeticoesInput(data: Record<string, unknown>): Red
   }
 
   return {
-    tipo: tipo as typeof TIPOS_PETICAO_VALIDOS[number],
+    tipo: tipo as (typeof TIPOS_PETICAO_VALIDOS)[number],
     detalhes,
     partes: data.partes as RedacaoPeticoesInput["partes"],
     pedidos: data.pedidos as string[] | undefined,

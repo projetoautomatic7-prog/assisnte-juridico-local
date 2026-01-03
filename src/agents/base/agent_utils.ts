@@ -97,11 +97,15 @@ export class CircuitBreaker {
     this.lastFailureTime = Date.now();
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[CircuitBreaker:${this.serviceName}] Failure ${this.failureCount}/${this.config.failureThreshold}: ${errorMessage}`);
+    console.error(
+      `[CircuitBreaker:${this.serviceName}] Failure ${this.failureCount}/${this.config.failureThreshold}: ${errorMessage}`
+    );
 
     if (this.failureCount >= this.config.failureThreshold) {
       this.state = "open";
-      console.error(`[CircuitBreaker:${this.serviceName}] Circuit OPENED after ${this.failureCount} failures`);
+      console.error(
+        `[CircuitBreaker:${this.serviceName}] Circuit OPENED after ${this.failureCount} failures`
+      );
     }
   }
 
@@ -116,7 +120,8 @@ export class CircuitBreaker {
   getHealth(): ServiceHealth {
     return {
       serviceName: this.serviceName,
-      status: this.state === "closed" ? "healthy" : this.state === "half-open" ? "degraded" : "unhealthy",
+      status:
+        this.state === "closed" ? "healthy" : this.state === "half-open" ? "degraded" : "unhealthy",
       lastCheck: Date.now(),
       errorCount: this.failureCount,
     };
@@ -127,7 +132,9 @@ export function validateEnvironment(requiredVars: string[]): { valid: boolean; m
   const missing: string[] = [];
 
   for (const varName of requiredVars) {
-    const value = process.env[varName] || (typeof import.meta !== "undefined" && (import.meta as any).env?.[varName]);
+    const value =
+      process.env[varName] ||
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.[varName]);
     if (!value) {
       missing.push(varName);
     }
@@ -272,9 +279,7 @@ export async function withGracefulDegradation<T>(
 
     const result = await Promise.race([
       primaryFn(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), timeoutMs)
-      ),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs)),
     ]);
 
     clearTimeout(timeoutId);
@@ -313,15 +318,18 @@ export interface AgentHealthCheck {
 export type ExecutionOutcome = "success" | "failure" | "degraded";
 
 class AgentMetricsCollector {
-  private metrics: Map<string, {
-    executions: number;
-    failures: number;
-    degradedExecutions: number;
-    totalLatencyMs: number;
-    lastSuccess?: number;
-    lastDegradation?: number;
-    lastError?: StructuredError;
-  }> = new Map();
+  private metrics: Map<
+    string,
+    {
+      executions: number;
+      failures: number;
+      degradedExecutions: number;
+      totalLatencyMs: number;
+      lastSuccess?: number;
+      lastDegradation?: number;
+      lastError?: StructuredError;
+    }
+  > = new Map();
 
   recordExecution(
     agentName: string,
@@ -357,8 +365,8 @@ class AgentMetricsCollector {
     this.metrics.set(agentName, current);
   }
 
-  getHealthCheck(agentName: string): Partial<AgentHealthCheck> & { 
-    degradedRate?: number; 
+  getHealthCheck(agentName: string): Partial<AgentHealthCheck> & {
+    degradedRate?: number;
     lastError?: StructuredError;
     lastDegradation?: number;
   } {
@@ -375,7 +383,8 @@ class AgentMetricsCollector {
     }
 
     const errorRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
-    const degradedRate = metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
+    const degradedRate =
+      metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
     const avgLatencyMs = metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
 
     let status: "healthy" | "degraded" | "unhealthy" = "healthy";

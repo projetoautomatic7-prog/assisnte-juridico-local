@@ -4,10 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-    validatePesquisaInput,
-    ValidationError
-} from "../validators";
+import { validatePesquisaInput, ValidationError } from "../validators";
 
 describe("validatePesquisaInput", () => {
   describe("✅ Validação de tema (obrigatório)", () => {
@@ -18,24 +15,18 @@ describe("validatePesquisaInput", () => {
 
     it("deve rejeitar tema ausente", () => {
       expect(() => validatePesquisaInput({})).toThrowError(ValidationError);
-      expect(() => validatePesquisaInput({})).toThrowError(
-        "Campo 'tema' é obrigatório"
-      );
+      expect(() => validatePesquisaInput({})).toThrowError("Campo 'tema' é obrigatório");
     });
 
     it("deve rejeitar tema não-string", () => {
-      expect(() => validatePesquisaInput({ tema: 123 })).toThrowError(
-        ValidationError
-      );
+      expect(() => validatePesquisaInput({ tema: 123 })).toThrowError(ValidationError);
       expect(() => validatePesquisaInput({ tema: 123 })).toThrowError(
         "Campo 'tema' deve ser uma string"
       );
     });
 
     it("deve rejeitar tema muito curto (< 3 caracteres)", () => {
-      expect(() => validatePesquisaInput({ tema: "ab" })).toThrowError(
-        ValidationError
-      );
+      expect(() => validatePesquisaInput({ tema: "ab" })).toThrowError(ValidationError);
       expect(() => validatePesquisaInput({ tema: "ab" })).toThrowError(
         "Campo 'tema' deve ter pelo menos 3 caracteres"
       );
@@ -43,9 +34,7 @@ describe("validatePesquisaInput", () => {
 
     it("deve rejeitar tema muito longo (> 500 caracteres)", () => {
       const longTema = "a".repeat(501);
-      expect(() => validatePesquisaInput({ tema: longTema })).toThrowError(
-        ValidationError
-      );
+      expect(() => validatePesquisaInput({ tema: longTema })).toThrowError(ValidationError);
       expect(() => validatePesquisaInput({ tema: longTema })).toThrowError(
         /não pode exceder 500 caracteres/
       );
@@ -81,26 +70,16 @@ describe("validatePesquisaInput", () => {
     });
 
     it("deve rejeitar tribunal inválido", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", tribunal: "INVALIDO" })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", tribunal: "INVALIDO" })
-      ).toThrowError(/Tribunal inválido/);
+      expect(() => validatePesquisaInput({ tema: "greve", tribunal: "INVALIDO" })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", tribunal: "INVALIDO" })).toThrowError(
+        /Tribunal inválido/
+      );
     });
 
     it("deve aceitar todos os tribunais válidos", () => {
-      const validTribunais = [
-        "STF",
-        "STJ",
-        "TST",
-        "TRF1",
-        "TRF2",
-        "TRF3",
-        "TRF4",
-        "TRF5",
-        "todos",
-      ];
+      const validTribunais = ["STF", "STJ", "TST", "TRF1", "TRF2", "TRF3", "TRF4", "TRF5", "todos"];
 
       validTribunais.forEach((tribunal) => {
         const result = validatePesquisaInput({ tema: "greve", tribunal });
@@ -127,18 +106,18 @@ describe("validatePesquisaInput", () => {
     });
 
     it("deve rejeitar dataInicio com formato inválido", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", dataInicio: "01/01/2020" })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", dataInicio: "2020-1-1" })
-      ).toThrowError(/Use formato YYYY-MM-DD/);
+      expect(() => validatePesquisaInput({ tema: "greve", dataInicio: "01/01/2020" })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", dataInicio: "2020-1-1" })).toThrowError(
+        /Use formato YYYY-MM-DD/
+      );
     });
 
     it("deve rejeitar dataFim com formato inválido", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", dataFim: "31-12-2024" })
-      ).toThrowError(ValidationError);
+      expect(() => validatePesquisaInput({ tema: "greve", dataFim: "31-12-2024" })).toThrowError(
+        ValidationError
+      );
     });
 
     it("deve rejeitar dataInicio posterior a dataFim", () => {
@@ -190,30 +169,30 @@ describe("validatePesquisaInput", () => {
     });
 
     it("deve rejeitar limit não-inteiro", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 10.5 })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 10.5 })
-      ).toThrowError(/deve ser um número inteiro/);
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 10.5 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 10.5 })).toThrowError(
+        /deve ser um número inteiro/
+      );
     });
 
     it("deve rejeitar limit menor que 1", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 0 })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 0 })
-      ).toThrowError(/deve ser maior que 0/);
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 0 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 0 })).toThrowError(
+        /deve ser maior que 0/
+      );
     });
 
     it("deve rejeitar limit maior que 50", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 51 })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", limit: 51 })
-      ).toThrowError(/não pode exceder 50/);
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 51 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 51 })).toThrowError(
+        /não pode exceder 50/
+      );
     });
 
     it("deve limitar automaticamente a 50 (cap)", () => {
@@ -243,21 +222,21 @@ describe("validatePesquisaInput", () => {
     });
 
     it("deve rejeitar threshold menor que 0", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", relevanceThreshold: -0.1 })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", relevanceThreshold: -0.1 })
-      ).toThrowError(/deve estar entre 0 e 1/);
+      expect(() => validatePesquisaInput({ tema: "greve", relevanceThreshold: -0.1 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", relevanceThreshold: -0.1 })).toThrowError(
+        /deve estar entre 0 e 1/
+      );
     });
 
     it("deve rejeitar threshold maior que 1", () => {
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", relevanceThreshold: 1.1 })
-      ).toThrowError(ValidationError);
-      expect(() =>
-        validatePesquisaInput({ tema: "greve", relevanceThreshold: 1.1 })
-      ).toThrowError(/deve estar entre 0 e 1/);
+      expect(() => validatePesquisaInput({ tema: "greve", relevanceThreshold: 1.1 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", relevanceThreshold: 1.1 })).toThrowError(
+        /deve estar entre 0 e 1/
+      );
     });
 
     it("deve aceitar threshold nos extremos (0 e 1)", () => {

@@ -1,7 +1,7 @@
 import {
-    createChatSpan,
-    createExecuteToolSpan,
-    createInvokeAgentSpan,
+  createChatSpan,
+  createExecuteToolSpan,
+  createInvokeAgentSpan,
 } from "@/lib/sentry-gemini-integration-v2";
 import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
@@ -41,72 +41,72 @@ export class RevisaoContratualAgent extends LangGraphAgent {
 
           current = updateState(current, { currentStep: "revisao-contratual:extract" });
 
-        // 1. Usar tool para extrair cláusulas do contrato
-        const clausulas = await createExecuteToolSpan(
-          {
-            agentName: "Revisão Contratual",
-            system: "gemini",
-            model: "gemini-2.5-pro",
-          },
-          {
-            toolName: "extract_contract_clauses",
-            toolType: "function",
-            toolInput: JSON.stringify({
-              texto: validatedInput.contratoTexto.substring(0, 500),
-              tipo: validatedInput.tipoContrato,
-            }),
-          },
-          async (toolSpan) => {
-            // Simular extração de cláusulas
-            await new Promise((resolve) => setTimeout(resolve, 25));
-
-            const clausulasExtraidas = [
-              {
-                numero: "5.1",
-                titulo: "Prazo de vigência",
-                texto: "O presente contrato terá vigência de 12 meses...",
-                tipo: "prazo",
-              },
-              {
-                numero: "7.3",
-                titulo: "Rescisão",
-                texto: "Qualquer das partes poderá rescindir...",
-                tipo: "rescisao",
-              },
-              {
-                numero: "10.2",
-                titulo: "Multa contratual",
-                texto: "Em caso de descumprimento, multa de 20%...",
-                tipo: "penalidade",
-              },
-            ];
-
-            toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(clausulasExtraidas));
-            toolSpan?.setAttribute("contract.clauses_extracted", clausulasExtraidas.length);
-
-            return clausulasExtraidas;
-          }
-        );
-
-        span?.setAttribute("revisao.clausulas_count", clausulas.length);
-
-        // 2. Usar LLM para analisar problemas nas cláusulas
-        const analise = await createChatSpan(
-          {
-            agentName: "Revisão Contratual",
-            system: "gemini",
-            model: "gemini-2.5-pro",
-            temperature: 0.2,
-          },
-          [
+          // 1. Usar tool para extrair cláusulas do contrato
+          const clausulas = await createExecuteToolSpan(
             {
-              role: "system",
-              content:
-                "Você é um revisor contratual especializado. Identifique cláusulas abusivas, ambíguas ou que possam prejudicar o cliente.",
+              agentName: "Revisão Contratual",
+              system: "gemini",
+              model: "gemini-2.5-pro",
             },
             {
-              role: "user",
-              content: `Analise as seguintes cláusulas de contrato de ${validatedInput.tipoContrato}:
+              toolName: "extract_contract_clauses",
+              toolType: "function",
+              toolInput: JSON.stringify({
+                texto: validatedInput.contratoTexto.substring(0, 500),
+                tipo: validatedInput.tipoContrato,
+              }),
+            },
+            async (toolSpan) => {
+              // Simular extração de cláusulas
+              await new Promise((resolve) => setTimeout(resolve, 25));
+
+              const clausulasExtraidas = [
+                {
+                  numero: "5.1",
+                  titulo: "Prazo de vigência",
+                  texto: "O presente contrato terá vigência de 12 meses...",
+                  tipo: "prazo",
+                },
+                {
+                  numero: "7.3",
+                  titulo: "Rescisão",
+                  texto: "Qualquer das partes poderá rescindir...",
+                  tipo: "rescisao",
+                },
+                {
+                  numero: "10.2",
+                  titulo: "Multa contratual",
+                  texto: "Em caso de descumprimento, multa de 20%...",
+                  tipo: "penalidade",
+                },
+              ];
+
+              toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(clausulasExtraidas));
+              toolSpan?.setAttribute("contract.clauses_extracted", clausulasExtraidas.length);
+
+              return clausulasExtraidas;
+            }
+          );
+
+          span?.setAttribute("revisao.clausulas_count", clausulas.length);
+
+          // 2. Usar LLM para analisar problemas nas cláusulas
+          const analise = await createChatSpan(
+            {
+              agentName: "Revisão Contratual",
+              system: "gemini",
+              model: "gemini-2.5-pro",
+              temperature: 0.2,
+            },
+            [
+              {
+                role: "system",
+                content:
+                  "Você é um revisor contratual especializado. Identifique cláusulas abusivas, ambíguas ou que possam prejudicar o cliente.",
+              },
+              {
+                role: "user",
+                content: `Analise as seguintes cláusulas de contrato de ${validatedInput.tipoContrato}:
 
 ${clausulas.map((c) => `Cláusula ${c.numero} (${c.titulo}): ${c.texto}`).join("\n\n")}
 
@@ -115,93 +115,98 @@ Identifique:
 2. Termos ambíguos ou vagos
 3. Riscos potenciais para o cliente
 4. Sugestões de alteração`,
+              },
+            ],
+            async (chatSpan) => {
+              // Simular análise
+              await new Promise((resolve) => setTimeout(resolve, 50));
+
+              const problemas = [
+                {
+                  clausula: "7.3",
+                  tipo: "ambiguidade",
+                  severidade: "média",
+                  descricao: 'Termo "qualquer das partes" sem especificar condições',
+                  sugestao: "Especificar motivos e prazos para rescisão",
+                },
+                {
+                  clausula: "10.2",
+                  tipo: "abusiva",
+                  severidade: "alta",
+                  descricao: "Multa de 20% pode ser considerada excessiva (CDC Art. 51)",
+                  sugestao: "Reduzir para 10% ou valor razoável",
+                },
+              ];
+
+              const resultado = {
+                problemas,
+                totalProblemas: problemas.length,
+                problemasAlta: problemas.filter((p) => p.severidade === "alta").length,
+                recomendacao:
+                  problemas.length > 2 ? "Renegociar contrato" : "Ajustes pontuais suficientes",
+              };
+
+              chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
+              chatSpan?.setAttribute("gen_ai.usage.total_tokens", 300);
+
+              return resultado;
+            }
+          );
+
+          span?.setAttribute("revisao.problemas_count", analise.totalProblemas);
+          span?.setAttribute("revisao.problemas_alta_severidade", analise.problemasAlta);
+          span?.setAttribute("revisao.recomendacao", analise.recomendacao);
+
+          current = updateState(current, {
+            currentStep: "revisao-contratual:issues_found",
+            data: {
+              ...current.data,
+              clausulas,
+              ...analise,
             },
-          ],
-          async (chatSpan) => {
-            // Simular análise
-            await new Promise((resolve) => setTimeout(resolve, 50));
-
-            const problemas = [
-              {
-                clausula: "7.3",
-                tipo: "ambiguidade",
-                severidade: "média",
-                descricao: 'Termo "qualquer das partes" sem especificar condições',
-                sugestao: "Especificar motivos e prazos para rescisão",
-              },
-              {
-                clausula: "10.2",
-                tipo: "abusiva",
-                severidade: "alta",
-                descricao: "Multa de 20% pode ser considerada excessiva (CDC Art. 51)",
-                sugestao: "Reduzir para 10% ou valor razoável",
-              },
-            ];
-
-            const resultado = {
-              problemas,
-              totalProblemas: problemas.length,
-              problemasAlta: problemas.filter((p) => p.severidade === "alta").length,
-              recomendacao:
-                problemas.length > 2 ? "Renegociar contrato" : "Ajustes pontuais suficientes",
-            };
-
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
-            chatSpan?.setAttribute("gen_ai.usage.total_tokens", 300);
-
-            return resultado;
-          }
-        );
-
-        span?.setAttribute("revisao.problemas_count", analise.totalProblemas);
-        span?.setAttribute("revisao.problemas_alta_severidade", analise.problemasAlta);
-        span?.setAttribute("revisao.recomendacao", analise.recomendacao);
-
-        current = updateState(current, {
-          currentStep: "revisao-contratual:issues_found",
-          data: {
-            ...current.data,
-            clausulas,
-            ...analise,
-          },
-          completed: true,
-        });
-
-        span?.setStatus({ code: 1, message: "ok" });
-
-        const resultMessage = formatReviewResult(
-          validatedInput.tipoContrato,
-          clausulas.length,
-          analise.totalProblemas,
-          validatedInput.contratoTexto.length
-        );
-
-        return this.addAgentMessage(current, resultMessage);
-      } catch (error) {
-        const errorType = error instanceof Error ? error.name : "UnknownError";
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        if (error instanceof ValidationError) {
-          logValidationError("Revisão Contratual", error.field, error.message, error.receivedValue);
-        } else {
-          logStructuredError("Revisão Contratual", errorType, errorMessage, {
-            tipoContrato: (state.data?.tipoContrato as string) || undefined,
-            step: state.currentStep,
+            completed: true,
           });
+
+          span?.setStatus({ code: 1, message: "ok" });
+
+          const resultMessage = formatReviewResult(
+            validatedInput.tipoContrato,
+            clausulas.length,
+            analise.totalProblemas,
+            validatedInput.contratoTexto.length
+          );
+
+          return this.addAgentMessage(current, resultMessage);
+        } catch (error) {
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (error instanceof ValidationError) {
+            logValidationError(
+              "Revisão Contratual",
+              error.field,
+              error.message,
+              error.receivedValue
+            );
+          } else {
+            logStructuredError("Revisão Contratual", errorType, errorMessage, {
+              tipoContrato: (state.data?.tipoContrato as string) || undefined,
+              step: state.currentStep,
+            });
+          }
+
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
+
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, {
+                  tipoContrato: (state.data?.tipoContrato as string) || undefined,
+                })
+              : formatFallbackMessage((state.data?.tipoContrato as string) || undefined);
+
+          return this.addAgentMessage(state, fallbackMessage);
         }
-
-        span?.setStatus({ code: 2, message: errorMessage });
-        span?.setAttribute("error.type", errorType);
-
-        const fallbackMessage =
-          error instanceof ValidationError
-            ? formatErrorMessage(errorType, errorMessage, {
-                tipoContrato: (state.data?.tipoContrato as string) || undefined,
-              })
-            : formatFallbackMessage((state.data?.tipoContrato as string) || undefined);
-
-        return this.addAgentMessage(state, fallbackMessage);
-      }
       }
     );
   }

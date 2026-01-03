@@ -131,8 +131,7 @@ describe("JurisprudenceRetriever", () => {
 
       if (result.precedentes.length > 0) {
         const manualAvg =
-          result.precedentes.reduce((sum, p) => sum + p.relevancia, 0) /
-          result.precedentes.length;
+          result.precedentes.reduce((sum, p) => sum + p.relevancia, 0) / result.precedentes.length;
 
         expect(result.avgRelevance).toBeCloseTo(manualAvg, 2);
       } else {

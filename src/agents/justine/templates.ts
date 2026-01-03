@@ -6,7 +6,8 @@
 /**
  * System prompt para análise de intimações
  */
-export const JUSTINE_SYSTEM_PROMPT = `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
+export const JUSTINE_SYSTEM_PROMPT =
+  `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
 
 **RESPONSABILIDADES:**
 - Analisar intimações do Diário de Justiça Eletrônico (DJEN)

@@ -4,7 +4,13 @@
 
 export interface RevisaoContratualInput {
   contratoTexto: string;
-  tipoContrato: "prestação de serviços" | "compra e venda" | "locação" | "trabalho" | "sociedade" | "outro";
+  tipoContrato:
+    | "prestação de serviços"
+    | "compra e venda"
+    | "locação"
+    | "trabalho"
+    | "sociedade"
+    | "outro";
   partes?: string[];
   analisarRiscos?: boolean;
 }
@@ -20,16 +26,33 @@ export class ValidationError extends Error {
   }
 }
 
-const TIPOS_CONTRATO_VALIDOS = ["prestação de serviços", "compra e venda", "locação", "trabalho", "sociedade", "outro"] as const;
+const TIPOS_CONTRATO_VALIDOS = [
+  "prestação de serviços",
+  "compra e venda",
+  "locação",
+  "trabalho",
+  "sociedade",
+  "outro",
+] as const;
 
-export function validateRevisaoContratualInput(data: Record<string, unknown>): RevisaoContratualInput {
+export function validateRevisaoContratualInput(
+  data: Record<string, unknown>
+): RevisaoContratualInput {
   const contratoTexto = data.contratoTexto as string | undefined;
   if (!contratoTexto) {
-    throw new ValidationError("Campo 'contratoTexto' é obrigatório", "contratoTexto", contratoTexto);
+    throw new ValidationError(
+      "Campo 'contratoTexto' é obrigatório",
+      "contratoTexto",
+      contratoTexto
+    );
   }
 
   if (typeof contratoTexto !== "string") {
-    throw new ValidationError("Campo 'contratoTexto' deve ser uma string", "contratoTexto", contratoTexto);
+    throw new ValidationError(
+      "Campo 'contratoTexto' deve ser uma string",
+      "contratoTexto",
+      contratoTexto
+    );
   }
 
   if (contratoTexto.length < 100 || contratoTexto.length > 50000) {
@@ -41,7 +64,7 @@ export function validateRevisaoContratualInput(data: Record<string, unknown>): R
   }
 
   const tipoContrato = (data.tipoContrato as string) || "prestação de serviços";
-  if (!TIPOS_CONTRATO_VALIDOS.includes(tipoContrato as typeof TIPOS_CONTRATO_VALIDOS[number])) {
+  if (!TIPOS_CONTRATO_VALIDOS.includes(tipoContrato as (typeof TIPOS_CONTRATO_VALIDOS)[number])) {
     throw new ValidationError(
       `Campo 'tipoContrato' deve ser: ${TIPOS_CONTRATO_VALIDOS.join(", ")}`,
       "tipoContrato",
@@ -51,7 +74,7 @@ export function validateRevisaoContratualInput(data: Record<string, unknown>): R
 
   return {
     contratoTexto,
-    tipoContrato: tipoContrato as typeof TIPOS_CONTRATO_VALIDOS[number],
+    tipoContrato: tipoContrato as (typeof TIPOS_CONTRATO_VALIDOS)[number],
     partes: data.partes as string[] | undefined,
     analisarRiscos: data.analisarRiscos === true,
   };

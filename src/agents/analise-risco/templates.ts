@@ -2,7 +2,12 @@
  * Templates para Análise de Risco
  */
 
-export function formatRiskResult(tipo: string, nivel: string, probabilidade: number, impacto: string): string {
+export function formatRiskResult(
+  tipo: string,
+  nivel: string,
+  probabilidade: number,
+  impacto: string
+): string {
   return `
 ⚠️ **Análise de Risco Concluída**
 

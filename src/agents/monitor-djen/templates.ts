@@ -6,7 +6,8 @@
 /**
  * System prompt para análise de publicações do DJEN
  */
-export const DJEN_SYSTEM_PROMPT = `Você é um especialista em monitoramento do Diário de Justiça Eletrônico Nacional (DJEN).
+export const DJEN_SYSTEM_PROMPT =
+  `Você é um especialista em monitoramento do Diário de Justiça Eletrônico Nacional (DJEN).
 
 **RESPONSABILIDADES:**
 - Analisar publicações do DJEN em tempo real
@@ -40,14 +41,12 @@ export const DJEN_SYSTEM_PROMPT = `Você é um especialista em monitoramento do 
 /**
  * Prompt para análise de publicação específica
  */
-export function generatePublicationAnalysisPrompt(
-  publication: {
-    court: string;
-    date: string;
-    content: string;
-    processNumber?: string;
-  }
-): string {
+export function generatePublicationAnalysisPrompt(publication: {
+  court: string;
+  date: string;
+  content: string;
+  processNumber?: string;
+}): string {
   return `
 **PUBLICAÇÃO DO DJEN:**
 

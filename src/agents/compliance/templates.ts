@@ -2,7 +2,11 @@
  * Templates para Compliance
  */
 
-export function formatComplianceResult(tipo: string, violacoesCount: number, score: number): string {
+export function formatComplianceResult(
+  tipo: string,
+  violacoesCount: number,
+  score: number
+): string {
   return `
 🔒 **Verificação de Compliance Concluída**
 

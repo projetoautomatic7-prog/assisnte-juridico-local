@@ -22,15 +22,26 @@ export class ValidationError extends Error {
   }
 }
 
-const VALID_COURTS = ["STF", "STJ", "TST", "TSE", "STM", "TRF1", "TRF2", "TRF3", "TRF4", "TRF5"] as const;
+const VALID_COURTS = [
+  "STF",
+  "STJ",
+  "TST",
+  "TSE",
+  "STM",
+  "TRF1",
+  "TRF2",
+  "TRF3",
+  "TRF4",
+  "TRF5",
+] as const;
 
 /**
  * Valida os inputs para monitoramento do DJEN
- * 
+ *
  * @param data - Dados recebidos do usuário
  * @returns Inputs validados e normalizados
  * @throws {ValidationError} Se validação falhar
- * 
+ *
  * @example
  * ```typescript
  * const validated = validateMonitorDJENInput({
@@ -44,11 +55,7 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
   const lawyerOAB = data.lawyerOAB as string | undefined;
   if (lawyerOAB) {
     if (typeof lawyerOAB !== "string") {
-      throw new ValidationError(
-        "Campo 'lawyerOAB' deve ser uma string",
-        "lawyerOAB",
-        lawyerOAB
-      );
+      throw new ValidationError("Campo 'lawyerOAB' deve ser uma string", "lawyerOAB", lawyerOAB);
     }
 
     // Formato esperado: "UF NUMERO" (ex: "MG 184404")
@@ -66,22 +73,16 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
   const courts = data.courts as string[] | undefined;
   if (courts) {
     if (!Array.isArray(courts)) {
-      throw new ValidationError(
-        "Campo 'courts' deve ser um array",
-        "courts",
-        courts
-      );
+      throw new ValidationError("Campo 'courts' deve ser um array", "courts", courts);
     }
 
     if (courts.length === 0) {
-      throw new ValidationError(
-        "Campo 'courts' não pode ser um array vazio",
-        "courts",
-        courts
-      );
+      throw new ValidationError("Campo 'courts' não pode ser um array vazio", "courts", courts);
     }
 
-    const invalidCourts = courts.filter(c => !VALID_COURTS.includes(c as typeof VALID_COURTS[number]));
+    const invalidCourts = courts.filter(
+      (c) => !VALID_COURTS.includes(c as (typeof VALID_COURTS)[number])
+    );
     if (invalidCourts.length > 0) {
       throw new ValidationError(
         `Tribunais inválidos: ${invalidCourts.join(", ")}. Valores aceitos: ${VALID_COURTS.join(", ")}`,

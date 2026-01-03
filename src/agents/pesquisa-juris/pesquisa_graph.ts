@@ -3,11 +3,7 @@ import {
   createExecuteToolSpan,
   createInvokeAgentSpan,
 } from "@/lib/sentry-gemini-integration-v2";
-import {
-  logAgentExecution,
-  logStructuredError,
-  logValidationError
-} from "../base/agent_logger";
+import { logAgentExecution, logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
@@ -107,7 +103,10 @@ export class PesquisaJurisAgent extends LangGraphAgent {
               },
               {
                 role: "user",
-                content: generateSearchQueryPrompt(validatedInput.tema, validatedInput.tribunal || "todos"),
+                content: generateSearchQueryPrompt(
+                  validatedInput.tema,
+                  validatedInput.tribunal || "todos"
+                ),
               },
             ],
             async (chatSpan) => {
@@ -195,10 +194,7 @@ export class PesquisaJurisAgent extends LangGraphAgent {
 
           span?.setStatus({ code: 1, message: "ok" });
 
-          return this.addAgentMessage(
-            current,
-            `${resumo}\n\n---\n\n${precedentesFormatados}`
-          );
+          return this.addAgentMessage(current, `${resumo}\n\n---\n\n${precedentesFormatados}`);
         } catch (error) {
           // ✅ MELHORIA 2: Error handling estruturado seguindo padrão Google
           const errorType = error instanceof Error ? error.name : "UnknownError";

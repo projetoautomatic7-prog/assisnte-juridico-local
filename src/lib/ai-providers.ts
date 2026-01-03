@@ -220,14 +220,16 @@ export class GeminiClient {
       this.apiKey = String(apiKey);
     } else {
       // Primeiro tenta process.env (Node.js), depois import.meta.env (Vite)
-      const processEnvKey = typeof process !== "undefined" && process.env
-        ? (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY)
-        : null;
-      
-      const importMetaEnvKey = typeof import.meta !== "undefined" && import.meta.env
-        ? (import.meta.env.VITE_GEMINI_API_KEY ?? import.meta.env.VITE_GEMINI_API_KEY_BACKEND)
-        : null;
-      
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY
+          : null;
+
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? (import.meta.env.VITE_GEMINI_API_KEY ?? import.meta.env.VITE_GEMINI_API_KEY_BACKEND)
+          : null;
+
       const envKey = processEnvKey || importMetaEnvKey;
       this.apiKey = envKey ? String(envKey) : null;
     }
@@ -470,12 +472,14 @@ export class GitHubModelsClient {
     if (apiKey) {
       this.apiKey = apiKey;
     } else {
-      const processEnvKey = typeof process !== "undefined" && process.env
-        ? (process.env.GITHUB_TOKEN || process.env.VITE_GITHUB_TOKEN)
-        : null;
-      const importMetaEnvKey = typeof import.meta !== "undefined" && import.meta.env
-        ? import.meta.env.VITE_GITHUB_TOKEN
-        : null;
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.GITHUB_TOKEN || process.env.VITE_GITHUB_TOKEN
+          : null;
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? import.meta.env.VITE_GITHUB_TOKEN
+          : null;
       this.apiKey = processEnvKey || importMetaEnvKey || "";
     }
   }
@@ -538,12 +542,14 @@ export class AzureOpenAIClient {
     if (apiKey) {
       this.apiKey = apiKey;
     } else {
-      const processEnvKey = typeof process !== "undefined" && process.env
-        ? (process.env.AZURE_OPENAI_KEY || process.env.VITE_AZURE_OPENAI_KEY)
-        : null;
-      const importMetaEnvKey = typeof import.meta !== "undefined" && import.meta.env
-        ? import.meta.env.VITE_AZURE_OPENAI_KEY
-        : null;
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.AZURE_OPENAI_KEY || process.env.VITE_AZURE_OPENAI_KEY
+          : null;
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? import.meta.env.VITE_AZURE_OPENAI_KEY
+          : null;
       this.apiKey = processEnvKey || importMetaEnvKey || "";
     }
   }

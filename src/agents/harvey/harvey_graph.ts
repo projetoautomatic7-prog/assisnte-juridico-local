@@ -48,12 +48,7 @@ export class HarveyAgent extends LangGraphAgent {
           });
         } catch (error) {
           if (error instanceof ValidationError) {
-            logValidationError(
-              "Harvey Specter",
-              error.field,
-              error.message,
-              error.receivedValue
-            );
+            logValidationError("Harvey Specter", error.field, error.message, error.receivedValue);
 
             const errorMsg = formatErrorMessage("ValidationError", error.message, {
               task: state.data?.task as string | undefined,

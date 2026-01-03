@@ -4,11 +4,11 @@ import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
 import {
-    formatErrorMessage,
-    formatFallbackMessage,
-    formatPrazoSummary,
-    formatPrazoUrgenteAlert,
-    formatPrazoVencidoAlert,
+  formatErrorMessage,
+  formatFallbackMessage,
+  formatPrazoSummary,
+  formatPrazoUrgenteAlert,
+  formatPrazoVencidoAlert,
 } from "./templates";
 import { validateGestaoPrazosInput, ValidationError } from "./validators";
 
@@ -35,7 +35,7 @@ export class GestaoPrazosAgent extends LangGraphAgent {
 
           // Step 0: Validate inputs
           const validatedInput = validateGestaoPrazosInput(state.data || {});
-          
+
           span?.setAttribute("prazos.tipo_processo", validatedInput.tipoProcesso);
           span?.setAttribute("prazos.data_publicacao", validatedInput.dataPublicacao);
           span?.setAttribute("prazos.prazo_dias", validatedInput.prazoEmDias);
@@ -116,12 +116,7 @@ export class GestaoPrazosAgent extends LangGraphAgent {
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError(
-              "Gestão de Prazos",
-              error.field,
-              error.message,
-              error.receivedValue
-            );
+            logValidationError("Gestão de Prazos", error.field, error.message, error.receivedValue);
           } else {
             logStructuredError("Gestão de Prazos", errorType, errorMessage, {
               tipoProcesso: (state.data?.tipoProcesso as string) || undefined,

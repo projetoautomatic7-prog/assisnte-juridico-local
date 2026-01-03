@@ -37,7 +37,10 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
 
           // Step 1: Generate petition
           current = updateState(current, { currentStep: "redacao:generate" });
-          const geminiResponse = await generatePeticao(validatedInput.tipo, validatedInput.detalhes);
+          const geminiResponse = await generatePeticao(
+            validatedInput.tipo,
+            validatedInput.detalhes
+          );
 
           if (geminiResponse.error) {
             throw new Error(geminiResponse.error);
@@ -47,7 +50,10 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
 
           span?.setAttribute("gen_ai.response.length", draft.length);
           span?.setAttribute("gen_ai.response.model", geminiResponse.metadata?.model || "unknown");
-          span?.setAttribute("gen_ai.usage.total_tokens", geminiResponse.metadata?.totalTokens || 0);
+          span?.setAttribute(
+            "gen_ai.usage.total_tokens",
+            geminiResponse.metadata?.totalTokens || 0
+          );
 
           current = updateState(current, {
             currentStep: "redacao:done",
@@ -84,7 +90,9 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
 
           const fallbackMessage =
             error instanceof ValidationError
-              ? formatErrorMessage(errorType, errorMessage, { tipo: (state.data?.tipo as string) || undefined })
+              ? formatErrorMessage(errorType, errorMessage, {
+                  tipo: (state.data?.tipo as string) || undefined,
+                })
               : formatFallbackMessage((state.data?.tipo as string) || undefined);
 
           return this.addAgentMessage(state, fallbackMessage);

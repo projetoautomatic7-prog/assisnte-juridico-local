@@ -27,7 +27,7 @@ export interface SearchResult {
 
 /**
  * Retriever para busca de jurisprudência em base vetorial (Qdrant)
- * 
+ *
  * @example
  * ```typescript
  * const retriever = new JurisprudenceRetriever();
@@ -70,7 +70,7 @@ export class JurisprudenceRetriever {
 
   /**
    * Executa busca de precedentes com re-ranking por relevância
-   * 
+   *
    * @param input - Parâmetros de busca validados
    * @returns Resultados com precedentes ordenados por relevância
    * @throws {Error} Se Qdrant não estiver disponível
@@ -90,7 +90,10 @@ export class JurisprudenceRetriever {
       const rankedPrecedentes = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
 
       // 4. Filtrar por tribunal se especificado
-      const filteredPrecedentes = this.filterByTribunal(rankedPrecedentes, input.tribunal || "todos");
+      const filteredPrecedentes = this.filterByTribunal(
+        rankedPrecedentes,
+        input.tribunal || "todos"
+      );
 
       // 5. Limitar resultados
       const finalPrecedentes = filteredPrecedentes.slice(0, input.limit || 10);
@@ -111,7 +114,7 @@ export class JurisprudenceRetriever {
       // Estruturar erro seguindo padrão Google
       throw new Error(
         `Calling retrieval tool with query:\n\n${input.tema}\n\n` +
-        `raised the following error:\n\n${errorType}: ${errorMessage}`
+          `raised the following error:\n\n${errorType}: ${errorMessage}`
       );
     }
   }
@@ -175,7 +178,8 @@ export class JurisprudenceRetriever {
     const mockPrecedentes: Precedente[] = [
       {
         titulo: "STF - Tema 1234 - Direito à greve",
-        ementa: "É constitucional o exercício do direito de greve no serviço público, desde que observadas as limitações previstas em lei...",
+        ementa:
+          "É constitucional o exercício do direito de greve no serviço público, desde que observadas as limitações previstas em lei...",
         relevancia: 0.92,
         tribunal: "STF",
         data: "2023-05-15",
@@ -185,7 +189,8 @@ export class JurisprudenceRetriever {
       },
       {
         titulo: "STJ - REsp 987654 - Adicional de insalubridade",
-        ementa: "O adicional de insalubridade deve ser calculado sobre o salário base do empregado, conforme art. 192 da CLT...",
+        ementa:
+          "O adicional de insalubridade deve ser calculado sobre o salário base do empregado, conforme art. 192 da CLT...",
         relevancia: 0.85,
         tribunal: "STJ",
         data: "2023-08-22",
@@ -195,7 +200,8 @@ export class JurisprudenceRetriever {
       },
       {
         titulo: "TST - RR 555666 - Horas extras",
-        ementa: "Configurada a prestação de horas extras habituais, devem ser consideradas no cálculo das verbas rescisórias...",
+        ementa:
+          "Configurada a prestação de horas extras habituais, devem ser consideradas no cálculo das verbas rescisórias...",
         relevancia: 0.78,
         tribunal: "TST",
         data: "2024-02-10",
@@ -215,7 +221,8 @@ export class JurisprudenceRetriever {
       },
       {
         titulo: "TRF3 - AC 123456 - Acidente de trabalho",
-        ementa: "Demonstrada a culpa do empregador no acidente de trabalho, é devida a indenização por danos morais...",
+        ementa:
+          "Demonstrada a culpa do empregador no acidente de trabalho, é devida a indenização por danos morais...",
         relevancia: 0.68,
         tribunal: "TRF3",
         data: "2024-01-20",
@@ -264,10 +271,10 @@ export class JurisprudenceRetriever {
 
 /**
  * Formata precedentes para exibição
- * 
+ *
  * @param precedentes - Lista de precedentes a formatar
  * @returns String formatada com precedentes
- * 
+ *
  * @example
  * ```typescript
  * const formatted = formatPrecedentes(results.precedentes);

@@ -20,16 +20,33 @@ export class ValidationError extends Error {
   }
 }
 
-const TIPOS_DOCUMENTO_VALIDOS = ["contrato", "petição", "sentença", "decisão", "procuração", "genérico"] as const;
+const TIPOS_DOCUMENTO_VALIDOS = [
+  "contrato",
+  "petição",
+  "sentença",
+  "decisão",
+  "procuração",
+  "genérico",
+] as const;
 
-export function validateAnaliseDocumentalInput(data: Record<string, unknown>): AnaliseDocumentalInput {
+export function validateAnaliseDocumentalInput(
+  data: Record<string, unknown>
+): AnaliseDocumentalInput {
   const documentoTexto = data.documentoTexto as string | undefined;
   if (!documentoTexto) {
-    throw new ValidationError("Campo 'documentoTexto' é obrigatório", "documentoTexto", documentoTexto);
+    throw new ValidationError(
+      "Campo 'documentoTexto' é obrigatório",
+      "documentoTexto",
+      documentoTexto
+    );
   }
 
   if (typeof documentoTexto !== "string") {
-    throw new ValidationError("Campo 'documentoTexto' deve ser uma string", "documentoTexto", documentoTexto);
+    throw new ValidationError(
+      "Campo 'documentoTexto' deve ser uma string",
+      "documentoTexto",
+      documentoTexto
+    );
   }
 
   if (documentoTexto.length < 50 || documentoTexto.length > 100000) {
@@ -41,7 +58,9 @@ export function validateAnaliseDocumentalInput(data: Record<string, unknown>): A
   }
 
   const tipoDocumento = (data.tipoDocumento as string) || "genérico";
-  if (!TIPOS_DOCUMENTO_VALIDOS.includes(tipoDocumento as typeof TIPOS_DOCUMENTO_VALIDOS[number])) {
+  if (
+    !TIPOS_DOCUMENTO_VALIDOS.includes(tipoDocumento as (typeof TIPOS_DOCUMENTO_VALIDOS)[number])
+  ) {
     throw new ValidationError(
       `Campo 'tipoDocumento' deve ser: ${TIPOS_DOCUMENTO_VALIDOS.join(", ")}`,
       "tipoDocumento",
@@ -51,7 +70,7 @@ export function validateAnaliseDocumentalInput(data: Record<string, unknown>): A
 
   return {
     documentoTexto,
-    tipoDocumento: tipoDocumento as typeof TIPOS_DOCUMENTO_VALIDOS[number],
+    tipoDocumento: tipoDocumento as (typeof TIPOS_DOCUMENTO_VALIDOS)[number],
     extrairEntidades: data.extrairEntidades === true,
     analisarRiscos: data.analisarRiscos === true,
   };

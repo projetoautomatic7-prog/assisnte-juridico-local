@@ -2,7 +2,11 @@
  * Templates para o agente Redação de Petições
  */
 
-export function formatPetitionResult(tipo: string, draftLength: number, tokenUsage?: number): string {
+export function formatPetitionResult(
+  tipo: string,
+  draftLength: number,
+  tokenUsage?: number
+): string {
   return `
 📝 **Petição Redigida com Sucesso**
 
@@ -20,7 +24,11 @@ export function formatPetitionResult(tipo: string, draftLength: number, tokenUsa
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string, context: { tipo?: string }): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+  context: { tipo?: string }
+): string {
   return `
 ⚠️ **Erro na redação da petição**
 

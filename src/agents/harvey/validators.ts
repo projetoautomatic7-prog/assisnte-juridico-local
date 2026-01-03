@@ -23,11 +23,11 @@ export class ValidationError extends Error {
 
 /**
  * Valida os inputs para análise estratégica do Harvey
- * 
+ *
  * @param data - Dados recebidos do usuário
  * @returns Inputs validados e normalizados
  * @throws {ValidationError} Se validação falhar
- * 
+ *
  * @example
  * ```typescript
  * const validated = validateHarveyInput({
@@ -41,19 +41,11 @@ export function validateHarveyInput(data: Record<string, unknown>): HarveyInput 
   const task = data.task;
 
   if (!task) {
-    throw new ValidationError(
-      "Campo 'task' é obrigatório para análise estratégica",
-      "task",
-      task
-    );
+    throw new ValidationError("Campo 'task' é obrigatório para análise estratégica", "task", task);
   }
 
   if (typeof task !== "string") {
-    throw new ValidationError(
-      "Campo 'task' deve ser uma string",
-      "task",
-      task
-    );
+    throw new ValidationError("Campo 'task' deve ser uma string", "task", task);
   }
 
   if (task.length < 10) {
@@ -85,11 +77,7 @@ export function validateHarveyInput(data: Record<string, unknown>): HarveyInput 
   // Validar context (opcional)
   const context = data.context as string | undefined;
   if (context && typeof context !== "string") {
-    throw new ValidationError(
-      "Campo 'context' deve ser uma string",
-      "context",
-      context
-    );
+    throw new ValidationError("Campo 'context' deve ser uma string", "context", context);
   }
 
   if (context && context.length > 5000) {
@@ -103,7 +91,7 @@ export function validateHarveyInput(data: Record<string, unknown>): HarveyInput 
   // Validar urgency (opcional)
   const urgency = data.urgency as string | undefined;
   const validUrgencies = ["low", "medium", "high"];
-  
+
   if (urgency && !validUrgencies.includes(urgency)) {
     throw new ValidationError(
       `Campo 'urgency' inválido: '${urgency}'. Valores aceitos: ${validUrgencies.join(", ")}`,

@@ -193,8 +193,9 @@ class TracingService {
     this.exporters.push(this.memoryExporter);
 
     // Add console exporter in development (supports both Vite and Node.js)
-    const isDev = typeof process !== "undefined" && process.env?.NODE_ENV !== "production"
-      || (typeof import.meta !== "undefined" && import.meta.env?.DEV);
+    const isDev =
+      (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") ||
+      (typeof import.meta !== "undefined" && import.meta.env?.DEV);
     if (isDev) {
       this.exporters.push(new ConsoleExporter());
     }

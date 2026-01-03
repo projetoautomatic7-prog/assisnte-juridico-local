@@ -6,7 +6,8 @@
 /**
  * System prompt principal para Harvey Specter
  */
-export const HARVEY_SYSTEM_PROMPT = `Você é Harvey Specter, estrategista jurídico sênior com vasta experiência em litígios complexos e negociações de alto risco.
+export const HARVEY_SYSTEM_PROMPT =
+  `Você é Harvey Specter, estrategista jurídico sênior com vasta experiência em litígios complexos e negociações de alto risco.
 
 **RESPONSABILIDADES:**
 - Analisar estratégias jurídicas complexas com visão 360°
@@ -37,7 +38,11 @@ export const HARVEY_SYSTEM_PROMPT = `Você é Harvey Specter, estrategista jurí
 /**
  * Prompt para análise estratégica detalhada
  */
-export function generateAnalysisPrompt(task: string, context?: string, processNumber?: string): string {
+export function generateAnalysisPrompt(
+  task: string,
+  context?: string,
+  processNumber?: string
+): string {
   let prompt = `**ANÁLISE ESTRATÉGICA SOLICITADA:**\n${task}\n\n`;
 
   if (processNumber) {
@@ -68,7 +73,7 @@ export function generateUrgencyPrompt(urgency: "low" | "medium" | "high"): strin
   const urgencyLabels = {
     low: "⚪ URGÊNCIA BAIXA - Análise detalhada permitida",
     medium: "🟡 URGÊNCIA MÉDIA - Priorize pontos críticos",
-    high: "🔴 URGÊNCIA ALTA - Foco em ações imediatas"
+    high: "🔴 URGÊNCIA ALTA - Foco em ações imediatas",
   };
 
   return `\n**${urgencyLabels[urgency]}**\n`;

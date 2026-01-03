@@ -33,7 +33,11 @@ ${entities.processos.map((p) => `  - ${p}`).join("\n")}
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string, context: { tipoDocumento?: string }): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+  context: { tipoDocumento?: string }
+): string {
   return `
 ⚠️ **Erro na análise documental**
 

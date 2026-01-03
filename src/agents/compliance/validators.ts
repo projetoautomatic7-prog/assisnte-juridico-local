@@ -9,7 +9,11 @@ export interface ComplianceInput {
 }
 
 export class ValidationError extends Error {
-  constructor(message: string, public field: string, public receivedValue: unknown) {
+  constructor(
+    message: string,
+    public field: string,
+    public receivedValue: unknown
+  ) {
     super(message);
     this.name = "ValidationError";
   }
@@ -19,7 +23,7 @@ const TIPOS_VERIFICACAO = ["lgpd", "lavagem", "etica", "tributario", "trabalhist
 
 export function validateComplianceInput(data: Record<string, unknown>): ComplianceInput {
   const tipoVerificacao = (data.tipoVerificacao as string) || "lgpd";
-  if (!TIPOS_VERIFICACAO.includes(tipoVerificacao as typeof TIPOS_VERIFICACAO[number])) {
+  if (!TIPOS_VERIFICACAO.includes(tipoVerificacao as (typeof TIPOS_VERIFICACAO)[number])) {
     throw new ValidationError(
       `Campo 'tipoVerificacao' deve ser: ${TIPOS_VERIFICACAO.join(", ")}`,
       "tipoVerificacao",
@@ -37,7 +41,7 @@ export function validateComplianceInput(data: Record<string, unknown>): Complian
   }
 
   return {
-    tipoVerificacao: tipoVerificacao as typeof TIPOS_VERIFICACAO[number],
+    tipoVerificacao: tipoVerificacao as (typeof TIPOS_VERIFICACAO)[number],
     documentoTexto,
     dadosPessoais: data.dadosPessoais as string[] | undefined,
   };

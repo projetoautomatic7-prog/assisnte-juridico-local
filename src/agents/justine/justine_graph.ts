@@ -38,13 +38,16 @@ export class JustineAgent extends LangGraphAgent {
 
           span?.setAttribute("justine.task", validatedInput.task.substring(0, 100));
           span?.setAttribute("justine.priority", validatedInput.priority || "medium");
-          span?.setAttribute("justine.publications_count", validatedInput.publications?.length || 0);
+          span?.setAttribute(
+            "justine.publications_count",
+            validatedInput.publications?.length || 0
+          );
 
           // Step 1: Generate analysis prompt
           current = updateState(current, { currentStep: "justine:analyze" });
-          
+
           const fullPrompt = `${JUSTINE_SYSTEM_PROMPT}\n\n${generateIntimationAnalysisPrompt(validatedInput.task)}`;
-          
+
           const response = await callGemini(fullPrompt, {
             temperature: 0.3,
             maxOutputTokens: 4096,
@@ -63,7 +66,10 @@ export class JustineAgent extends LangGraphAgent {
               completed: false,
             });
 
-            return this.addAgentMessage(current, `Erro ao processar análise de intimações: ${response.error}`);
+            return this.addAgentMessage(
+              current,
+              `Erro ao processar análise de intimações: ${response.error}`
+            );
           }
 
           const result = response.text;
@@ -89,12 +95,7 @@ export class JustineAgent extends LangGraphAgent {
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError(
-              "Mrs. Justine",
-              error.field,
-              error.message,
-              error.receivedValue
-            );
+            logValidationError("Mrs. Justine", error.field, error.message, error.receivedValue);
           } else {
             logStructuredError("Mrs. Justine", errorType, errorMessage, {
               task: (state.data?.task as string)?.substring(0, 100) || undefined,

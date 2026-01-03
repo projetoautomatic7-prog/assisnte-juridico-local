@@ -27,11 +27,11 @@ const TIPOS_PROCESSO_VALIDOS = ["cível", "trabalhista", "penal", "tributário"]
 
 /**
  * Valida os inputs para cálculo de prazos processuais
- * 
+ *
  * @param data - Dados recebidos do usuário
  * @returns Inputs validados e normalizados
  * @throws {ValidationError} Se validação falhar
- * 
+ *
  * @example
  * ```typescript
  * const validated = validateGestaoPrazosInput({
@@ -55,14 +55,10 @@ export function validateGestaoPrazosInput(data: Record<string, unknown>): Gestao
   // Validar tipoProcesso (obrigatório)
   const tipoProcesso = data.tipoProcesso as string | undefined;
   if (!tipoProcesso) {
-    throw new ValidationError(
-      "Campo 'tipoProcesso' é obrigatório",
-      "tipoProcesso",
-      tipoProcesso
-    );
+    throw new ValidationError("Campo 'tipoProcesso' é obrigatório", "tipoProcesso", tipoProcesso);
   }
 
-  if (!TIPOS_PROCESSO_VALIDOS.includes(tipoProcesso as typeof TIPOS_PROCESSO_VALIDOS[number])) {
+  if (!TIPOS_PROCESSO_VALIDOS.includes(tipoProcesso as (typeof TIPOS_PROCESSO_VALIDOS)[number])) {
     throw new ValidationError(
       `Campo 'tipoProcesso' deve ser um dos seguintes: ${TIPOS_PROCESSO_VALIDOS.join(", ")}`,
       "tipoProcesso",
@@ -103,19 +99,11 @@ export function validateGestaoPrazosInput(data: Record<string, unknown>): Gestao
   // Validar prazoEmDias (obrigatório)
   const prazoEmDias = data.prazoEmDias as number | undefined;
   if (!prazoEmDias) {
-    throw new ValidationError(
-      "Campo 'prazoEmDias' é obrigatório",
-      "prazoEmDias",
-      prazoEmDias
-    );
+    throw new ValidationError("Campo 'prazoEmDias' é obrigatório", "prazoEmDias", prazoEmDias);
   }
 
   if (typeof prazoEmDias !== "number" || isNaN(prazoEmDias)) {
-    throw new ValidationError(
-      "Campo 'prazoEmDias' deve ser um número",
-      "prazoEmDias",
-      prazoEmDias
-    );
+    throw new ValidationError("Campo 'prazoEmDias' deve ser um número", "prazoEmDias", prazoEmDias);
   }
 
   if (prazoEmDias < 1 || prazoEmDias > 365) {
@@ -148,7 +136,7 @@ export function validateGestaoPrazosInput(data: Record<string, unknown>): Gestao
 
   return {
     processNumber,
-    tipoProcesso: tipoProcesso as typeof TIPOS_PROCESSO_VALIDOS[number],
+    tipoProcesso: tipoProcesso as (typeof TIPOS_PROCESSO_VALIDOS)[number],
     dataPublicacao,
     prazoEmDias: Number(prazoEmDias),
     considerarFeriados: considerarFeriados === true,

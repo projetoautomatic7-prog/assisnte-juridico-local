@@ -23,7 +23,11 @@ ${riscosCount > 3 ? "Sugerimos revisão completa antes da assinatura" : "Revisar
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string, context: { tipoContrato?: string }): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+  context: { tipoContrato?: string }
+): string {
   return `
 ⚠️ **Erro na revisão contratual**
 

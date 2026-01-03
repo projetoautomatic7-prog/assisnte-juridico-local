@@ -152,21 +152,11 @@ export abstract class LangGraphAgent {
 
       if (this.config.enableGracefulDegradation) {
         console.warn(`[${agentName}] Usando fallback após erro:`, this.lastError);
-        agentMetrics.recordExecution(
-          agentName,
-          "degraded",
-          Date.now() - startTime,
-          this.lastError
-        );
+        agentMetrics.recordExecution(agentName, "degraded", Date.now() - startTime, this.lastError);
         return this.createFallbackState(state, this.lastError);
       }
 
-      agentMetrics.recordExecution(
-        agentName,
-        "failure",
-        Date.now() - startTime,
-        this.lastError
-      );
+      agentMetrics.recordExecution(agentName, "failure", Date.now() - startTime, this.lastError);
       return this.handleExecutionError(state, error);
     }
   }
@@ -188,13 +178,15 @@ export abstract class LangGraphAgent {
         degraded: true,
         fallbackUsed: true,
         circuitBreakerState: this.circuitBreaker.getState(),
-        structuredError: error ? {
-          code: error.code,
-          message: error.message,
-          recoverable: error.recoverable,
-          suggestedAction: error.suggestedAction,
-          timestamp: error.timestamp,
-        } : undefined,
+        structuredError: error
+          ? {
+              code: error.code,
+              message: error.message,
+              recoverable: error.recoverable,
+              suggestedAction: error.suggestedAction,
+              timestamp: error.timestamp,
+            }
+          : undefined,
       },
       messages: [
         ...state.messages,

@@ -70,7 +70,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useEditorAI, EDITOR_SLASH_COMMANDS } from "@/hooks/use-editor-ai";
 import { cn } from "@/lib/utils";
-import { Bot, ChevronDown, Expand, FileText, Loader2, Sparkles, User, Wand2, Zap } from "lucide-react";
+import {
+  Bot,
+  ChevronDown,
+  Expand,
+  FileText,
+  Loader2,
+  Sparkles,
+  User,
+  Wand2,
+  Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -196,9 +206,9 @@ export function ProfessionalEditor({
   const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
 
   // Hook de IA para editor
-  const { 
-    isLoading: isEditorAILoading, 
-    executeCommand, 
+  const {
+    isLoading: isEditorAILoading,
+    executeCommand,
     generateMinuta,
     loadCommands,
   } = useEditorAI();
@@ -481,30 +491,28 @@ export function ProfessionalEditor({
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = currentHtml;
         const plainText = tempDiv.textContent || tempDiv.innerText || "";
-        
+
         // Remover o texto do comando slash usando a API do modelo (preserva formatação)
         editor.model.change((writer) => {
           const selection = editor.model.document.selection;
           const position = selection.getLastPosition();
-          
+
           if (position) {
             // Encontrar o slash command no final do texto
             const slashMatch = plainText.match(/\/([a-z-]*)$/i);
             if (slashMatch) {
               const charsToDelete = slashMatch[0].length;
               // Mover para trás e deletar os caracteres do comando
-              const range = writer.createRange(
-                position.getShiftedBy(-charsToDelete),
-                position
-              );
+              const range = writer.createRange(position.getShiftedBy(-charsToDelete), position);
               writer.remove(range);
             }
           }
         });
 
-        const prompt = customPrompt || `Gere conteúdo jurídico profissional para ${command.replace("/", "")}`;
+        const prompt =
+          customPrompt || `Gere conteúdo jurídico profissional para ${command.replace("/", "")}`;
         const contextWithoutSlash = plainText.replace(/\/[a-z-]*$/i, "").trim();
-        
+
         const result = await executeCommand({
           command,
           prompt,
@@ -569,20 +577,20 @@ export function ProfessionalEditor({
   const checkForSlashCommand = useCallback((plainText: string, editor: ClassicEditor) => {
     const lines = plainText.split("\n");
     const lastLine = lines[lines.length - 1] || "";
-    
+
     // Procurar por comando slash no final do texto
     const slashMatch = lastLine.match(/\/([a-z-]*)$/i);
-    
+
     if (slashMatch) {
       const filter = slashMatch[1].toLowerCase();
       setSlashFilter(filter);
       setShowSlashMenu(true);
-      
+
       // Posicionar o menu próximo à seleção atual
       try {
         const selection = editor.editing.view.document.selection;
         const viewRange = selection.getFirstRange();
-        
+
         if (viewRange) {
           const domRange = editor.editing.view.domConverter.viewRangeToDom(viewRange);
           if (domRange) {
@@ -594,7 +602,7 @@ export function ProfessionalEditor({
             return;
           }
         }
-        
+
         // Fallback: posição relativa ao editor
         const editorElement = editor.ui.view.element;
         if (editorElement) {
@@ -614,9 +622,10 @@ export function ProfessionalEditor({
   }, []);
 
   // Filtrar comandos slash
-  const filteredSlashCommands = EDITOR_SLASH_COMMANDS.filter(cmd =>
-    cmd.command.toLowerCase().includes(slashFilter) ||
-    cmd.label.toLowerCase().includes(slashFilter)
+  const filteredSlashCommands = EDITOR_SLASH_COMMANDS.filter(
+    (cmd) =>
+      cmd.command.toLowerCase().includes(slashFilter) ||
+      cmd.label.toLowerCase().includes(slashFilter)
   );
 
   const handleAIGenerate = useCallback(async () => {
@@ -720,11 +729,7 @@ export function ProfessionalEditor({
         {/* Slash Commands Dropdown */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Comandos Slash"
-            >
+            <Button variant="ghost" size="sm" title="Comandos Slash">
               <FileText className="h-4 w-4" />
               <span className="ml-2 hidden sm:inline">Comandos /</span>
             </Button>
@@ -789,7 +794,7 @@ export function ProfessionalEditor({
 
       {/* Floating Slash Command Menu */}
       {showSlashMenu && filteredSlashCommands.length > 0 && (
-        <div 
+        <div
           className="absolute z-50 bg-background border rounded-lg shadow-lg p-2 w-64"
           style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
         >
