@@ -393,5 +393,6 @@
   "agentSonar.token": "525735eccb98cf7cdcf0dccf920275f4d37dbe4c",
   "agentSonar.serverUrl": "https://sonarcloud.io",
   "agentSonar.projectKey": "portprojetoautomacao-debug_assistente-jur-dico-principalrepli",
-  "agentSonar.defaultIssueLimit": 20
+  "agentSonar.defaultIssueLimit": 20,
+  "python-envs.pythonProjects": []
 }
