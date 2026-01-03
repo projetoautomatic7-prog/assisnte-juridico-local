@@ -12,6 +12,7 @@
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid hsl(var(--border));
+  position: relative;
 }
 
 /* AI Toolbar */
@@ -24,36 +25,70 @@
   background: hsl(var(--muted) / 0.3);
   min-height: 48px;
   flex-shrink: 0;
+  z-index: 10;
 }
 
 /* Editor Container */
 .professional-editor-page {
   flex: 1;
-  overflow-y: auto;
-  background: hsl(var(--background));
+  overflow: hidden;
+  background: white;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+/* CKEditor Root - force contain all children */
+.professional-editor-page .ck.ck-reset,
+.professional-editor-page .ck.ck-reset_all {
+  position: relative !important;
 }
 
 /* CKEditor wrapper */
 .professional-editor-page .ck.ck-editor {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  width: 100%;
-  background: white;
-  border: 1px solid hsl(var(--border)) !important;
-  border-radius: var(--radius) !important;
-  overflow: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: white !important;
+  border: none !important;
+  overflow: hidden !important;
+  position: relative !important;
 }
 
+/* CKEditor top section (contains toolbar) */
 .professional-editor-page .ck.ck-editor__top {
+  position: relative !important;
+  z-index: 5 !important;
+  flex-shrink: 0 !important;
+  background: hsl(var(--muted) / 0.3) !important;
   border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
+/* CKEditor main content area */
 .professional-editor-page .ck.ck-editor__main {
-  flex: 1;
-  overflow: hidden;
+  flex: 1 !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Toolbar Sticky Wrapper */
+.professional-editor-page .ck.ck-sticky-panel {
+  position: relative !important;
+}
+
+.professional-editor-page .ck.ck-sticky-panel__content {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+}
+
+.professional-editor-page .ck.ck-sticky-panel__content_sticky {
+  position: relative !important;
+  top: auto !important;
+  box-shadow: none !important;
 }
 
 /* Toolbar do CKEditor */
@@ -70,7 +105,8 @@
   flex-wrap: wrap !important;
 }
 
-.professional-editor-page .ck.ck-button {
+.professional-editor-page .ck.ck-button,
+.professional-editor-page .ck.ck-button.ck-off {
   border-radius: var(--radius) !important;
   padding: 0.25rem !important;
   min-width: 28px !important;
@@ -98,6 +134,12 @@
   border: 1px solid hsl(var(--border)) !important;
   border-radius: var(--radius) !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+  z-index: 100 !important;
+}
+
+/* Toolbar separator */
+.professional-editor-page .ck.ck-toolbar__separator {
+  background: hsl(var(--border)) !important;
 }
 
 /* Área editável */
@@ -105,8 +147,8 @@
 .professional-editor-page .ck-editor__editable.ck-focused,
 .professional-editor-page .ck.ck-editor__editable_inline {
   padding: 1rem 1.5rem !important;
-  min-height: 300px !important;
-  max-height: 400px !important;
+  min-height: 250px !important;
+  height: 100% !important;
   overflow-y: auto !important;
   font-family: 'Times New Roman', Times, Georgia, serif !important;
   font-size: 14px !important;
@@ -209,6 +251,11 @@
   border-top: 1px solid hsl(var(--border));
   background: hsl(var(--muted) / 0.3);
   flex-shrink: 0;
+}
+
+/* Balloon toolbar (text selection) */
+.ck.ck-balloon-panel {
+  z-index: 9999 !important;
 }
 
 /* Responsivo */
