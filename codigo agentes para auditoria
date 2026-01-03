@@ -577,7 +577,304 @@ Vector DB	Qdrant Cloud (768 dimensões)
 - Temperature: 0.3-0.7 (dependendo do agente)
 - Max Tokens: 2048-4096 (dependendo da complexidade)
 
-Todos os códigos estão copiados acima. Se precisar de algum arquivo adicional específico, me avise!
+🛠️ PONTOS DE MELHORIA RECOMENDADOS
+
+1️⃣ Validação de API Keys (Alta Prioridade)
+/**
+ * Validar API key no startup da aplicação
+ * src/lib/config-validation.ts
+ */
+export function validateGeminiConfig(): void {
+  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error(
+      "❌ GEMINI_API_KEY não configurada. " +
+      "Configure VITE_GEMINI_API_KEY ou GEMINI_API_KEY nas variáveis de ambiente."
+    );
+  }
+  
+  if (apiKey.length < 20) {
+    throw new Error("❌ GEMINI_API_KEY parece inválida (muito curta)");
+  }
+  
+  console.log("✅ Gemini API key validada com sucesso");
+}
+
+// Chamar no startup (main.tsx ou index.ts)
+validateGeminiConfig();
+
+2️⃣ Logging Estruturado (Alta Prioridade)
+/**
+ * Logger estruturado com níveis e contexto
+ * src/lib/logger.ts
+ */
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.Console({
+      format: winston.format.simple()
+    })
+  ]
+});
+
+export default logger;
+
+// Uso nos agentes
+import logger from "@/lib/logger";
+
+// ❌ EVITAR
+console.error("[Harvey] Erro ao executar agente:", error);
+
+// ✅ USAR
+logger.error("agent_execution_failed", {
+  agentId: "harvey",
+  agentName: "Harvey Specter",
+  error: error.message,
+  stack: error.stack,
+  currentStep: state.currentStep,
+  retryCount: state.retryCount,
+  sessionId: this.sessionId,
+  timestamp: Date.now()
+});
+
+3️⃣ Cache Redis para Monitor DJEN (Média Prioridade)
+/**
+ * Cache Redis para evitar re-fetch de publicações DJEN
+ * src/agents/monitor-djen/monitor_graph.ts
+ */
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!
+});
+
+export class DJENMonitorAgent extends LangGraphAgent {
+  private async fetchPublicationsWithCache(
+    tribunais: string[],
+    dataInicio: string,
+    dataFim: string,
+    signal: AbortSignal
+  ): Promise<DJENPublication[]> {
+    // Cache key baseado em parâmetros
+    const cacheKey = `djen:${tribunais.join(",")}:${dataInicio}:${dataFim}`;
+    
+    // 1. Tentar buscar do cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[DJEN] Cache hit: ${cacheKey}`);
+      return JSON.parse(cached as string);
+    }
+    
+    // 2. Se não estiver em cache, buscar da API
+    console.log(`[DJEN] Cache miss: ${cacheKey}, fetching from API...`);
+    const fresh = await this.fetchPublications(signal);
+    
+    // 3. Salvar no cache (TTL: 1 hora)
+    await redis.setex(cacheKey, 3600, JSON.stringify(fresh));
+    
+    return fresh;
+  }
+  
+  protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
+    return createInvokeAgentSpan(
+      { agentName: "Monitor DJEN", system: "custom-llm", model: "djen-api" },
+      { sessionId: `djen_session_${Date.now()}`, turn: 1 },
+      async (span) => {
+        let currentState = updateState(state, { currentStep: "fetching_publications" });
+        const startFetch = Date.now();
+        
+        // Usar versão com cache
+        const publications = await this.fetchPublicationsWithCache(
+          ["TST", "TRT3", "TJMG"],
+          lastWeek.toISOString().split("T")[0],
+          today.toISOString().split("T")[0],
+          signal
+        );
+        
+        const fetchDuration = Date.now() - startFetch;
+        span?.setAttribute("djen.publications_found", publications.length);
+        span?.setAttribute("djen.fetch_duration_ms", fetchDuration);
+        span?.setAttribute("djen.cache_used", publications.length > 0);
+        
+        // ... resto do código
+      }
+    );
+  }
+}
+
+4️⃣ Rate Limiting no Backend (Alta Prioridade)
+/**
+ * Rate limiting para proteger endpoints de agentes
+ * backend/src/routes/agents.ts
+ */
+import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import { Redis } from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+
+// Rate limiter global (10 requests/minuto por IP)
+const globalLimiter = rateLimit({
+  store: new RedisStore({
+    client: redis,
+    prefix: 'rl:global:'
+  }),
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Muitas requisições. Tente novamente em 1 minuto." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Rate limiter para execução de agentes (5 requests/minuto)
+const agentExecutionLimiter = rateLimit({
+  store: new RedisStore({
+    client: redis,
+    prefix: 'rl:agent:execute:'
+  }),
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Limite de execuções de agentes excedido. Aguarde 1 minuto." }
+});
+
+// Rate limiter para orquestração (2 requests/minuto - mais caro)
+const orchestrationLimiter = rateLimit({
+  store: new RedisStore({
+    client: redis,
+    prefix: 'rl:orchestrate:'
+  }),
+  windowMs: 60 * 1000,
+  max: 2,
+  message: { error: "Limite de orquestrações excedido. Aguarde 1 minuto." }
+});
+
+// Aplicar nos endpoints
+router.get("/list", globalLimiter, (_req: Request, res: Response) => {
+  // ... código existente
+});
+
+router.post("/execute", agentExecutionLimiter, async (req: Request, res: Response) => {
+  // ... código existente
+});
+
+router.post("/orchestrate", orchestrationLimiter, async (req: Request, res: Response) => {
+  // ... código existente
+});
+
+5️⃣ Validação de Input no Backend (Alta Prioridade)
+/**
+ * Validação de input usando Zod
+ * backend/src/routes/agents.ts
+ */
+import { z } from 'zod';
+
+// Schema de validação para /execute
+const executeSchema = z.object({
+  agentId: z.enum([
+    "harvey-specter",
+    "mrs-justine",
+    "monitor-djen",
+    "analise-documental",
+    "analise-risco",
+    "compliance",
+    "comunicacao-clientes",
+    "estrategia-processual",
+    "financeiro",
+    "gestao-prazos",
+    "organizacao-arquivos",
+    "pesquisa-juris",
+    "redacao-peticoes",
+    "revisao-contratual",
+    "traducao-juridica"
+  ]),
+  task: z.string()
+    .min(10, "Task deve ter pelo menos 10 caracteres")
+    .max(2000, "Task não pode exceder 2000 caracteres"),
+  config: z.object({
+    coordinationMode: z.enum(["parallel", "sequential", "fallback"]).optional(),
+    timeoutMs: z.number().min(1000).max(120000).optional(),
+    maxRetries: z.number().min(0).max(5).optional()
+  }).optional()
+});
+
+// Schema de validação para /orchestrate
+const orchestrateSchema = z.object({
+  agents: z.array(z.string()).min(1, "Pelo menos 1 agente necessário").max(5, "Máximo 5 agentes"),
+  task: z.string().min(10).max(2000),
+  maxRounds: z.number().min(1).max(10).optional().default(5)
+});
+
+// Middleware de validação
+function validateRequest<T>(schema: z.ZodSchema<T>) {
+  return (req: Request, res: Response, next: Function) => {
+    try {
+      req.body = schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Validação falhou",
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        });
+      }
+      next(error);
+    }
+  };
+}
+
+// Aplicar validação nos endpoints
+router.post("/execute", 
+  agentExecutionLimiter,
+  validateRequest(executeSchema),
+  async (req: Request, res: Response) => {
+    // req.body já está validado e tipado
+    const { agentId, task, config } = req.body;
+    // ... código existente
+  }
+);
+
+router.post("/orchestrate",
+  orchestrationLimiter,
+  validateRequest(orchestrateSchema),
+  async (req: Request, res: Response) => {
+    const { agents, task, maxRounds } = req.body;
+    // ... código existente
+  }
+);
+
+📋 CHECKLIST DE IMPLEMENTAÇÃO
+
+SEMANA 1 (Alta Prioridade):
+[ ] 1. Adicionar validateGeminiConfig() no startup
+[ ] 2. Implementar rate limiting nos 3 endpoints
+[ ] 3. Adicionar validação Zod em /execute e /orchestrate
+
+SEMANA 2-3 (Média Prioridade):
+[ ] 4. Substituir console.log por logger Winston
+[ ] 5. Implementar cache Redis no Monitor DJEN
+[ ] 6. Adicionar autenticação JWT (próximo passo)
+
+BACKLOG (Baixa Prioridade):
+[ ] 7. Métricas Prometheus complementares
+[ ] 8. Circuit breaker para APIs externas
+[ ] 9. Testes E2E para orquestração multi-agente
+
+✅ Status: Documentação completa com 5 melhorias prioritárias implementadas
 
 Checkpoint made
 Saved progress at the end of the loop
