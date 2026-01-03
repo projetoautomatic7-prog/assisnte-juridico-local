@@ -14,51 +14,163 @@
  * - Sentry AI Monitoring v2 integration
  * - OpenTelemetry semantic conventions
  * - Conversation tracking (sessionId, turn)
+ *
+ * Robustness (Baseado no Google Agent Starter Pack):
+ * - Circuit Breaker para evitar cascata de falhas
+ * - Graceful Degradation com fallback
+ * - Métricas de execução por agente
+ * - Structured Error Handling
  */
 
 import { createChatSpan } from "@/lib/sentry-gemini-integration-v2";
 import type { AgentState } from "./agent_state";
 import { addMessage, updateState } from "./agent_state";
+import {
+  CircuitBreaker,
+  agentMetrics,
+  classifyGeminiError,
+  createFallbackResponse,
+  type StructuredError,
+} from "./agent_utils";
 
 export interface LangGraphConfig {
   timeoutMs: number;
   maxRetries: number;
   retryDelayMs: number;
-  // Observability
   enableSentryTracing?: boolean;
   agentName?: string;
+  enableCircuitBreaker?: boolean;
+  enableGracefulDegradation?: boolean;
+  circuitBreakerThreshold?: number;
 }
 
 export const DEFAULT_CONFIG: LangGraphConfig = {
-  timeoutMs: 30000, // 30 seconds
+  timeoutMs: 30000,
   maxRetries: 3,
   retryDelayMs: 1000,
   enableSentryTracing: true,
   agentName: "unknown-agent",
+  enableCircuitBreaker: true,
+  enableGracefulDegradation: true,
+  circuitBreakerThreshold: 5,
 };
+
+const circuitBreakers = new Map<string, CircuitBreaker>();
 
 export abstract class LangGraphAgent {
   protected config: LangGraphConfig;
   protected abortController: AbortController | null = null;
   protected sessionId: string;
   protected turnCounter: number = 0;
+  protected circuitBreaker: CircuitBreaker;
+  protected lastError: StructuredError | null = null;
 
   constructor(config: Partial<LangGraphConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.sessionId = `${this.config.agentName}-${Date.now()}`;
+
+    const agentName = this.config.agentName || "unknown-agent";
+    if (!circuitBreakers.has(agentName)) {
+      circuitBreakers.set(
+        agentName,
+        new CircuitBreaker(agentName, {
+          failureThreshold: this.config.circuitBreakerThreshold,
+          resetTimeoutMs: 30000,
+        })
+      );
+    }
+    this.circuitBreaker = circuitBreakers.get(agentName)!;
   }
 
   /**
-   * Execute the agent with timeout and retry logic
-   * Now with Sentry AI Monitoring instrumentation
+   * Execute the agent with timeout, retry logic, circuit breaker e graceful degradation
+   * Baseado nos padrões do Google Agent Starter Pack
    */
   async execute(state: AgentState): Promise<AgentState> {
-    // Return early if tracing is disabled
-    if (!this.config.enableSentryTracing) {
-      return await this.executeInternal(state);
-    }
+    const startTime = Date.now();
+    const agentName = this.config.agentName || "unknown-agent";
 
-    return await this.executeWithTracing(state);
+    try {
+      let result: AgentState;
+
+      if (this.config.enableCircuitBreaker) {
+        result = await this.circuitBreaker.execute(
+          async () => {
+            if (!this.config.enableSentryTracing) {
+              return await this.executeInternal(state);
+            }
+            return await this.executeWithTracing(state);
+          },
+          this.config.enableGracefulDegradation
+            ? () => this.createFallbackState(state)
+            : undefined
+        );
+      } else {
+        if (!this.config.enableSentryTracing) {
+          result = await this.executeInternal(state);
+        } else {
+          result = await this.executeWithTracing(state);
+        }
+      }
+
+      agentMetrics.recordExecution(agentName, !result.error, Date.now() - startTime);
+      return result;
+    } catch (error) {
+      agentMetrics.recordExecution(agentName, false, Date.now() - startTime);
+      this.lastError = classifyGeminiError(error);
+
+      if (this.config.enableGracefulDegradation) {
+        console.warn(`[${agentName}] Usando fallback após erro:`, this.lastError);
+        return this.createFallbackState(state);
+      }
+
+      return this.handleExecutionError(state, error);
+    }
+  }
+
+  /**
+   * Cria estado de fallback para graceful degradation
+   */
+  private createFallbackState(state: AgentState): AgentState {
+    const task = (state.data?.task as string) || "tarefa não especificada";
+    const fallbackMessage = createFallbackResponse(this.config.agentName || "Agente", task);
+
+    return updateState(state, {
+      currentStep: "fallback",
+      completed: true,
+      data: {
+        ...state.data,
+        degraded: true,
+        fallbackUsed: true,
+        circuitBreakerState: this.circuitBreaker.getState(),
+      },
+      messages: [
+        ...state.messages,
+        {
+          role: "assistant" as const,
+          content: fallbackMessage,
+          timestamp: Date.now(),
+        },
+      ],
+    });
+  }
+
+  /**
+   * Retorna o último erro estruturado
+   */
+  getLastError(): StructuredError | null {
+    return this.lastError;
+  }
+
+  /**
+   * Retorna status de saúde do agente
+   */
+  getHealthStatus() {
+    return {
+      ...agentMetrics.getHealthCheck(this.config.agentName || "unknown-agent"),
+      circuitBreakerState: this.circuitBreaker.getState(),
+      circuitBreakerHealth: this.circuitBreaker.getHealth(),
+    };
   }
 
   /**
