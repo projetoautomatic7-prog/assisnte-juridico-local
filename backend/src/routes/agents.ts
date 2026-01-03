@@ -256,27 +256,61 @@ router.post("/reset-stats", (_req: Request, res: Response) => {
 });
 
 router.get("/health", async (_req: Request, res: Response) => {
-  const agentHealthChecks: Record<string, { status: string; circuitBreaker?: string; errorRate?: number }> = {};
+  const agentHealthChecks: Record<string, {
+    status: string;
+    circuitBreaker?: string;
+    errorRate?: number;
+    degradedRate?: number;
+    avgLatencyMs?: number;
+    lastError?: { code: string; message: string; recoverable?: boolean };
+  }> = {};
 
   for (const agentId of Object.keys(HYBRID_AGENT_REGISTRY)) {
     agentHealthChecks[agentId] = {
       status: "available",
       circuitBreaker: "closed",
-      errorRate: hybridStats.totalExecutions > 0
-        ? (1 - hybridStats.successRate / 100)
-        : 0,
+      errorRate: 0,
+      degradedRate: 0,
+      avgLatencyMs: 0,
     };
   }
 
+  const totalExecutions = hybridStats.totalExecutions;
+  const successRate = hybridStats.successRate || 100;
+  const errorRate = totalExecutions > 0 ? (1 - successRate / 100) : 0;
+
+  let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (successRate < 50) {
+    overallStatus = "unhealthy";
+  } else if (successRate < 90) {
+    overallStatus = "degraded";
+  }
+
+  const unhealthyAgents = Object.entries(agentHealthChecks)
+    .filter(([_, health]) => health.status === "unhealthy")
+    .map(([id]) => id);
+
+  const degradedAgents = Object.entries(agentHealthChecks)
+    .filter(([_, health]) => health.status === "degraded")
+    .map(([id]) => id);
+
   const overallHealth = {
-    status: hybridStats.successRate >= 90 ? "healthy"
-      : hybridStats.successRate >= 70 ? "degraded"
-      : "unhealthy",
+    status: overallStatus,
     totalAgents: Object.keys(HYBRID_AGENT_REGISTRY).length,
     activeAgents: Object.keys(agentHealthChecks).length,
-    stats: hybridStats,
+    unhealthyAgents,
+    degradedAgents,
+    stats: {
+      ...hybridStats,
+      errorRate,
+    },
     agents: agentHealthChecks,
     geminiConfigValid: !!process.env.VITE_GEMINI_API_KEY || !!process.env.GEMINI_API_KEY,
+    environmentHealth: {
+      geminiApiKey: !!process.env.VITE_GEMINI_API_KEY || !!process.env.GEMINI_API_KEY,
+      upstashRedis: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
+      djenSchedulerEnabled: process.env.DJEN_SCHEDULER_ENABLED === "true",
+    },
     timestamp: new Date().toISOString(),
   };
 

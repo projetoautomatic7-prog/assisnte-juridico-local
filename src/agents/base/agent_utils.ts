@@ -310,34 +310,58 @@ export interface AgentHealthCheck {
   avgLatencyMs: number;
 }
 
+export type ExecutionOutcome = "success" | "failure" | "degraded";
+
 class AgentMetricsCollector {
   private metrics: Map<string, {
     executions: number;
     failures: number;
+    degradedExecutions: number;
     totalLatencyMs: number;
     lastSuccess?: number;
+    lastDegradation?: number;
+    lastError?: StructuredError;
   }> = new Map();
 
-  recordExecution(agentName: string, success: boolean, latencyMs: number): void {
+  recordExecution(
+    agentName: string,
+    outcome: ExecutionOutcome,
+    latencyMs: number,
+    error?: StructuredError
+  ): void {
     const current = this.metrics.get(agentName) || {
       executions: 0,
       failures: 0,
+      degradedExecutions: 0,
       totalLatencyMs: 0,
     };
 
     current.executions++;
     current.totalLatencyMs += latencyMs;
 
-    if (success) {
-      current.lastSuccess = Date.now();
-    } else {
-      current.failures++;
+    switch (outcome) {
+      case "success":
+        current.lastSuccess = Date.now();
+        break;
+      case "degraded":
+        current.degradedExecutions++;
+        current.lastDegradation = Date.now();
+        if (error) current.lastError = error;
+        break;
+      case "failure":
+        current.failures++;
+        if (error) current.lastError = error;
+        break;
     }
 
     this.metrics.set(agentName, current);
   }
 
-  getHealthCheck(agentName: string): Partial<AgentHealthCheck> {
+  getHealthCheck(agentName: string): Partial<AgentHealthCheck> & { 
+    degradedRate?: number; 
+    lastError?: StructuredError;
+    lastDegradation?: number;
+  } {
     const metrics = this.metrics.get(agentName);
 
     if (!metrics) {
@@ -346,16 +370,18 @@ class AgentMetricsCollector {
         status: "healthy",
         errorRate: 0,
         avgLatencyMs: 0,
+        degradedRate: 0,
       };
     }
 
     const errorRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+    const degradedRate = metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
     const avgLatencyMs = metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
 
     let status: "healthy" | "degraded" | "unhealthy" = "healthy";
     if (errorRate > 0.5) {
       status = "unhealthy";
-    } else if (errorRate > 0.1) {
+    } else if (errorRate > 0.1 || degradedRate > 0.3) {
       status = "degraded";
     }
 
@@ -363,17 +389,24 @@ class AgentMetricsCollector {
       agentName,
       status,
       lastSuccessfulExecution: metrics.lastSuccess,
+      lastDegradation: metrics.lastDegradation,
       errorRate,
+      degradedRate,
       avgLatencyMs,
+      lastError: metrics.lastError,
     };
   }
 
-  getAllMetrics(): Record<string, Partial<AgentHealthCheck>> {
-    const result: Record<string, Partial<AgentHealthCheck>> = {};
+  getAllMetrics(): Record<string, ReturnType<AgentMetricsCollector["getHealthCheck"]>> {
+    const result: Record<string, ReturnType<AgentMetricsCollector["getHealthCheck"]>> = {};
     for (const agentName of this.metrics.keys()) {
       result[agentName] = this.getHealthCheck(agentName);
     }
     return result;
+  }
+
+  getAgentNames(): string[] {
+    return Array.from(this.metrics.keys());
   }
 }
 

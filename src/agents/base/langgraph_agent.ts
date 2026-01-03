@@ -31,6 +31,7 @@ import {
   classifyGeminiError,
   createFallbackResponse,
   type StructuredError,
+  type ExecutionOutcome,
 } from "./agent_utils";
 
 export interface LangGraphConfig {
@@ -92,6 +93,7 @@ export abstract class LangGraphAgent {
 
     try {
       let result: AgentState;
+      let wasDegraded = false;
 
       if (this.config.enableCircuitBreaker) {
         result = await this.circuitBreaker.execute(
@@ -102,7 +104,11 @@ export abstract class LangGraphAgent {
             return await this.executeWithTracing(state);
           },
           this.config.enableGracefulDegradation
-            ? () => this.createFallbackState(state)
+            ? () => {
+                wasDegraded = true;
+                this.lastError = classifyGeminiError(new Error("Circuit breaker fallback"));
+                return this.createFallbackState(state, this.lastError);
+              }
             : undefined
         );
       } else {
@@ -113,36 +119,73 @@ export abstract class LangGraphAgent {
         }
       }
 
-      agentMetrics.recordExecution(agentName, !result.error, Date.now() - startTime);
+      const isDegraded = wasDegraded || result.data?.degraded === true;
+      let outcome: ExecutionOutcome;
+
+      if (isDegraded) {
+        outcome = "degraded";
+      } else if (result.error) {
+        outcome = "failure";
+      } else {
+        outcome = "success";
+      }
+
+      agentMetrics.recordExecution(
+        agentName,
+        outcome,
+        Date.now() - startTime,
+        isDegraded ? this.lastError || undefined : undefined
+      );
+
       return result;
     } catch (error) {
-      agentMetrics.recordExecution(agentName, false, Date.now() - startTime);
       this.lastError = classifyGeminiError(error);
 
       if (this.config.enableGracefulDegradation) {
         console.warn(`[${agentName}] Usando fallback após erro:`, this.lastError);
-        return this.createFallbackState(state);
+        agentMetrics.recordExecution(
+          agentName,
+          "degraded",
+          Date.now() - startTime,
+          this.lastError
+        );
+        return this.createFallbackState(state, this.lastError);
       }
 
+      agentMetrics.recordExecution(
+        agentName,
+        "failure",
+        Date.now() - startTime,
+        this.lastError
+      );
       return this.handleExecutionError(state, error);
     }
   }
 
   /**
    * Cria estado de fallback para graceful degradation
+   * Inclui erro estruturado para contexto
    */
-  private createFallbackState(state: AgentState): AgentState {
+  private createFallbackState(state: AgentState, error?: StructuredError): AgentState {
     const task = (state.data?.task as string) || "tarefa não especificada";
     const fallbackMessage = createFallbackResponse(this.config.agentName || "Agente", task);
 
     return updateState(state, {
       currentStep: "fallback",
       completed: true,
+      error: error?.message,
       data: {
         ...state.data,
         degraded: true,
         fallbackUsed: true,
         circuitBreakerState: this.circuitBreaker.getState(),
+        structuredError: error ? {
+          code: error.code,
+          message: error.message,
+          recoverable: error.recoverable,
+          suggestedAction: error.suggestedAction,
+          timestamp: error.timestamp,
+        } : undefined,
       },
       messages: [
         ...state.messages,
