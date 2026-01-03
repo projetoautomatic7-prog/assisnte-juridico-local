@@ -22,7 +22,7 @@ readonly PROJECT_ROOT="${SCRIPT_DIR}/.."
 readonly RESULTS_DIR="${PROJECT_ROOT}/.sonar-results"
 readonly LOG_FILE="${RESULTS_DIR}/auto-fix-loop.log"
 readonly SONAR_TOKEN="${SONAR_TOKEN:-}"
-readonly SONAR_PROJECT="thiagobodevan-a11y_assistente-juridico-p"
+readonly SONAR_PROJECT="portprojetoautomacao-debug_assistente-jur-dico-principalrepli"
 
 # Parâmetros
 MAX_ITERATIONS=50

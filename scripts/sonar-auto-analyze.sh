@@ -31,8 +31,8 @@ readonly NC='\033[0m'
 # Configurações
 readonly PROJECT_ROOT="${SCRIPT_DIR}/.."
 readonly SONAR_TOKEN="${SONAR_TOKEN:-}"
-readonly SONAR_PROJECT="thiagobodevan-a11y_assistente-juridico-p"
-readonly SONAR_ORG="thiagobodevan-a11y-assistente-juridico-p"
+readonly SONAR_PROJECT="portprojetoautomacao-debug_assistente-jur-dico-principalrepli"
+readonly SONAR_ORG="portprojetoautomacao-debug"
 readonly RESULTS_DIR="${PROJECT_ROOT}/.sonar-results"
 readonly LOG_FILE="${RESULTS_DIR}/analysis.log"
 

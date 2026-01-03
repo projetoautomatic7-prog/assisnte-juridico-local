@@ -2,6 +2,56 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Dev: Frontend",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "group": "dev",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dev: Backend",
+      "type": "shell",
+      "command": "cd backend && npm run dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "options": {
+        "env": {
+          "NODE_ENV": "development"
+        }
+      },
+      "presentation": {
+        "group": "dev",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dev: Full Stack",
+      "dependsOn": ["Dev: Frontend", "Dev: Backend"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Produção",
+      "type": "npm",
+      "script": "build:deploy",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Produção Local",
+      "type": "shell",
+      "command": "npm run start:production",
+      "problemMatcher": [],
+      "options": {
+        "env": {
+          "NODE_ENV": "production",
+          "PORT": "3001"
+        }
+      }
+    },
+    {
       "label": "Start GitHub MCP Server (Docker)",
       "type": "shell",
       "command": "./scripts/start-github-mcp.sh",

@@ -29,7 +29,9 @@ function makeReq(action: string, method: string, authorized = true): any {
   return {
     query: { action },
     method,
-    headers: authorized ? { host: "localhost:3000" } : { host: "prod.example.com" },
+    headers: authorized
+      ? { host: "localhost:3000" }
+      : { host: "prod.example.com", authorization: "Bearer invalid-token" },
     body: {},
   };
 }
@@ -37,8 +39,16 @@ function makeReq(action: string, method: string, authorized = true): any {
 describe("agents API handler", () => {
   it("should reject unauthorized requests", async () => {
     const req = makeReq("process-queue", "POST", false);
+    // Force NODE_ENV to production for this test to ensure auth check runs
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+
     const res = mockRes();
     await handler(req, res);
+
+    // Restore env
+    process.env.NODE_ENV = originalEnv;
+
     expect(res.statusCode).toBe(401);
     expect(res.body).toHaveProperty("error");
   });

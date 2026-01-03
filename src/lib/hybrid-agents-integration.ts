@@ -45,8 +45,8 @@ export type HybridStats = {
 // ============================================================================
 
 const HYBRID_AGENT_REGISTRY: Record<string, HybridAgentType> = {
-  "harvey-specter": "langgraph-custom",
-  "mrs-justine": "langgraph-custom",
+  harvey: "langgraph-custom",
+  justine: "langgraph-custom",
   "monitor-djen": "langgraph-djen",
   "analise-documental": "langgraph-custom",
   "analise-risco": "langgraph-custom",

@@ -9,7 +9,6 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 import { phosphorIconOptimizer } from "./vite-icon-optimizer";
-import { devApiPlugin } from "./vite-dev-api-plugin";
 
 // Resolve robusto para ESM (funciona em Windows/Linux)
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -18,7 +17,6 @@ const projectRoot = process.env.PROJECT_ROOT || __dirname;
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    devApiPlugin(),
     react(),
     tailwindcss(),
     phosphorIconOptimizer(),
@@ -129,6 +127,13 @@ export default defineConfig({
     exclude: ["@doist/todoist-api-typescript"],
   },
   server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
     host: "0.0.0.0", // Aceita conexões de 127.0.0.1, localhost e IPs externos
     port: 5000,
     allowedHosts: true, // Allow Replit's proxy
@@ -138,7 +143,13 @@ export default defineConfig({
     },
     watch: {
       // Ignore directories with many files to avoid ENOSPC error
-      ignored: ["**/pkg/**", "**/bin/**", "**/k8s/**", "**/backend/**", "**/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/**"],
+      ignored: [
+        "**/pkg/**",
+        "**/bin/**",
+        "**/k8s/**",
+        "**/backend/**",
+        "**/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/**",
+      ],
     },
   },
   build: {

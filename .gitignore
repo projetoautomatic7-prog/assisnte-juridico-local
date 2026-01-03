@@ -21,6 +21,9 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .vscode/mcp.json
 .vscode/sonar-config.json
 .vscode/sonar-copilot-assistant.user.json
@@ -40,6 +43,7 @@ dist-ssr
 .env.production
 .env.vercel
 .env.staging
+.env.test
 *.backup
 .env.backup
 .env.local.backup
