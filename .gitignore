@@ -124,3 +124,4 @@ coverage-api/
 .sonar-results/
 jdk-25_linux-x64_bin.deb
 .vs/
+adk-samples/
