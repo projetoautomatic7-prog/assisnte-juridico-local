@@ -10,7 +10,6 @@
 
 import { useState, useCallback } from "react";
 import type { DJENPublication } from "@/types/djen-publication";
-import { buscarDJENNoBrowser, type DJENSearchParams } from "@/services/djen-browser-capture";
 
 interface ExpedientesResponse {
   success: boolean;
@@ -91,7 +90,7 @@ function parseOAB(oab: string): { numero?: string; uf?: string } {
   return {};
 }
 
-async function fetchFromBrowserDirect(
+async function fetchFromBackendProxy(
   baseUrl: string,
   maxItems: number
 ): Promise<{
@@ -117,7 +116,7 @@ async function fetchFromBrowserDirect(
     lawyers = DEFAULT_LAWYERS;
     localStorage.setItem("monitored-lawyers", JSON.stringify(DEFAULT_LAWYERS));
     console.log(
-      "[DJEN Browser] Usando advogados padrão:",
+      "[DJEN Proxy] Usando advogados padrão:",
       DEFAULT_LAWYERS.map((l) => l.name).join(", ")
     );
   }
@@ -137,54 +136,53 @@ async function fetchFromBrowserDirect(
     const { numero, uf } = parseOAB(lawyer.oab);
 
     if (!numero) {
-      console.warn(`[DJEN Browser] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
+      console.warn(`[DJEN Proxy] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
       continue;
     }
 
     if (!uf) {
       console.warn(
-        `[DJEN Browser] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
+        `[DJEN Proxy] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
       );
       continue;
     }
 
-    const params: DJENSearchParams = {
-      numeroOab: numero,
-      ufOab: uf,
-      meio: "D",
-    };
+    try {
+      const hoje = new Date().toISOString().split("T")[0];
+      const url = `${baseUrl}/api/djen/publicacoes?numeroOab=${numero}&ufOab=${uf}&dataInicio=${hoje}&dataFim=${hoje}`;
+      console.log(`[DJEN Proxy] Buscando via backend: ${url}`);
 
-    const result = await buscarDJENNoBrowser(params);
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`[DJEN Proxy] Erro HTTP ${response.status}`);
+        continue;
+      }
 
-    if (result.isGeoBlocked) {
-      return {
-        expedientes: [],
-        lawyersConfigured: enabledLawyers.length,
-        isGeoBlocked: true,
-        error: result.error,
-      };
-    }
+      const data = await response.json();
 
-    if (result.success) {
-      const converted: DJENPublication[] = result.publicacoes.map((pub) => ({
-        id: pub.id || crypto.randomUUID(),
-        tribunal: pub.siglaTribunal,
-        data: pub.dataDisponibilizacao,
-        tipo: pub.tipoComunicacao || "Intimação",
-        teor: pub.texto,
-        numeroProcesso: pub.numeroProcesso,
-        orgao: pub.nomeOrgao,
-        lawyerName: lawyer.name,
-        matchType: "oab" as const,
-        source: "DJEN-Browser",
-        createdAt: new Date().toISOString(),
-        notified: false,
-      }));
-      allPublications.push(...converted);
+      if (data.success && Array.isArray(data.publicacoes)) {
+        const converted: DJENPublication[] = data.publicacoes.map((pub: Record<string, unknown>) => ({
+          id: (pub.id as string) || crypto.randomUUID(),
+          tribunal: pub.siglaTribunal as string,
+          data: pub.dataDisponibilizacao as string,
+          tipo: (pub.tipoComunicacao as string) || "Intimação",
+          teor: pub.texto as string,
+          numeroProcesso: pub.numeroProcesso as string,
+          orgao: pub.nomeOrgao as string,
+          lawyerName: lawyer.name,
+          matchType: "oab" as const,
+          source: "DJEN-Proxy",
+          createdAt: new Date().toISOString(),
+          notified: false,
+        }));
+        allPublications.push(...converted);
+      }
+    } catch (error) {
+      console.error(`[DJEN Proxy] Erro ao buscar para ${lawyer.name}:`, error);
     }
 
     if (enabledLawyers.length > 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
@@ -223,8 +221,8 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
         console.warn("[DJENWidget] Backend indisponível, tentando browser-direct:", backendError);
       }
 
-      console.log("[DJENWidget] Tentando busca direta via navegador...");
-      const browserResult = await fetchFromBrowserDirect(baseUrl, maxItems);
+      console.log("[DJENWidget] Tentando busca via proxy backend...");
+      const browserResult = await fetchFromBackendProxy(baseUrl, maxItems);
 
       if (browserResult.isGeoBlocked) {
         setIsGeoBlocked(true);

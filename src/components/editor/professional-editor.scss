@@ -159,6 +159,71 @@
   z-index: 9999 !important;
 }
 
+/* ============================================
+   Color Picker / Font Color Panels (GLOBAL)
+   ============================================ */
+
+/* Os painéis de cor são renderizados no body, não dentro do editor */
+.ck.ck-color-ui-dropdown,
+.ck.ck-color-picker,
+.ck.ck-color-grid,
+.ck.ck-color-table-dropdown {
+  z-index: 99999 !important;
+}
+
+.ck.ck-dropdown__panel.ck-color-ui-dropdown__panel,
+.ck.ck-dropdown__panel[class*="color"] {
+  z-index: 99999 !important;
+  background: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15) !important;
+}
+
+/* Grid de cores */
+.ck.ck-color-grid {
+  padding: 0.5rem !important;
+}
+
+.ck.ck-color-grid__tile {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 4px !important;
+  border: 1px solid transparent !important;
+}
+
+.ck.ck-color-grid__tile:hover {
+  border-color: hsl(var(--primary)) !important;
+  transform: scale(1.1);
+}
+
+/* Input de cor customizada */
+.ck.ck-input-color input {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+}
+
+/* Botões de cor na toolbar */
+.professional-editor-page .ck.ck-font-color-dropdown,
+.professional-editor-page .ck.ck-font-background-color-dropdown {
+  position: relative !important;
+}
+
+.professional-editor-page .ck.ck-splitbutton {
+  border: none !important;
+}
+
+.professional-editor-page .ck.ck-splitbutton__action,
+.professional-editor-page .ck.ck-splitbutton__arrow {
+  border: none !important;
+  background: transparent !important;
+}
+
+.professional-editor-page .ck.ck-splitbutton:hover .ck-splitbutton__action,
+.professional-editor-page .ck.ck-splitbutton:hover .ck-splitbutton__arrow {
+  background: hsl(var(--muted)) !important;
+}
+
 /* Área principal de conteúdo */
 .professional-editor-page .ck.ck-editor__main {
   flex: 1 !important;
