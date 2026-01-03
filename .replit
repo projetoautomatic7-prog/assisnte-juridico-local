@@ -5,7 +5,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["systemdUkify", "lsof", "file"]
+packages = ["systemdUkify", "lsof", "file", "tree"]
 
 [workflows]
 runButton = "Project"
