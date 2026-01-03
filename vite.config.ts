@@ -142,13 +142,19 @@ export default defineConfig({
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },
     watch: {
-      // Ignore directories with many files to avoid ENOSPC error
+      // Ignore directories with many files to avoid ENOSPC error and reduce CPU usage
       ignored: [
         "**/pkg/**",
         "**/bin/**",
         "**/k8s/**",
         "**/backend/**",
         "**/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/**",
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/dist/**",
+        "**/coverage/**",
+        "**/.sonar-results/**",
+        "**/tests/e2e/**",
       ],
     },
   },

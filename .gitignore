@@ -124,3 +124,6 @@ coverage-api/
 .sonar-results/
 jdk-25_linux-x64_bin.deb
 .vs/
+
+# Go modules cache (898MB) - exclude from file watchers
+pkg/
