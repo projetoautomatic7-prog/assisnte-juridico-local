@@ -44,6 +44,8 @@ export class JustineAgent extends LangGraphAgent {
           current = updateState(current, { currentStep: "justine:analyze" });
           
           const fullPrompt = `${JUSTINE_SYSTEM_PROMPT}\n\n${generateIntimationAnalysisPrompt(validatedInput.task)}`;
+          
+          const response = await callGemini(fullPrompt, {
             temperature: 0.3,
             maxOutputTokens: 4096,
           });

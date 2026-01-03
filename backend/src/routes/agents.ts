@@ -8,20 +8,72 @@ const __dirname = dirname(__filename);
 // Imports dinâmicos dos agentes (evita problemas de path com ESM)
 let runHarvey: any;
 let runJustine: any;
+let monitorDJEN: any;
+let runAnaliseDocumental: any;
+let runAnaliseRisco: any;
+let runCompliance: any;
+let runComunicacaoClientes: any;
+let runEstrategiaProcessual: any;
+let runFinanceiro: any;
+let runGestaoPrazos: any;
+let runOrganizacaoArquivos: any;
+let runPesquisaJuris: any;
+let runRedacaoPeticoes: any;
+let runRevisaoContratual: any;
 
 // Carregar agentes de forma assíncrona
 async function loadAgents() {
   try {
-    // Path relativo a partir de backend/src/routes → workspace root
     const agentsPath = resolve(__dirname, "../../../src/agents");
 
-    const harveyModule = await import(`${agentsPath}/harvey/harvey_graph.js`);
+    const [
+      harveyModule,
+      justineModule,
+      monitorModule,
+      analiseDocModule,
+      analiseRiscoModule,
+      complianceModule,
+      comunicacaoModule,
+      estrategiaModule,
+      financeiroModule,
+      gestaoPrazosModule,
+      organizacaoModule,
+      pesquisaModule,
+      redacaoModule,
+      revisaoModule,
+    ] = await Promise.all([
+      import(`${agentsPath}/harvey/harvey_graph.js`),
+      import(`${agentsPath}/justine/justine_graph.js`),
+      import(`${agentsPath}/monitor-djen/monitor_graph.js`),
+      import(`${agentsPath}/analise-documental/analise_documental_graph.js`),
+      import(`${agentsPath}/analise-risco/analise_risco_graph.js`),
+      import(`${agentsPath}/compliance/compliance_graph.js`),
+      import(`${agentsPath}/comunicacao-clientes/comunicacao_clientes_graph.js`),
+      import(`${agentsPath}/estrategia-processual/estrategia_processual_graph.js`),
+      import(`${agentsPath}/financeiro/financeiro_graph.js`),
+      import(`${agentsPath}/gestao-prazos/gestao_prazos_graph.js`),
+      import(`${agentsPath}/organizacao-arquivos/organizacao_arquivos_graph.js`),
+      import(`${agentsPath}/pesquisa-juris/pesquisa_graph.js`),
+      import(`${agentsPath}/redacao-peticoes/redacao_graph.js`),
+      import(`${agentsPath}/revisao-contratual/revisao_contratual_graph.js`),
+    ]);
+
     runHarvey = harveyModule.runHarvey;
-
-    const justineModule = await import(`${agentsPath}/justine/justine_graph.js`);
     runJustine = justineModule.runJustine;
+    monitorDJEN = monitorModule.monitorDJEN;
+    runAnaliseDocumental = analiseDocModule.runAnaliseDocumental;
+    runAnaliseRisco = analiseRiscoModule.runAnaliseRisco;
+    runCompliance = complianceModule.runCompliance;
+    runComunicacaoClientes = comunicacaoModule.runComunicacaoClientes;
+    runEstrategiaProcessual = estrategiaModule.runEstrategiaProcessual;
+    runFinanceiro = financeiroModule.runFinanceiro;
+    runGestaoPrazos = gestaoPrazosModule.runGestaoPrazos;
+    runOrganizacaoArquivos = organizacaoModule.runOrganizacaoArquivos;
+    runPesquisaJuris = pesquisaModule.runPesquisaJuris;
+    runRedacaoPeticoes = redacaoModule.runRedacaoPeticoes;
+    runRevisaoContratual = revisaoModule.runRevisaoContratual;
 
-    console.log("[Agents] ✅ Agentes reais carregados (Harvey + Justine)");
+    console.log("[Agents] ✅ 14 agentes reais carregados");
   } catch (error) {
     console.error("[Agents] ❌ Erro ao carregar agentes:", error);
     console.warn("[Agents] ⚠️  Usando modo stub (IA desabilitada)");
@@ -48,7 +100,23 @@ const HYBRID_AGENT_REGISTRY: Record<string, string> = {
   "pesquisa-juris": "langgraph-custom",
   "redacao-peticoes": "langgraph-custom",
   "revisao-contratual": "langgraph-custom",
-  "traducao-juridica": "langgraph-custom",
+};
+
+const AGENT_RUNNERS: Record<string, () => any> = {
+  "harvey-specter": () => runHarvey,
+  "mrs-justine": () => runJustine,
+  "monitor-djen": () => monitorDJEN,
+  "analise-documental": () => runAnaliseDocumental,
+  "analise-risco": () => runAnaliseRisco,
+  compliance: () => runCompliance,
+  "comunicacao-clientes": () => runComunicacaoClientes,
+  "estrategia-processual": () => runEstrategiaProcessual,
+  financeiro: () => runFinanceiro,
+  "gestao-prazos": () => runGestaoPrazos,
+  "organizacao-arquivos": () => runOrganizacaoArquivos,
+  "pesquisa-juris": () => runPesquisaJuris,
+  "redacao-peticoes": () => runRedacaoPeticoes,
+  "revisao-contratual": () => runRevisaoContratual,
 };
 
 interface HybridStats {
@@ -227,18 +295,12 @@ router.post("/execute", async (req: Request, res: Response) => {
   try {
     let result;
 
-    // Executar agente real baseado no ID
-    if (agentId === "harvey-specter" && runHarvey) {
-      const agentResult = await runHarvey({ task });
-      result = {
-        completed: agentResult.completed,
-        message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
-        data: agentResult.data,
-        steps: agentResult.messages.length,
-        aiPowered: true,
-      };
-    } else if (agentId === "mrs-justine" && runJustine) {
-      const agentResult = await runJustine({ task });
+    // Executar agente real baseado no ID usando o mapa de runners
+    const runnerGetter = AGENT_RUNNERS[agentId];
+    const runner = runnerGetter ? runnerGetter() : null;
+
+    if (runner) {
+      const agentResult = await runner({ task });
       result = {
         completed: agentResult.completed,
         message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
@@ -247,11 +309,11 @@ router.post("/execute", async (req: Request, res: Response) => {
         aiPowered: true,
       };
     } else {
-      // Outros agentes ainda são stubs
+      // Agente não carregado - modo stub
       result = {
         completed: true,
-        message: `Task executed by ${agentId} (stub)`,
-        data: { task, note: "Este agente ainda não foi implementado com IA real" },
+        message: `Task executed by ${agentId} (stub - agentes não carregados)`,
+        data: { task, note: "Agentes não foram carregados. Verifique os logs." },
         aiPowered: false,
       };
     }
