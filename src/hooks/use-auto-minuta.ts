@@ -7,12 +7,12 @@
  * ✨ REFATORADO: Usa minuta-service.ts centralizado
  */
 
-import { useEffect, useRef, useState, useMemo } from "react";
 import { useKV } from "@/hooks/use-kv";
-import { toast } from "sonner";
-import type { Minuta } from "@/types";
 import type { AgentTask } from "@/lib/agents";
 import { createMinutaFromAgentTask } from "@/services/minuta-service";
+import type { Minuta } from "@/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 // Tipos de documento para mapeamento
 const DOCUMENT_TYPE_MAP: Record<string, Minuta["tipo"]> = {
@@ -135,15 +135,14 @@ export function useAutoMinuta() {
 
       // Marcar como processada
       processedTasksRef.current.add(task.id);
-      setProcessedTasksCount(processedTasksRef.current.size);
 
-      // Salvar no localStorage
+      // Salvar no localStorage e atualizar contador atomicamente
       try {
         localStorage.setItem(
           "processed-petition-tasks",
           JSON.stringify([...processedTasksRef.current])
         );
-        // Update count state
+        // Update count state (single call)
         setProcessedTasksCount(processedTasksRef.current.size);
       } catch (e) {
         console.error("[AutoMinuta] Erro ao salvar tarefas processadas:", e);
