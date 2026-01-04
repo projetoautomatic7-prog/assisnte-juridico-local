@@ -47,8 +47,8 @@ export interface TemplateSearchInput {
 
 export class TemplateContratualRetriever {
   private readonly collectionName = "contratos_templates";
-  private readonly qdrantService: QdrantService | null = null;
-  private readonly useMockData: boolean;
+  private qdrantService: QdrantService | null = null;
+  private useMockData: boolean = true;
 
   constructor() {
     const qdrantUrl = import.meta.env.VITE_QDRANT_URL || import.meta.env.QDRANT_URL;
