@@ -262,6 +262,6 @@ npm run dev
 
 ---
 
-**Data**: 03/01/2026  
+**Data**: 3 de Janeiro de 2026  
 **Autor**: GitHub Copilot Coding Agent  
 **Revisor**: Aguardando merge da PR
