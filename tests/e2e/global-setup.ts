@@ -1,9 +1,68 @@
 import { chromium, FullConfig } from "@playwright/test";
+import { ChildProcess, exec } from "node:child_process";
 import path from "node:path";
+
+let backendProcess: ChildProcess | null = null;
 
 async function globalSetup(config: FullConfig) {
   // Any global setup can go here (programmatic login + storageState)
   console.log("🚀 Starting E2E tests...");
+
+  // Iniciar backend se não estiver rodando
+  if (!process.env.SKIP_BACKEND_START) {
+    console.log("🔧 Starting backend server...");
+    const projectRoot = config.rootDir || process.cwd();
+
+    try {
+      // ✅ Usar exec ao invés de spawn
+      const backendDir = path.join(projectRoot, "backend");
+      const command = `cd "${backendDir}" && npm run dev`;
+
+      backendProcess = exec(command, {
+        env: {
+          ...process.env,
+          NODE_ENV: "development",
+        },
+      });
+
+      if (backendProcess.pid) {
+        process.env.BACKEND_PID = backendProcess.pid.toString();
+        console.log(`📝 Backend PID: ${backendProcess.pid}`);
+      }
+
+      // Capturar erros do processo
+      backendProcess.on("error", (error) => {
+        console.error("❌ Backend exec error:", error);
+      });
+
+      // ✅ Health check ao invés de timeout fixo
+      console.log("⏳ Waiting for backend to be healthy...");
+      let healthy = false;
+      for (let attempt = 1; attempt <= 30; attempt++) {
+        try {
+          const response = await fetch("http://localhost:3001/health");
+          if (response.ok) {
+            healthy = true;
+            console.log(`✅ Backend is healthy (attempt ${attempt}/30)`);
+            break;
+          }
+        } catch (error) {
+          // Backend ainda não respondeu
+          if (attempt % 5 === 0) {
+            console.log(`⏳ Still waiting... (attempt ${attempt}/30)`);
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (!healthy) {
+        console.warn("⚠️ Backend health check failed after 30s, tests may fail");
+      }
+    } catch (error) {
+      console.error("❌ Failed to start backend:", error);
+      console.warn("⚠️ Continuing without backend, tests will likely fail");
+    }
+  }
 
   const projectRoot = config.rootDir || process.cwd();
   const storagePath = path.join(projectRoot, "tests/e2e/storageState.json");

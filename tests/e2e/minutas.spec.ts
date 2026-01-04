@@ -7,11 +7,22 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Aguarda carregar
     await page.waitForLoadState("networkidle");
+
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
   });
 
   test("deve criar e editar minuta com TiptapEditorV2", async ({ page }) => {
-    // Clica no menu Minutas (pode estar em sidebar ou tabs)
-    await page.click("text=Minutas");
+    // Aguardar sidebar carregar completamente
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
+    // Clica no menu Minutas usando data-testid da sidebar
+    await page.click('[data-testid="nav-minutas"]', { timeout: 10000 });
 
     // Aguarda carregar a lista de minutas
     await page.waitForTimeout(500);
@@ -35,9 +46,9 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
       await tituloInput.fill("Petição de Teste E2E");
     }
 
-    // Preenche o editor TiptapEditorV2
+    // Preenche o editor TiptapEditorV2 (usar seletor mais específico para o conteúdo)
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
 
@@ -72,7 +83,8 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve usar comandos AI rápidos no editor", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -86,7 +98,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Escreve texto no editor
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
     await page.keyboard.type("Texto curto para expandir");
@@ -119,7 +131,8 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve exibir e usar variáveis no editor", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -154,7 +167,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Digita variável no editor
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
     await page.keyboard.type("Processo número {{processo}} ");
@@ -165,7 +178,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve editar minuta existente", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Busca primeira minuta da lista
@@ -197,7 +210,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Verifica se editor está visível
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await expect(editorLocator).toBeVisible();
 
@@ -221,7 +234,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve permitir geração customizada com IA", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -254,7 +267,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve validar contador de palavras e caracteres", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -281,7 +294,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve cancelar criação de minuta", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -310,7 +323,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve excluir minuta", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria minuta para excluir
@@ -355,7 +368,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve manter formatação do editor ao salvar", async ({ page }) => {
     // Navega para Minutas
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     // Cria nova minuta
@@ -405,7 +418,7 @@ test.describe("Toolbar e Formatação TiptapEditorV2", () => {
     await page.waitForLoadState("networkidle");
 
     // Abre Minutas e cria nova
-    await page.click("text=Minutas");
+    await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
     const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();

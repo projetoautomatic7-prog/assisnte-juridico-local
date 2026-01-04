@@ -1,9 +1,21 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Captura e Monitoramento", () => {
-  test("deve capturar screenshots", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
+  });
+
+  test("deve capturar screenshots", async ({ page }) => {
     // browser_take_screenshot
     await page.screenshot({ path: "tests/screenshots/homepage.png", fullPage: true });
 
@@ -12,8 +24,6 @@ test.describe("Captura e Monitoramento", () => {
   });
 
   test("deve capturar snapshots de acessibilidade", async ({ page }) => {
-    await page.goto("/");
-
     // Verificar acessibilidade usando getByRole (melhor prática no Playwright 1.57+)
     // page.accessibility.snapshot() foi removido - usar roles e ARIA
     const mainContent = page.getByRole("main").or(page.locator("main, #root"));

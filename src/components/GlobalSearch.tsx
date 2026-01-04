@@ -89,19 +89,14 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Função para resetar o estado da busca
-  const resetSearch = useCallback(() => {
+  // Função para fechar o modal com reset
+  const closeSearch = useCallback(() => {
+    setIsOpen(false);
     setQuery("");
     setCategory("all");
     setSelectedIndex(0);
     setResults([]);
   }, []);
-
-  // Função para fechar o modal com reset
-  const closeSearch = useCallback(() => {
-    setIsOpen(false);
-    resetSearch();
-  }, [resetSearch]);
 
   // Focar input quando abrir
   useEffect(() => {

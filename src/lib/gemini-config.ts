@@ -5,15 +5,21 @@
 
 export const getGeminiApiKey = (): string => {
   // Tenta múltiplas variáveis (flexível para diferentes ambientes)
+  // Suporte tanto para frontend (import.meta.env) quanto backend (process.env)
   const apiKey = String(
-    import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_KEY || ""
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_GEMINI_API_KEY) ||
+      (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_GEMINI_KEY) ||
+      (typeof process !== "undefined" && process.env?.VITE_GEMINI_API_KEY) ||
+      (typeof process !== "undefined" && process.env?.GEMINI_API_KEY) ||
+      ""
   );
 
   if (!apiKey) {
     throw new Error(
-      "A variável VITE_GEMINI_API_KEY não está configurada.\n" +
+      "A variável VITE_GEMINI_API_KEY ou GEMINI_API_KEY não está configurada.\n" +
         "➡ Adicione sua chave Gemini no arquivo .env:\n" +
-        '    VITE_GEMINI_API_KEY="SUA_CHAVE_AQUI"\n\n' +
+        '    VITE_GEMINI_API_KEY="SUA_CHAVE_AQUI"\n' +
+        '    GEMINI_API_KEY="SUA_CHAVE_AQUI"\n\n' +
         'As chaves Gemini começam com "AIza..." ou "GEM-...".'
     );
   }

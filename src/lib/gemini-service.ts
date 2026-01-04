@@ -202,6 +202,21 @@ export async function callGemini(
   prompt: string,
   config: Partial<GeminiConfig> = {}
 ): Promise<GeminiResponse> {
+  // 🧪 MOCK para testes (retorna resposta simulada instantaneamente)
+  const useMock = process.env.USE_MOCK_GEMINI === "true" || process.env.NODE_ENV === "test";
+  if (useMock) {
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Simular latência mínima
+    return {
+      text: "Resposta mockada do Gemini para testes",
+      metadata: {
+        model: config.model || "gemini-2.5-pro",
+        promptTokens: 50,
+        responseTokens: 20,
+        totalTokens: 70,
+      },
+    };
+  }
+
   // Criar span de tracing para chamada LLM
   const llmSpan = startLLMSpan("gemini-2.5-pro", {
     temperature: config.temperature,

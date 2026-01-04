@@ -35,9 +35,12 @@ test.describe("Fluxo Principal da Aplicação", () => {
   });
 
   test("deve navegar para o CRM de Processos", async ({ page }) => {
+    // Aguardar sidebar carregar
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 10000 });
+
     // Clica no botão de navegação usando Test ID ou ARIA button (Sidebar usa Button, não link)
     const navButton = page
-      .getByTestId("nav-processes")
+      .getByTestId("nav-processos")
       .or(page.getByRole("button", { name: /Processos|CRM|Acervo/i }));
 
     await navButton.click({ timeout: 10000 });

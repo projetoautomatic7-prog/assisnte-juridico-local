@@ -321,7 +321,8 @@ export function initErrorTracking(): void {
 
     // 🔍 Inicializar integração Gemini para AI Monitoring (lazy loading)
     // Dynamic import para evitar erro de módulo não encontrado durante type-check
-    setTimeout(async () => {
+    let geminiTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    geminiTimeoutId = setTimeout(async () => {
       try {
         const { initGeminiIntegration } = await import("../lib/sentry-gemini-integration.js");
         initGeminiIntegration({
@@ -332,7 +333,15 @@ export function initErrorTracking(): void {
       } catch {
         // Silencioso - integração opcional
       }
+      geminiTimeoutId = null;
     }, 1000);
+
+    // Expor para cleanup em testes/hot reload
+    if (typeof window !== "undefined") {
+      (
+        window as unknown as { __sentryGeminiTimeout?: ReturnType<typeof setTimeout> | null }
+      ).__sentryGeminiTimeout = geminiTimeoutId;
+    }
   } catch (error) {
     console.error("❌ Falha ao inicializar Sentry:", error);
   }

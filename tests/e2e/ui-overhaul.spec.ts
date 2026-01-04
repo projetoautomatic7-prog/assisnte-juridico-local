@@ -3,8 +3,21 @@ import { expect, test } from "@playwright/test";
 test.describe("UI Overhaul - E2E Tests", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Navegar para MinutasManager
-    await page.click("text=Minutas");
+    await page.waitForLoadState("networkidle");
+
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
+
+    // Navegar para MinutasManager usando data-testid
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
+    await page.click('[data-testid="nav-minutas"]');
+    await page.waitForTimeout(500);
   });
 
   test.describe("MinutasManager - ViewMode Toggle", () => {

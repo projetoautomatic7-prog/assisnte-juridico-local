@@ -1,5 +1,12 @@
 import { Request, Response, Router } from "express";
 import pg from "pg";
+import { validateBody, validateParams, validateQuery } from "../middleware/validation.js";
+import {
+  CreateMinutaSchema,
+  MinutaIdParamSchema,
+  MinutasQuerySchema,
+  UpdateMinutaSchema,
+} from "../schemas/minutas.schemas.js";
 
 const router = Router();
 
@@ -126,8 +133,8 @@ router.get("/stats/resumo", async (_req: Request, res: Response) => {
   }
 });
 
-router.get("/", async (req: Request, res: Response) => {
-  const { status, tipo, criada_por_agente, processId, limit, offset } = req.query;
+router.get("/", validateQuery(MinutasQuerySchema), async (req: Request, res: Response) => {
+  const { status, tipo, criadoPorAgente, processId, limit, offset } = req.query;
 
   try {
     let whereConditions: string[] = [];
@@ -144,10 +151,9 @@ router.get("/", async (req: Request, res: Response) => {
       params.push(tipo);
     }
 
-    if (criada_por_agente !== undefined) {
-      const isAgente = criada_por_agente === "true";
+    if (criadoPorAgente !== undefined) {
       whereConditions.push(`criado_por_agente = $${paramIndex++}`);
-      params.push(isAgente);
+      params.push(criadoPorAgente);
     }
 
     if (processId && typeof processId === "string") {
@@ -193,7 +199,7 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", validateBody(CreateMinutaSchema), async (req: Request, res: Response) => {
   const {
     titulo,
     processId,
@@ -284,7 +290,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", validateParams(MinutaIdParamSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -313,109 +319,114 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.put("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const updates = req.body;
+router.put(
+  "/:id",
+  validateParams(MinutaIdParamSchema),
+  validateBody(UpdateMinutaSchema),
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const updates = req.body;
 
-  const validTipos = ["peticao", "contrato", "parecer", "recurso", "procuracao", "outro"];
-  const validStatuses = ["rascunho", "em-revisao", "pendente-revisao", "finalizada", "arquivada"];
+    const validTipos = ["peticao", "contrato", "parecer", "recurso", "procuracao", "outro"];
+    const validStatuses = ["rascunho", "em-revisao", "pendente-revisao", "finalizada", "arquivada"];
 
-  if (updates.tipo && !validTipos.includes(updates.tipo)) {
-    return res.status(400).json({
-      success: false,
-      error: `tipo inválido. Valores permitidos: ${validTipos.join(", ")}`,
-    });
-  }
-
-  if (updates.status && !validStatuses.includes(updates.status)) {
-    return res.status(400).json({
-      success: false,
-      error: `status inválido. Valores permitidos: ${validStatuses.join(", ")}`,
-    });
-  }
-
-  try {
-    const existsResult = await pool.query("SELECT id FROM minutas WHERE id = $1", [id]);
-    if (existsResult.rows.length === 0) {
-      return res.status(404).json({
+    if (updates.tipo && !validTipos.includes(updates.tipo)) {
+      return res.status(400).json({
         success: false,
-        error: `Minuta com id '${id}' não encontrada`,
+        error: `tipo inválido. Valores permitidos: ${validTipos.join(", ")}`,
       });
     }
 
-    const immutableFields = ["id", "criadoEm", "criado_em"];
-    immutableFields.forEach((field) => delete updates[field]);
-
-    const fieldMapping: Record<string, string> = {
-      titulo: "titulo",
-      processId: "process_id",
-      tipo: "tipo",
-      conteudo: "conteudo",
-      status: "status",
-      autor: "autor",
-      googleDocsId: "google_docs_id",
-      googleDocsUrl: "google_docs_url",
-      ultimaSincronizacao: "ultima_sincronizacao",
-      criadoPorAgente: "criado_por_agente",
-      agenteId: "agente_id",
-      templateId: "template_id",
-      expedienteId: "expediente_id",
-      variaveis: "variaveis",
-    };
-
-    let setClauses: string[] = [];
-    let params: any[] = [];
-    let paramIndex = 1;
-
-    for (const [key, value] of Object.entries(updates)) {
-      const dbField = fieldMapping[key] || key;
-      if (dbField && !immutableFields.includes(dbField)) {
-        setClauses.push(`${dbField} = $${paramIndex++}`);
-        if (dbField === "variaveis") {
-          params.push(JSON.stringify(value));
-        } else {
-          params.push(value);
-        }
-      }
+    if (updates.status && !validStatuses.includes(updates.status)) {
+      return res.status(400).json({
+        success: false,
+        error: `status inválido. Valores permitidos: ${validStatuses.join(", ")}`,
+      });
     }
 
-    setClauses.push(`atualizado_em = NOW()`);
+    try {
+      const existsResult = await pool.query("SELECT id FROM minutas WHERE id = $1", [id]);
+      if (existsResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `Minuta com id '${id}' não encontrada`,
+        });
+      }
 
-    if (setClauses.length === 1) {
-      const result = await pool.query("SELECT * FROM minutas WHERE id = $1", [id]);
+      const immutableFields = ["id", "criadoEm", "criado_em"];
+      immutableFields.forEach((field) => delete updates[field]);
+
+      const fieldMapping: Record<string, string> = {
+        titulo: "titulo",
+        processId: "process_id",
+        tipo: "tipo",
+        conteudo: "conteudo",
+        status: "status",
+        autor: "autor",
+        googleDocsId: "google_docs_id",
+        googleDocsUrl: "google_docs_url",
+        ultimaSincronizacao: "ultima_sincronizacao",
+        criadoPorAgente: "criado_por_agente",
+        agenteId: "agente_id",
+        templateId: "template_id",
+        expedienteId: "expediente_id",
+        variaveis: "variaveis",
+      };
+
+      let setClauses: string[] = [];
+      let params: any[] = [];
+      let paramIndex = 1;
+
+      for (const [key, value] of Object.entries(updates)) {
+        const dbField = fieldMapping[key] || key;
+        if (dbField && !immutableFields.includes(dbField)) {
+          setClauses.push(`${dbField} = $${paramIndex++}`);
+          if (dbField === "variaveis") {
+            params.push(JSON.stringify(value));
+          } else {
+            params.push(value);
+          }
+        }
+      }
+
+      setClauses.push(`atualizado_em = NOW()`);
+
+      if (setClauses.length === 1) {
+        const result = await pool.query("SELECT * FROM minutas WHERE id = $1", [id]);
+        const minuta = rowToMinuta(result.rows[0]);
+        return res.json({
+          success: true,
+          data: minuta,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      params.push(id);
+      const result = await pool.query(
+        `UPDATE minutas SET ${setClauses.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        params
+      );
+
       const minuta = rowToMinuta(result.rows[0]);
-      return res.json({
+
+      console.log(`[Minutas] Updated minuta: ${id}`);
+
+      res.json({
         success: true,
         data: minuta,
         timestamp: new Date().toISOString(),
       });
+    } catch (error) {
+      console.error("[Minutas] Error updating minuta:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erro ao atualizar minuta",
+      });
     }
-
-    params.push(id);
-    const result = await pool.query(
-      `UPDATE minutas SET ${setClauses.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
-      params
-    );
-
-    const minuta = rowToMinuta(result.rows[0]);
-
-    console.log(`[Minutas] Updated minuta: ${id}`);
-
-    res.json({
-      success: true,
-      data: minuta,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("[Minutas] Error updating minuta:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erro ao atualizar minuta",
-    });
   }
-});
+);
 
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", validateParams(MinutaIdParamSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -444,13 +455,21 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/:id/duplicar", async (req: Request, res: Response) => {
-  await duplicarMinuta(req, res);
-});
+router.post(
+  "/:id/duplicar",
+  validateParams(MinutaIdParamSchema),
+  async (req: Request, res: Response) => {
+    await duplicarMinuta(req, res);
+  }
+);
 
-router.post("/:id/duplicate", async (req: Request, res: Response) => {
-  await duplicarMinuta(req, res);
-});
+router.post(
+  "/:id/duplicate",
+  validateParams(MinutaIdParamSchema),
+  async (req: Request, res: Response) => {
+    await duplicarMinuta(req, res);
+  }
+);
 
 async function duplicarMinuta(req: Request, res: Response) {
   const { id } = req.params;

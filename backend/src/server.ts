@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
 import { inicializarTabelaExpedientes } from "./db/expedientes.js";
@@ -47,6 +48,42 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rate Limiting - Proteção contra abuso de API
+// Configurável via variáveis de ambiente para testes
+const isTestEnv = process.env.NODE_ENV === "test";
+const isDevEnv = process.env.NODE_ENV === "development";
+const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED !== "false";
+
+const apiLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 min default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "1000" : "100")),
+  skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
+  message: { error: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting mais restritivo para endpoints de IA
+const aiLimiter = rateLimit({
+  windowMs: parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS || "900000"), // 15 min
+  max: parseInt(
+    process.env.AI_RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "500" : isDevEnv ? "100" : "30")
+  ),
+  skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
+  message: { error: "Too many AI requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+console.log(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
+console.log(`[Rate Limiting] API Max: ${apiLimiter.max || "unlimited"} req/window`);
+console.log(`[Rate Limiting] AI Max: ${aiLimiter.max || "unlimited"} req/window`);
+
+// Aplicar rate limiting geral em todas as rotas de API (se habilitado)
+if (rateLimitEnabled && !isTestEnv) {
+  app.use("/api/", apiLimiter);
+}
+
 // Request logging
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -65,11 +102,20 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/spark", sparkRouter);
 app.use("/api/kv", kvRouter);
-app.use("/api/llm", llmRouter);
-app.use("/api/agents", agentsRouter);
+// Rate limiting específico para endpoints de IA (se habilitado)
+if (rateLimitEnabled && !isTestEnv) {
+  app.use("/api/llm", aiLimiter, llmRouter);
+  app.use("/api/agents", aiLimiter, agentsRouter);
+  app.use("/api/ai", aiLimiter, aiCommandsRouter);
+  app.use("/api/llm-stream", aiLimiter, llmStreamRouter);
+} else {
+  app.use("/api/llm", llmRouter);
+  app.use("/api/agents", agentsRouter);
+  app.use("/api/ai", aiCommandsRouter);
+  app.use("/api/llm-stream", llmStreamRouter);
+}
+// Rotas sem rate limiting adicional
 app.use("/api/minutas", minutasRouter);
-app.use("/api/ai", aiCommandsRouter);
-app.use("/api/llm-stream", llmStreamRouter);
 app.use("/api/djen", djenRouter);
 app.use("/api/editor", editorRouter);
 app.use("/api/expedientes", expedientesRouter);

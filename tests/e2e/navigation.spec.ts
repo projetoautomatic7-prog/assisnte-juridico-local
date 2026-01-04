@@ -1,9 +1,22 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Navegação e Interações", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
+  });
+
   test("deve navegar entre páginas e voltar", async ({ page }) => {
     // browser_navigate
-    await page.goto("/");
     await expect(page).toHaveURL(/\/$/);
 
     // Navigate to another page using a link click or navigation

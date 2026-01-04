@@ -346,11 +346,19 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
     window.postMessage(pingMessage, window.location.origin);
 
     // Verificar conexão a cada 30s
+    // Rastrear timeout para limpeza adequada
+    let connectionTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const connectionCheckInterval = setInterval(() => {
       window.postMessage(pingMessage, window.location.origin);
 
+      // Limpar timeout anterior antes de criar novo
+      if (connectionTimeoutId !== null) {
+        clearTimeout(connectionTimeoutId);
+      }
+
       // Se não receber resposta em 5s, marcar como desconectado
-      const timeoutId = setTimeout(() => {
+      connectionTimeoutId = setTimeout(() => {
         setState((prev) => {
           if (prev.isConnected && !prev.isSyncing) {
             return {
@@ -360,15 +368,17 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
           }
           return prev;
         });
+        connectionTimeoutId = null;
       }, 5000);
-
-      return () => clearTimeout(timeoutId);
     }, 30000);
 
     // Cleanup
     return () => {
       window.removeEventListener("message", handleExtensionMessage);
       clearInterval(connectionCheckInterval);
+      if (connectionTimeoutId !== null) {
+        clearTimeout(connectionTimeoutId);
+      }
       console.log("[PJE Sync] Hook desmontado");
     };
   }, [handleExtensionMessage]);
