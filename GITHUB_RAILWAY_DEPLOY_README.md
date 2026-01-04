@@ -11,7 +11,7 @@
 ### 2. Obter Project ID
 1. No Railway Dashboard, selecione seu projeto
 2. Vá para **Settings** > **General**
-3. Copie o **Project ID**
+3. Copie o **Project ID** (atual: `d60e5f8d-fb13-4361-b489-ba89eaddd292`)
 
 ### 3. Configurar Secrets no GitHub
 1. Acesse seu repositório no GitHub
@@ -37,7 +37,7 @@
 ## 📋 Checklist de Configuração
 
 - [ ] Railway Token criado e adicionado como secret
-- [ ] Railway Project ID adicionado como secret  
+- [ ] Railway Project ID adicionado como secret
 - [ ] Todas as variáveis de ambiente configuradas no Railway
 - [ ] Workflow `railway-deploy.yml` criado
 - [ ] Primeiro deploy testado
