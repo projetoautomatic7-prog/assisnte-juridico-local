@@ -26,20 +26,27 @@ import { createMinutaFromAgentTask } from "./lib/minuta-service-backend.js";
 function _requireAuth(req: VercelRequest): boolean {
   const authHeader = req.headers.authorization;
 
-  // Permitir acesso em desenvolvimento/localhost
-  if (!authHeader) {
-    // Se FORCE_AUTH_CHECK for true, sempre exige autenticação (retorna false)
-    if (process.env.FORCE_AUTH_CHECK === "true") {
+  // Se FORCE_AUTH_CHECK for true, sempre exige autenticação
+  if (process.env.FORCE_AUTH_CHECK === "true") {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return false;
     }
-
-    const isDev =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "test" ||
-      req.headers.host?.includes("localhost") === true ||
-      req.headers.host?.includes("vercel.app") === true;
+    const token = authHeader.substring(7);
+    return token.length > 32;
   }
 
+  // Permitir acesso em desenvolvimento/localhost sem autenticação
+  const isDev =
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "test" ||
+    req.headers.host?.includes("localhost") === true ||
+    req.headers.host?.includes("vercel.app") === true;
+
+  if (isDev && !authHeader) {
+    return true;
+  }
+
+  // Em produção, exigir autenticação
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
   }
@@ -1386,21 +1393,40 @@ function isVercelEnvironment(req: VercelRequest): boolean {
  */
 function hasValidAuthentication(req: VercelRequest): boolean {
   const authHeader = req.headers.authorization;
-  const hasBearer = authHeader?.startsWith("Bearer ");
-  const hasApiKey = !!req.headers["x-api-key"];
-  return !!(hasBearer || hasApiKey);
+  const apiKey = req.headers["x-api-key"];
+  
+  // Validar Bearer token
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    // Token válido deve ter pelo menos 32 caracteres
+    if (token.length > 32) {
+      return true;
+    }
+  }
+  
+  // Validar API key
+  if (apiKey && typeof apiKey === "string" && apiKey.length > 16) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
  * Verifica autorização da requisição (Refatorado - SonarCloud S3776)
  */
 function isAuthorized(req: VercelRequest): boolean {
+  // Em produção, sempre exigir autenticação
+  if (process.env.NODE_ENV === "production") {
+    return hasValidAuthentication(req);
+  }
+
   // Aceitar se tem autenticação válida
   if (hasValidAuthentication(req)) {
     return true;
   }
 
-  // Aceitar se é ambiente confiável (dev ou Vercel)
+  // Em dev/test, aceitar se é ambiente confiável (dev ou Vercel)
   return isLocalOrDevEnvironment(req) || isVercelEnvironment(req);
 }
 

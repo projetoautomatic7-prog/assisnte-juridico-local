@@ -28,13 +28,9 @@ export default defineConfig({
     hookTimeout: 60000, // 1 minuto para hooks
     // Configuração de pool para estabilidade (usar threads em vez de forks)
     pool: "threads",
-    poolOptions: {
-      threads: {
-        // Ajuste conservador: poucas threads para evitar OOM/worker errors
-        minThreads: 1,
-        maxThreads: process.env.CI ? 2 : 1,
-      },
-    },
+    // Vitest 4 moved poolOptions to top-level
+    minThreads: 1,
+    maxThreads: process.env.CI ? 2 : 1,
     // Ajustar concorrência baseado em ambiente para estabilidade
     maxConcurrency: process.env.CI ? 3 : 1,
     // ✅ Isolar testes no CI para melhor confiabilidade
