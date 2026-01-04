@@ -24,6 +24,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     }
 
     // Navegar para seção Minutas usando data-testid
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
     const minutasLink = page.locator('[data-testid="nav-minutas"]');
     await minutasLink.click();
     await page.waitForTimeout(1000);

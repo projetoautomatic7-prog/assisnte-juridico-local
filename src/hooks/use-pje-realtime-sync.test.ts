@@ -65,7 +65,7 @@ describe("usePJERealTimeSync - Memory Leak Prevention", () => {
     // Avançar múltiplos ciclos
     for (let i = 0; i < 5; i++) {
       vi.advanceTimersByTime(30000);
-      
+
       // Avançar um pouco mais para que o timeout execute se houver
       vi.advanceTimersByTime(6000);
     }
@@ -80,10 +80,10 @@ describe("usePJERealTimeSync - Memory Leak Prevention", () => {
 
     // Primeiro ciclo
     vi.advanceTimersByTime(30000);
-    
+
     // Segundo ciclo - deve limpar anterior e criar novo
     vi.advanceTimersByTime(30000);
-    
+
     // Terceiro ciclo
     vi.advanceTimersByTime(30000);
 

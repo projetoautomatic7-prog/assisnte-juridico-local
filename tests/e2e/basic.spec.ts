@@ -1,9 +1,21 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Assistente Jurídico - Testes Básicos", () => {
-  test("deve carregar a página inicial", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
+  });
+
+  test("deve carregar a página inicial", async ({ page }) => {
     // Aguarda o título ou algum elemento aparecer
     await expect(page).toHaveTitle(/Assistente Jurídico/i);
   });

@@ -1,7 +1,7 @@
 # 📊 Relatório Final - Testes E2E Editor de Minutas
 
-**Data:** 04 de Janeiro de 2026  
-**Executor:** GitHub Copilot  
+**Data:** 04 de Janeiro de 2026
+**Executor:** GitHub Copilot
 **Arquivo Testado:** `tests/e2e/editor-minutas-ckeditor.spec.ts`
 
 ---
@@ -29,7 +29,7 @@
 - **Validações:** Modal abre, título correto, CKEditor carrega
 - **Status:** ✅ PASSOU
 
-### 2. ✓ Deve alternar entre visualização em grade e lista  
+### 2. ✓ Deve alternar entre visualização em grade e lista
 - **Duração:** 16.6s
 - **Validações:** Toggle de visualização funciona
 - **Status:** ✅ PASSOU
@@ -49,7 +49,7 @@
 
 **Falhas:**
 1. ❌ Deve criar nova minuta com conteúdo básico
-2. ❌ Deve usar toolbar de formatação do CKEditor  
+2. ❌ Deve usar toolbar de formatação do CKEditor
 3. ❌ Deve editar minuta existente
 4. ❌ Deve duplicar minuta
 5. ❌ Deve aprovar minuta (finalizar)
@@ -204,7 +204,7 @@ expect(invalidField).toBeGreaterThan(0);
 
 2. **Corrigir seletores de botões em cards**
    - Arquivos: Testes de editar/deletar/duplicar/aprovar
-   - Tempo estimado: 20 min  
+   - Tempo estimado: 20 min
    - Impacto: +4 testes passando
 
 ### Prioridade 🟡 MÉDIA
@@ -242,7 +242,7 @@ expect(invalidField).toBeGreaterThan(0);
 - ✅ Cada teste falho tem screenshot no momento do erro
 - ✅ Localização: `test-results/*/test-failed-1.png`
 
-### Vídeos de Execução  
+### Vídeos de Execução
 - ✅ Cada teste tem gravação completa em WebM
 - ✅ Localização: `test-results/*/video.webm`
 
@@ -311,9 +311,9 @@ expect(invalidField).toBeGreaterThan(0);
 | Aprovar/Finalizar | ⚠️ Testado | Botão não encontrado |
 | Validação de campos | ⚠️ Testado | Erro não aparece |
 
-**Legenda:**  
-✅ Funciona corretamente  
-⚠️ Funcionalidade OK, teste precisa ajuste  
+**Legenda:**
+✅ Funciona corretamente
+⚠️ Funcionalidade OK, teste precisa ajuste
 ❌ Funcionalidade ou teste quebrado
 
 ---
@@ -330,10 +330,10 @@ expect(invalidField).toBeGreaterThan(0);
 
 ## ✍️ Assinatura
 
-**Responsável:** GitHub Copilot  
-**Data:** 04/01/2026 02:50 UTC  
-**Branch:** `fix/use-auto-minuta-state-updates`  
-**Commit:** Correções de seletores E2E aplicadas  
+**Responsável:** GitHub Copilot
+**Data:** 04/01/2026 02:50 UTC
+**Branch:** `fix/use-auto-minuta-state-updates`
+**Commit:** Correções de seletores E2E aplicadas
 
 **Conclusão:** O sistema evoluiu significativamente. A infraestrutura de testes está sólida (backend, seletores, timing). Agora é necessário apenas ajustar os métodos de interação com o CKEditor e refinar seletores de botões para alcançar 100% de sucesso.
 
