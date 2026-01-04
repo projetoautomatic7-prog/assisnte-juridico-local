@@ -2,8 +2,8 @@
   "name": "Assistente Jurídico PJe",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "hostRequirements": {
-    "cpus": 8,
-    "memory": "32gb",
+    "cpus": 4,
+    "memory": "8gb",
     "storage": "32gb"
   },
   "features": {
@@ -140,8 +140,9 @@
     }
   },
   "postCreateCommand": "npm install",
-  // Rodar auto-init ao iniciar o container (de maneira não bloqueante)
-  "postStartCommand": "bash auto-init.sh > /tmp/auto-init.log 2>&1 &",
+  // Modo LITE para Codespaces - evita sobrecarga de recursos
+  // Para ativar modo completo: bash auto-init.sh
+  "postStartCommand": "echo '✅ Codespace pronto! Use: npm run dev' > /tmp/codespace-ready.log",
   "forwardPorts": [5173, 5000],
   "portsAttributes": {
     "5173": {

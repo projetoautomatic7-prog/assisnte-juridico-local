@@ -68,7 +68,7 @@
       "label": "auto-init",
       "type": "shell",
       "command": "${workspaceFolder}/auto-init.sh",
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "dependsOn": [
         "auto-dev",
         "auto-watch",
@@ -90,7 +90,7 @@
         "sleep 60 && chmod +x scripts/sonar-auto-analyze.sh && while true; do ./scripts/sonar-auto-analyze.sh --fix 2>&1 | tee -a .sonar-results/auto-analyze.log; sleep 300; done"
       ],
       "isBackground": true,
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "never",
         "panel": "dedicated",
@@ -106,7 +106,7 @@
       "args": ["run", "dev"],
       "isBackground": true,
       "group": "build",
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "options": { "cwd": "${workspaceFolder}" }
     },
     {
@@ -116,7 +116,7 @@
       "args": ["scripts/auto-test-watcher.sh", "--mode", "smart"],
       "isBackground": true,
       "group": "test",
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -143,7 +143,7 @@
       "args": ["run", "test:watch:auto"],
       "isBackground": true,
       "group": "test",
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -160,7 +160,7 @@
         "while true; do sleep 30; npm run lint -- --fix --quiet 2>/dev/null || true; done"
       ],
       "isBackground": true,
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "never",
         "panel": "dedicated",
@@ -396,7 +396,7 @@
       "label": "auto-scan-issues",
       "type": "shell",
       "command": "${workspaceFolder}/auto-create-issues.sh",
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "silent",
         "panel": "dedicated",
@@ -448,7 +448,7 @@
       "type": "shell",
       "command": "${workspaceFolder}/auto-debug-fix.sh",
       "isBackground": true,
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "presentation": {
         "reveal": "silent",
         "panel": "dedicated",
@@ -563,7 +563,7 @@
         "while true; do npm run test:run || ./scripts/auto-fix-tests.sh; sleep 60; done"
       ],
       "isBackground": true,
-      "runOptions": { "runOn": "folderOpen" },
+      "runOptions": {},
       "group": "test",
       "presentation": {
         "reveal": "silent",
