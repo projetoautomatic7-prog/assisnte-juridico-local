@@ -100,6 +100,9 @@ export function useAutoMinuta() {
 
     if (petitionTasks.length === 0) return;
 
+    // ✅ FIX: Processar todas as tarefas em batch e atualizar estado apenas uma vez
+    const newMinutas: Minuta[] = [];
+
     // Processar cada tarefa nova
     for (const task of petitionTasks) {
       const resultData = (task.result?.data || {}) as {
@@ -123,52 +126,56 @@ export function useAutoMinuta() {
           continue;
         }
 
-        // Adicionar minuta validada
-        setMinutas((current) => [...(current || []), newMinuta!]);
+        // Adicionar à lista de novas minutas
+        newMinutas.push(newMinuta);
+
+        // Marcar como processada no ref
+        processedTasksRef.current.add(task.id);
+
+        // Notificar usuário individualmente
+        toast.success(`📝 Nova minuta criada pelo Agente de Redação!`, {
+          description: newMinuta.titulo,
+          duration: 8000,
+          action: {
+            label: "Ver Minutas",
+            onClick: () => {
+              // Navegar para minutas (se tiver router)
+              globalThis.window.location.hash = "#minutas";
+            },
+          },
+        });
+
+        console.log("[AutoMinuta] Minuta criada automaticamente:", {
+          id: newMinuta.id,
+          titulo: newMinuta.titulo,
+          taskId: task.id,
+        });
       } catch (error) {
         console.error("[AutoMinuta] Erro ao criar minuta:", error);
         toast.error("Erro ao criar minuta automática", {
           description: error instanceof Error ? error.message : "Erro desconhecido",
         });
-        continue;
       }
+    }
 
-      // Marcar como processada
-      processedTasksRef.current.add(task.id);
+    // ✅ FIX: Atualizar estado apenas uma vez após processar todas as tarefas
+    if (newMinutas.length > 0) {
+      // Adicionar todas as novas minutas de uma vez
+      setMinutas((current) => [...(current || []), ...newMinutas]);
 
-      // Salvar no localStorage e atualizar contador atomicamente
+      // Salvar no localStorage e atualizar contador apenas uma vez
       try {
         localStorage.setItem(
           "processed-petition-tasks",
           JSON.stringify([...processedTasksRef.current])
         );
-        // Update count state (single call)
         setProcessedTasksCount(processedTasksRef.current.size);
       } catch (e) {
         console.error("[AutoMinuta] Erro ao salvar tarefas processadas:", e);
       }
 
-      // Notificar usuário
-      toast.success(`📝 Nova minuta criada pelo Agente de Redação!`, {
-        description: newMinuta.titulo,
-        duration: 8000,
-        action: {
-          label: "Ver Minutas",
-          onClick: () => {
-            // Navegar para minutas (se tiver router)
-            globalThis.window.location.hash = "#minutas";
-          },
-        },
-      });
-
-      // Disparar evento para sincronização de contadores no CRM
+      // Disparar evento único para sincronização de contadores no CRM
       globalThis.dispatchEvent(new CustomEvent("minuta-added"));
-
-      console.log("[AutoMinuta] Minuta criada automaticamente:", {
-        id: newMinuta.id,
-        titulo: newMinuta.titulo,
-        taskId: task.id,
-      });
     }
   }, [completedTasks, setMinutas]);
 

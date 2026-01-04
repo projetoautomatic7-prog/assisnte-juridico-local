@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { validateDateComponents, parseBrazilianDate } from "./date-utils";
+import { describe, expect, it } from "vitest";
+import { parseBrazilianDate, validateDateComponents } from "./date-utils";
 
 describe("validateDateComponents", () => {
   describe("datas válidas", () => {

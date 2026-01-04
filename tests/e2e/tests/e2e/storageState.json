@@ -7,6 +7,10 @@
         {
           "name": "user",
           "value": "{\"id\":\"local-admin\",\"email\":\"admin@local\",\"name\":\"Administrador\",\"avatarUrl\":\"\",\"role\":\"admin\"}"
+        },
+        {
+          "name": "monitored-lawyers",
+          "value": "[{\"id\":\"thiago-bodevan-veiga\",\"name\":\"Thiago Bodevan Veiga\",\"oab\":\"184404/MG\",\"enabled\":true}]"
         }
       ]
     }
