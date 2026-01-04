@@ -54,11 +54,11 @@ echo "📋 1. VERIFICANDO DEVCONTAINER.JSON"
 echo "-----------------------------------"
 
 # Check CPU requirement
-cpu_req=$(grep -A 3 '"hostRequirements"' .devcontainer/devcontainer.json | grep '"cpus"' | grep -oP '\d+')
+cpu_req=$(grep -A 3 '"hostRequirements"' .devcontainer/devcontainer.json | awk -F: '/"cpus"/ { gsub(/[^0-9]/, "", $2); print $2; exit }')
 check_item "CPUs solicitadas" "4" "$cpu_req"
 
 # Check Memory requirement
-mem_req=$(grep -A 3 '"hostRequirements"' .devcontainer/devcontainer.json | grep '"memory"' | grep -oP '\d+gb')
+mem_req=$(grep -A 3 '"hostRequirements"' .devcontainer/devcontainer.json | awk -F: '/"memory"/ { gsub(/[^0-9A-Za-z]/, "", $2); print $2; exit }')
 check_item "Memória solicitada" "8gb" "$mem_req"
 
 # Check postStartCommand
