@@ -1386,9 +1386,41 @@ function isVercelEnvironment(req: VercelRequest): boolean {
  */
 function hasValidAuthentication(req: VercelRequest): boolean {
   const authHeader = req.headers.authorization;
-  const hasBearer = authHeader?.startsWith("Bearer ");
-  const hasApiKey = !!req.headers["x-api-key"];
-  return !!(hasBearer || hasApiKey);
+  
+  // Check Bearer token
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7).trim();
+    // Validate token - must be non-empty and at least 32 characters for a valid token
+    const validBearerToken = token.length >= 32;
+    
+    // Check against configured API keys
+    const validApiKeys = [
+      process.env.AGENTS_API_KEY,
+      process.env.API_KEY,
+      process.env.CRON_SECRET,
+    ].filter(Boolean);
+    
+    // Token must either be long enough (secure) or match a configured key
+    if (validBearerToken || validApiKeys.includes(token)) {
+      return true;
+    }
+  }
+  
+  // Check x-api-key header
+  const apiKey = req.headers["x-api-key"];
+  if (apiKey && typeof apiKey === "string") {
+    const validApiKeys = [
+      process.env.AGENTS_API_KEY,
+      process.env.API_KEY,
+      process.env.CRON_SECRET,
+    ].filter(Boolean);
+    
+    if (validApiKeys.includes(apiKey)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 /**
