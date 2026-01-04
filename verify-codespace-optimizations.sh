@@ -76,7 +76,8 @@ echo "📋 2. VERIFICANDO TASKS AUTOMÁTICAS"
 echo "-----------------------------------"
 
 # Count auto-start tasks
-auto_tasks=$(grep -c '"runOn": "folderOpen"' .vscode/tasks.json || echo "0")
+auto_tasks=$(grep -c '"runOn": "folderOpen"' .vscode/tasks.json 2>/dev/null || true)
+auto_tasks=${auto_tasks:-0}
 check_item "Tasks com auto-start" "0" "$auto_tasks"
 
 echo ""
