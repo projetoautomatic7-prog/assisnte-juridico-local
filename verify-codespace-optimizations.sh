@@ -139,7 +139,7 @@ cpu_cores=$(nproc)
 echo -e "${GREEN}ℹ️${NC}  CPU cores disponíveis: $cpu_cores"
 
 # Check running Node.js processes
-node_processes=$(ps aux | grep -v grep | grep -c node || echo "0")
+node_processes=$(pgrep -c node 2>/dev/null || echo "0")
 check_warning "Processos Node.js ativos" "$node_processes" "3"
 
 echo ""
