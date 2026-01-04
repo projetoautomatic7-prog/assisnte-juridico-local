@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
 import { inicializarTabelaExpedientes } from "./db/expedientes.js";
@@ -47,6 +48,27 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rate Limiting - Proteção contra abuso de API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limite de 100 requisições por janela por IP
+  message: { error: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting mais restritivo para endpoints de IA
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 30, // Limite de 30 requisições de IA por janela
+  message: { error: "Too many AI requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Aplicar rate limiting geral em todas as rotas de API
+app.use("/api/", apiLimiter);
+
 // Request logging
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -65,11 +87,13 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/spark", sparkRouter);
 app.use("/api/kv", kvRouter);
-app.use("/api/llm", llmRouter);
-app.use("/api/agents", agentsRouter);
+// Rate limiting específico para endpoints de IA
+app.use("/api/llm", aiLimiter, llmRouter);
+app.use("/api/agents", aiLimiter, agentsRouter);
+app.use("/api/ai", aiLimiter, aiCommandsRouter);
+app.use("/api/llm-stream", aiLimiter, llmStreamRouter);
+// Rotas sem rate limiting adicional
 app.use("/api/minutas", minutasRouter);
-app.use("/api/ai", aiCommandsRouter);
-app.use("/api/llm-stream", llmStreamRouter);
 app.use("/api/djen", djenRouter);
 app.use("/api/editor", editorRouter);
 app.use("/api/expedientes", expedientesRouter);

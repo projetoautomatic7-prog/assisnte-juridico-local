@@ -10,8 +10,10 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
   });
 
   test("deve criar e editar minuta com TiptapEditorV2", async ({ page }) => {
+    // Aguardar sidebar carregar completamente
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
     // Clica no menu Minutas usando data-testid da sidebar
-    await page.click('[data-testid="nav-minutas"]');
+    await page.click('[data-testid="nav-minutas"]', { timeout: 10000 });
 
     // Aguarda carregar a lista de minutas
     await page.waitForTimeout(500);
@@ -72,6 +74,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve usar comandos AI rápidos no editor", async ({ page }) => {
     // Navega para Minutas
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
     await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
@@ -119,6 +122,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
   test("deve exibir e usar variáveis no editor", async ({ page }) => {
     // Navega para Minutas
+    await page.waitForSelector('[data-testid="sidebar-nav"]', { timeout: 15000 });
     await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 

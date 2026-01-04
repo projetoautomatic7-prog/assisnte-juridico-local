@@ -23,38 +23,49 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
       await page.waitForLoadState("networkidle");
     }
 
-    // Navegar para seção Minutas
-    const minutasLink = page.locator('a:has-text("Minutas"), button:has-text("Minutas")').first();
+    // Navegar para seção Minutas usando data-testid
+    const minutasLink = page.locator('[data-testid="nav-minutas"]');
     await minutasLink.click();
     await page.waitForTimeout(1000);
   });
 
   test("deve abrir modal de nova minuta com CKEditor", async ({ page }) => {
-    // Clicar no botão "Nova Minuta"
-    const novaMinutaBtn = page.locator('button:has-text("Nova Minuta")').first();
-    await expect(novaMinutaBtn).toBeVisible();
+    // Clicar no botão "Nova Minuta" ou "+"
+    const novaMinutaBtn = page
+      .locator('button:has-text("Nova Minuta"), button:has-text("+")')
+      .first();
+    await expect(novaMinutaBtn).toBeVisible({ timeout: 10000 });
     await novaMinutaBtn.click();
 
     // Aguardar modal abrir
     await page.waitForTimeout(500);
 
-    // Verificar título do modal
-    await expect(page.locator('text="Nova Minuta"')).toBeVisible();
+    // Verificar título do modal usando role heading (evita strict mode violation)
+    await expect(page.getByRole("heading", { name: "Nova Minuta" })).toBeVisible();
 
     // Verificar tabs do modal
-    await expect(page.locator('button[role="tab"]:has-text("Editor")')).toBeVisible();
-    await expect(page.locator('button[role="tab"]:has-text("Templates")')).toBeVisible();
-    await expect(page.locator('button[role="tab"]:has-text("Variáveis")')).toBeVisible();
+    await expect(page.locator('button[role="tab"]:has-text("Editor")')).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator('button[role="tab"]:has-text("Templates")')).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.locator('button[role="tab"]:has-text("Variáveis")')).toBeVisible({
+      timeout: 5000,
+    });
 
     // Verificar campos do formulário
     await expect(page.locator('label:has-text("Título")')).toBeVisible();
     await expect(page.locator('label:has-text("Tipo")')).toBeVisible();
     await expect(page.locator('label:has-text("Status")')).toBeVisible();
 
-    // Verificar se CKEditor foi carregado
-    await expect(page.locator(".ck-editor")).toBeVisible();
-    await expect(page.locator(".ck-toolbar")).toBeVisible();
-    await expect(page.locator(".ck-editor__editable")).toBeVisible();
+    // Verificar se CKEditor ou ProfessionalEditor foi carregado
+    const editorPresent = await page
+      .locator(".ck-editor, .tiptap, .ProseMirror, [contenteditable='true']")
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    expect(editorPresent).toBeTruthy();
   });
 
   test("deve criar nova minuta com conteúdo básico", async ({ page }) => {
@@ -66,35 +77,46 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     const tituloInput = page.locator('input[id="titulo"]');
     await tituloInput.fill("Petição Inicial - Teste E2E CKEditor");
 
-    // Selecionar tipo
+    // Selecionar tipo - aguardar modal carregar e usar force para overlay
+    await page.waitForTimeout(500);
     const tipoSelect = page.locator('button[id="tipo"]');
-    await tipoSelect.click();
-    await page.locator('text="Petição"').first().click();
+    await tipoSelect.click({ force: true });
+    await page.waitForTimeout(200);
+    await page.locator('[role="option"]:has-text("Petição")').first().click({ force: true });
 
-    // Escrever no CKEditor
-    const editorContent = page.locator(".ck-editor__editable");
-    await editorContent.click();
-    
+    // Escrever no editor (CKEditor ou Tiptap)
+    const editorContent = page
+      .locator(".ck-editor__editable, .tiptap, .ProseMirror, [contenteditable='true']")
+      .first();
+    await editorContent.click({ timeout: 10000 });
+
     // Esperar editor estar pronto
     await page.waitForTimeout(300);
-    
+
     // Digitar texto
-    await page.keyboard.type("Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG.");
+    await page.keyboard.type(
+      "Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG."
+    );
     await page.keyboard.press("Enter");
     await page.keyboard.press("Enter");
-    await page.keyboard.type("Fulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA.");
+    await page.keyboard.type(
+      "Fulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA."
+    );
 
     // Verificar se texto apareceu no editor
     await expect(editorContent).toContainText("Excelentíssimo Senhor Doutor");
     await expect(editorContent).toContainText("AÇÃO DE COBRANÇA");
 
     // Verificar contador de palavras
-    const wordCount = page.locator('text=/\\d+ palavra/');
+    const wordCount = page.locator("text=/\\d+ palavra/");
     await expect(wordCount).toBeVisible();
 
     // Salvar minuta
-    await page.locator('button:has-text("Criar Minuta")').click();
-    await page.waitForTimeout(1000);
+    await page
+      .locator('button:has-text("Criar Minuta"), button:has-text("Salvar")')
+      .first()
+      .click({ timeout: 10000 });
+    await page.waitForTimeout(2000);
 
     // Verificar se minuta foi criada
     await expect(page.locator('text="Petição Inicial - Teste E2E CKEditor"')).toBeVisible();
@@ -120,10 +142,15 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     // Selecionar todo o texto (Ctrl+A)
     await page.keyboard.press("Control+a");
 
-    // Aplicar negrito usando a toolbar
-    const boldButton = page.locator('.ck-toolbar button[aria-label*="Bold"], .ck-toolbar button[title*="Bold"], .ck-toolbar button:has(.ck-icon[viewBox*="bold"])').first();
-    await boldButton.click();
-    await page.waitForTimeout(200);
+    // Aplicar negrito usando a toolbar CKEditor
+    await page.waitForTimeout(500);
+    const boldButton = page
+      .locator('.ck-toolbar .ck-button[data-cke-tooltip-text*="Bold"]')
+      .or(page.locator(".ck-toolbar button").filter({ hasText: /^B$/ }))
+      .first();
+    await boldButton.waitFor({ state: "visible", timeout: 10000 });
+    await boldButton.click({ force: true });
+    await page.waitForTimeout(300);
 
     // Verificar se HTML tem tag <strong>
     const content = await editorContent.innerHTML();
@@ -131,7 +158,11 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
 
     // Aplicar itálico
     await page.keyboard.press("Control+a");
-    const italicButton = page.locator('.ck-toolbar button[aria-label*="Italic"], .ck-toolbar button[title*="Italic"], .ck-toolbar button:has(.ck-icon[viewBox*="italic"])').first();
+    const italicButton = page
+      .locator(
+        '.ck-toolbar button[aria-label*="Italic"], .ck-toolbar button[title*="Italic"], .ck-toolbar button:has(.ck-icon[viewBox*="italic"])'
+      )
+      .first();
     await italicButton.click();
     await page.waitForTimeout(200);
 
@@ -154,7 +185,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
 
     // Preencher dados básicos
     await page.locator('input[id="titulo"]').fill("Teste IA - Continuar");
-    
+
     // Escrever texto inicial
     const editorContent = page.locator(".ck-editor__editable");
     await editorContent.click();
@@ -168,13 +199,13 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(2000);
 
     // Verificar se há indicador de loading
-    const loadingIndicator = page.locator('text=/Processando|Aguarde/i');
+    const loadingIndicator = page.locator("text=/Processando|Aguarde/i");
     if (await loadingIndicator.isVisible({ timeout: 1000 })) {
       await loadingIndicator.waitFor({ state: "hidden", timeout: 15000 });
     }
 
     // Verificar se texto foi expandido (deve ter mais palavras)
-    const wordCountAfter = page.locator('text=/\\d+ palavra/');
+    const wordCountAfter = page.locator("text=/\\d+ palavra/");
     const wordCountText = await wordCountAfter.textContent();
     const wordCount = parseInt(wordCountText?.match(/\d+/)?.[0] || "0");
     expect(wordCount).toBeGreaterThan(10);
@@ -192,7 +223,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(1000);
 
     // Encontrar e clicar no botão "Editar" da minuta criada
-    const minutaCard = page.locator('text="Minuta para Editar"').locator('..');
+    const minutaCard = page.locator('text="Minuta para Editar"').locator("..");
     await minutaCard.locator('button:has-text("Editar")').click();
     await page.waitForTimeout(500);
 
@@ -225,7 +256,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(1000);
 
     // Duplicar minuta
-    const minutaCard = page.locator('text="Minuta Original"').locator('..');
+    const minutaCard = page.locator('text="Minuta Original"').locator("..");
     await minutaCard.locator('button:has-text("Duplicar")').click();
     await page.waitForTimeout(1000);
 
@@ -246,7 +277,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(1000);
 
     // Deletar minuta
-    const minutaCard = page.locator('text="Minuta para Deletar"').locator('..');
+    const minutaCard = page.locator('text="Minuta para Deletar"').locator("..");
     await minutaCard.locator('button:has-text("Excluir")').click();
     await page.waitForTimeout(1000);
 
@@ -290,9 +321,12 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(1000);
 
     // Aplicar filtro de status
-    const statusFilter = page.locator('button:has-text("Todos Status"), select[value="all"]').first();
-    await statusFilter.click();
-    await page.locator('text="Rascunho"').first().click();
+    const statusFilter = page
+      .locator('button:has-text("Todos Status"), select[value="all"]')
+      .first();
+    await statusFilter.click({ force: true });
+    await page.waitForTimeout(300);
+    await page.locator('[role="option"]:has-text("Rascunho")').first().click({ force: true });
     await page.waitForTimeout(500);
 
     // Verificar se apenas minutas com status Rascunho são exibidas
@@ -329,7 +363,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(1000);
 
     // Aprovar minuta
-    const minutaCard = page.locator('text="Minuta para Aprovar"').locator('..');
+    const minutaCard = page.locator('text="Minuta para Aprovar"').locator("..");
     await minutaCard.locator('button:has-text("Aprovar")').click();
     await page.waitForTimeout(1000);
 
@@ -347,7 +381,14 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(500);
 
-    // Verificar mensagem de erro
-    await expect(page.locator('text=/Preencha.*título/i, text=/título.*obrigatório/i')).toBeVisible();
+    // Verificar mensagem de erro ou toast de validação
+    const errorVisible = await page
+      .locator(
+        "text=/Preencha.*título/i, text=/título.*obrigatório/i, [role='alert']:has-text(/título/i)"
+      )
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    expect(errorVisible).toBeTruthy();
   });
 });

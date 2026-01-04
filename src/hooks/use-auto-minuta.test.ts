@@ -3,13 +3,13 @@
  * Valida o processamento em batch de múltiplas tarefas
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { AgentTask } from "@/lib/agents";
+import * as minutaServiceModule from "@/services/minuta-service";
+import type { Minuta } from "@/types/minuta";
 import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAutoMinuta } from "./use-auto-minuta";
 import * as kvModule from "./use-kv";
-import * as minutaServiceModule from "@/services/minuta-service";
-import type { AgentTask } from "@/lib/agents";
-import type { Minuta } from "@/types/minuta";
 
 // Mock dependencies
 vi.mock("./use-kv");

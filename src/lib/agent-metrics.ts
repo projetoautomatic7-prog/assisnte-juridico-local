@@ -207,14 +207,25 @@ class AgentMetricsCollector {
 // Singleton instance
 export const metricsCollector = new AgentMetricsCollector();
 
-// Cleanup autom�tico a cada 5 minutos
+// Cleanup automático a cada 5 minutos
+let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 if (typeof setInterval !== "undefined") {
-  setInterval(
+  cleanupIntervalId = setInterval(
     () => {
       metricsCollector.cleanup();
     },
     5 * 60 * 1000
   );
+}
+
+/**
+ * Limpa o interval de cleanup (útil para testes e HMR)
+ */
+export function stopMetricsCleanup(): void {
+  if (cleanupIntervalId !== null) {
+    clearInterval(cleanupIntervalId);
+    cleanupIntervalId = null;
+  }
 }
 
 /**

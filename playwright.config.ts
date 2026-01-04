@@ -11,6 +11,7 @@ export default defineConfig({
 
   // Use path (string) for ESM compatibility
   globalSetup: "./tests/e2e/global-setup.ts",
+  globalTeardown: "./tests/e2e/global-teardown.ts",
 
   // Timeout configuration
   timeout: 60_000,
@@ -36,9 +37,10 @@ export default defineConfig({
   webServer: USE_PROD
     ? undefined
     : {
-        command: process.platform === "win32"
-          ? `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`
-          : `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`,
+        command:
+          process.platform === "win32"
+            ? `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`
+            : `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`,
         url: `http://127.0.0.1:${PORT}`,
         // SEMPRE reutilizar servidor existente para evitar conflitos de porta
         reuseExistingServer: true,

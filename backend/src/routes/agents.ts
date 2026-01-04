@@ -334,11 +334,13 @@ router.post("/execute", async (req: Request, res: Response) => {
       agentId,
       outcome,
       executionTime,
-      isDegraded && result.data?.structuredError ? {
-        code: result.data.structuredError.code || "UNKNOWN",
-        message: result.data.structuredError.message || "Unknown error",
-        recoverable: result.data.structuredError.recoverable,
-      } : undefined
+      isDegraded && result.data?.structuredError
+        ? {
+            code: result.data.structuredError.code || "UNKNOWN",
+            message: result.data.structuredError.message || "Unknown error",
+            recoverable: result.data.structuredError.recoverable,
+          }
+        : undefined
     );
 
     res.json({
@@ -449,7 +451,7 @@ router.get("/health", async (_req: Request, res: Response) => {
 
   const totalExecutions = hybridStats.totalExecutions;
   const successRate = hybridStats.successRate || 100;
-  const errorRate = totalExecutions > 0 ? (1 - successRate / 100) : 0;
+  const errorRate = totalExecutions > 0 ? 1 - successRate / 100 : 0;
 
   const unhealthyAgents = Object.entries(agentHealthChecks)
     .filter(([_, health]) => health.status === "unhealthy")
