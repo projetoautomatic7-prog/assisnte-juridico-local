@@ -7,7 +7,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { inicializarTabelaMinutas } from "../../backend/src/db/minutas";
 import * as minutaService from "../../backend/src/services/minuta-service";
 
-describe("Minuta Service - Integração Real", () => {
+const shouldRun = process.env.ENABLE_DB_TEST === "true";
+const describeFn = shouldRun ? describe : describe.skip;
+
+describeFn("Minuta Service - Integração Real", () => {
   let testMinutaId: string;
 
   beforeAll(async () => {

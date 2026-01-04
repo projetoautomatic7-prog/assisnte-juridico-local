@@ -26,14 +26,19 @@ export class RateLimiter {
   constructor(config: RateLimitConfig) {
     const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
     const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-    if (url && token) {
+    const forceInMemory = process.env.USE_INMEMORY_RATE_LIMIT === "true";
+    const isMockHost = url?.includes("mock-redis.") || url?.includes("fake.");
+
+    if (!forceInMemory && url && token && !isMockHost) {
       this.redis = new Redis({
         url,
         token,
       });
     } else {
       // Fallback to in-memory store for development/testing environments
-      console.warn("[RateLimit] Upstash Redis não configurado — usando fallback InMemoryRedis");
+      console.warn(
+        "[RateLimit] Upstash Redis não configurado ou mock — usando fallback InMemoryRedis"
+      );
       this.inMemoryStore = new Map();
     }
 

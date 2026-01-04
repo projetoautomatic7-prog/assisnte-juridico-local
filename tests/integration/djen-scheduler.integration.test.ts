@@ -9,7 +9,10 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { executarManualmente } from "../../backend/src/services/djen-scheduler";
 
-describe("DJEN Scheduler - Integração Real", () => {
+const shouldRun = process.env.ENABLE_DB_TEST === "true";
+const describeFn = shouldRun ? describe : describe.skip;
+
+describeFn("DJEN Scheduler - Integração Real", () => {
   let pool: Pool;
 
   beforeAll(async () => {

@@ -42,8 +42,13 @@ dist-ssr
 .env.development
 .env.production
 .env.vercel
+.env.vercel.*
+.env.vercel.production
+.env.vercel.latest
 .env.staging
 .env.test
+.env.qdrant
+.env.railway
 *.backup
 .env.backup
 .env.local.backup
@@ -128,10 +133,12 @@ coverage-api/
 .sonar-results/
 jdk-25_linux-x64_bin.deb
 .vs/
-<<<<<<< HEAD
-adk-samples/
-=======
 
 # Go modules cache (898MB) - exclude from file watchers
 pkg/
->>>>>>> 04317406b4d945e6113f300da005508b13db8df0
+
+# Local env files
+.env.vercel.production
+.env.vercel.latest
+.env.qdrant
+.env.railway

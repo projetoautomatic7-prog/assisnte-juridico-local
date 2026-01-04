@@ -26,23 +26,31 @@ describe("LangGraph agent stubs (smoke tests)", () => {
   });
 
   test("Analise Documental runs and completes", async () => {
-    const result = await runAnaliseDocumental({ documentoTexto: "Documento de exemplo" });
+    const documentoTexto =
+      "Documento de exemplo com conteúdo suficiente para validar o agente. ".repeat(2);
+    const result = await runAnaliseDocumental({ documentoTexto });
     expect(result.completed).toBe(true);
   });
 
   test("Gestao Prazos runs and completes", async () => {
-    const result = await runGestaoPrazos({ tipoProcesso: "Processo de teste" });
+    const result = await runGestaoPrazos({
+      tipoProcesso: "cível",
+      dataPublicacao: "2024-01-10",
+      prazoEmDias: 15,
+    });
     expect(result.completed).toBe(true);
   });
 
   test("Redacao Peticoes returns a result object", async () => {
-    const result = await runRedacaoPeticoes();
+    const result = await runRedacaoPeticoes({
+      detalhes: "Petição resumida para teste automatizado.",
+    });
     expect(result).toBeDefined();
     expect(typeof result.completed).toBe("boolean");
   });
 
   test("Pesquisa Juris returns a result object", async () => {
-    const result = await runPesquisaJuris();
+    const result = await runPesquisaJuris({ tema: "prescrição intercorrente" });
     expect(result).toBeDefined();
     expect(typeof result.completed).toBe("boolean");
   });
@@ -53,7 +61,12 @@ describe("LangGraph agent stubs (smoke tests)", () => {
   });
 
   test("Revisao Contratual returns a result object", async () => {
-    const result = await runRevisaoContratual();
+    const contratoTexto =
+      "Cláusula contratual exemplo para validação do agente de revisão com texto suficientemente extenso " +
+      "para passar pela validação de tamanho mínimo exigido pelo agente de revisão contratual, evitando falhas.";
+    const result = await runRevisaoContratual({
+      contratoTexto,
+    });
     expect(result).toBeDefined();
     expect(typeof result.completed).toBe("boolean");
   });

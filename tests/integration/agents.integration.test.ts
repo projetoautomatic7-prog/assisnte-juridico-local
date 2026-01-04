@@ -6,8 +6,10 @@
 import { describe, expect, it } from "vitest";
 
 const isCI = process.env.CI === "true";
+const shouldRun = !isCI && process.env.ENABLE_REAL_AGENTS_TEST === "true";
+const describeFn = shouldRun ? describe : describe.skip;
 
-describe.skipIf(isCI)("Agentes LangGraph - Integração Real", () => {
+describeFn("Agentes LangGraph - Integração Real", () => {
   it("deve listar agentes disponíveis", async () => {
     const response = await fetch("http://localhost:3001/api/agents/list");
     const agents = await response.json();

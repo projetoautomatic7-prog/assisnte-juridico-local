@@ -15,7 +15,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 const BASE_URL = "http://localhost:3001/api/agents";
 const TIMEOUT = 60000; // 60s para operações com IA real
 
-describe("Integração Completa dos Agentes", () => {
+const isCI = process.env.CI === "true";
+const shouldRun = !isCI && process.env.ENABLE_REAL_AGENTS_TEST === "true";
+const describeFn = shouldRun ? describe : describe.skip;
+
+describeFn("Integração Completa dos Agentes", () => {
   beforeAll(async () => {
     // Reset stats antes dos testes
     await fetch(`${BASE_URL}/reset-stats`, {
