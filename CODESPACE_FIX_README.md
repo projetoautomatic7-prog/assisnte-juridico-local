@@ -223,6 +223,6 @@ free -h
 
 ---
 
-**Data**: 03/01/2026
+**Data**: 2026-01-03
 **Autor**: GitHub Copilot Agent
 **Revisor**: Time de DevOps
