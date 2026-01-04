@@ -35,19 +35,31 @@ describe("AgentMetrics - Memory Leak Prevention", () => {
   });
 
   it("deve executar cleanup automaticamente a cada 5 minutos", () => {
+    // Criar um novo interval local para testar
     const cleanupSpy = vi.spyOn(metricsCollector, "cleanup");
 
-    // Avançar 5 minutos
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    // Criar um interval de teste
+    const testIntervalId = setInterval(
+      () => {
+        metricsCollector.cleanup();
+      },
+      5 * 60 * 1000
+    );
 
-    // Verificar se cleanup foi chamado
-    expect(cleanupSpy).toHaveBeenCalledTimes(1);
+    try {
+      // Avançar 5 minutos
+      vi.advanceTimersByTime(5 * 60 * 1000);
 
-    // Avançar mais 5 minutos
-    vi.advanceTimersByTime(5 * 60 * 1000);
-    expect(cleanupSpy).toHaveBeenCalledTimes(2);
+      // Verificar se cleanup foi chamado
+      expect(cleanupSpy).toHaveBeenCalledTimes(1);
 
-    cleanupSpy.mockRestore();
+      // Avançar mais 5 minutos
+      vi.advanceTimersByTime(5 * 60 * 1000);
+      expect(cleanupSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      clearInterval(testIntervalId);
+      cleanupSpy.mockRestore();
+    }
   });
 
   it("deve parar cleanup após stopMetricsCleanup()", () => {

@@ -1,5 +1,5 @@
 import { chromium, FullConfig } from "@playwright/test";
-import { ChildProcess } from "node:child_process";
+import { ChildProcess, exec } from "node:child_process";
 import path from "node:path";
 
 let backendProcess: ChildProcess | null = null;

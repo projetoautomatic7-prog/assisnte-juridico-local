@@ -7,6 +7,15 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Aguarda carregar
     await page.waitForLoadState("networkidle");
+
+    // Fazer login se necessário
+    const loginButton = page.locator('button:has-text("Entrar")');
+    if (await loginButton.isVisible({ timeout: 2000 })) {
+      await page.fill('input[type="text"], input[name="username"]', "adm");
+      await page.fill('input[type="password"], input[name="password"]', "adm123");
+      await loginButton.click();
+      await page.waitForLoadState("networkidle");
+    }
   });
 
   test("deve criar e editar minuta com TiptapEditorV2", async ({ page }) => {
