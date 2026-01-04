@@ -190,3 +190,71 @@ Editor: CKEditor 5, TipTap
 Worked for 1 minute
 
 Scroll to latest
+roteiro prático para corrigir erros/bugs e executar testes no seu projeto, considerando que você está usando Node.js, TypeScript, Playwright, Vitest e tem scripts de automação Bash.
+
+1. Corrigir Erros e Bugs
+a) Verifique erros de build e tipos
+
+
+
+npm run build
+npx tsc --noEmit
+Corrija qualquer erro apontado pelo TypeScript ou pelo processo de build.
+b) Lint para encontrar problemas de estilo/código
+
+
+
+npm run lint
+Ajuste os arquivos conforme as mensagens do linter.
+c) Revisão dos Testes Unitários
+Os arquivos de teste (*.test.ts) já cobrem utilitários, popup, content-script, extractors, etc.
+Se algum teste falhar, leia a mensagem de erro e corrija o código-fonte ou o próprio teste.
+2. Executar Testes
+a) Testes Unitários (Vitest)
+
+
+
+npm test
+# ou
+npm run test:watch
+# ou cobertura:
+npm run test:coverage
+
+b) Testes E2E (Playwright)
+Use o script de login E2E para garantir autenticação:
+
+
+
+./test-e2e-login.sh
+Depois rode os testes E2E normalmente:
+
+
+
+npx playwright test
+c) Testes de Automação Bash
+Para validar automações customizadas:
+
+
+
+./test-auto-issues.sh
+Veja o resumo dos testes no terminal.
+3. Checklist de Correção
+ Build sem erros (npm run build)
+ TypeScript sem erros (npx tsc --noEmit)
+ Lint OK (npm run lint)
+ Todos os testes unitários passam (npm test)
+ Testes E2E passam (npx playwright test)
+ Scripts Bash OK (./test-auto-issues.sh)
+4. Dicas para Debug
+Use logs detalhados:
+
+
+
+localStorage.setItem('PJE_SYNC_DEBUG', 'true');
+Verifique o console do navegador e do terminal para mensagens [PJe Sync] ou erros.
+5. Se encontrar bugs:
+Leia a mensagem de erro.
+Localize o arquivo/linha.
+Corrija o código.
+Rode novamente os testes.
+Se precisar de ajuda com um erro específico, cole aqui a mensagem ou stack trace que eu te ajudo a corrigir!

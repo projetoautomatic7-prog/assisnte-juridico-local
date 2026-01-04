@@ -93,6 +93,7 @@ export function getEventColor(tipo?: string): string {
 
 /**
  * Utilitário para obter classe de badge baseada no tipo
+ * @deprecated Use getEventBadgeStyle() para consistência com themeConfig.colors
  */
 export function getEventBadgeClass(tipo?: string): string {
   const baseClass = "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
@@ -120,7 +121,21 @@ export function getEventBadgeClass(tipo?: string): string {
 }
 
 /**
+ * Utilitário para obter estilo inline de badge baseada no tipo
+ * Usa themeConfig.colors para centralização (padrão 10% bg / 20% border)
+ */
+export function getEventBadgeStyle(tipo?: string): React.CSSProperties {
+  const base = getEventColor(tipo);
+  return {
+    color: base,
+    backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
+    borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
+  };
+}
+
+/**
  * Utilitário para obter classe de status de processo
+ * @deprecated Use getStatusBadgeStyle() para consistência com themeConfig.colors
  */
 export function getStatusBadgeClass(status: string): string {
   const baseClass = "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
@@ -137,6 +152,26 @@ export function getStatusBadgeClass(status: string): string {
     default:
       return `${baseClass} bg-gray-500/10 text-gray-600 border-gray-500/30`;
   }
+}
+
+/**
+ * Utilitário para obter estilo inline de status de processo
+ * Usa themeConfig.colors para centralização (padrão 10% bg / 20% border)
+ */
+export function getStatusBadgeStyle(status: string): React.CSSProperties {
+  const colorMap: Record<string, string> = {
+    ativo: themeConfig.colors.sucesso,
+    suspenso: themeConfig.colors.alerta,
+    arquivado: "hsl(0, 0%, 45%)", // Gray
+    concluido: themeConfig.colors.info,
+  };
+
+  const base = colorMap[status] || themeConfig.colors.info;
+  return {
+    color: base,
+    backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
+    borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
+  };
 }
 
 export default themeConfig;

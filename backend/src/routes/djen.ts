@@ -4,6 +4,56 @@ import { executarManualmente } from "../services/djen-scheduler.js";
 const router = Router();
 
 /**
+ * GET /api/djen/publicacoes
+ * Proxy para buscar publicações do DJEN (evita CORS no frontend)
+ */
+router.get("/publicacoes", async (req, res) => {
+  try {
+    const { numeroOab, ufOab, dataInicio, dataFim } = req.query;
+
+    if (!numeroOab || !ufOab) {
+      return res.status(400).json({
+        success: false,
+        error: "Parâmetros numeroOab e ufOab são obrigatórios",
+      });
+    }
+
+    const hoje = new Date().toISOString().split("T")[0];
+    const dataInicioParam = (dataInicio as string) || hoje;
+    const dataFimParam = (dataFim as string) || hoje;
+
+    const url = `https://comunicaapi.pje.jus.br/api/v1/comunicacao?meio=D&numeroOab=${numeroOab}&ufOab=${ufOab}&dataDisponibilizacaoInicio=${dataInicioParam}&dataDisponibilizacaoFim=${dataFimParam}`;
+
+    console.log(`[DJEN Proxy] Buscando: ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "PJe-Assistente/1.0",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API DJEN retornou ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    res.json({
+      success: true,
+      publicacoes: data,
+      count: Array.isArray(data) ? data.length : 0,
+    });
+  } catch (error) {
+    console.error(`[DJEN Proxy] Erro:`, error);
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+    });
+  }
+});
+
+/**
  * POST /api/djen/trigger-manual
  * Executa o processamento DJEN manualmente (útil para testes)
  */

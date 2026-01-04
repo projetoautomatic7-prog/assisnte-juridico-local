@@ -1,6 +1,21 @@
 import react from "@vitejs/plugin-react";
-import { resolve } from "node:path";
+import dotenv from "dotenv";
+import fs from "node:fs";
+import path, { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Prefer .env.test; fallback to .env.local then .env (sem placeholders)
+for (const envFile of [".env.test", ".env.local", ".env"]) {
+  const envPath = path.resolve(__dirname, envFile);
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    break;
+  }
+}
 
 export default defineConfig({
   plugins: [react()],

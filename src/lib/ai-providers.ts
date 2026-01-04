@@ -215,14 +215,22 @@ export class GeminiClient {
    * @param retryConfig - Configuração de retry (opcional)
    */
   constructor(apiKey?: string, retryConfig?: Partial<RetryConfig>) {
-    // Tenta pegar API key de forma flexível
+    // Tenta pegar API key de forma flexível (suporta Vite e Node.js)
     if (apiKey) {
       this.apiKey = String(apiKey);
-    } else if (import.meta === undefined) {
-      this.apiKey = null;
     } else {
-      const env = import.meta.env;
-      const envKey = env.VITE_GEMINI_API_KEY ?? env.VITE_GEMINI_API_KEY_BACKEND;
+      // Primeiro tenta process.env (Node.js), depois import.meta.env (Vite)
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY
+          : null;
+
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? (import.meta.env.VITE_GEMINI_API_KEY ?? import.meta.env.VITE_GEMINI_API_KEY_BACKEND)
+          : null;
+
+      const envKey = processEnvKey || importMetaEnvKey;
       this.apiKey = envKey ? String(envKey) : null;
     }
 
@@ -461,8 +469,19 @@ export class GitHubModelsClient {
   private readonly baseUrl = GITHUB_MODELS_CONFIG.baseUrl;
 
   constructor(apiKey?: string) {
-    this.apiKey =
-      apiKey || (import.meta === undefined ? "" : import.meta.env.VITE_GITHUB_TOKEN || "") || "";
+    if (apiKey) {
+      this.apiKey = apiKey;
+    } else {
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.GITHUB_TOKEN || process.env.VITE_GITHUB_TOKEN
+          : null;
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? import.meta.env.VITE_GITHUB_TOKEN
+          : null;
+      this.apiKey = processEnvKey || importMetaEnvKey || "";
+    }
   }
 
   async chat(
@@ -520,10 +539,19 @@ export class AzureOpenAIClient {
 
   constructor(endpoint?: string, apiKey?: string) {
     this.endpoint = endpoint || AZURE_AI_CONFIG.endpoint;
-    this.apiKey =
-      apiKey ||
-      (import.meta === undefined ? "" : import.meta.env.VITE_AZURE_OPENAI_KEY || "") ||
-      "";
+    if (apiKey) {
+      this.apiKey = apiKey;
+    } else {
+      const processEnvKey =
+        typeof process !== "undefined" && process.env
+          ? process.env.AZURE_OPENAI_KEY || process.env.VITE_AZURE_OPENAI_KEY
+          : null;
+      const importMetaEnvKey =
+        typeof import.meta !== "undefined" && import.meta.env
+          ? import.meta.env.VITE_AZURE_OPENAI_KEY
+          : null;
+      this.apiKey = processEnvKey || importMetaEnvKey || "";
+    }
   }
 
   /**

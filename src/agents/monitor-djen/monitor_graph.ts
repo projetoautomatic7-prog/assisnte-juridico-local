@@ -8,12 +8,21 @@
  * - Uses safe HTTP requests with timeout
  * - No eval() or dynamic code execution
  * - Validates all external data before processing
+ * - Input validation with structured error handling
  */
 
+import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  formatCriticalPublication,
+  formatErrorMessage,
+  formatFallbackMessage,
+  formatMonitoringSummary,
+} from "./templates";
+import { validateMonitorDJENInput, ValidationError } from "./validators";
 
 export interface DJENPublication {
   id: string;
@@ -47,72 +56,117 @@ export class DJENMonitorAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        // Step 1: Fetch publications
-        let currentState = updateState(state, { currentStep: "fetching_publications" });
+        try {
+          // Step 0: Validate inputs
+          const validatedInput = validateMonitorDJENInput(state.data || {});
+          span?.setAttribute("djen.lawyer_oab", validatedInput.lawyerOAB || "default");
+          span?.setAttribute("djen.courts", validatedInput.courts?.join(",") || "all");
+          span?.setAttribute("djen.auto_register", validatedInput.autoRegister || false);
 
-        const startFetch = Date.now();
-        const publications = await this.fetchPublications(signal);
-        const fetchDuration = Date.now() - startFetch;
+          // Step 1: Fetch publications
+          let currentState = updateState(state, { currentStep: "fetching_publications" });
 
-        // Adicionar métricas ao span
-        span?.setAttribute("djen.publications_found", publications.length);
-        span?.setAttribute("djen.fetch_duration_ms", fetchDuration);
-        span?.setAttribute("djen.scan_timestamp", new Date().toISOString());
+          const startFetch = Date.now();
+          const publications = await this.fetchPublications(signal, validatedInput);
+          const fetchDuration = Date.now() - startFetch;
 
-        // Analisar publicações críticas (com número de processo)
-        const criticalPublications = publications.filter((p) => p.processNumber);
-        const courtDistribution = publications.reduce(
-          (acc, p) => {
-            acc[p.court] = (acc[p.court] || 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        );
+          // Adicionar métricas ao span
+          span?.setAttribute("djen.publications_found", publications.length);
+          span?.setAttribute("djen.fetch_duration_ms", fetchDuration);
+          span?.setAttribute("djen.scan_timestamp", new Date().toISOString());
 
-        span?.setAttribute("djen.critical_count", criticalPublications.length);
-        span?.setAttribute("djen.courts_found", Object.keys(courtDistribution).join(", "));
-        span?.setAttribute("djen.court_distribution", JSON.stringify(courtDistribution));
+          // Analisar publicações críticas (com número de processo)
+          const criticalPublications = publications.filter((p) => p.processNumber);
+          const courtDistribution = publications.reduce(
+            (acc, p) => {
+              acc[p.court] = (acc[p.court] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
 
-        // Step 2: Process publications
-        currentState = updateState(currentState, {
-          currentStep: "processing_publications",
-          data: {
-            ...currentState.data,
-            publications,
-            criticalPublications,
-            courtDistribution,
-            fetchedAt: Date.now(),
-            fetchDuration,
-          },
-        });
+          span?.setAttribute("djen.critical_count", criticalPublications.length);
+          span?.setAttribute("djen.courts_found", Object.keys(courtDistribution).join(", "));
+          span?.setAttribute("djen.court_distribution", JSON.stringify(courtDistribution));
 
-        // Step 3: Determinar ação baseada em publicações críticas
-        if (criticalPublications.length > 0) {
-          span?.setAttribute("djen.action", "escalate_to_justine");
+          // Step 2: Process publications
           currentState = updateState(currentState, {
-            currentStep: "escalate",
+            currentStep: "processing_publications",
             data: {
               ...currentState.data,
-              action: "escalate",
-              targetAgent: "justine",
+              publications,
+              criticalPublications,
+              courtDistribution,
+              fetchedAt: Date.now(),
+              fetchDuration,
             },
           });
-        } else {
-          span?.setAttribute("djen.action", "no_action_needed");
+
+          // Step 3: Determinar ação baseada em publicações críticas
+          if (criticalPublications.length > 0) {
+            span?.setAttribute("djen.action", "escalate_to_justine");
+
+            // Log critical publications
+            criticalPublications.forEach((pub) => {
+              console.log(formatCriticalPublication(pub));
+            });
+
+            currentState = updateState(currentState, {
+              currentStep: "escalate",
+              data: {
+                ...currentState.data,
+                action: "escalate",
+                targetAgent: "justine",
+              },
+            });
+          } else {
+            span?.setAttribute("djen.action", "no_action_needed");
+          }
+
+          // Step 4: Complete
+          currentState = updateState(currentState, {
+            currentStep: "completed",
+            completed: true,
+          });
+
+          span?.setStatus({ code: 1, message: "ok" });
+
+          const summaryMessage = formatMonitoringSummary(
+            publications.length,
+            criticalPublications.length,
+            courtDistribution,
+            fetchDuration
+          );
+
+          return this.addAgentMessage(currentState, summaryMessage);
+        } catch (error) {
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (error instanceof ValidationError) {
+            logValidationError("Monitor DJEN", error.field, error.message, error.receivedValue);
+          } else {
+            logStructuredError("Monitor DJEN", errorType, errorMessage, {
+              lawyerOAB: (state.data?.lawyerOAB as string) || undefined,
+              courts: (state.data?.courts as string[]) || undefined,
+              step: state.currentStep,
+            });
+          }
+
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
+
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, {
+                  lawyerOAB: (state.data?.lawyerOAB as string) || undefined,
+                  courts: (state.data?.courts as string[]) || undefined,
+                  step: state.currentStep,
+                })
+              : formatFallbackMessage((state.data?.lawyerOAB as string) || undefined);
+
+          return this.addAgentMessage(state, fallbackMessage);
         }
-
-        // Step 4: Complete
-        currentState = updateState(currentState, {
-          currentStep: "completed",
-          completed: true,
-        });
-
-        span?.setStatus({ code: 1, message: "ok" });
-
-        return this.addAgentMessage(
-          currentState,
-          `Monitor DJEN concluído: ${publications.length} publicações (${criticalPublications.length} críticas) em ${fetchDuration}ms`
-        );
       }
     );
   }
@@ -123,21 +177,25 @@ export class DJENMonitorAgent extends LangGraphAgent {
    * Security: Uses AbortSignal for timeout protection
    * Integration: Real DJEN API via existing djen-api.ts service
    */
-  private async fetchPublications(signal: AbortSignal): Promise<DJENPublication[]> {
+  private async fetchPublications(
+    signal: AbortSignal,
+    input: { startDate?: string; endDate?: string; courts?: string[] }
+  ): Promise<DJENPublication[]> {
     // Import DJEN API service
     const { consultarDJEN } = await import("@/lib/djen-api");
 
-    // Get date range (last 7 days)
+    // Get date range (default: last 7 days)
     const today = new Date();
     const lastWeek = new Date(today);
     lastWeek.setDate(today.getDate() - 7);
 
-    const dataFim = today.toISOString().split("T")[0];
-    const dataInicio = lastWeek.toISOString().split("T")[0];
+    const dataFim = input.endDate || today.toISOString().split("T")[0];
+    const dataInicio = input.startDate || lastWeek.toISOString().split("T")[0];
 
     // Fetch from DJEN API with timeout
+    const tribunais = input.courts || ["TST", "TRT3", "TJMG"];
     const results = await consultarDJEN({
-      tribunais: ["TST", "TRT3", "TJMG"],
+      tribunais,
       searchTerms: {},
       dataInicio,
       dataFim,
