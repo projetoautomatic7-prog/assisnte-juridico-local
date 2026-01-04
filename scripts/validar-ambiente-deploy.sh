@@ -55,7 +55,7 @@ check_node() {
         warning "Instale Node.js v20+ em: https://nodejs.org"
         return 1
     fi
-    
+
     NODE_VERSION=$(node -v | cut -d 'v' -f 2 | cut -d '.' -f 1)
     if [ "$NODE_VERSION" -lt 20 ]; then
         error "Node.js v$NODE_VERSION detectado. Requer v20+"
@@ -85,7 +85,7 @@ check_dependencies() {
         npm install || return 1
     fi
     success "Dependências instaladas"
-    
+
     # Verificar backend
     if [ -d "backend" ]; then
         info "Verificando dependências do backend..."
@@ -96,7 +96,7 @@ check_dependencies() {
         fi
         success "Dependências do backend instaladas"
     fi
-    
+
     return 0
 }
 
@@ -104,7 +104,7 @@ check_dependencies() {
 check_required_vars() {
     info "Verificando variáveis de ambiente obrigatórias..."
     local missing=0
-    
+
     # Lista de variáveis obrigatórias
     local required_vars=(
         "VITE_GEMINI_API_KEY"
@@ -113,7 +113,7 @@ check_required_vars() {
         "UPSTASH_REDIS_REST_TOKEN"
         "DATABASE_URL"
     )
-    
+
     for var in "${required_vars[@]}"; do
         if [ -z "${!var}" ]; then
             error "Variável $var não definida"
@@ -122,30 +122,30 @@ check_required_vars() {
             success "Variável $var definida"
         fi
     done
-    
+
     if [ $missing -gt 0 ]; then
         error "$missing variável(is) obrigatória(s) faltando"
         warning "Configure no arquivo .env"
         return 1
     fi
-    
+
     return 0
 }
 
 # Testar Gemini API
 test_gemini() {
     info "Testando Gemini API..."
-    
+
     if [ -z "$VITE_GEMINI_API_KEY" ]; then
         warning "VITE_GEMINI_API_KEY não definida, pulando teste"
         return 0
     fi
-    
+
     local response=$(curl -s -X POST \
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=$VITE_GEMINI_API_KEY" \
         -H 'Content-Type: application/json' \
         -d '{"contents":[{"parts":[{"text":"test"}]}]}' 2>&1)
-    
+
     if echo "$response" | grep -q '"candidates"'; then
         success "Gemini API respondendo"
         return 0
@@ -159,15 +159,15 @@ test_gemini() {
 # Testar Upstash Redis
 test_upstash() {
     info "Testando Upstash Redis..."
-    
+
     if [ -z "$UPSTASH_REDIS_REST_URL" ] || [ -z "$UPSTASH_REDIS_REST_TOKEN" ]; then
         warning "Variáveis Upstash não definidas, pulando teste"
         return 0
     fi
-    
+
     local response=$(curl -s "$UPSTASH_REDIS_REST_URL/ping" \
         -H "Authorization: Bearer $UPSTASH_REDIS_REST_TOKEN" 2>&1)
-    
+
     if echo "$response" | grep -q '"result":"PONG"'; then
         success "Upstash Redis conectado"
         return 0
@@ -181,18 +181,18 @@ test_upstash() {
 # Testar PostgreSQL
 test_postgres() {
     info "Testando PostgreSQL..."
-    
+
     if [ -z "$DATABASE_URL" ]; then
         warning "DATABASE_URL não definida, pulando teste"
         return 0
     fi
-    
+
     if ! command -v psql &> /dev/null; then
         warning "psql não instalado, pulando teste de conexão PostgreSQL"
         warning "Instale: brew install postgresql (Mac) ou apt install postgresql-client (Linux)"
         return 0
     fi
-    
+
     if psql "$DATABASE_URL" -c "SELECT 1;" &> /dev/null; then
         success "PostgreSQL conectado"
         return 0
@@ -220,9 +220,21 @@ check_typescript() {
 check_lint() {
     info "Verificando Lint..."
     local lint_output=$(npm run lint 2>&1)
-    local errors=$(echo "$lint_output" | grep -o '[0-9]* error' | cut -d ' ' -f 1 || echo "0")
-    local warnings=$(echo "$lint_output" | grep -o '[0-9]* warning' | cut -d ' ' -f 1 || echo "0")
-    
+    local errors=$(echo "$lint_output" | grep -o '[0-9]* error' | cut -d ' ' -f 1 | head -1)
+    local warnings=$(echo "$lint_output" | grep -o '[0-9]* warning' | cut -d ' ' -f 1 | head -1)
+
+    # Garantir que sempre temos um número
+    errors=${errors:-0}
+    warnings=${warnings:-0}
+
+    # Validar que são números
+    if ! [[ "$errors" =~ ^[0-9]+$ ]]; then
+        errors=0
+    fi
+    if ! [[ "$warnings" =~ ^[0-9]+$ ]]; then
+        warnings=0
+    fi
+
     if [ "$errors" -eq 0 ]; then
         if [ "$warnings" -le 150 ]; then
             success "Lint OK ($errors erros, $warnings warnings)"
@@ -243,7 +255,7 @@ check_build() {
     info "Verificando Build..."
     if npm run build &> /dev/null; then
         success "Build OK"
-        
+
         # Verificar tamanho do build
         if [ -d "dist" ]; then
             local size=$(du -sh dist | cut -f1)
@@ -260,15 +272,15 @@ check_build() {
 # Testar servidor local
 test_local_server() {
     info "Testando servidor local..."
-    
+
     # Iniciar servidor em background
     info "Iniciando servidor dev..."
     npm run dev > /dev/null 2>&1 &
     local server_pid=$!
-    
+
     # Aguardar servidor iniciar
     sleep 10
-    
+
     # Testar endpoint
     if curl -s http://localhost:5173 > /dev/null; then
         success "Servidor local respondendo em http://localhost:5173"
@@ -288,12 +300,12 @@ check_git() {
         warning "Git não está instalado"
         return 0
     fi
-    
+
     if [ ! -d .git ]; then
         warning "Não é um repositório Git"
         return 0
     fi
-    
+
     # Verificar se há mudanças não comitadas
     if [ -n "$(git status --porcelain)" ]; then
         warning "Existem mudanças não comitadas"
@@ -301,11 +313,11 @@ check_git() {
     else
         success "Git: sem mudanças pendentes"
     fi
-    
+
     # Verificar branch
     local branch=$(git branch --show-current)
     info "Branch atual: $branch"
-    
+
     return 0
 }
 
@@ -316,7 +328,7 @@ print_summary() {
     echo "📊 RESUMO DA VALIDAÇÃO"
     echo "======================================"
     echo ""
-    
+
     if [ $TOTAL_ERRORS -eq 0 ]; then
         success "Ambiente configurado corretamente! ✨"
         echo ""
@@ -346,9 +358,9 @@ main() {
     echo "Assistente Jurídico PJe v1.4.0+"
     echo "======================================"
     echo ""
-    
+
     TOTAL_ERRORS=0
-    
+
     # Executar verificações
     check_env_file || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     load_env
@@ -356,25 +368,25 @@ main() {
     check_npm || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     check_dependencies || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     check_required_vars || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
-    
+
     echo ""
     info "Testando conectividade..."
     test_gemini || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     test_upstash || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     test_postgres || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
-    
+
     echo ""
     info "Verificando qualidade do código..."
     check_typescript || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     check_lint || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     check_build || TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
-    
+
     echo ""
     check_git
-    
+
     # Relatório final
     print_summary
-    
+
     # Exit code
     if [ $TOTAL_ERRORS -eq 0 ]; then
         exit 0
