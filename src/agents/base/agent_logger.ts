@@ -3,6 +3,7 @@
  * Baseado no padrão Google Agent Starter Pack
  */
 
+import * as Sentry from "@sentry/react";
 import { isProduction } from "@/lib/env-utils";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
@@ -103,14 +104,36 @@ class AgentLogger {
   }
 
   /**
-   * Envia erro para Sentry (integração futura)
+   * Envia erro para Sentry em produção
+   * Captura exceções com contexto completo do agente
    */
   private sendToSentry(log: StructuredLog): void {
-    // TODO: Integrar com Sentry quando disponível
-    // Sentry.captureException(new Error(log.message), {
-    //   level: "error",
-    //   contexts: { agent: log.context }
-    // });
+    Sentry.withScope((scope) => {
+      scope.setTag("agent.name", log.context.agentName || "unknown");
+      scope.setTag("error.type", log.context.errorType || "unknown");
+      scope.setTag("agent.step", (log.context.step as string) || "unknown");
+      scope.setLevel("error");
+
+      scope.setContext("agent_context", {
+        ...log.context,
+        timestamp: log.timestamp,
+        logLevel: log.level,
+      });
+
+      Sentry.addBreadcrumb({
+        category: "agent",
+        message: log.message,
+        level: "error",
+        data: {
+          agentName: log.context.agentName,
+          errorType: log.context.errorType,
+          step: log.context.step,
+          sessionId: log.context.sessionId,
+        },
+      });
+
+      Sentry.captureException(new Error(log.message));
+    });
   }
 }
 

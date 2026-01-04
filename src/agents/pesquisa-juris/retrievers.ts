@@ -3,8 +3,12 @@
  * Baseado no padrão Google Agent Starter Pack (agentic_rag/retrievers.py)
  */
 
+import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
 import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { PesquisaJurisInput } from "./validators";
+
+const EMBEDDING_API_URL = "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
+const EMBEDDING_DIMENSION = 768;
 
 export interface Precedente {
   titulo: string;
@@ -120,16 +124,81 @@ export class JurisprudenceRetriever {
   }
 
   /**
-   * Gera embeddings usando modelo text-embedding
-   * ✅ Conecta com Gemini ou Google Vertex AI em produção
+   * Gera embeddings usando Google Gemini Text Embedding API
+   * Modelo: text-embedding-004 (768 dimensões)
+   * ✅ Fallback para mock embeddings se API falhar
    */
   private async generateEmbeddings(text: string): Promise<number[]> {
-    // TODO: Implementar integração real com Google Text Embeddings API
-    // Por enquanto, simular embedding
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    if (!isGeminiConfigured()) {
+      console.warn("⚠️ [Embeddings] Gemini API não configurada, usando mock embeddings");
+      return this.generateMockEmbeddings();
+    }
 
-    // Simular vetor de 768 dimensões (padrão para text-embedding-005)
-    return Array.from({ length: 768 }, () => Math.random());
+    try {
+      const apiKey = getGeminiApiKey();
+      const startTime = Date.now();
+
+      console.log("🔄 [Embeddings] Gerando embedding real via Gemini API...", {
+        textLength: text.length,
+        model: "text-embedding-004",
+      });
+
+      const response = await fetch(`${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "models/text-embedding-004",
+          content: {
+            parts: [{ text }],
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("❌ [Embeddings] Erro na API Gemini:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody,
+        });
+        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const embeddings = data?.embedding?.values;
+
+      if (!embeddings || !Array.isArray(embeddings)) {
+        console.error("❌ [Embeddings] Resposta inválida da API:", data);
+        throw new Error("Invalid embedding response from Gemini API");
+      }
+
+      const elapsedMs = Date.now() - startTime;
+      console.log("✅ [Embeddings] Embedding gerado com sucesso:", {
+        dimension: embeddings.length,
+        elapsedMs,
+      });
+
+      if (embeddings.length !== EMBEDDING_DIMENSION) {
+        console.warn(`⚠️ [Embeddings] Dimensão inesperada: ${embeddings.length} (esperado: ${EMBEDDING_DIMENSION})`);
+      }
+
+      return embeddings;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:", errorMessage);
+      return this.generateMockEmbeddings();
+    }
+  }
+
+  /**
+   * Gera embeddings mock para fallback quando API não disponível
+   * Retorna vetor de 768 dimensões com valores aleatórios
+   */
+  private generateMockEmbeddings(): number[] {
+    console.log("📦 [Embeddings] Usando mock embeddings (768 dimensões)");
+    return Array.from({ length: EMBEDDING_DIMENSION }, () => Math.random());
   }
 
   /**
