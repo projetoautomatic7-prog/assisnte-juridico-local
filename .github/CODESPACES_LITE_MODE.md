@@ -256,5 +256,5 @@ top -bn1 | head -20
 
 ---
 
-**Última atualização**: 03/01/2026
+**Última atualização**: 2026-01-03
 **Mantido por**: Time de DevOps - Assistente Jurídico PJe
