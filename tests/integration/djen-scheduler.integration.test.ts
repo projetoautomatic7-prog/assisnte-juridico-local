@@ -7,7 +7,7 @@
 
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { executarManualmente } from "../../../backend/src/services/djen-scheduler";
+import { executarManualmente } from "../../backend/src/services/djen-scheduler";
 
 describe("DJEN Scheduler - Integração Real", () => {
   let pool: Pool;

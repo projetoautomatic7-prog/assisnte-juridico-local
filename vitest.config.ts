@@ -61,6 +61,14 @@ export default defineConfig({
       VITEST: "true",
     },
   },
+  // Pool options agora no topo (Vitest 4) para evitar OOM e respeitar limites de threads
+  poolOptions: {
+    threads: {
+      // Ajuste conservador: poucas threads para evitar OOM/worker errors
+      minThreads: 1,
+      maxThreads: process.env.CI ? 2 : 1,
+    },
+  },
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

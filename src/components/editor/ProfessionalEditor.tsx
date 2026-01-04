@@ -68,7 +68,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useEditorAI, EDITOR_SLASH_COMMANDS } from "@/hooks/use-editor-ai";
+import { EDITOR_SLASH_COMMANDS, useEditorAI } from "@/hooks/use-editor-ai";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -82,6 +82,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 // ===========================
@@ -204,6 +205,7 @@ export function ProfessionalEditor({
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
   const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
+  const portalTarget = typeof document !== "undefined" ? document.body : null;
 
   // Hook de IA para editor
   const {
@@ -573,53 +575,72 @@ export function ProfessionalEditor({
     [generateMinuta, djenData, processData, documentType]
   );
 
-  // Detectar "/" no início de uma linha e posicionar menu próximo ao cursor
-  const checkForSlashCommand = useCallback((plainText: string, editor: ClassicEditor) => {
-    const lines = plainText.split("\n");
-    const lastLine = lines[lines.length - 1] || "";
+  const calculateSlashMenuPosition = useCallback((rect: DOMRect | null) => {
+    const padding = 12;
+    const menuWidth = 256; // w-64
+    const menuHeight = 240; // max-h-48 + paddings
 
-    // Procurar por comando slash no final do texto
-    const slashMatch = lastLine.match(/\/([a-z-]*)$/i);
-
-    if (slashMatch) {
-      const filter = slashMatch[1].toLowerCase();
-      setSlashFilter(filter);
-      setShowSlashMenu(true);
-
-      // Posicionar o menu próximo à seleção atual
-      try {
-        const selection = editor.editing.view.document.selection;
-        const viewRange = selection.getFirstRange();
-
-        if (viewRange) {
-          const domRange = editor.editing.view.domConverter.viewRangeToDom(viewRange);
-          if (domRange) {
-            const rect = domRange.getBoundingClientRect();
-            setSlashMenuPosition({
-              top: rect.bottom + window.scrollY + 5,
-              left: rect.left + window.scrollX,
-            });
-            return;
-          }
-        }
-
-        // Fallback: posição relativa ao editor
-        const editorElement = editor.ui.view.element;
-        if (editorElement) {
-          const rect = editorElement.getBoundingClientRect();
-          setSlashMenuPosition({
-            top: rect.top + window.scrollY + 100,
-            left: rect.left + window.scrollX + 50,
-          });
-        }
-      } catch {
-        setSlashMenuPosition({ top: 200, left: 100 });
-      }
-    } else {
-      setShowSlashMenu(false);
-      setSlashFilter("");
+    if (!rect) {
+      return { top: padding, left: padding };
     }
+
+    if (typeof window === "undefined") {
+      return { top: rect.bottom + 5, left: rect.left };
+    }
+
+    const maxLeft = Math.max(window.innerWidth - menuWidth - padding, padding);
+    const maxTop = Math.max(window.innerHeight - menuHeight - padding, padding);
+
+    return {
+      top: Math.min(Math.max(rect.bottom + 5, padding), maxTop),
+      left: Math.min(Math.max(rect.left, padding), maxLeft),
+    };
   }, []);
+
+  // Detectar "/" no início de uma linha e posicionar menu próximo ao cursor
+  const checkForSlashCommand = useCallback(
+    (plainText: string, editor: ClassicEditor) => {
+      const lines = plainText.split("\n");
+      const lastLine = lines[lines.length - 1] || "";
+
+      // Procurar por comando slash no final do texto
+      const slashMatch = lastLine.match(/\/([a-z-]*)$/i);
+
+      if (slashMatch) {
+        const filter = slashMatch[1].toLowerCase();
+        setSlashFilter(filter);
+        setShowSlashMenu(true);
+
+        // Posicionar o menu próximo à seleção atual
+        try {
+          const selection = editor.editing.view.document.selection;
+          const viewRange = selection.getFirstRange();
+
+          if (viewRange) {
+            const domRange = editor.editing.view.domConverter.viewRangeToDom(viewRange);
+            if (domRange) {
+              const rect = domRange.getBoundingClientRect();
+              setSlashMenuPosition(calculateSlashMenuPosition(rect));
+              return;
+            }
+          }
+
+          // Fallback: posição relativa ao editor
+          const editorElement = editor.ui.view.element;
+          if (editorElement) {
+            const rect = editorElement.getBoundingClientRect();
+            setSlashMenuPosition(calculateSlashMenuPosition(rect));
+          }
+        } catch {
+          setSlashMenuPosition(calculateSlashMenuPosition(null));
+        }
+      } else {
+        setShowSlashMenu(false);
+        setSlashFilter("");
+      }
+    },
+    [calculateSlashMenuPosition]
+  );
 
   // Filtrar comandos slash
   const filteredSlashCommands = EDITOR_SLASH_COMMANDS.filter(
@@ -793,27 +814,31 @@ export function ProfessionalEditor({
       </div>
 
       {/* Floating Slash Command Menu */}
-      {showSlashMenu && filteredSlashCommands.length > 0 && (
-        <div
-          className="absolute z-50 bg-background border rounded-lg shadow-lg p-2 w-64"
-          style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
-        >
-          <ScrollArea className="max-h-48">
-            {filteredSlashCommands.map((cmd) => (
-              <Button
-                key={cmd.command}
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left"
-                onClick={() => handleSlashCommand(cmd.command)}
-              >
-                <span className="mr-2">{cmd.icon}</span>
-                <span className="font-medium">{cmd.label}</span>
-              </Button>
-            ))}
-          </ScrollArea>
-        </div>
-      )}
+      {showSlashMenu &&
+        filteredSlashCommands.length > 0 &&
+        portalTarget &&
+        createPortal(
+          <div
+            className="fixed z-[99999] bg-background border rounded-lg shadow-lg p-2 w-64"
+            style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
+          >
+            <ScrollArea className="max-h-48">
+              {filteredSlashCommands.map((cmd) => (
+                <Button
+                  key={cmd.command}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-left"
+                  onClick={() => handleSlashCommand(cmd.command)}
+                >
+                  <span className="mr-2">{cmd.icon}</span>
+                  <span className="font-medium">{cmd.label}</span>
+                </Button>
+              ))}
+            </ScrollArea>
+          </div>,
+          portalTarget
+        )}
 
       {/* CKEditor */}
       <div className="professional-editor-page">

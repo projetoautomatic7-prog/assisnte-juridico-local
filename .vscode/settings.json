@@ -491,5 +491,8 @@
     "comments": false,
     "strings": false
   },
-  "editor.suggestOnTriggerCharacters": false
+  "editor.suggestOnTriggerCharacters": false,
+  "[scss]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  }
 }

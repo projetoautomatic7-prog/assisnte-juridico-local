@@ -79,6 +79,10 @@ secrets.json
 serviceAccountKey.json
 .gitlab-token
 
+# Gemini CLI settings
+.gemini/
+gha-creds-*.json
+
 **/agent-eval-report*
 packages
 pids

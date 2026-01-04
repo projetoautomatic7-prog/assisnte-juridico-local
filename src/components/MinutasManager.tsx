@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescription as DialogDescriptionUI,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -22,26 +22,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useAICommands } from "@/hooks/use-ai-commands";
 import { useAIStreaming } from "@/hooks/use-ai-streaming";
 import { useGoogleDocs } from "@/hooks/use-google-docs";
 import { useKV } from "@/hooks/use-kv";
+
 import {
   documentTemplates,
   extractUnfilledVariables,
   replaceTemplateVariables,
   type DocumentTemplate,
 } from "@/lib/document-templates";
+
 import { callGemini, isGeminiConfigured } from "@/lib/gemini-service";
 import { googleDocsService } from "@/lib/google-docs-service";
 import { themeConfig } from "@/lib/themes";
+
 import {
   createMinuta,
   updateMinuta,
   validateMinutaForFinalization,
   type MinutaInput,
 } from "@/services/minuta-service";
+
 import type { Minuta, Process } from "@/types";
+
 import {
   AlertTriangle,
   Bot,
@@ -66,17 +72,23 @@ import {
   Wand2,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 
 import { ProfessionalEditor } from "@/components/editor/ProfessionalEditor";
 
-// Verificar se as credenciais do Google estão configuradas
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-const GOOGLE_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-const isGoogleConfigured = !!GOOGLE_CLIENT_ID && !!GOOGLE_API_KEY;
-
 type ViewMode = "grid" | "list";
+
+/**
+ * ✅ Google Docs config (corrigido):
+ * - Usa VITE_GOOGLE_API_KEY se existir
+ * - Fallback para VITE_GEMINI_API_KEY pra não quebrar seu env atual
+ */
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_API_KEY =
+  import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+const isGoogleConfigured = !!GOOGLE_CLIENT_ID && !!GOOGLE_API_KEY;
 
 export default function MinutasManager() {
   const [minutas, setMinutas] = useKV<Minuta[]>("minutas", []);
@@ -87,8 +99,12 @@ export default function MinutasManager() {
   const [editingMinuta, setEditingMinuta] = useState<Minuta | null>(null);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState("editor");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"editor" | "templates" | "variaveis">("editor");
+
+  // ✅ SEPARAR buscas (bug de UX importante)
+  const [minutaSearch, setMinutaSearch] = useState("");
+  const [templateSearch, setTemplateSearch] = useState("");
+
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -103,12 +119,8 @@ export default function MinutasManager() {
   }>({});
 
   const { streamChat } = useAIStreaming({
-    onChunk: (chunk) => {
-      streamCallbacksRef.current.onChunk?.(chunk);
-    },
-    onComplete: () => {
-      streamCallbacksRef.current.onComplete?.();
-    },
+    onChunk: (chunk) => streamCallbacksRef.current.onChunk?.(chunk),
+    onComplete: () => streamCallbacksRef.current.onComplete?.(),
     onError: (err) => {
       console.error("[MinutasManager] Erro no streaming:", err);
       toast.error("Erro no streaming de IA");
@@ -116,9 +128,10 @@ export default function MinutasManager() {
     },
   });
 
+  // ✅ processId = "" (sem lixo "_none")
   const [formData, setFormData] = useState({
     titulo: "",
-    processId: "_none",
+    processId: "",
     tipo: "peticao" as Minuta["tipo"],
     conteudo: "",
     status: "rascunho" as Minuta["status"],
@@ -143,9 +156,7 @@ export default function MinutasManager() {
   }, [checkAIStatus]);
 
   useEffect(() => {
-    if (aiCommandError) {
-      toast.error(`Erro no comando IA: ${aiCommandError}`);
-    }
+    if (aiCommandError) toast.error(`Erro no comando IA: ${aiCommandError}`);
   }, [aiCommandError]);
 
   const handleAICommand = useCallback(
@@ -174,16 +185,11 @@ export default function MinutasManager() {
       try {
         await commandFn(formData.conteudo, (chunk) => {
           streamedContent += chunk;
+
           if (mode === "append") {
-            setFormData((prev) => ({
-              ...prev,
-              conteudo: prev.conteudo + chunk,
-            }));
+            setFormData((prev) => ({ ...prev, conteudo: prev.conteudo + chunk }));
           } else {
-            setFormData((prev) => ({
-              ...prev,
-              conteudo: streamedContent,
-            }));
+            setFormData((prev) => ({ ...prev, conteudo: streamedContent }));
           }
         });
 
@@ -205,8 +211,7 @@ export default function MinutasManager() {
       }
       try {
         await googleDocsService.initialize();
-        const authenticated = googleDocsService.isAuthenticated();
-        setIsAuthenticated(authenticated);
+        setIsAuthenticated(googleDocsService.isAuthenticated());
       } catch (err) {
         console.error("[MinutasManager] ❌ Google Docs init falhou:", err);
         setIsAuthenticated(false);
@@ -216,7 +221,7 @@ export default function MinutasManager() {
   }, []);
 
   useEffect(() => {
-    if (formData.processId && formData.processId !== "_none") {
+    if (formData.processId) {
       const processo = (processes || []).find((p) => p.id === formData.processId);
       if (processo) {
         setVariableValues((prev) => ({
@@ -235,7 +240,7 @@ export default function MinutasManager() {
   const resetForm = () => {
     setFormData({
       titulo: "",
-      processId: "_none",
+      processId: "",
       tipo: "peticao",
       conteudo: "",
       status: "rascunho",
@@ -243,6 +248,7 @@ export default function MinutasManager() {
     setSelectedTemplate(null);
     setVariableValues({});
     setActiveTab("editor");
+    setTemplateSearch("");
   };
 
   const handleAuthGoogle = async () => {
@@ -252,7 +258,6 @@ export default function MinutasManager() {
         return;
       }
 
-      // Mostrar loading toast
       const toastId = toast.loading("Inicializando Google Docs...");
 
       try {
@@ -261,15 +266,13 @@ export default function MinutasManager() {
       } catch (initError) {
         const errorMsg =
           initError instanceof Error ? initError.message : "Erro ao inicializar Google Docs";
-
-        // Mensagens mais específicas baseadas no erro
         let userMessage = errorMsg;
+
         if (errorMsg.includes("Timeout")) {
           userMessage = "Timeout ao carregar Google Docs. Verifique sua conexão e tente novamente.";
         } else if (errorMsg.includes("Failed to load")) {
-          userMessage =
-            "Não foi possível carregar scripts do Google. Verifique se você está conectado à internet.";
-        } else if (errorMsg.includes("API key")) {
+          userMessage = "Não foi possível carregar scripts do Google. Verifique sua conexão.";
+        } else if (errorMsg.toLowerCase().includes("api key")) {
           userMessage = "Credenciais do Google inválidas. Contate o suporte.";
         }
 
@@ -279,13 +282,11 @@ export default function MinutasManager() {
       }
 
       const success = await googleDocsService.authenticate();
-
       if (success) {
         setIsAuthenticated(true);
         toast.success("Autenticado com Google Docs!");
       } else {
-        const lastError = googleDocsService.getLastError();
-        toast.error(lastError || "Falha na autenticação - verifique se popups estão permitidos");
+        toast.error(googleDocsService.getLastError() || "Falha na autenticação - verifique popups");
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Erro desconhecido";
@@ -303,7 +304,7 @@ export default function MinutasManager() {
     try {
       const minutaInput: MinutaInput = {
         titulo: formData.titulo,
-        processId: formData.processId === "_none" ? undefined : formData.processId,
+        processId: formData.processId || undefined,
         tipo: formData.tipo,
         conteudo: formData.conteudo,
         status: formData.status,
@@ -312,7 +313,6 @@ export default function MinutasManager() {
       };
 
       const novaMinuta = createMinuta(minutaInput);
-
       setMinutas((current = []) => [...current, novaMinuta]);
 
       resetForm();
@@ -348,7 +348,7 @@ export default function MinutasManager() {
 
       const minutaAtualizada = updateMinuta(editingMinuta, {
         titulo: formData.titulo,
-        processId: formData.processId === "_none" ? undefined : formData.processId,
+        processId: formData.processId || undefined,
         tipo: formData.tipo,
         conteudo: formData.conteudo,
         status: formData.status,
@@ -363,11 +363,11 @@ export default function MinutasManager() {
           minutaAtualizada.googleDocsId,
           minutaAtualizada.conteudo
         );
-        if (syncSuccess) {
-          toast.success("Minuta atualizada e sincronizada com Google Docs");
-        } else {
-          toast.warning("Minuta atualizada, mas falha ao sincronizar com Google Docs");
-        }
+        toast[syncSuccess ? "success" : "warning"](
+          syncSuccess
+            ? "Minuta atualizada e sincronizada com Google Docs"
+            : "Minuta atualizada, mas falha ao sincronizar com Google Docs"
+        );
       } else {
         toast.success("Minuta atualizada com sucesso!");
       }
@@ -385,7 +385,7 @@ export default function MinutasManager() {
     setEditingMinuta(minuta);
     setFormData({
       titulo: minuta.titulo,
-      processId: minuta.processId || "_none",
+      processId: minuta.processId || "",
       tipo: minuta.tipo,
       conteudo: minuta.conteudo,
       status: minuta.status,
@@ -428,13 +428,9 @@ export default function MinutasManager() {
     toast.success("Minuta duplicada com sucesso!");
   };
 
-  const handleExportPDF = (_minuta: Minuta) => {
-    toast.info("Exportação para PDF em desenvolvimento");
-  };
-
-  const handleExportDOCX = (_minuta: Minuta) => {
+  const handleExportPDF = (_minuta: Minuta) => toast.info("Exportação para PDF em desenvolvimento");
+  const handleExportDOCX = (_minuta: Minuta) =>
     toast.info("Exportação para DOCX em desenvolvimento");
-  };
 
   const handleOpenInGoogleDocs = async (minuta: Minuta) => {
     if (!isAuthenticated) {
@@ -465,7 +461,7 @@ export default function MinutasManager() {
           toast.success("Documento criado e aberto no Google Docs!");
         }
       }
-    } catch (_error) {
+    } catch {
       toast.error("Erro ao abrir no Google Docs");
     }
   };
@@ -476,10 +472,8 @@ export default function MinutasManager() {
     setIsSyncing(minuta.id);
     try {
       const success = await importFromGoogleDocs(minuta.id, minutas || [], setMinutas);
-      if (success) {
-        toast.success("Alterações importadas do Google Docs!");
-      }
-    } catch (_error) {
+      if (success) toast.success("Alterações importadas do Google Docs!");
+    } catch {
       toast.error("Erro ao importar do Google Docs");
     } finally {
       setIsSyncing(null);
@@ -488,17 +482,15 @@ export default function MinutasManager() {
 
   const handleApplyTemplate = (template: DocumentTemplate) => {
     setSelectedTemplate(template);
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       titulo: template.nome,
       tipo: template.categoria as Minuta["tipo"],
       conteudo: template.conteudo,
-    });
+    }));
 
     const initialValues: Record<string, string> = {};
-    template.variaveis.forEach((v) => {
-      initialValues[v] = variableValues[v] || "";
-    });
+    template.variaveis.forEach((v) => (initialValues[v] = variableValues[v] || ""));
     setVariableValues(initialValues);
 
     setActiveTab("editor");
@@ -507,14 +499,12 @@ export default function MinutasManager() {
 
   const handleFillVariables = () => {
     const filled = replaceTemplateVariables(formData.conteudo, variableValues);
-    setFormData({ ...formData, conteudo: filled });
+    setFormData((prev) => ({ ...prev, conteudo: filled }));
     toast.success("Variáveis preenchidas no documento!");
   };
 
   const handleAIGenerate = async (prompt: string): Promise<string> => {
-    if (!isGeminiConfigured()) {
-      throw new Error("Gemini não está configurado");
-    }
+    if (!isGeminiConfigured()) throw new Error("Gemini não está configurado");
 
     const fullPrompt = `Você é um assistente jurídico especializado em redação de documentos legais brasileiros.
 Sua função é ajudar na criação, edição e melhoria de petições, contratos, pareceres e outros documentos jurídicos.
@@ -524,7 +514,6 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
 ${prompt}`;
 
     const response = await callGemini(fullPrompt);
-
     return response.text;
   };
 
@@ -561,15 +550,15 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
     [streamChat]
   );
 
-  // Alinhado ao design system semântico em src/lib/themes.ts
-  const getStatusStyle = (status: Minuta["status"]): React.CSSProperties => {
+  // ✅ estilos tipados sem React namespace
+  const getStatusStyle = (status: Minuta["status"]): CSSProperties => {
     const map: Record<Minuta["status"], string> = {
-      rascunho: themeConfig.colors.alerta, // amarelo
-      "em-revisao": themeConfig.colors.info, // azul
-      "pendente-revisao": themeConfig.colors.alerta, // laranja
-      finalizada: themeConfig.colors.sucesso, // verde
-      arquivada: "hsl(0, 0%, 45%)", // cinza neutro
-    } as const;
+      rascunho: themeConfig.colors.alerta,
+      "em-revisao": themeConfig.colors.info,
+      "pendente-revisao": themeConfig.colors.alerta,
+      finalizada: themeConfig.colors.sucesso,
+      arquivada: "hsl(0, 0%, 45%)",
+    };
 
     const base = map[status] || themeConfig.colors.info;
     return {
@@ -579,72 +568,54 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
     };
   };
 
-  const getStatusLabel = (status: Minuta["status"]) => {
-    const labels = {
-      rascunho: "Rascunho",
-      "em-revisao": "Em Revisão",
-      "pendente-revisao": "Pendente Revisão",
-      finalizada: "Finalizada",
-      arquivada: "Arquivada",
-    };
-    return labels[status] || status;
-  };
+  const getStatusLabel = (status: Minuta["status"]) =>
+    (
+      ({
+        rascunho: "Rascunho",
+        "em-revisao": "Em Revisão",
+        "pendente-revisao": "Pendente Revisão",
+        finalizada: "Finalizada",
+        arquivada: "Arquivada",
+      }) as const
+    )[status] || status;
 
-  const getTipoLabel = (tipo: Minuta["tipo"]) => {
-    const labels = {
-      peticao: "Petição",
-      contrato: "Contrato",
-      parecer: "Parecer",
-      recurso: "Recurso",
-      procuracao: "Procuração",
-      outro: "Outro",
-    };
-    return labels[tipo] || tipo;
-  };
+  const getTipoLabel = (tipo: Minuta["tipo"]) =>
+    (
+      ({
+        peticao: "Petição",
+        contrato: "Contrato",
+        parecer: "Parecer",
+        recurso: "Recurso",
+        procuracao: "Procuração",
+        outro: "Outro",
+      }) as const
+    )[tipo] || tipo;
 
-  const getAlertStyle = (): React.CSSProperties => {
-    const base = themeConfig.colors.alerta;
-    return {
-      color: base,
-      backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
-      borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
-    };
-  };
-
-  const getSuccessStyle = (): React.CSSProperties => {
-    const base = themeConfig.colors.sucesso;
-    return {
-      color: base,
-      backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
-      borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
-    };
-  };
-
-  const getInfoStyle = (): React.CSSProperties => {
-    const base = themeConfig.colors.info;
-    return {
-      color: base,
-      backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
-      borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
-    };
-  };
-
-  // Filtrar minutas
-  const filteredMinutas = (minutas || []).filter((m) => {
-    const matchesSearch =
-      searchQuery === "" || m.titulo.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || m.status === filterStatus;
-    const matchesTipo = filterTipo === "all" || m.tipo === filterTipo;
-    return matchesSearch && matchesStatus && matchesTipo;
+  const getTintStyle = (base: string): CSSProperties => ({
+    color: base,
+    backgroundColor: `${base.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
+    borderColor: `${base.replace("hsl", "hsla").replace(")", ", 0.20)")}`,
   });
 
-  // Minutas pendentes de revisão
-  const minutasPendentes = (minutas || []).filter(
-    (m) => m.status === "pendente-revisao" || m.criadoPorAgente
+  const filteredMinutas = useMemo(() => {
+    const q = minutaSearch.trim().toLowerCase();
+    return (minutas || []).filter((m) => {
+      const matchesSearch = !q || m.titulo.toLowerCase().includes(q);
+      const matchesStatus = filterStatus === "all" || m.status === filterStatus;
+      const matchesTipo = filterTipo === "all" || m.tipo === filterTipo;
+      return matchesSearch && matchesStatus && matchesTipo;
+    });
+  }, [minutas, minutaSearch, filterStatus, filterTipo]);
+
+  const minutasPendentes = useMemo(
+    () => (minutas || []).filter((m) => m.status === "pendente-revisao" || m.criadoPorAgente),
+    [minutas]
   );
 
-  // Variáveis não preenchidas
-  const unfilledVariables = extractUnfilledVariables(formData.conteudo);
+  const unfilledVariables = useMemo(
+    () => extractUnfilledVariables(formData.conteudo),
+    [formData.conteudo]
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -664,7 +635,11 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
           {(() => {
             if (!isGoogleConfigured) {
               return (
-                <Badge variant="outline" style={getAlertStyle()} className="px-4 py-2">
+                <Badge
+                  variant="outline"
+                  style={getTintStyle(themeConfig.colors.alerta)}
+                  className="px-4 py-2"
+                >
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   Google não configurado
                 </Badge>
@@ -679,7 +654,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
               );
             }
             return (
-              <Badge style={getSuccessStyle()} className="px-4 py-2">
+              <Badge style={getTintStyle(themeConfig.colors.sucesso)} className="px-4 py-2">
                 <FileText className="mr-2" />
                 Google Conectado
               </Badge>
@@ -699,367 +674,414 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto flex flex-col bg-card">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {editingMinuta ? (
-                    <>
-                      <Pencil />
-                      Editar Minuta
-                    </>
-                  ) : (
-                    <>
-                      <Plus />
-                      Nova Minuta
-                    </>
-                  )}
-                </DialogTitle>
-                <DialogDescription>
-                  Use o editor rico para criar sua minuta. Use o botão de IA para gerar conteúdo
-                  automaticamente com Gemini 2.5 Pro.
-                </DialogDescription>
-              </DialogHeader>
+            {/* ✅ Modal sem overflow-y-auto + scroll só no corpo */}
+            <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col bg-card p-0 overflow-hidden">
+              <div className="p-6 pb-3">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {editingMinuta ? (
+                      <>
+                        <Pencil />
+                        Editar Minuta
+                      </>
+                    ) : (
+                      <>
+                        <Plus />
+                        Nova Minuta
+                      </>
+                    )}
+                  </DialogTitle>
+                  <DialogDescriptionUI>
+                    Use o editor rico para criar sua minuta. Use a IA para gerar conteúdo com Gemini
+                    2.5 Pro.
+                  </DialogDescriptionUI>
+                </DialogHeader>
+              </div>
 
               <Tabs
                 value={activeTab}
-                onValueChange={setActiveTab}
+                onValueChange={(v) => setActiveTab(v as any)}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="editor">Editor</TabsTrigger>
-                  <TabsTrigger value="templates">Templates</TabsTrigger>
-                  <TabsTrigger value="variaveis">Variáveis</TabsTrigger>
-                </TabsList>
+                <div className="px-6">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="editor">Editor</TabsTrigger>
+                    <TabsTrigger value="templates">Templates</TabsTrigger>
+                    <TabsTrigger value="variaveis">Variáveis</TabsTrigger>
+                  </TabsList>
+                </div>
 
-                <TabsContent
-                  value="editor"
-                  className="flex-1 flex flex-col overflow-hidden mt-4 space-y-4"
-                >
-                  {/* Metadados */}
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="col-span-2">
-                      <Label htmlFor="titulo">Título</Label>
-                      <Input
-                        id="titulo"
-                        value={formData.titulo}
-                        onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                        placeholder="Ex: Petição Inicial - Ação de Cobrança"
-                      />
-                    </div>
+                <div className="flex-1 overflow-hidden">
+                  <ScrollArea className="h-full">
+                    <div className="px-6 pb-6 pt-4">
+                      <TabsContent value="editor" className="mt-0 space-y-4">
+                        {/* Metadados */}
+                        <Card className="border-muted">
+                          <CardHeader className="py-4">
+                            <CardTitle className="text-sm">Dados da minuta</CardTitle>
+                            <CardDescription className="text-xs">
+                              Defina título, tipo, status e vinculação (opcional)
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="md:col-span-2">
+                                <Label htmlFor="titulo">Título</Label>
+                                <Input
+                                  id="titulo"
+                                  value={formData.titulo}
+                                  onChange={(e) =>
+                                    setFormData((p) => ({ ...p, titulo: e.target.value }))
+                                  }
+                                  placeholder="Ex: Petição Inicial - Ação de Cobrança"
+                                />
+                              </div>
 
-                    <div>
-                      <Label htmlFor="tipo">Tipo</Label>
-                      <Select
-                        value={formData.tipo}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            tipo: value as Minuta["tipo"],
-                          })
-                        }
-                      >
-                        <SelectTrigger id="tipo">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="peticao">Petição</SelectItem>
-                          <SelectItem value="contrato">Contrato</SelectItem>
-                          <SelectItem value="parecer">Parecer</SelectItem>
-                          <SelectItem value="recurso">Recurso</SelectItem>
-                          <SelectItem value="procuracao">Procuração</SelectItem>
-                          <SelectItem value="outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <div>
+                                <Label htmlFor="tipo">Tipo</Label>
+                                <Select
+                                  value={formData.tipo}
+                                  onValueChange={(value) =>
+                                    setFormData((p) => ({ ...p, tipo: value as Minuta["tipo"] }))
+                                  }
+                                >
+                                  <SelectTrigger id="tipo">
+                                    <SelectValue placeholder="Selecione..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="peticao">Petição</SelectItem>
+                                    <SelectItem value="contrato">Contrato</SelectItem>
+                                    <SelectItem value="parecer">Parecer</SelectItem>
+                                    <SelectItem value="recurso">Recurso</SelectItem>
+                                    <SelectItem value="procuracao">Procuração</SelectItem>
+                                    <SelectItem value="outro">Outro</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-                    <div>
-                      <Label htmlFor="status">Status</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            status: value as Minuta["status"],
-                          })
-                        }
-                      >
-                        <SelectTrigger id="status">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="rascunho">Rascunho</SelectItem>
-                          <SelectItem value="em-revisao">Em Revisão</SelectItem>
-                          <SelectItem value="finalizada">Finalizada</SelectItem>
-                          <SelectItem value="arquivada">Arquivada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                              <div>
+                                <Label htmlFor="status">Status</Label>
+                                <Select
+                                  value={formData.status}
+                                  onValueChange={(value) =>
+                                    setFormData((p) => ({
+                                      ...p,
+                                      status: value as Minuta["status"],
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger id="status">
+                                    <SelectValue placeholder="Selecione..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="rascunho">Rascunho</SelectItem>
+                                    <SelectItem value="em-revisao">Em Revisão</SelectItem>
+                                    <SelectItem value="finalizada">Finalizada</SelectItem>
+                                    <SelectItem value="arquivada">Arquivada</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
 
-                  <div>
-                    <Label htmlFor="processo">Vincular a Processo (opcional)</Label>
-                    <Select
-                      value={formData.processId}
-                      onValueChange={(value) => setFormData({ ...formData, processId: value })}
-                    >
-                      <SelectTrigger id="processo">
-                        <SelectValue placeholder="Selecione um processo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Nenhum</SelectItem>
-                        {(processes || []).map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.numeroCNJ} - {p.titulo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                            <div>
+                              <Label htmlFor="processo">Vincular a Processo (opcional)</Label>
+                              <Select
+                                value={formData.processId || "_none"}
+                                onValueChange={(value) =>
+                                  setFormData((p) => ({
+                                    ...p,
+                                    processId: value === "_none" ? "" : value,
+                                  }))
+                                }
+                              >
+                                <SelectTrigger id="processo">
+                                  <SelectValue placeholder="Selecione um processo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="_none">Nenhum</SelectItem>
+                                  {(processes || []).map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.numeroCNJ} - {p.titulo}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </CardContent>
+                        </Card>
 
-                  {/* Editor - CKEditor 5 */}
-                  <div className="flex-1 overflow-hidden flex flex-col min-h-[400px]">
-                    <ProfessionalEditor
-                      key={editingMinuta?.id || "new-minuta"}
-                      content={formData.conteudo}
-                      onChange={(content) => setFormData({ ...formData, conteudo: content })}
-                      onAIGenerate={handleAIGenerate}
-                      onAIStream={handleAIStream}
-                      variables={variableValues}
-                      placeholder="Digite o conteúdo da minuta ou use o botão de IA para gerar com Gemini..."
-                      className="h-full min-h-[400px]"
-                      showCollaboration={false}
-                    />
-                  </div>
+                        {/* Editor */}
+                        <Card className="border-muted">
+                          <CardHeader className="py-4">
+                            <CardTitle className="text-sm">Conteúdo</CardTitle>
+                            <CardDescription className="text-xs">
+                              Escreva ou gere com IA e depois refine com comandos
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="min-h-[420px]">
+                              <ProfessionalEditor
+                                key={editingMinuta?.id || "new-minuta"}
+                                content={formData.conteudo}
+                                onChange={(content) =>
+                                  setFormData((p) => ({ ...p, conteudo: content }))
+                                }
+                                onAIGenerate={handleAIGenerate}
+                                onAIStream={handleAIStream}
+                                variables={variableValues}
+                                placeholder="Digite o conteúdo da minuta ou use a IA para gerar com Gemini..."
+                                className="h-full min-h-[420px]"
+                                showCollaboration={false}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
 
-                  {/* Comandos IA */}
-                  <Card className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20">
-                    <CardHeader className="py-3 px-4">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Bot className="h-4 w-4 text-purple-600" />
-                        Comandos IA
+                        {/* Comandos IA (mantidos) */}
+                        <Card className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20">
+                          <CardHeader className="py-3 px-4">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <Bot className="h-4 w-4 text-purple-600" />
+                              Comandos IA
+                              {!isAICommandLoading && (
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30"
+                                >
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  Gemini 2.5 Pro
+                                </Badge>
+                              )}
+                              {isAICommandLoading && (
+                                <Badge variant="secondary" className="ml-2">
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Processando...
+                                </Badge>
+                              )}
+                              {!canAIRequest && aiWaitTime > 0 && (
+                                <Badge
+                                  variant="outline"
+                                  className="ml-2 text-orange-600 border-orange-500"
+                                >
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Aguarde {Math.ceil(aiWaitTime / 1000)}s
+                                </Badge>
+                              )}
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                              Use os comandos abaixo para processar o texto com IA
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="py-2 px-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAICommand("continuar", "append")}
+                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                              >
+                                {activeAICommand === "continuar" ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                ) : (
+                                  <Zap className="h-4 w-4 text-purple-600" />
+                                )}
+                                <span className="font-medium">Continuar</span>
+                                <span className="text-[10px] text-muted-foreground text-center">
+                                  Continua a escrita
+                                </span>
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAICommand("expandir", "replace")}
+                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                              >
+                                {activeAICommand === "expandir" ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                ) : (
+                                  <Expand className="h-4 w-4 text-purple-600" />
+                                )}
+                                <span className="font-medium">Expandir</span>
+                                <span className="text-[10px] text-muted-foreground text-center">
+                                  Desenvolve o texto
+                                </span>
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAICommand("revisar", "replace")}
+                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                              >
+                                {activeAICommand === "revisar" ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                ) : (
+                                  <Sparkles className="h-4 w-4 text-purple-600" />
+                                )}
+                                <span className="font-medium">Revisar</span>
+                                <span className="text-[10px] text-muted-foreground text-center">
+                                  Melhora gramática
+                                </span>
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAICommand("formalizar", "replace")}
+                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                              >
+                                {activeAICommand === "formalizar" ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                                ) : (
+                                  <Wand2 className="h-4 w-4 text-purple-600" />
+                                )}
+                                <span className="font-medium">Formalizar</span>
+                                <span className="text-[10px] text-muted-foreground text-center">
+                                  Linguagem jurídica
+                                </span>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+
                         {isAICommandLoading && (
-                          <Badge variant="secondary" className="ml-2">
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Processando...
-                          </Badge>
+                          <div className="flex items-center justify-center gap-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                            <span className="text-sm font-medium text-purple-600">
+                              {activeAICommand === "continuar" && "Continuando escrita com IA..."}
+                              {activeAICommand === "expandir" && "Expandindo texto com IA..."}
+                              {activeAICommand === "revisar" && "Revisando gramática com IA..."}
+                              {activeAICommand === "formalizar" &&
+                                "Formalizando linguagem com IA..."}
+                            </span>
+                          </div>
                         )}
-                        {!canAIRequest && aiWaitTime > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="ml-2 text-orange-600 border-orange-500"
-                          >
-                            <Clock className="h-3 w-3 mr-1" />
-                            Aguarde {Math.ceil(aiWaitTime / 1000)}s
-                          </Badge>
+
+                        {unfilledVariables.length > 0 && (
+                          <Alert style={getTintStyle(themeConfig.colors.alerta)}>
+                            <AlertTriangle
+                              className="h-4 w-4"
+                              style={{ color: themeConfig.colors.alerta }}
+                            />
+                            <AlertDescription style={{ color: themeConfig.colors.alerta }}>
+                              <strong>{unfilledVariables.length} variáveis não preenchidas:</strong>{" "}
+                              {unfilledVariables.slice(0, 5).join(", ")}
+                              {unfilledVariables.length > 5 &&
+                                ` e mais ${unfilledVariables.length - 5}`}
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="ml-2"
+                                style={{ color: themeConfig.colors.alerta }}
+                                onClick={() => setActiveTab("variaveis")}
+                              >
+                                Preencher variáveis →
+                              </Button>
+                            </AlertDescription>
+                          </Alert>
                         )}
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        Use os comandos abaixo para processar o texto com IA
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="py-2 px-4">
-                      <div className="grid grid-cols-4 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAICommand("continuar", "append")}
-                          disabled={isAICommandLoading || !formData.conteudo.trim()}
-                          className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                        >
-                          {activeAICommand === "continuar" ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                          ) : (
-                            <Zap className="h-4 w-4 text-purple-600" />
-                          )}
-                          <span className="font-medium">Continuar</span>
-                          <span className="text-[10px] text-muted-foreground text-center">
-                            Continua a escrita
-                          </span>
-                        </Button>
+                      </TabsContent>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAICommand("expandir", "replace")}
-                          disabled={isAICommandLoading || !formData.conteudo.trim()}
-                          className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                        >
-                          {activeAICommand === "expandir" ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                          ) : (
-                            <Expand className="h-4 w-4 text-purple-600" />
-                          )}
-                          <span className="font-medium">Expandir</span>
-                          <span className="text-[10px] text-muted-foreground text-center">
-                            Desenvolve o texto
-                          </span>
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAICommand("revisar", "replace")}
-                          disabled={isAICommandLoading || !formData.conteudo.trim()}
-                          className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                        >
-                          {activeAICommand === "revisar" ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                          ) : (
-                            <Sparkles className="h-4 w-4 text-purple-600" />
-                          )}
-                          <span className="font-medium">Revisar</span>
-                          <span className="text-[10px] text-muted-foreground text-center">
-                            Melhora gramática
-                          </span>
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAICommand("formalizar", "replace")}
-                          disabled={isAICommandLoading || !formData.conteudo.trim()}
-                          className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                        >
-                          {activeAICommand === "formalizar" ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                          ) : (
-                            <Wand2 className="h-4 w-4 text-purple-600" />
-                          )}
-                          <span className="font-medium">Formalizar</span>
-                          <span className="text-[10px] text-muted-foreground text-center">
-                            Linguagem jurídica
-                          </span>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Variáveis não preenchidas */}
-                  {unfilledVariables.length > 0 && (
-                    <Alert
-                      style={{
-                        borderColor: `${themeConfig.colors.alerta.replace("hsl", "hsla").replace(")", ", 0.50)")}`,
-                        backgroundColor: `${themeConfig.colors.alerta.replace("hsl", "hsla").replace(")", ", 0.10)")}`,
-                      }}
-                    >
-                      <AlertTriangle
-                        className="h-4 w-4"
-                        style={{ color: themeConfig.colors.alerta }}
-                      />
-                      <AlertDescription style={{ color: themeConfig.colors.alerta }}>
-                        <strong>{unfilledVariables.length} variáveis não preenchidas:</strong>{" "}
-                        {unfilledVariables.slice(0, 5).join(", ")}
-                        {unfilledVariables.length > 5 && ` e mais ${unfilledVariables.length - 5}`}
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="ml-2"
-                          style={{ color: themeConfig.colors.alerta }}
-                          onClick={() => setActiveTab("variaveis")}
-                        >
-                          Preencher variáveis →
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="templates" className="flex-1 overflow-hidden mt-4">
-                  <div className="space-y-4 h-full flex flex-col">
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar templates..."
-                          className="pl-9"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <ScrollArea className="flex-1">
-                      <div className="grid grid-cols-2 gap-3">
-                        {documentTemplates
-                          .filter(
-                            (t) =>
-                              searchQuery === "" ||
-                              t.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              t.categoria.toLowerCase().includes(searchQuery.toLowerCase())
-                          )
-                          .map((template) => (
-                            <Card
-                              key={template.id}
-                              className={`cursor-pointer transition-all hover:border-primary/50 ${
-                                selectedTemplate?.id === template.id
-                                  ? "border-primary bg-primary/5"
-                                  : ""
-                              }`}
-                              onClick={() => handleApplyTemplate(template)}
-                            >
-                              <CardHeader className="p-4">
-                                <CardTitle className="text-sm flex items-center gap-2">
-                                  <FolderOpen className="h-4 w-4" />
-                                  {template.nome}
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                  {template.descricao}
-                                </CardDescription>
-                              </CardHeader>
-                              <CardContent className="p-4 pt-0">
-                                <div className="flex gap-2 flex-wrap">
-                                  <Badge variant="outline" className="text-xs">
-                                    {template.categoria}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {template.variaveis.length} variáveis
-                                  </Badge>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="variaveis" className="flex-1 overflow-hidden mt-4">
-                  <div className="space-y-4 h-full flex flex-col">
-                    <p className="text-sm text-muted-foreground">
-                      Preencha as variáveis para substituir automaticamente no documento. Use o
-                      formato <code className="bg-muted px-1 rounded">{"{{variavel}}"}</code>.
-                    </p>
-
-                    <ScrollArea className="flex-1">
-                      <div className="grid grid-cols-2 gap-4">
-                        {(selectedTemplate?.variaveis || unfilledVariables).map((variable) => (
-                          <div key={variable}>
-                            <Label className="text-xs">{variable}</Label>
+                      <TabsContent value="templates" className="mt-0">
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                              value={variableValues[variable] || ""}
-                              onChange={(e) =>
-                                setVariableValues((prev) => ({
-                                  ...prev,
-                                  [variable]: e.target.value,
-                                }))
-                              }
-                              placeholder={`Valor para ${variable}`}
+                              placeholder="Buscar templates..."
+                              className="pl-9"
+                              value={templateSearch}
+                              onChange={(e) => setTemplateSearch(e.target.value)}
                             />
                           </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
 
-                    <Button onClick={handleFillVariables} className="w-full">
-                      <Sparkles className="mr-2" />
-                      Aplicar Variáveis no Documento
-                    </Button>
-                  </div>
-                </TabsContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {documentTemplates
+                              .filter((t) => {
+                                const q = templateSearch.trim().toLowerCase();
+                                return (
+                                  !q ||
+                                  t.nome.toLowerCase().includes(q) ||
+                                  t.categoria.toLowerCase().includes(q)
+                                );
+                              })
+                              .map((template) => (
+                                <Card
+                                  key={template.id}
+                                  className={`cursor-pointer transition-all hover:border-primary/50 ${
+                                    selectedTemplate?.id === template.id
+                                      ? "border-primary bg-primary/5"
+                                      : ""
+                                  }`}
+                                  onClick={() => handleApplyTemplate(template)}
+                                >
+                                  <CardHeader className="p-4">
+                                    <CardTitle className="text-sm flex items-center gap-2">
+                                      <FolderOpen className="h-4 w-4" />
+                                      {template.nome}
+                                    </CardTitle>
+                                    <CardDescription className="text-xs">
+                                      {template.descricao}
+                                    </CardDescription>
+                                  </CardHeader>
+                                  <CardContent className="p-4 pt-0">
+                                    <div className="flex gap-2 flex-wrap">
+                                      <Badge variant="outline" className="text-xs">
+                                        {template.categoria}
+                                      </Badge>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {template.variaveis.length} variáveis
+                                      </Badge>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="variaveis" className="mt-0">
+                        <div className="space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Preencha as variáveis para substituir automaticamente no documento. Use
+                            o formato{" "}
+                            <code className="bg-muted px-1 rounded">{"{{variavel}}"}</code>.
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {(selectedTemplate?.variaveis || unfilledVariables).map((variable) => (
+                              <div key={variable}>
+                                <Label className="text-xs">{variable}</Label>
+                                <Input
+                                  value={variableValues[variable] || ""}
+                                  onChange={(e) =>
+                                    setVariableValues((prev) => ({
+                                      ...prev,
+                                      [variable]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder={`Valor para ${variable}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          <Button onClick={handleFillVariables} className="w-full">
+                            <Sparkles className="mr-2" />
+                            Aplicar Variáveis no Documento
+                          </Button>
+                        </div>
+                      </TabsContent>
+                    </div>
+                  </ScrollArea>
+                </div>
               </Tabs>
 
-              {/* Footer */}
-              <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+              <div className="p-6 pt-3 border-t flex justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1085,7 +1107,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
           <AlertDescription className="text-orange-800 dark:text-orange-200">
             <strong>{minutasPendentes.length} minuta(s) pendente(s) de revisão</strong> criada(s)
             pelos agentes IA.
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 flex-wrap">
               {minutasPendentes.slice(0, 3).map((m) => (
                 <Button
                   key={m.id}
@@ -1110,8 +1132,8 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
           <Input
             placeholder="Buscar minutas..."
             className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={minutaSearch}
+            onChange={(e) => setMinutaSearch(e.target.value)}
           />
         </div>
 
@@ -1146,7 +1168,6 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
 
         <Badge variant="secondary">{filteredMinutas.length} minuta(s)</Badge>
 
-        {/* View Mode Toggle */}
         <div className="flex gap-1 border rounded-lg p-1">
           <Button
             size="sm"
@@ -1177,7 +1198,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText size={64} className="text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              {searchQuery || filterStatus !== "all" || filterTipo !== "all"
+              {minutaSearch || filterStatus !== "all" || filterTipo !== "all"
                 ? "Nenhuma minuta encontrada com os filtros aplicados."
                 : "Nenhuma minuta criada ainda."}
               <br />
@@ -1209,12 +1230,13 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                         <FileText className="text-primary h-4 w-4" />
                         {minuta.titulo}
                         {minuta.criadoPorAgente && (
-                          <Badge style={getInfoStyle()}>
+                          <Badge style={getTintStyle(themeConfig.colors.info)}>
                             <Bot className="mr-1 h-3 w-3" />
                             IA
                           </Badge>
                         )}
                       </CardTitle>
+
                       <CardDescription className="mt-2 flex items-center gap-2 flex-wrap">
                         <Badge style={getStatusStyle(minuta.status)}>
                           {getStatusLabel(minuta.status)}
@@ -1226,7 +1248,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                           </Badge>
                         )}
                         {minuta.googleDocsId && (
-                          <Badge style={getInfoStyle()}>
+                          <Badge style={getTintStyle(themeConfig.colors.info)}>
                             <FileText className="mr-1 h-3 w-3" />
                             Google Docs
                           </Badge>
@@ -1238,7 +1260,6 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
 
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Preview do conteúdo */}
                     {viewMode === "grid" && (
                       <div
                         className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg max-h-24 overflow-hidden prose prose-sm dark:prose-invert line-clamp-3"
@@ -1250,7 +1271,6 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                       />
                     )}
 
-                    {/* Timestamps */}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -1264,7 +1284,6 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                       )}
                     </div>
 
-                    {/* Ações */}
                     <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant="outline" onClick={() => handleEditMinuta(minuta)}>
                         <Pencil className="mr-2 h-4 w-4" />
@@ -1345,9 +1364,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                           title="Importar alterações do Google Docs"
                         >
                           <RefreshCw
-                            className={`mr-2 h-4 w-4 ${
-                              isSyncing === minuta.id ? "animate-spin" : ""
-                            }`}
+                            className={`mr-2 h-4 w-4 ${isSyncing === minuta.id ? "animate-spin" : ""}`}
                           />
                           {isSyncing === minuta.id ? "Importando..." : "Importar"}
                         </Button>

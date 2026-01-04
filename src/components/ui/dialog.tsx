@@ -1,22 +1,22 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
 
-function Dialog({ ...props }: Readonly<ComponentProps<typeof DialogPrimitive.Root>>) {
+function Dialog(props: Readonly<ComponentProps<typeof DialogPrimitive.Root>>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({ ...props }: ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger(props: ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({ ...props }: Readonly<ComponentProps<typeof DialogPrimitive.Portal>>) {
+function DialogPortal(props: Readonly<ComponentProps<typeof DialogPrimitive.Portal>>) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose(props: ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
@@ -33,6 +33,10 @@ function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrim
   );
 }
 
+/**
+ * Nota: manter overflow-hidden é ok.
+ * O CKEditor resolve dropdowns/balloons via body + z-index (já ajustado no SCSS).
+ */
 function DialogContent({
   className,
   children,

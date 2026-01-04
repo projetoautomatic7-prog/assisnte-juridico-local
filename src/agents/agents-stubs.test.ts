@@ -16,22 +16,22 @@ import { describe, expect, test } from "vitest";
 
 describe("LangGraph agent stubs (smoke tests)", () => {
   test("Harvey runs and completes", async () => {
-    const result = await runHarvey();
+    const result = await runHarvey({ task: "Teste rápido" });
     expect(result.completed).toBe(true);
   });
 
   test("Justine runs and completes", async () => {
-    const result = await runJustine();
+    const result = await runJustine({ task: "Teste rápido" });
     expect(result.completed).toBe(true);
   });
 
   test("Analise Documental runs and completes", async () => {
-    const result = await runAnaliseDocumental();
+    const result = await runAnaliseDocumental({ documentoTexto: "Documento de exemplo" });
     expect(result.completed).toBe(true);
   });
 
   test("Gestao Prazos runs and completes", async () => {
-    const result = await runGestaoPrazos();
+    const result = await runGestaoPrazos({ tipoProcesso: "Processo de teste" });
     expect(result.completed).toBe(true);
   });
 

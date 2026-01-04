@@ -1,6 +1,6 @@
 /**
  * Professional Editor - Estilo adaptativo para modal
- * Corrige problemas de toolbar flutuante do CKEditor 5
+ * Corrige problemas de toolbar flutuante do CKEditor 5 dentro de Radix Dialog (transform + sticky)
  */
 
 /* Container Principal */
@@ -44,7 +44,7 @@
    CKEditor 5 Overrides - FORÇANDO LAYOUT
    ============================================ */
 
-/* Reset de todos os containers CK */
+/* Reset de containers CK */
 .professional-editor-page .ck-reset_all,
 .professional-editor-page .ck.ck-reset {
   position: relative !important;
@@ -68,7 +68,7 @@
   position: relative !important;
 }
 
-/* Seção superior do editor (contém toolbar) */
+/* Seção superior do editor (toolbar) */
 .professional-editor-page .ck.ck-editor__top {
   position: relative !important;
   z-index: 5 !important;
@@ -78,31 +78,25 @@
   width: 100% !important;
 }
 
-/* Sticky Panel - DESABILITAR comportamento sticky */
-.professional-editor-page .ck.ck-sticky-panel {
-  position: relative !important;
-  width: 100% !important;
+/* ========= FIX PRINCIPAL =========
+   Radix Dialog usa transform (translate) no Content.
+   Isso quebra sticky/fixed do CKEditor e a toolbar pode “flutuar no meio”.
+   Então: DESABILITA sticky com força bruta (inclusive quando ele tenta ficar fixed).
+*/
+.professional-editor-wrapper .ck.ck-sticky-panel,
+.professional-editor-wrapper .ck.ck-sticky-panel__content,
+.professional-editor-wrapper .ck.ck-sticky-panel__content_sticky {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.professional-editor-page .ck.ck-sticky-panel__placeholder {
+/* Placeholder do sticky */
+.professional-editor-wrapper .ck.ck-sticky-panel__placeholder {
   display: none !important;
-}
-
-.professional-editor-page .ck.ck-sticky-panel__content {
-  position: relative !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.professional-editor-page .ck.ck-sticky-panel__content_sticky {
-  position: relative !important;
-  top: 0 !important;
-  width: 100% !important;
-  box-shadow: none !important;
 }
 
 /* Toolbar do CKEditor */
@@ -140,13 +134,13 @@
   color: hsl(var(--primary)) !important;
 }
 
-/* Toolbar separator */
+/* Separator */
 .professional-editor-page .ck.ck-toolbar__separator {
   background: hsl(var(--border)) !important;
   margin: 0 0.25rem !important;
 }
 
-/* Dropdowns do CKEditor */
+/* Dropdowns */
 .professional-editor-page .ck.ck-dropdown__button {
   border: none !important;
   background: transparent !important;
@@ -156,31 +150,29 @@
   border: 1px solid hsl(var(--border)) !important;
   border-radius: var(--radius) !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
-  z-index: 9999 !important;
+  z-index: 99999 !important;
 }
 
 /* ============================================
    Color Picker / Font Color Panels (GLOBAL)
    ============================================ */
 
-/* Os painéis de cor são renderizados no body, não dentro do editor */
 .ck.ck-color-ui-dropdown,
 .ck.ck-color-picker,
 .ck.ck-color-grid,
 .ck.ck-color-table-dropdown {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
 }
 
 .ck.ck-dropdown__panel.ck-color-ui-dropdown__panel,
 .ck.ck-dropdown__panel[class*="color"] {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   background: white !important;
   border: 1px solid hsl(var(--border)) !important;
   border-radius: var(--radius) !important;
   box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15) !important;
 }
 
-/* Grid de cores */
 .ck.ck-color-grid {
   padding: 0.5rem !important;
 }
@@ -197,34 +189,12 @@
   transform: scale(1.1);
 }
 
-/* Input de cor customizada */
 .ck.ck-input-color input {
   border: 1px solid hsl(var(--border)) !important;
   border-radius: var(--radius) !important;
 }
 
-/* Botões de cor na toolbar */
-.professional-editor-page .ck.ck-font-color-dropdown,
-.professional-editor-page .ck.ck-font-background-color-dropdown {
-  position: relative !important;
-}
-
-.professional-editor-page .ck.ck-splitbutton {
-  border: none !important;
-}
-
-.professional-editor-page .ck.ck-splitbutton__action,
-.professional-editor-page .ck.ck-splitbutton__arrow {
-  border: none !important;
-  background: transparent !important;
-}
-
-.professional-editor-page .ck.ck-splitbutton:hover .ck-splitbutton__action,
-.professional-editor-page .ck.ck-splitbutton:hover .ck-splitbutton__arrow {
-  background: hsl(var(--muted)) !important;
-}
-
-/* Área principal de conteúdo */
+/* Área principal */
 .professional-editor-page .ck.ck-editor__main {
   flex: 1 !important;
   overflow: hidden !important;
@@ -242,7 +212,7 @@
   padding: 1rem 1.5rem !important;
   min-height: 200px !important;
   overflow-y: auto !important;
-  font-family: 'Times New Roman', Times, Georgia, serif !important;
+  font-family: "Times New Roman", Times, Georgia, serif !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
   color: #1a1a1a !important;
@@ -266,10 +236,7 @@
   font-style: italic !important;
 }
 
-/* ============================================
-   Tipografia do conteúdo
-   ============================================ */
-
+/* Tipografia */
 .professional-editor-page .ck-content h1 {
   font-size: 1.75rem;
   font-weight: bold;
@@ -348,28 +315,22 @@
   flex-shrink: 0;
 }
 
-/* ============================================
-   Balloon Toolbar (seleção de texto)
-   ============================================ */
-
+/* Balloon Toolbar */
 .ck.ck-balloon-panel {
-  z-index: 9999 !important;
+  z-index: 999999 !important;
 }
 
-/* ============================================
-   Responsivo
-   ============================================ */
-
+/* Responsivo */
 @media (max-width: 768px) {
   .professional-editor-page .ck-editor__editable {
     padding: 0.75rem 1rem !important;
     font-size: 13px !important;
   }
-  
+
   .ai-toolbar {
     padding: 0.375rem 0.5rem;
   }
-  
+
   .professional-editor-page .ck.ck-toolbar {
     padding: 0.25rem !important;
   }
