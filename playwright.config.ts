@@ -37,8 +37,8 @@ export default defineConfig({
     ? undefined
     : {
         command: process.platform === "win32"
-          ? `node start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`
-          : `node start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`,
+          ? `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`
+          : `node scripts/start-dev-with-api.cjs --port ${PORT} --host 127.0.0.1`,
         url: `http://127.0.0.1:${PORT}`,
         // SEMPRE reutilizar servidor existente para evitar conflitos de porta
         reuseExistingServer: true,

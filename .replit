@@ -75,6 +75,10 @@ exposeLocalhost = true
 localPort = 5252
 externalPort = 6800
 
+[[ports]]
+localPort = 9323
+externalPort = 4200
+
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build:deploy"]
