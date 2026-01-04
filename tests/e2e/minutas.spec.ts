@@ -46,9 +46,9 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
       await tituloInput.fill("Petição de Teste E2E");
     }
 
-    // Preenche o editor TiptapEditorV2
+    // Preenche o editor TiptapEditorV2 (usar seletor mais específico para o conteúdo)
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
 
@@ -98,7 +98,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Escreve texto no editor
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
     await page.keyboard.type("Texto curto para expandir");
@@ -167,7 +167,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Digita variável no editor
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await editorLocator.click();
     await page.keyboard.type("Processo número {{processo}} ");
@@ -210,7 +210,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
 
     // Verifica se editor está visível
     const editorLocator = page
-      .locator('[role="presentation"], .simple-editor-content, .tiptap')
+      .locator('.tiptap, [contenteditable="true"]')
       .first();
     await expect(editorLocator).toBeVisible();
 
