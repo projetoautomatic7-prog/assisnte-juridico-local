@@ -4,7 +4,8 @@
 # VERIFICAR OTIMIZAÇÕES DO CODESPACE
 # ==========================================
 
-set -e
+# Não usamos 'set -e' aqui porque este script de verificação
+# deve continuar executando todas as checagens mesmo que algumas falhem.
 
 echo "================================================"
 echo "🔍 VERIFICANDO OTIMIZAÇÕES DO CODESPACE"
