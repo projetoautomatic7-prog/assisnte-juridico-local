@@ -2,7 +2,7 @@
 # Execute este script APÓS fazer login e linkar o projeto
 
 # Verificar se está logado e linkado
-railway status || (echo '❌ Não está logado ou projeto não linkado. Execute: railway login && railway link -p d60e5f8d-fb13-4361-b489-ba89eaddd292' && exit 1)
+railway status || (echo '❌ Não está logado ou projeto não linkado. Execute: railway login && railway link -p 65944b39-fdb1-491c-9395-d684e3e05204' && exit 1)
 
 # Configurar variáveis de produção (adaptadas do .env.local)
 railway variables set VITE_GEMINI_API_KEY="AIzaSyDEqIR7SSC1LLXyl1yyoKFKHK7XOp51QuY"

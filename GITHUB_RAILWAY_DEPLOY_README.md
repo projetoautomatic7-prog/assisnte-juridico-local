@@ -11,7 +11,12 @@
 ### 2. Obter Project ID
 1. No Railway Dashboard, selecione seu projeto
 2. Vá para **Settings** > **General**
-3. Copie o **Project ID** (atual: `d60e5f8d-fb13-4361-b489-ba89eaddd292`)
+3. Copie o **Project ID** (atual: `65944b39-fdb1-491c-9395-d684e3e05204`)
+
+### ⚠️ Usando Project Token
+Você também pode usar um Project Token diretamente:
+- Token: `11111014-68c4-4259-b094-36c66477b7df`
+- Defina como `RAILWAY_TOKEN` no GitHub Secrets
 
 ### 3. Configurar Secrets no GitHub
 1. Acesse seu repositório no GitHub
