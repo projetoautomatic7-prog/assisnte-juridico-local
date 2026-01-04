@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import type { Process, ProcessEvent } from "@/types";
 import { FolderOpen, MagnifyingGlass } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
-import { getStatusBadgeClass } from "@/lib/themes";
+import { getStatusBadgeStyle } from "@/lib/themes";
 
 type FilterType = "all" | "active" | "urgent";
 
@@ -196,7 +196,7 @@ export function AcervoPJe() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge className={getStatusBadgeClass(process.status)}>
+                          <Badge style={getStatusBadgeStyle(process.status)}>
                             {process.status}
                           </Badge>
                           {process.fase && (
