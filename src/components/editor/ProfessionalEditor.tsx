@@ -8,6 +8,8 @@
  * - Comentários e revisões
  * - Export para Word/PDF
  * - Aparência de página A4
+ * - Slash commands para IA (/gerar-minuta, /djen, etc)
+ * - Integração com DJEN e dados de processos
  */
 
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -64,11 +66,43 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useEditorAI, EDITOR_SLASH_COMMANDS } from "@/hooks/use-editor-ai";
 import { cn } from "@/lib/utils";
-import { Bot, ChevronDown, Expand, Loader2, Sparkles, User, Wand2, Zap } from "lucide-react";
+import {
+  Bot,
+  ChevronDown,
+  Expand,
+  FileText,
+  Loader2,
+  Sparkles,
+  User,
+  Wand2,
+  Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+// ===========================
+// Types
+// ===========================
+
+interface DJENPublication {
+  id?: string;
+  conteudo?: string;
+  dataDisponibilizacao?: string;
+  orgaoJulgador?: string;
+  numeroProcesso?: string;
+}
+
+interface ProcessData {
+  numero?: string;
+  partes?: string;
+  vara?: string;
+  classe?: string;
+  [key: string]: unknown;
+}
 
 // ===========================
 // Props Interface
@@ -91,6 +125,9 @@ interface ProfessionalEditorProps {
   ) => Promise<void>;
   readonly variables?: Record<string, string>;
   readonly showCollaboration?: boolean;
+  readonly djenData?: DJENPublication[];
+  readonly processData?: ProcessData;
+  readonly documentType?: string;
 }
 
 // ===========================
@@ -147,6 +184,9 @@ export function ProfessionalEditor({
   onAIStream,
   variables = {},
   showCollaboration = true,
+  djenData = [],
+  processData,
+  documentType,
 }: ProfessionalEditorProps) {
   const editorRef = useRef<ClassicEditor | null>(null);
   const lastUserInputRef = useRef<number>(Date.now());
@@ -161,6 +201,22 @@ export function ProfessionalEditor({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashFilter, setSlashFilter] = useState("");
+  const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
+
+  // Hook de IA para editor
+  const {
+    isLoading: isEditorAILoading,
+    executeCommand,
+    generateMinuta,
+    loadCommands,
+  } = useEditorAI();
+
+  // Carregar comandos ao montar
+  useEffect(() => {
+    loadCommands();
+  }, [loadCommands]);
 
   // ===========================
   // CKEditor Configuration
@@ -417,6 +473,161 @@ export function ProfessionalEditor({
     [onAIGenerate, onAIStream, replaceVariables, runAIStreaming]
   );
 
+  // ===========================
+  // Slash Command Handler
+  // ===========================
+
+  const handleSlashCommand = useCallback(
+    async (command: string, customPrompt: string = "") => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      setIsAIActive(true);
+      setShowSlashMenu(false);
+
+      try {
+        // Obter conteúdo atual para contexto
+        const currentHtml = editor.getData();
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = currentHtml;
+        const plainText = tempDiv.textContent || tempDiv.innerText || "";
+
+        // Remover o texto do comando slash usando a API do modelo (preserva formatação)
+        editor.model.change((writer) => {
+          const selection = editor.model.document.selection;
+          const position = selection.getLastPosition();
+
+          if (position) {
+            // Encontrar o slash command no final do texto
+            const slashMatch = plainText.match(/\/([a-z-]*)$/i);
+            if (slashMatch) {
+              const charsToDelete = slashMatch[0].length;
+              // Mover para trás e deletar os caracteres do comando
+              const range = writer.createRange(position.getShiftedBy(-charsToDelete), position);
+              writer.remove(range);
+            }
+          }
+        });
+
+        const prompt =
+          customPrompt || `Gere conteúdo jurídico profissional para ${command.replace("/", "")}`;
+        const contextWithoutSlash = plainText.replace(/\/[a-z-]*$/i, "").trim();
+
+        const result = await executeCommand({
+          command,
+          prompt,
+          context: contextWithoutSlash,
+          djenData,
+          processData,
+        });
+
+        if (result.success && result.content) {
+          const viewFragment = editor.data.processor.toView(result.content);
+          const modelFragment = editor.data.toModel(viewFragment);
+          editor.model.insertContent(modelFragment);
+          toast.success(`Comando ${command} executado`);
+        } else {
+          toast.error(result.error || "Erro ao executar comando");
+        }
+      } catch (error) {
+        console.error("Erro no slash command:", error);
+        toast.error("Erro ao executar comando de IA");
+      } finally {
+        setIsAIActive(false);
+      }
+    },
+    [executeCommand, djenData, processData]
+  );
+
+  const handleGenerateMinutaWithContext = useCallback(
+    async (prompt: string) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      setIsAIActive(true);
+
+      try {
+        const currentContent = editor.getData();
+        const result = await generateMinuta({
+          prompt,
+          context: currentContent,
+          djenData,
+          processData,
+          documentType,
+          existingContent: currentContent,
+        });
+
+        if (result.success && result.content) {
+          editor.setData(result.content);
+          toast.success("Minuta gerada com sucesso");
+        } else {
+          toast.error(result.error || "Erro ao gerar minuta");
+        }
+      } catch (error) {
+        console.error("Erro ao gerar minuta:", error);
+        toast.error("Erro ao gerar minuta");
+      } finally {
+        setIsAIActive(false);
+      }
+    },
+    [generateMinuta, djenData, processData, documentType]
+  );
+
+  // Detectar "/" no início de uma linha e posicionar menu próximo ao cursor
+  const checkForSlashCommand = useCallback((plainText: string, editor: ClassicEditor) => {
+    const lines = plainText.split("\n");
+    const lastLine = lines[lines.length - 1] || "";
+
+    // Procurar por comando slash no final do texto
+    const slashMatch = lastLine.match(/\/([a-z-]*)$/i);
+
+    if (slashMatch) {
+      const filter = slashMatch[1].toLowerCase();
+      setSlashFilter(filter);
+      setShowSlashMenu(true);
+
+      // Posicionar o menu próximo à seleção atual
+      try {
+        const selection = editor.editing.view.document.selection;
+        const viewRange = selection.getFirstRange();
+
+        if (viewRange) {
+          const domRange = editor.editing.view.domConverter.viewRangeToDom(viewRange);
+          if (domRange) {
+            const rect = domRange.getBoundingClientRect();
+            setSlashMenuPosition({
+              top: rect.bottom + window.scrollY + 5,
+              left: rect.left + window.scrollX,
+            });
+            return;
+          }
+        }
+
+        // Fallback: posição relativa ao editor
+        const editorElement = editor.ui.view.element;
+        if (editorElement) {
+          const rect = editorElement.getBoundingClientRect();
+          setSlashMenuPosition({
+            top: rect.top + window.scrollY + 100,
+            left: rect.left + window.scrollX + 50,
+          });
+        }
+      } catch {
+        setSlashMenuPosition({ top: 200, left: 100 });
+      }
+    } else {
+      setShowSlashMenu(false);
+      setSlashFilter("");
+    }
+  }, []);
+
+  // Filtrar comandos slash
+  const filteredSlashCommands = EDITOR_SLASH_COMMANDS.filter(
+    (cmd) =>
+      cmd.command.toLowerCase().includes(slashFilter) ||
+      cmd.label.toLowerCase().includes(slashFilter)
+  );
+
   const handleAIGenerate = useCallback(async () => {
     const editor = editorRef.current;
     if (!aiPrompt.trim() || !editor) return;
@@ -515,6 +726,53 @@ export function ProfessionalEditor({
           </PopoverContent>
         </Popover>
 
+        {/* Slash Commands Dropdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" title="Comandos Slash">
+              <FileText className="h-4 w-4" />
+              <span className="ml-2 hidden sm:inline">Comandos /</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="start">
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Comandos Slash</h4>
+              <p className="text-xs text-muted-foreground">
+                Digite "/" no editor para acessar rapidamente
+              </p>
+              <ScrollArea className="h-48">
+                <div className="space-y-1">
+                  {EDITOR_SLASH_COMMANDS.map((cmd) => (
+                    <Button
+                      key={cmd.command}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => handleSlashCommand(cmd.command)}
+                      disabled={isAIActive || isEditorAILoading}
+                    >
+                      <span className="mr-2">{cmd.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{cmd.label}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {cmd.description}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* DJEN Context Indicator */}
+        {djenData && djenData.length > 0 && (
+          <Badge variant="secondary" className="ml-2">
+            {djenData.length} pub. DJEN
+          </Badge>
+        )}
+
         {/* Collaboration Indicator */}
         {showCollaboration && (
           <div className="ml-auto flex items-center gap-2">
@@ -524,7 +782,7 @@ export function ProfessionalEditor({
                 Você está editando
               </Badge>
             )}
-            {isAIActive && !isUserTyping && (
+            {(isAIActive || isEditorAILoading) && !isUserTyping && (
               <Badge variant="default" className="bg-purple-500">
                 <Bot className="h-3 w-3 mr-1" />
                 IA escrevendo...
@@ -533,6 +791,29 @@ export function ProfessionalEditor({
           </div>
         )}
       </div>
+
+      {/* Floating Slash Command Menu */}
+      {showSlashMenu && filteredSlashCommands.length > 0 && (
+        <div
+          className="absolute z-50 bg-background border rounded-lg shadow-lg p-2 w-64"
+          style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
+        >
+          <ScrollArea className="max-h-48">
+            {filteredSlashCommands.map((cmd) => (
+              <Button
+                key={cmd.command}
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-left"
+                onClick={() => handleSlashCommand(cmd.command)}
+              >
+                <span className="mr-2">{cmd.icon}</span>
+                <span className="font-medium">{cmd.label}</span>
+              </Button>
+            ))}
+          </ScrollArea>
+        </div>
+      )}
 
       {/* CKEditor */}
       <div className="professional-editor-page">
@@ -561,6 +842,9 @@ export function ProfessionalEditor({
             const plainText = tempDiv.textContent || tempDiv.innerText || "";
             setWordCount(countWords(plainText));
             setCharCount(plainText.length);
+
+            // Detectar slash commands enquanto digita
+            checkForSlashCommand(plainText, editor);
 
             if (!readOnly) {
               handleUserInput();

@@ -22,6 +22,7 @@ import {
   syncDeadlineToGoogleCalendar,
   type IntimationAnalysisResult,
 } from "@/lib/deadline-calendar-integration";
+import { getEventBadgeStyle, getStatusBadgeStyle, themeConfig } from "@/lib/themes";
 import type { Appointment, Expediente } from "@/types";
 import { toast } from "sonner";
 
@@ -982,21 +983,27 @@ Crie o workflow de controladoria para esta tarefa.`,
         {!autoAnalyzing &&
           safeExpedientes.length > 0 &&
           safeExpedientes.every((e) => e.analyzed && !needsReanalysis(e)) && (
-            <Card className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
+            <Card
+              className="border-border"
+              style={{
+                borderColor: `${themeConfig.colors.sucesso}50`,
+                backgroundColor: `${themeConfig.colors.sucesso}08`,
+              }}
+            >
               <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <p className="text-sm text-green-700 dark:text-green-400">
+                    <p className="text-sm" style={{ color: themeConfig.colors.sucesso }}>
                       ✅ Todas as {safeExpedientes.length} intimações analisadas pela Mrs. Justin-e
                     </p>
                   </div>
                   {tasksCreated > 0 && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" style={getStatusBadgeStyle("concluido")}>
                       {tasksCreated} tarefas na fila dos agentes
                     </Badge>
                   )}
                   {deadlinesCreated > 0 && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    <Badge variant="secondary" style={getStatusBadgeStyle("ativo")}>
                       {deadlinesCreated} prazos na agenda
                     </Badge>
                   )}

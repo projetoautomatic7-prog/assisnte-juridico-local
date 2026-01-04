@@ -1,10 +1,11 @@
 {
+  "extends": "../tsconfig.paths.json",
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2021",
     "module": "ESNext",
-    "lib": ["ES2020"],
+    "lib": ["ES2021", "DOM"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "..",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,8 +14,12 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "../src/agents/**/*", "../src/lib/**/*"],
+  "exclude": ["node_modules", "dist", "../src/**/*.tsx", "../src/**/*.test.ts", "../src/**/*.test.tsx"]
 }

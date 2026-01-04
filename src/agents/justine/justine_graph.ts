@@ -1,82 +1,123 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
+import { callGemini } from "@/lib/gemini-service";
+import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { validateJustineInput, ValidationError } from "./validators";
+import {
+  JUSTINE_SYSTEM_PROMPT,
+  generateIntimationAnalysisPrompt,
+  formatErrorMessage,
+  formatFallbackMessage,
+} from "./templates";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 
 export class JustineAgent extends LangGraphAgent {
-  protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
-    let current = updateState(state, { currentStep: "justine:start" });
+  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+    return createInvokeAgentSpan(
+      {
+        agentName: "Mrs. Justine",
+        system: "gemini",
+        model: "gemini-2.5-pro",
+        temperature: 0.3,
+      },
+      {
+        sessionId: (state.data?.sessionId as string) || `justine_session_${Date.now()}`,
+        turn: state.retryCount + 1,
+        messages: state.messages.map((m) => ({
+          role: m.role as "user" | "assistant" | "system",
+          content: m.content,
+        })),
+      },
+      async (span) => {
+        try {
+          let current = updateState(state, { currentStep: "justine:validate" });
 
-    const task = (state.data.task as string) || "Analisar intimações e publicações do DJEN";
+          // Step 0: Validate inputs
+          const validatedInput = validateJustineInput(state.data || {});
 
-    try {
-      const response = await anthropic.messages.create(
-        {
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
-          system: `Você é Mrs. Justine, assistente jurídica especialista em análise de intimações e publicações processuais.
+          span?.setAttribute("justine.task", validatedInput.task.substring(0, 100));
+          span?.setAttribute("justine.priority", validatedInput.priority || "medium");
+          span?.setAttribute(
+            "justine.publications_count",
+            validatedInput.publications?.length || 0
+          );
 
-RESPONSABILIDADES:
-- Analisar intimações do Diário de Justiça Eletrônico (DJEN)
-- Extrair informações críticas (prazos, decisões, despachos)
-- Identificar ações urgentes necessárias
-- Classificar prioridade das publicações
-- Detectar riscos de preclusão ou perda de prazo
+          // Step 1: Generate analysis prompt
+          current = updateState(current, { currentStep: "justine:analyze" });
 
-DIRETRIZES:
-- Seja precisa e detalhista na análise
-- Destaque prazos peremptórios com urgência
-- Cite artigos do CPC/15 relacionados aos prazos
-- Use linguagem técnica mas clara
-- Sempre mencione a data limite para manifestação
-- Responda SEMPRE em português brasileiro`,
-          messages: [
-            {
-              role: "user",
-              content: task,
+          const fullPrompt = `${JUSTINE_SYSTEM_PROMPT}\n\n${generateIntimationAnalysisPrompt(validatedInput.task)}`;
+
+          const response = await callGemini(fullPrompt, {
+            temperature: 0.3,
+            maxOutputTokens: 4096,
+          });
+
+          if (response.error) {
+            span?.setAttribute("gen_ai.error", response.error);
+            span?.setStatus({ code: 2, message: response.error });
+
+            current = updateState(current, {
+              currentStep: "justine:error",
+              data: {
+                ...current.data,
+                error: response.error,
+              },
+              completed: false,
+            });
+
+            return this.addAgentMessage(
+              current,
+              `Erro ao processar análise de intimações: ${response.error}`
+            );
+          }
+
+          const result = response.text;
+
+          span?.setAttribute("gen_ai.response.length", result.length);
+          span?.setAttribute("gen_ai.usage.total_tokens", response.metadata?.totalTokens || 0);
+          span?.setStatus({ code: 1, message: "ok" });
+
+          current = updateState(current, {
+            currentStep: "justine:intimations_extracted",
+            data: {
+              ...current.data,
+              analysis: result,
+              found: 1,
+              usage: response.metadata,
             },
-          ],
-        },
-        {
-          signal,
+            completed: true,
+          });
+
+          return this.addAgentMessage(current, result);
+        } catch (error) {
+          const errorType = error instanceof Error ? error.name : "UnknownError";
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (error instanceof ValidationError) {
+            logValidationError("Mrs. Justine", error.field, error.message, error.receivedValue);
+          } else {
+            logStructuredError("Mrs. Justine", errorType, errorMessage, {
+              task: (state.data?.task as string)?.substring(0, 100) || undefined,
+              step: state.currentStep,
+            });
+          }
+
+          span?.setStatus({ code: 2, message: errorMessage });
+          span?.setAttribute("error.type", errorType);
+
+          const fallbackMessage =
+            error instanceof ValidationError
+              ? formatErrorMessage(errorType, errorMessage, {
+                  task: (state.data?.task as string) || undefined,
+                  step: state.currentStep,
+                })
+              : formatFallbackMessage((state.data?.task as string) || undefined);
+
+          return this.addAgentMessage(state, fallbackMessage);
         }
-      );
-
-      const result =
-        response.content[0].type === "text"
-          ? response.content[0].text
-          : "Resposta não textual recebida";
-
-      current = updateState(current, {
-        currentStep: "justine:intimations_extracted",
-        data: {
-          ...current.data,
-          analysis: result,
-          found: 1,
-          usage: response.usage,
-        },
-        completed: true,
-      });
-
-      return this.addAgentMessage(current, result);
-    } catch (error) {
-      console.error("[Justine] Erro ao executar agente:", error);
-
-      current = updateState(current, {
-        currentStep: "justine:error",
-        data: {
-          ...current.data,
-          error: error instanceof Error ? error.message : "Erro desconhecido",
-        },
-        completed: false,
-      });
-
-      return this.addAgentMessage(current, "Erro ao processar análise de intimações.");
-    }
+      }
+    );
   }
 }
 

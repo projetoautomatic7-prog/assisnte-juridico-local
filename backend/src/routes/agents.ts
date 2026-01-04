@@ -8,20 +8,72 @@ const __dirname = dirname(__filename);
 // Imports dinâmicos dos agentes (evita problemas de path com ESM)
 let runHarvey: any;
 let runJustine: any;
+let monitorDJEN: any;
+let runAnaliseDocumental: any;
+let runAnaliseRisco: any;
+let runCompliance: any;
+let runComunicacaoClientes: any;
+let runEstrategiaProcessual: any;
+let runFinanceiro: any;
+let runGestaoPrazos: any;
+let runOrganizacaoArquivos: any;
+let runPesquisaJuris: any;
+let runRedacaoPeticoes: any;
+let runRevisaoContratual: any;
 
 // Carregar agentes de forma assíncrona
 async function loadAgents() {
   try {
-    // Path relativo a partir de backend/src/routes → workspace root
     const agentsPath = resolve(__dirname, "../../../src/agents");
 
-    const harveyModule = await import(`${agentsPath}/harvey/harvey_graph.js`);
+    const [
+      harveyModule,
+      justineModule,
+      monitorModule,
+      analiseDocModule,
+      analiseRiscoModule,
+      complianceModule,
+      comunicacaoModule,
+      estrategiaModule,
+      financeiroModule,
+      gestaoPrazosModule,
+      organizacaoModule,
+      pesquisaModule,
+      redacaoModule,
+      revisaoModule,
+    ] = await Promise.all([
+      import(`${agentsPath}/harvey/harvey_graph.js`),
+      import(`${agentsPath}/justine/justine_graph.js`),
+      import(`${agentsPath}/monitor-djen/monitor_graph.js`),
+      import(`${agentsPath}/analise-documental/analise_documental_graph.js`),
+      import(`${agentsPath}/analise-risco/analise_risco_graph.js`),
+      import(`${agentsPath}/compliance/compliance_graph.js`),
+      import(`${agentsPath}/comunicacao-clientes/comunicacao_clientes_graph.js`),
+      import(`${agentsPath}/estrategia-processual/estrategia_processual_graph.js`),
+      import(`${agentsPath}/financeiro/financeiro_graph.js`),
+      import(`${agentsPath}/gestao-prazos/gestao_prazos_graph.js`),
+      import(`${agentsPath}/organizacao-arquivos/organizacao_arquivos_graph.js`),
+      import(`${agentsPath}/pesquisa-juris/pesquisa_graph.js`),
+      import(`${agentsPath}/redacao-peticoes/redacao_graph.js`),
+      import(`${agentsPath}/revisao-contratual/revisao_contratual_graph.js`),
+    ]);
+
     runHarvey = harveyModule.runHarvey;
-
-    const justineModule = await import(`${agentsPath}/justine/justine_graph.js`);
     runJustine = justineModule.runJustine;
+    monitorDJEN = monitorModule.monitorDJEN;
+    runAnaliseDocumental = analiseDocModule.runAnaliseDocumental;
+    runAnaliseRisco = analiseRiscoModule.runAnaliseRisco;
+    runCompliance = complianceModule.runCompliance;
+    runComunicacaoClientes = comunicacaoModule.runComunicacaoClientes;
+    runEstrategiaProcessual = estrategiaModule.runEstrategiaProcessual;
+    runFinanceiro = financeiroModule.runFinanceiro;
+    runGestaoPrazos = gestaoPrazosModule.runGestaoPrazos;
+    runOrganizacaoArquivos = organizacaoModule.runOrganizacaoArquivos;
+    runPesquisaJuris = pesquisaModule.runPesquisaJuris;
+    runRedacaoPeticoes = redacaoModule.runRedacaoPeticoes;
+    runRevisaoContratual = revisaoModule.runRevisaoContratual;
 
-    console.log("[Agents] ✅ Agentes reais carregados (Harvey + Justine)");
+    console.log("[Agents] ✅ 14 agentes reais carregados");
   } catch (error) {
     console.error("[Agents] ❌ Erro ao carregar agentes:", error);
     console.warn("[Agents] ⚠️  Usando modo stub (IA desabilitada)");
@@ -48,7 +100,23 @@ const HYBRID_AGENT_REGISTRY: Record<string, string> = {
   "pesquisa-juris": "langgraph-custom",
   "redacao-peticoes": "langgraph-custom",
   "revisao-contratual": "langgraph-custom",
-  "traducao-juridica": "langgraph-custom",
+};
+
+const AGENT_RUNNERS: Record<string, () => any> = {
+  "harvey-specter": () => runHarvey,
+  "mrs-justine": () => runJustine,
+  "monitor-djen": () => monitorDJEN,
+  "analise-documental": () => runAnaliseDocumental,
+  "analise-risco": () => runAnaliseRisco,
+  compliance: () => runCompliance,
+  "comunicacao-clientes": () => runComunicacaoClientes,
+  "estrategia-processual": () => runEstrategiaProcessual,
+  financeiro: () => runFinanceiro,
+  "gestao-prazos": () => runGestaoPrazos,
+  "organizacao-arquivos": () => runOrganizacaoArquivos,
+  "pesquisa-juris": () => runPesquisaJuris,
+  "redacao-peticoes": () => runRedacaoPeticoes,
+  "revisao-contratual": () => runRevisaoContratual,
 };
 
 interface HybridStats {
@@ -71,6 +139,106 @@ let hybridStats: HybridStats = {
 
 let executionTimes: number[] = [];
 let successCount = 0;
+
+type ExecutionOutcome = "success" | "failure" | "degraded";
+
+interface AgentMetrics {
+  executions: number;
+  successes: number;
+  failures: number;
+  degradedExecutions: number;
+  totalLatencyMs: number;
+  lastSuccess?: number;
+  lastFailure?: number;
+  lastDegradation?: number;
+  lastError?: { code: string; message: string; recoverable?: boolean };
+  circuitBreakerState: "closed" | "open" | "half-open";
+}
+
+const perAgentMetrics: Map<string, AgentMetrics> = new Map();
+
+function getAgentMetrics(agentId: string): AgentMetrics {
+  if (!perAgentMetrics.has(agentId)) {
+    perAgentMetrics.set(agentId, {
+      executions: 0,
+      successes: 0,
+      failures: 0,
+      degradedExecutions: 0,
+      totalLatencyMs: 0,
+      circuitBreakerState: "closed",
+    });
+  }
+  return perAgentMetrics.get(agentId)!;
+}
+
+function recordAgentExecution(
+  agentId: string,
+  outcome: ExecutionOutcome,
+  latencyMs: number,
+  error?: { code: string; message: string; recoverable?: boolean }
+): void {
+  const metrics = getAgentMetrics(agentId);
+
+  metrics.executions++;
+  metrics.totalLatencyMs += latencyMs;
+
+  switch (outcome) {
+    case "success":
+      metrics.successes++;
+      metrics.lastSuccess = Date.now();
+      break;
+    case "degraded":
+      metrics.degradedExecutions++;
+      metrics.lastDegradation = Date.now();
+      if (error) metrics.lastError = error;
+      break;
+    case "failure":
+      metrics.failures++;
+      metrics.lastFailure = Date.now();
+      if (error) metrics.lastError = error;
+      break;
+  }
+
+  const failureRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+  if (failureRate > 0.5) {
+    metrics.circuitBreakerState = "open";
+  } else if (failureRate > 0.1 || metrics.degradedExecutions > 3) {
+    metrics.circuitBreakerState = "half-open";
+  } else {
+    metrics.circuitBreakerState = "closed";
+  }
+}
+
+function getAgentHealthStatus(agentId: string): {
+  status: "healthy" | "degraded" | "unhealthy";
+  circuitBreaker: "closed" | "open" | "half-open";
+  errorRate: number;
+  degradedRate: number;
+  avgLatencyMs: number;
+  lastError?: { code: string; message: string; recoverable?: boolean };
+} {
+  const metrics = getAgentMetrics(agentId);
+
+  const errorRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+  const degradedRate = metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
+  const avgLatencyMs = metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
+
+  let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (errorRate > 0.5) {
+    status = "unhealthy";
+  } else if (errorRate > 0.1 || degradedRate > 0.3) {
+    status = "degraded";
+  }
+
+  return {
+    status,
+    circuitBreaker: metrics.circuitBreakerState,
+    errorRate,
+    degradedRate,
+    avgLatencyMs,
+    lastError: metrics.lastError,
+  };
+}
 
 router.get("/list", (_req: Request, res: Response) => {
   const agents = Object.entries(HYBRID_AGENT_REGISTRY).map(([id, type]) => ({
@@ -127,18 +295,12 @@ router.post("/execute", async (req: Request, res: Response) => {
   try {
     let result;
 
-    // Executar agente real baseado no ID
-    if (agentId === "harvey-specter" && runHarvey) {
-      const agentResult = await runHarvey({ task });
-      result = {
-        completed: agentResult.completed,
-        message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
-        data: agentResult.data,
-        steps: agentResult.messages.length,
-        aiPowered: true,
-      };
-    } else if (agentId === "mrs-justine" && runJustine) {
-      const agentResult = await runJustine({ task });
+    // Executar agente real baseado no ID usando o mapa de runners
+    const runnerGetter = AGENT_RUNNERS[agentId];
+    const runner = runnerGetter ? runnerGetter() : null;
+
+    if (runner) {
+      const agentResult = await runner({ task });
       result = {
         completed: agentResult.completed,
         message: agentResult.messages[agentResult.messages.length - 1]?.content || "No response",
@@ -147,15 +309,16 @@ router.post("/execute", async (req: Request, res: Response) => {
         aiPowered: true,
       };
     } else {
-      // Outros agentes ainda são stubs
+      // Agente não carregado - modo stub
       result = {
         completed: true,
-        message: `Task executed by ${agentId} (stub)`,
-        data: { task, note: "Este agente ainda não foi implementado com IA real" },
+        message: `Task executed by ${agentId} (stub - agentes não carregados)`,
+        data: { task, note: "Agentes não foram carregados. Verifique os logs." },
         aiPowered: false,
       };
     }
 
+    const executionTime = performance.now() - startTime;
     executionTimes.push(executionTime);
     successCount++;
     hybridStats.totalExecutions++;
@@ -164,12 +327,27 @@ router.post("/execute", async (req: Request, res: Response) => {
     hybridStats.averageExecutionTime =
       executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
 
+    const isDegraded = result.data?.degraded === true || result.data?.fallbackUsed === true;
+    const outcome: ExecutionOutcome = isDegraded ? "degraded" : "success";
+
+    recordAgentExecution(
+      agentId,
+      outcome,
+      executionTime,
+      isDegraded && result.data?.structuredError ? {
+        code: result.data.structuredError.code || "UNKNOWN",
+        message: result.data.structuredError.message || "Unknown error",
+        recoverable: result.data.structuredError.recoverable,
+      } : undefined
+    );
+
     res.json({
       success: true,
       mode: "langgraph",
       agentId,
       executionTime,
       result,
+      degraded: isDegraded,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -178,12 +356,20 @@ router.post("/execute", async (req: Request, res: Response) => {
     hybridStats.traditionalExecutions++;
     hybridStats.successRate = (successCount / hybridStats.totalExecutions) * 100;
 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    recordAgentExecution(agentId, "failure", executionTime, {
+      code: "EXECUTION_ERROR",
+      message: errorMessage,
+      recoverable: true,
+    });
+
     res.status(500).json({
       success: false,
       mode: "traditional",
       agentId,
       executionTime,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
       timestamp: new Date().toISOString(),
     });
   }
@@ -251,6 +437,58 @@ router.post("/reset-stats", (_req: Request, res: Response) => {
     success: true,
     message: "Stats reset successfully",
     timestamp: new Date().toISOString(),
+  });
+});
+
+router.get("/health", async (_req: Request, res: Response) => {
+  const agentHealthChecks: Record<string, ReturnType<typeof getAgentHealthStatus>> = {};
+
+  for (const agentId of Object.keys(HYBRID_AGENT_REGISTRY)) {
+    agentHealthChecks[agentId] = getAgentHealthStatus(agentId);
+  }
+
+  const totalExecutions = hybridStats.totalExecutions;
+  const successRate = hybridStats.successRate || 100;
+  const errorRate = totalExecutions > 0 ? (1 - successRate / 100) : 0;
+
+  const unhealthyAgents = Object.entries(agentHealthChecks)
+    .filter(([_, health]) => health.status === "unhealthy")
+    .map(([id]) => id);
+
+  const degradedAgents = Object.entries(agentHealthChecks)
+    .filter(([_, health]) => health.status === "degraded")
+    .map(([id]) => id);
+
+  let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (unhealthyAgents.length > 0 || successRate < 50) {
+    overallStatus = "unhealthy";
+  } else if (degradedAgents.length > 0 || successRate < 90) {
+    overallStatus = "degraded";
+  }
+
+  const overallHealth = {
+    status: overallStatus,
+    totalAgents: Object.keys(HYBRID_AGENT_REGISTRY).length,
+    activeAgents: Object.keys(agentHealthChecks).length,
+    unhealthyAgents,
+    degradedAgents,
+    stats: {
+      ...hybridStats,
+      errorRate,
+    },
+    agents: agentHealthChecks,
+    geminiConfigValid: !!process.env.VITE_GEMINI_API_KEY || !!process.env.GEMINI_API_KEY,
+    environmentHealth: {
+      geminiApiKey: !!process.env.VITE_GEMINI_API_KEY || !!process.env.GEMINI_API_KEY,
+      upstashRedis: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
+      djenSchedulerEnabled: process.env.DJEN_SCHEDULER_ENABLED === "true",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  res.json({
+    success: true,
+    ...overallHealth,
   });
 });
 

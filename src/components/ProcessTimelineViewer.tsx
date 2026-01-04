@@ -7,6 +7,7 @@ import type { Process, ProcessEvent } from "@/types";
 import { Clock, Download, ExternalLink, FileText, Filter, Workflow } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getEventBadgeStyle } from "@/lib/themes";
 
 /**
  * Props principais do componente ProcessTimelineViewer
@@ -37,38 +38,21 @@ function formatTime(dateStr: string) {
 }
 
 function getTipoBadge(tipo?: ProcessEvent["tipo"]) {
-  switch (tipo) {
-    case "certidao":
-      return { label: "Certidão", className: "bg-sky-500/10 text-sky-600 border-sky-500/30" };
-    case "mandado":
-      return { label: "Mandado", className: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
-    case "despacho":
-      return {
-        label: "Despacho",
-        className: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30",
-      };
-    case "sentenca":
-      return { label: "Sentença", className: "bg-red-500/10 text-red-600 border-red-500/30" };
-    case "peticao":
-      return {
-        label: "Petição",
-        className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-      };
-    case "intimacao":
-      return {
-        label: "Intimação",
-        className: "bg-purple-500/10 text-purple-600 border-purple-500/30",
-      };
-    case "juntada":
-      return { label: "Juntada", className: "bg-blue-500/10 text-blue-600 border-blue-500/30" };
-    case "conclusos":
-      return { label: "Conclusos", className: "bg-teal-500/10 text-teal-600 border-teal-500/30" };
-    default:
-      return {
-        label: "Movimentação",
-        className: "bg-gray-500/10 text-gray-600 border-gray-500/30",
-      };
-  }
+  const labelMap: Record<string, string> = {
+    certidao: "Certidão",
+    mandado: "Mandado",
+    despacho: "Despacho",
+    sentenca: "Sentença",
+    peticao: "Petição",
+    intimacao: "Intimação",
+    juntada: "Juntada",
+    conclusos: "Conclusos",
+  };
+
+  return {
+    label: tipo && tipo in labelMap ? labelMap[tipo] : "Movimentação",
+    style: getEventBadgeStyle(tipo),
+  };
 }
 
 /**
@@ -249,7 +233,8 @@ export default function ProcessTimelineViewer({
                             <div className="flex items-center justify-between gap-2">
                               <Badge
                                 variant="outline"
-                                className={`border ${tipo.className} text-[10px]`}
+                                className="border text-[10px]"
+                                style={tipo.style}
                               >
                                 {tipo.label}
                               </Badge>

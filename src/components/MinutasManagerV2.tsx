@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAIStreaming } from "@/hooks/use-ai-streaming";
 import { useKV } from "@/hooks/use-kv";
 import { usePJERealTimeSync } from "@/hooks/use-pje-realtime-sync";
-import { getStatusBadgeClass } from "@/lib/themes";
+import { getStatusBadgeStyle } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import type { Minuta, Process } from "@/types";
 import {
@@ -331,7 +331,7 @@ export default function MinutasManagerV2() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={getStatusBadgeClass(minuta.status)}>
+                      <Badge variant="outline" style={getStatusBadgeStyle(minuta.status)}>
                         {minuta.status}
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
