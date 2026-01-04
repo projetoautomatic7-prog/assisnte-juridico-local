@@ -7,7 +7,8 @@ import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
 import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { RevisaoContratualInput } from "./validators";
 
-const EMBEDDING_API_URL = "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
+const EMBEDDING_API_URL =
+  "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
 const EMBEDDING_DIMENSION = 768;
 
 export interface TemplateContratual {
@@ -168,7 +169,10 @@ export class TemplateContratualRetriever {
       return embeddings;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:", errorMessage);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        errorMessage
+      );
       return this.generateMockEmbeddings();
     }
   }
@@ -202,7 +206,8 @@ export class TemplateContratualRetriever {
       tipoContrato: (result.payload.tipoContrato as string) || "outro",
       clausulasPadrao: (result.payload.clausulasPadrao as ClausulaPadrao[]) || [],
       versao: (result.payload.versao as string) || "1.0",
-      ultimaAtualizacao: (result.payload.ultimaAtualizacao as string) || new Date().toISOString().split("T")[0],
+      ultimaAtualizacao:
+        (result.payload.ultimaAtualizacao as string) || new Date().toISOString().split("T")[0],
       fonte: result.payload.fonte as string | undefined,
       tags: (result.payload.tags as string[]) || [],
     }));
@@ -212,33 +217,38 @@ export class TemplateContratualRetriever {
     const mockTemplates: TemplateContratual[] = [
       {
         titulo: "Template - Contrato de Prestação de Serviços",
-        descricao: "Modelo padrão para contratos de prestação de serviços entre empresas ou pessoa física",
+        descricao:
+          "Modelo padrão para contratos de prestação de serviços entre empresas ou pessoa física",
         relevancia: 0.95,
         tipoContrato: "prestação de serviços",
         clausulasPadrao: [
           {
             numero: "1",
             titulo: "Objeto",
-            texto: "O presente contrato tem por objeto a prestação de serviços de [DESCREVER SERVIÇOS]...",
+            texto:
+              "O presente contrato tem por objeto a prestação de serviços de [DESCREVER SERVIÇOS]...",
             obrigatoria: true,
             comentarios: "Descrever detalhadamente os serviços",
           },
           {
             numero: "2",
             titulo: "Prazo",
-            texto: "O prazo de vigência do presente contrato é de [XX] meses, iniciando em [DATA]...",
+            texto:
+              "O prazo de vigência do presente contrato é de [XX] meses, iniciando em [DATA]...",
             obrigatoria: true,
           },
           {
             numero: "3",
             titulo: "Valor e Forma de Pagamento",
-            texto: "Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor de R$ [VALOR]...",
+            texto:
+              "Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor de R$ [VALOR]...",
             obrigatoria: true,
           },
           {
             numero: "4",
             titulo: "Rescisão",
-            texto: "O presente contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de 30 dias...",
+            texto:
+              "O presente contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de 30 dias...",
             obrigatoria: false,
           },
         ],
@@ -249,20 +259,23 @@ export class TemplateContratualRetriever {
       },
       {
         titulo: "Template - Contrato de Locação Residencial",
-        descricao: "Modelo de contrato de locação de imóvel residencial urbano conforme Lei 8.245/91",
-        relevancia: 0.90,
+        descricao:
+          "Modelo de contrato de locação de imóvel residencial urbano conforme Lei 8.245/91",
+        relevancia: 0.9,
         tipoContrato: "locação",
         clausulasPadrao: [
           {
             numero: "1",
             titulo: "Objeto da Locação",
-            texto: "O LOCADOR cede ao LOCATÁRIO, para uso exclusivamente residencial, o imóvel situado em...",
+            texto:
+              "O LOCADOR cede ao LOCATÁRIO, para uso exclusivamente residencial, o imóvel situado em...",
             obrigatoria: true,
           },
           {
             numero: "2",
             titulo: "Prazo da Locação",
-            texto: "O prazo da locação é de [XX] meses, com início em [DATA] e término em [DATA]...",
+            texto:
+              "O prazo da locação é de [XX] meses, com início em [DATA] e término em [DATA]...",
             obrigatoria: true,
           },
           {
@@ -305,13 +318,15 @@ export class TemplateContratualRetriever {
           {
             numero: "3",
             titulo: "Remuneração",
-            texto: "O salário mensal será de R$ [VALOR], pago até o 5º dia útil do mês subsequente...",
+            texto:
+              "O salário mensal será de R$ [VALOR], pago até o 5º dia útil do mês subsequente...",
             obrigatoria: true,
           },
           {
             numero: "4",
             titulo: "Período de Experiência",
-            texto: "O contrato terá período de experiência de 45 dias, prorrogável por mais 45 dias...",
+            texto:
+              "O contrato terá período de experiência de 45 dias, prorrogável por mais 45 dias...",
             obrigatoria: false,
           },
         ],
@@ -322,7 +337,8 @@ export class TemplateContratualRetriever {
       },
       {
         titulo: "Template - Contrato de Compra e Venda de Imóvel",
-        descricao: "Modelo de contrato para compra e venda de imóvel com cláusulas de financiamento",
+        descricao:
+          "Modelo de contrato para compra e venda de imóvel com cláusulas de financiamento",
         relevancia: 0.83,
         tipoContrato: "compra e venda",
         clausulasPadrao: [
@@ -365,7 +381,8 @@ export class TemplateContratualRetriever {
           {
             numero: "2",
             titulo: "Capital Social",
-            texto: "O capital social é de R$ [VALOR], dividido em [XX] quotas de R$ [VALOR] cada...",
+            texto:
+              "O capital social é de R$ [VALOR], dividido em [XX] quotas de R$ [VALOR] cada...",
             obrigatoria: true,
           },
           {

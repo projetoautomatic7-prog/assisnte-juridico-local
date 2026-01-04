@@ -195,9 +195,13 @@ describe("validatePesquisaInput", () => {
       );
     });
 
-    it("deve limitar automaticamente a 50 (cap)", () => {
-      const result = validatePesquisaInput({ tema: "greve", limit: 100 });
-      expect(result.limit).toBe(50);
+    it("deve rejeitar limit de 100 (acima do máximo)", () => {
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 100 })).toThrowError(
+        ValidationError
+      );
+      expect(() => validatePesquisaInput({ tema: "greve", limit: 100 })).toThrowError(
+        /não pode exceder 50/
+      );
     });
   });
 

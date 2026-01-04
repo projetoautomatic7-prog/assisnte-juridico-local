@@ -22,9 +22,7 @@ describe("validateHarveyInput", () => {
 
     it("deve rejeitar task não-string", () => {
       expect(() => validateHarveyInput({ task: 123 })).toThrow(ValidationError);
-      expect(() => validateHarveyInput({ task: 123 })).toThrow(
-        "Campo 'task' deve ser uma string"
-      );
+      expect(() => validateHarveyInput({ task: 123 })).toThrow("Campo 'task' deve ser uma string");
     });
 
     it("deve rejeitar task muito curta (< 10 caracteres)", () => {

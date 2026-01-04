@@ -22,9 +22,7 @@ describe("validateJustineInput", () => {
 
     it("deve rejeitar task não-string", () => {
       expect(() => validateJustineInput({ task: 123 })).toThrow(ValidationError);
-      expect(() => validateJustineInput({ task: 123 })).toThrow(
-        "Campo 'task' deve ser uma string"
-      );
+      expect(() => validateJustineInput({ task: 123 })).toThrow("Campo 'task' deve ser uma string");
     });
 
     it("deve rejeitar task muito curta (< 10 caracteres)", () => {

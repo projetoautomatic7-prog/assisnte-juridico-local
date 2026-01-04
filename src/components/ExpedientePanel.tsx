@@ -983,7 +983,13 @@ Crie o workflow de controladoria para esta tarefa.`,
         {!autoAnalyzing &&
           safeExpedientes.length > 0 &&
           safeExpedientes.every((e) => e.analyzed && !needsReanalysis(e)) && (
-            <Card className="border-border" style={{ borderColor: `${themeConfig.colors.sucesso}50`, backgroundColor: `${themeConfig.colors.sucesso}08` }}>
+            <Card
+              className="border-border"
+              style={{
+                borderColor: `${themeConfig.colors.sucesso}50`,
+                backgroundColor: `${themeConfig.colors.sucesso}08`,
+              }}
+            >
               <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -992,12 +998,12 @@ Crie o workflow de controladoria para esta tarefa.`,
                     </p>
                   </div>
                   {tasksCreated > 0 && (
-                    <Badge variant="secondary" style={getStatusBadgeStyle('concluido')}>
+                    <Badge variant="secondary" style={getStatusBadgeStyle("concluido")}>
                       {tasksCreated} tarefas na fila dos agentes
                     </Badge>
                   )}
                   {deadlinesCreated > 0 && (
-                    <Badge variant="secondary" style={getStatusBadgeStyle('ativo')}>
+                    <Badge variant="secondary" style={getStatusBadgeStyle("ativo")}>
                       {deadlinesCreated} prazos na agenda
                     </Badge>
                   )}

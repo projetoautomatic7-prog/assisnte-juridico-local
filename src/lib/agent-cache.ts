@@ -191,8 +191,8 @@ export class AgentCache {
           }
         } while (cursor !== 0);
       } else {
-        const keysToDelete = Array.from(this.memoryCache.keys()).filter(
-          (key) => key.startsWith(this.prefix)
+        const keysToDelete = Array.from(this.memoryCache.keys()).filter((key) =>
+          key.startsWith(this.prefix)
         );
         for (const key of keysToDelete) {
           this.memoryCache.delete(key);
@@ -224,8 +224,8 @@ export class AgentCache {
           }
         } while (cursor !== 0);
       } else {
-        const keysToDelete = Array.from(this.memoryCache.keys()).filter(
-          (key) => key.startsWith(fullPrefix)
+        const keysToDelete = Array.from(this.memoryCache.keys()).filter((key) =>
+          key.startsWith(fullPrefix)
         );
         for (const key of keysToDelete) {
           this.memoryCache.delete(key);
@@ -365,7 +365,7 @@ export function createHashKey(input: string): string {
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
   return Math.abs(hash).toString(36);

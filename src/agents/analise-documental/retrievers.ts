@@ -7,7 +7,8 @@ import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
 import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { AnaliseDocumentalInput } from "./validators";
 
-const EMBEDDING_API_URL = "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
+const EMBEDDING_API_URL =
+  "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
 const EMBEDDING_DIMENSION = 768;
 
 export interface DocumentoJuridico {
@@ -73,7 +74,10 @@ export class DocumentoRetriever {
       const embeddings = await this.generateEmbeddings(input.texto);
       const rawResults = await this.searchVectorDatabase(embeddings, input);
       const rankedDocumentos = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
-      const filteredDocumentos = this.filterByTipo(rankedDocumentos, input.tipoDocumento || "todos");
+      const filteredDocumentos = this.filterByTipo(
+        rankedDocumentos,
+        input.tipoDocumento || "todos"
+      );
       const finalDocumentos = filteredDocumentos.slice(0, input.limit || 10);
 
       const executionTimeMs = Date.now() - startTime;
@@ -160,7 +164,10 @@ export class DocumentoRetriever {
       return embeddings;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:", errorMessage);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        errorMessage
+      );
       return this.generateMockEmbeddings();
     }
   }
@@ -254,7 +261,7 @@ export class DocumentoRetriever {
         titulo: "Decisão Interlocutória - Tutela de Urgência",
         conteudo:
           "Defiro a tutela de urgência requerida, ante a presença dos requisitos do art. 300 do CPC...",
-        relevancia: 0.70,
+        relevancia: 0.7,
         tipoDocumento: "decisão",
         data: "2024-07-22",
         numeroProcesso: "1005678-90.2024.8.26.0100",

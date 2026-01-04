@@ -283,18 +283,13 @@ export class CircuitBreaker {
 
     this.onStateChange?.(oldState, newState);
 
-    console.log(
-      `[CircuitBreaker:${this.name}] State changed: ${oldState} -> ${newState}`
-    );
+    console.log(`[CircuitBreaker:${this.name}] State changed: ${oldState} -> ${newState}`);
   }
 }
 
 const circuitBreakers = new Map<string, CircuitBreaker>();
 
-export function getCircuitBreaker(
-  name: string,
-  config?: CircuitBreakerConfig
-): CircuitBreaker {
+export function getCircuitBreaker(name: string, config?: CircuitBreakerConfig): CircuitBreaker {
   let cb = circuitBreakers.get(name);
   if (!cb) {
     cb = new CircuitBreaker({ ...config, name });

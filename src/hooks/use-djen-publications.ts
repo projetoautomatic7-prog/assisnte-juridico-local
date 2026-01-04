@@ -161,20 +161,22 @@ async function fetchFromBackendProxy(
       const data = await response.json();
 
       if (data.success && Array.isArray(data.publicacoes)) {
-        const converted: DJENPublication[] = data.publicacoes.map((pub: Record<string, unknown>) => ({
-          id: (pub.id as string) || crypto.randomUUID(),
-          tribunal: pub.siglaTribunal as string,
-          data: pub.dataDisponibilizacao as string,
-          tipo: (pub.tipoComunicacao as string) || "Intimação",
-          teor: pub.texto as string,
-          numeroProcesso: pub.numeroProcesso as string,
-          orgao: pub.nomeOrgao as string,
-          lawyerName: lawyer.name,
-          matchType: "oab" as const,
-          source: "DJEN-Proxy",
-          createdAt: new Date().toISOString(),
-          notified: false,
-        }));
+        const converted: DJENPublication[] = data.publicacoes.map(
+          (pub: Record<string, unknown>) => ({
+            id: (pub.id as string) || crypto.randomUUID(),
+            tribunal: pub.siglaTribunal as string,
+            data: pub.dataDisponibilizacao as string,
+            tipo: (pub.tipoComunicacao as string) || "Intimação",
+            teor: pub.texto as string,
+            numeroProcesso: pub.numeroProcesso as string,
+            orgao: pub.nomeOrgao as string,
+            lawyerName: lawyer.name,
+            matchType: "oab" as const,
+            source: "DJEN-Proxy",
+            createdAt: new Date().toISOString(),
+            notified: false,
+          })
+        );
         allPublications.push(...converted);
       }
     } catch (error) {

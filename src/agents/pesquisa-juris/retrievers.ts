@@ -7,7 +7,8 @@ import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
 import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { PesquisaJurisInput } from "./validators";
 
-const EMBEDDING_API_URL = "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
+const EMBEDDING_API_URL =
+  "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
 const EMBEDDING_DIMENSION = 768;
 
 export interface Precedente {
@@ -181,13 +182,18 @@ export class JurisprudenceRetriever {
       });
 
       if (embeddings.length !== EMBEDDING_DIMENSION) {
-        console.warn(`⚠️ [Embeddings] Dimensão inesperada: ${embeddings.length} (esperado: ${EMBEDDING_DIMENSION})`);
+        console.warn(
+          `⚠️ [Embeddings] Dimensão inesperada: ${embeddings.length} (esperado: ${EMBEDDING_DIMENSION})`
+        );
       }
 
       return embeddings;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:", errorMessage);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        errorMessage
+      );
       return this.generateMockEmbeddings();
     }
   }

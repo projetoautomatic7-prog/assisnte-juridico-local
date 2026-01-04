@@ -7,7 +7,8 @@ import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
 import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
 import type { ComplianceInput } from "./validators";
 
-const EMBEDDING_API_URL = "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
+const EMBEDDING_API_URL =
+  "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
 const EMBEDDING_DIMENSION = 768;
 
 export interface NormaRegulamento {
@@ -81,7 +82,10 @@ export class NormaRegulamentoRetriever {
       const embeddings = await this.generateEmbeddings(input.texto);
       const rawResults = await this.searchVectorDatabase(embeddings, input);
       const rankedNormas = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
-      const filteredNormas = this.filterByTipoVerificacao(rankedNormas, input.tipoVerificacao || "todos");
+      const filteredNormas = this.filterByTipoVerificacao(
+        rankedNormas,
+        input.tipoVerificacao || "todos"
+      );
       const finalNormas = filteredNormas.slice(0, input.limit || 10);
 
       const executionTimeMs = Date.now() - startTime;
@@ -168,7 +172,10 @@ export class NormaRegulamentoRetriever {
       return embeddings;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:", errorMessage);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        errorMessage
+      );
       return this.generateMockEmbeddings();
     }
   }
@@ -201,7 +208,8 @@ export class NormaRegulamentoRetriever {
       relevancia: result.score,
       tipo: (result.payload.tipo as NormaRegulamento["tipo"]) || "lei",
       numero: (result.payload.numero as string) || "S/N",
-      dataPublicacao: (result.payload.dataPublicacao as string) || new Date().toISOString().split("T")[0],
+      dataPublicacao:
+        (result.payload.dataPublicacao as string) || new Date().toISOString().split("T")[0],
       orgaoEmissor: (result.payload.orgaoEmissor as string) || "Desconhecido",
       artigos: (result.payload.artigos as ArtigoNorma[]) || [],
       vigente: result.payload.vigente !== false,
@@ -213,7 +221,8 @@ export class NormaRegulamentoRetriever {
     const mockNormas: NormaRegulamento[] = [
       {
         titulo: "Lei Geral de Proteção de Dados Pessoais (LGPD)",
-        ementa: "Dispõe sobre o tratamento de dados pessoais, inclusive nos meios digitais, por pessoa natural ou por pessoa jurídica",
+        ementa:
+          "Dispõe sobre o tratamento de dados pessoais, inclusive nos meios digitais, por pessoa natural ou por pessoa jurídica",
         relevancia: 0.96,
         tipo: "lei",
         numero: "13.709/2018",
@@ -222,7 +231,8 @@ export class NormaRegulamentoRetriever {
         artigos: [
           {
             numero: "7º",
-            caput: "O tratamento de dados pessoais somente poderá ser realizado nas seguintes hipóteses:",
+            caput:
+              "O tratamento de dados pessoais somente poderá ser realizado nas seguintes hipóteses:",
             incisos: [
               "I - mediante o fornecimento de consentimento pelo titular",
               "II - para o cumprimento de obrigação legal ou regulatória",
@@ -231,7 +241,8 @@ export class NormaRegulamentoRetriever {
           },
           {
             numero: "11",
-            caput: "O tratamento de dados pessoais sensíveis somente poderá ocorrer nas seguintes hipóteses:",
+            caput:
+              "O tratamento de dados pessoais sensíveis somente poderá ocorrer nas seguintes hipóteses:",
             incisos: [
               "I - quando o titular ou seu responsável legal consentir",
               "II - sem fornecimento de consentimento do titular, nas hipóteses em que for indispensável para...",
@@ -252,11 +263,13 @@ export class NormaRegulamentoRetriever {
         artigos: [
           {
             numero: "1º",
-            caput: "Ocultar ou dissimular a natureza, origem, localização, disposição, movimentação ou propriedade de bens, direitos ou valores provenientes, direta ou indiretamente, de infração penal.",
+            caput:
+              "Ocultar ou dissimular a natureza, origem, localização, disposição, movimentação ou propriedade de bens, direitos ou valores provenientes, direta ou indiretamente, de infração penal.",
           },
           {
             numero: "10",
-            caput: "As pessoas referidas no art. 9º: I - identificarão seus clientes e manterão cadastro atualizado...",
+            caput:
+              "As pessoas referidas no art. 9º: I - identificarão seus clientes e manterão cadastro atualizado...",
           },
         ],
         vigente: true,
@@ -264,7 +277,8 @@ export class NormaRegulamentoRetriever {
       },
       {
         titulo: "Resolução BACEN - Política de Prevenção à Lavagem",
-        ementa: "Dispõe sobre a política, os procedimentos e os controles internos de prevenção à lavagem de dinheiro",
+        ementa:
+          "Dispõe sobre a política, os procedimentos e os controles internos de prevenção à lavagem de dinheiro",
         relevancia: 0.88,
         tipo: "resolução",
         numero: "4.753/2019",
@@ -273,7 +287,8 @@ export class NormaRegulamentoRetriever {
         artigos: [
           {
             numero: "2º",
-            caput: "A política de prevenção à lavagem de dinheiro e ao financiamento do terrorismo deve contemplar...",
+            caput:
+              "A política de prevenção à lavagem de dinheiro e ao financiamento do terrorismo deve contemplar...",
           },
         ],
         vigente: true,
@@ -281,7 +296,8 @@ export class NormaRegulamentoRetriever {
       },
       {
         titulo: "Código de Ética do Servidor Público",
-        ementa: "Aprova o Código de Ética Profissional do Servidor Público Civil do Poder Executivo Federal",
+        ementa:
+          "Aprova o Código de Ética Profissional do Servidor Público Civil do Poder Executivo Federal",
         relevancia: 0.85,
         tipo: "decreto",
         numero: "1.171/1994",
@@ -290,7 +306,8 @@ export class NormaRegulamentoRetriever {
         artigos: [
           {
             numero: "I",
-            caput: "A dignidade, o decoro, o zelo, a eficácia e a consciência dos princípios morais são primados maiores...",
+            caput:
+              "A dignidade, o decoro, o zelo, a eficácia e a consciência dos princípios morais são primados maiores...",
           },
         ],
         vigente: true,
@@ -299,7 +316,7 @@ export class NormaRegulamentoRetriever {
       {
         titulo: "Instrução Normativa RFB - Compliance Tributário",
         ementa: "Dispõe sobre o programa de conformidade cooperativa fiscal",
-        relevancia: 0.80,
+        relevancia: 0.8,
         tipo: "instrução normativa",
         numero: "2.153/2023",
         dataPublicacao: "2023-07-15",
@@ -315,7 +332,8 @@ export class NormaRegulamentoRetriever {
       },
       {
         titulo: "NR-1 - Disposições Gerais e Gerenciamento de Riscos Ocupacionais",
-        ementa: "Estabelece as disposições gerais, o campo de aplicação, os termos e as definições comuns às Normas Regulamentadoras",
+        ementa:
+          "Estabelece as disposições gerais, o campo de aplicação, os termos e as definições comuns às Normas Regulamentadoras",
         relevancia: 0.75,
         tipo: "portaria",
         numero: "MTP 423/2021",
@@ -324,7 +342,8 @@ export class NormaRegulamentoRetriever {
         artigos: [
           {
             numero: "1.5.1",
-            caput: "O empregador deve implementar o gerenciamento de riscos ocupacionais em suas organizações...",
+            caput:
+              "O empregador deve implementar o gerenciamento de riscos ocupacionais em suas organizações...",
           },
         ],
         vigente: true,
@@ -332,7 +351,8 @@ export class NormaRegulamentoRetriever {
       },
       {
         titulo: "Súmula Vinculante 37 - STF",
-        ementa: "Não cabe ao Poder Judiciário, que não tem função legislativa, aumentar vencimentos de servidores públicos sob o fundamento de isonomia.",
+        ementa:
+          "Não cabe ao Poder Judiciário, que não tem função legislativa, aumentar vencimentos de servidores públicos sob o fundamento de isonomia.",
         relevancia: 0.72,
         tipo: "súmula",
         numero: "37",
@@ -353,7 +373,10 @@ export class NormaRegulamentoRetriever {
       .sort((a, b) => b.relevancia - a.relevancia);
   }
 
-  private filterByTipoVerificacao(normas: NormaRegulamento[], tipoVerificacao: string): NormaRegulamento[] {
+  private filterByTipoVerificacao(
+    normas: NormaRegulamento[],
+    tipoVerificacao: string
+  ): NormaRegulamento[] {
     if (tipoVerificacao === "todos") {
       return normas;
     }
@@ -372,9 +395,7 @@ export class NormaRegulamentoRetriever {
       return normas;
     }
 
-    return normas.filter((n) =>
-      n.tags?.some((tag) => relevantTags.includes(tag.toLowerCase()))
-    );
+    return normas.filter((n) => n.tags?.some((tag) => relevantTags.includes(tag.toLowerCase())));
   }
 
   private calculateAverageRelevance(normas: NormaRegulamento[]): number {
