@@ -405,45 +405,46 @@ jobs:
               return;
             }
 
-            const codeBlock = '```';
-            const body = `## 🚨 Vulnerabilidades de Segurança Detectadas
-
-O monitoramento automático de segurança detectou vulnerabilidades críticas nas dependências do projeto.
-
-### 📊 Resumo
-
-- **Críticas**: ${critical}
-- **Altas**: ${high}
-- **Moderadas**: ${moderate}
-
-### 🔧 Ações Recomendadas
-
-1. **Executar localmente**:
-${codeBlock}bash
-npm audit --json > audit-results.json
-jq '.' audit-results.json
-${codeBlock}
-
-2. **Tentar correção automática**:
-${codeBlock}bash
-npm audit fix
-# Se necessário (cuidado com breaking changes):
-npm audit fix --force
-${codeBlock}
-
-3. **Revisar e atualizar manualmente**:
-   - Verificar package.json para dependências desatualizadas
-   - Atualizar versões problemáticas
-   - Considerar substituição de bibliotecas abandonadas
-
-### 📄 Relatório Completo
-
-O relatório JSON completo do npm audit está disponível nos artefatos do workflow.
-
-**Workflow Run**: \${{ github.server_url }}/\${{ github.repository }}/actions/runs/\${{ github.run_id }}
-
----
-*Issue criada automaticamente pelo workflow de monitoramento em ${new Date().toISOString()}*`;
+            const body = [
+              '## 🚨 Vulnerabilidades de Segurança Detectadas',
+              '',
+              'O monitoramento automático de segurança detectou vulnerabilidades críticas nas dependências do projeto.',
+              '',
+              '### 📊 Resumo',
+              '',
+              `- **Críticas**: ${critical}`,
+              `- **Altas**: ${high}`,
+              `- **Moderadas**: ${moderate}`,
+              '',
+              '### 🔧 Ações Recomendadas',
+              '',
+              '1. **Executar localmente**:',
+              '```bash',
+              'npm audit --json > audit-results.json',
+              "jq '.' audit-results.json",
+              '```',
+              '',
+              '2. **Tentar correção automática**:',
+              '```bash',
+              'npm audit fix',
+              '# Se necessário (cuidado com breaking changes):',
+              'npm audit fix --force',
+              '```',
+              '',
+              '3. **Revisar e atualizar manualmente**:',
+              '   - Verificar package.json para dependências desatualizadas',
+              '   - Atualizar versões problemáticas',
+              '   - Considerar substituição de bibliotecas abandonadas',
+              '',
+              '### 📄 Relatório Completo',
+              '',
+              'O relatório JSON completo do npm audit está disponível nos artefatos do workflow.',
+              '',
+              `**Workflow Run**: \${{ github.server_url }}/\${{ github.repository }}/actions/runs/\${{ github.run_id }}`,
+              '',
+              '---',
+              `*Issue criada automaticamente pelo workflow de monitoramento em ${new Date().toISOString()}*`
+            ].join('\\n');
 
             await github.rest.issues.create({
               owner: context.repo.owner,
