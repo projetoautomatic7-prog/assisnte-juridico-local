@@ -108,7 +108,7 @@ export function normalizeText(text: string): string {
 // ===== OAB parsing helpers (reduces S3776) =====
 
 function parseOABWithPattern(value: string): { numero?: string; uf?: string } | null {
-  const matchOABPattern = /OAB\s*\/\s*([A-Z]{2})\s*(\d+)/i.exec(value);
+  const matchOABPattern = /OAB\s{0,5}\/\s{0,5}([A-Z]{2})\s{0,5}(\d+)/i.exec(value);
   if (matchOABPattern) {
     return { numero: matchOABPattern[2], uf: matchOABPattern[1].toUpperCase() };
   }
@@ -116,7 +116,7 @@ function parseOABWithPattern(value: string): { numero?: string; uf?: string } | 
 }
 
 function parseOABNumericUF(value: string): { numero?: string; uf?: string } | null {
-  const matchNumericUF = /(\d+)\s?\/\s?([A-Z]{2})/i.exec(value);
+  const matchNumericUF = /(\d+)\s{0,2}\/\s{0,2}([A-Z]{2})/i.exec(value);
   if (matchNumericUF) {
     return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
   }

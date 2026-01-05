@@ -94,15 +94,9 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     // Esperar editor estar pronto
     await page.waitForTimeout(300);
 
-    // Digitar texto
-    await page.keyboard.type(
-      "Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG."
-    );
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Enter");
-    await page.keyboard.type(
-      "Fulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA."
-    );
+    // Digitar texto usando fill que é mais confiável
+    const textoMinuta = "Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG.\n\nFulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA.";
+    await editorContent.fill(textoMinuta);
 
     // Verificar se texto apareceu no editor
     await expect(editorContent).toContainText("Excelentíssimo Senhor Doutor");
@@ -138,7 +132,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(300);
 
     // Digitar texto
-    await page.keyboard.type("Texto para formatar");
+    await editorContent.fill("Texto para formatar");
 
     // Selecionar todo o texto (Ctrl+A)
     await page.keyboard.press("Control+a");
@@ -190,7 +184,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     // Escrever texto inicial
     const editorContent = page.locator(".ck-editor__editable");
     await editorContent.click();
-    await page.keyboard.type("O contrato foi assinado em 10 de janeiro de 2024");
+    await editorContent.fill("O contrato foi assinado em 10 de janeiro de 2024");
 
     // Clicar no botão "Continuar" dos comandos IA
     const continuarBtn = page.locator('button:has-text("Continuar")').first();
@@ -219,7 +213,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('input[id="titulo"]').fill("Minuta para Editar");
     const editorContent = page.locator(".ck-editor__editable");
     await editorContent.click();
-    await page.keyboard.type("Conteúdo inicial da minuta.");
+    await editorContent.fill("Conteúdo inicial da minuta.");
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(1000);
 
@@ -235,7 +229,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     const editor = page.locator(".ck-editor__editable");
     await editor.click();
     await page.keyboard.press("Control+a");
-    await page.keyboard.type("Conteúdo MODIFICADO pelo teste E2E.");
+    await editor.fill("Conteúdo MODIFICADO pelo teste E2E.");
 
     // Salvar alterações
     await page.locator('button:has-text("Atualizar Minuta")').click();
@@ -252,7 +246,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('input[id="titulo"]').fill("Minuta Original");
     const editorContent = page.locator(".ck-editor__editable");
     await editorContent.click();
-    await page.keyboard.type("Este é o conteúdo da minuta original.");
+    await editorContent.fill("É o conteúdo da minuta original.");
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(1000);
 
@@ -273,7 +267,7 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('input[id="titulo"]').fill("Minuta para Deletar");
     const editorContent = page.locator(".ck-editor__editable");
     await editorContent.click();
-    await page.keyboard.type("Esta minuta será deletada.");
+    await editorContent.fill("Esta minuta será deletada.");
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(1000);
 
@@ -316,8 +310,9 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('button:has-text("Nova Minuta")').first().click();
     await page.waitForTimeout(500);
     await page.locator('input[id="titulo"]').fill("Minuta Rascunho");
-    await page.locator(".ck-editor__editable").click();
-    await page.keyboard.type("Rascunho");
+    const editor = page.locator(".ck-editor__editable");
+    await editor.click();
+    await editor.fill("Rascunho");
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(1000);
 
@@ -358,8 +353,9 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.locator('button:has-text("Nova Minuta")').first().click();
     await page.waitForTimeout(500);
     await page.locator('input[id="titulo"]').fill("Minuta para Aprovar");
-    await page.locator(".ck-editor__editable").click();
-    await page.keyboard.type("Conteúdo da minuta para aprovação.");
+    const editor = page.locator(".ck-editor__editable");
+    await editor.click();
+    await editor.fill("Conteúdo da minuta para aprovação.");
     await page.locator('button:has-text("Criar Minuta")').click();
     await page.waitForTimeout(1000);
 

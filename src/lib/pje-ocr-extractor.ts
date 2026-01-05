@@ -81,7 +81,7 @@ function parseDatas(text: string): string[] {
   const datas: string[] = [];
 
   // Formato: DD/MM/YYYY ou DD de MMMM de YYYY
-  const regex1 = /(\d{1,2})\s*(?:de\s+)?(\w+)\s+(?:de\s+)?(\d{4})/gi;
+  const regex1 = /(\d{1,2})\s{0,3}(?:de\s{1,2})?(\w{3,12})\s{1,3}(?:de\s{1,2})?(\d{4})/gi;
   const matches1 = text.matchAll(regex1);
 
   for (const match of matches1) {
@@ -169,7 +169,7 @@ function parseComarcaVara(text: string): { comarca?: string; vara?: string } {
   }
 
   // Vara
-  const varaMatch = text.match(/(\d+[ªº]?\s+Vara[^\n]+)/i);
+  const varaMatch = text.match(/(\d+[ªº]?\s{0,2}Vara[^\n]{0,100})/i);
   if (varaMatch) {
     result.vara = varaMatch[1].trim();
   }
@@ -203,13 +203,13 @@ export function parsePjeDocument(ocrText: string): PjeDocumentData {
   }
 
   // Autor
-  const autorMatch = ocrText.match(/AUTOR[:.]\s*([A-Z\s]+)(?:\s+CPF|$)/i);
+  const autorMatch = ocrText.match(/AUTOR[:.]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i);
   if (autorMatch) {
     data.autor = autorMatch[1].trim();
   }
 
   // Réu
-  const reuMatch = ocrText.match(/R[ÉE]U[:.]\s*([A-Z\s]+)(?:\s+CPF|$)/i);
+  const reuMatch = ocrText.match(/R[ÉE]U[:]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i);
   if (reuMatch) {
     data.reu = reuMatch[1].trim();
   }

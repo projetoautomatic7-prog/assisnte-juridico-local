@@ -79,8 +79,8 @@ export function extractAllCNJ(text: string): string[] {
  * Detecta padrões "X vs Y", "X x Y", "X v. Y"
  */
 export function parsePartes(text: string): { autor: string; reu: string } | null {
-  // Usar split ao invés de regex complexo
-  const parts = text.split(/\s+(?:vs?\.?|x)\s+/i);
+  // Usar split ao invés de regex complexo - limitar espaços
+  const parts = text.split(/\s{1,2}(?:vs?\.?|x)\s{1,2}/i);
 
   if (parts.length !== 2) return null;
 
@@ -95,7 +95,7 @@ export function parsePartes(text: string): { autor: string; reu: string } | null
  * Seguro: usa matchAll ao invés de exec loop
  */
 export function extractTemplateVariables(content: string): string[] {
-  const regex = /\{\{([^}]+)\}\}/g;
+  const regex = /\{\{([^}]{1,50})\}\}/g;
   const variables: string[] = [];
 
   for (const match of content.matchAll(regex)) {

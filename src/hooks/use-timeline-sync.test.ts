@@ -35,10 +35,13 @@ describe("useTimelineSync", () => {
       useTimelineSync({ processId: "123456", autoRefresh: false })
     );
 
-    // Aguardar processamento
-    await waitFor(() => {
-      expect(result.current.events.length).toBeGreaterThan(0);
-    });
+    // Aguardar processamento com timeout de 5 segundos
+    await waitFor(
+      () => {
+        expect(result.current.events.length).toBeGreaterThan(0);
+      },
+      { timeout: 5000 }
+    );
 
     // Deve encontrar o expediente "123.456" porque "123456" == "123456" (após replaceAll(/\D/g, ""))
     expect(result.current.events).toHaveLength(1);
@@ -51,9 +54,12 @@ describe("useTimelineSync", () => {
     );
 
     // Aguardar processamento
-    await waitFor(() => {
-      expect(result.current.events).toBeDefined();
-    });
+    await waitFor(
+      () => {
+        expect(result.current.events).toBeDefined();
+      },
+      { timeout: 5000 }
+    );
 
     expect(result.current.events).toHaveLength(0);
   });

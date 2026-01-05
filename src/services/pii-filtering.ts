@@ -89,16 +89,16 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   [PIIType.EMAIL]: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
 
   // Telefone: (11) 98765-4321, 11987654321, +55 11 98765-4321, 11 98765-4321
-  [PIIType.TELEFONE]: /(?:\+55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}[\s-]?\d{4}\b/g,
+  [PIIType.TELEFONE]: /(?:\+55\s{0,1})?(?:\(?\d{2}\)?\s{0,1})?\d{4,5}[\s-]{0,1}\d{4}\b/g,
 
   // Endere�o: Rua/Av + nome + n�mero
-  [PIIType.ENDERECO]: /(?:Rua|Avenida|Av\.|R\.|Travessa|Trav\.)\s+[A-Za-z�-�\s]+,?\s*\d+/gi,
+  [PIIType.ENDERECO]: /(?:Rua|Avenida|Av\.|R\.|Travessa|Trav\.)\s{1,3}[A-Za-zà-ú\s]{1,100},?\s{0,2}\d+/gi,
 
   // Conta banc�ria: Ag 1234 C/C 12345-6
-  [PIIType.CONTA_BANCARIA]: /(?:Ag|Ag�ncia|Conta|C\/C)\s*:?\s*\d{3,6}-?\d?/gi,
+  [PIIType.CONTA_BANCARIA]: /(?:Ag|Agência|Conta|C\/C)[\s:]{0,3}\d{3,6}-?\d?/gi,
 
   // Cart�o de cr�dito: 1234 5678 9012 3456
-  [PIIType.CARTAO_CREDITO]: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
+  [PIIType.CARTAO_CREDITO]: /\b\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}\b/g,
 
   // RG: 12.345.678-9 ou 123456789
   [PIIType.RG]: /\b\d{1,2}\.?\d{3}\.?\d{3}-?[0-9X]\b/g,
@@ -110,11 +110,11 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   [PIIType.PASSPORT]: /\b[A-Z]{2}\d{6}\b/g,
 
   // OAB: OAB/SP 123.456
-  [PIIType.OAB]: /\bOAB\/[A-Z]{2}\s*\d{3,6}\.?\d{0,3}\b/gi,
+  [PIIType.OAB]: /\bOAB\/[A-Z]{2}\s{0,2}\d{3,6}\.?\d{0,3}\b/gi,
 
   // Nome completo (heur�stica: Nome Sobrenome com mai�sculas)
   [PIIType.NOME_COMPLETO]:
-    /\b[A-Z�����������������������][a-z�����������������������]+\s+(?:[A-Z�����������������������][a-z�����������������������]+\s*){1,}\b/g,
+    /\b[A-ZÀ-Ü][a-zà-ü]{1,30}\s{1,2}(?:[A-ZÀ-Ü][a-zà-ü]{1,30}[\s]{0,2}){1,5}\b/g,
 };
 
 /**

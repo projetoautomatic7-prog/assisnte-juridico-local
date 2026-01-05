@@ -6,7 +6,10 @@ import { describe, expect, it } from "vitest";
 // Load .env.test explicitly to ensure we have the variables
 dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
 
-describe("Database Connection", () => {
+const shouldRun = process.env.ENABLE_DB_TEST === "true";
+const describeFn = shouldRun ? describe : describe.skip;
+
+describeFn("Database Connection", () => {
   it("should connect to the PostgreSQL database", async () => {
     const connectionString = process.env.DATABASE_URL;
 

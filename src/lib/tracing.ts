@@ -205,14 +205,16 @@ class TracingService {
    * Generate unique trace ID (W3C compatible)
    */
   generateTraceId(): string {
-    return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    // Use crypto.randomUUID() and convert to hex string (32 chars)
+    return crypto.randomUUID().replace(/-/g, '');
   }
 
   /**
    * Generate unique span ID
    */
   generateSpanId(): string {
-    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    // Generate 16 hex chars using crypto
+    return crypto.randomUUID().replace(/-/g, '').substring(0, 16);
   }
 
   /**
@@ -244,8 +246,9 @@ class TracingService {
       return this.createNoOpSpan(name);
     }
 
-    // Sampling check
-    if (Math.random() > this.samplingRate) {
+    // Sampling check using crypto for better randomness
+    const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / (0xFFFFFFFF + 1);
+    if (randomValue > this.samplingRate) {
       // Return a no-op span
       return this.createNoOpSpan(name);
     }
