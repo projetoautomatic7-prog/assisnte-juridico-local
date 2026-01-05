@@ -206,7 +206,7 @@ class TracingService {
    */
   generateTraceId(): string {
     // Use crypto.randomUUID() and convert to hex string (32 chars)
-    return crypto.randomUUID().replace(/-/g, '');
+    return crypto.randomUUID().replace(/-/g, "");
   }
 
   /**
@@ -214,7 +214,7 @@ class TracingService {
    */
   generateSpanId(): string {
     // Generate 16 hex chars using crypto
-    return crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+    return crypto.randomUUID().replace(/-/g, "").substring(0, 16);
   }
 
   /**
@@ -247,7 +247,7 @@ class TracingService {
     }
 
     // Sampling check using crypto for better randomness
-    const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / (0xFFFFFFFF + 1);
+    const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
     if (randomValue > this.samplingRate) {
       // Return a no-op span
       return this.createNoOpSpan(name);

@@ -92,7 +92,8 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   [PIIType.TELEFONE]: /(?:\+55\s{0,1})?(?:\(?\d{2}\)?\s{0,1})?\d{4,5}[\s-]{0,1}\d{4}\b/g,
 
   // Endere�o: Rua/Av + nome + n�mero
-  [PIIType.ENDERECO]: /(?:Rua|Avenida|Av\.|R\.|Travessa|Trav\.)\s{1,3}[A-Za-zà-ú\s]{1,100},?\s{0,2}\d+/gi,
+  [PIIType.ENDERECO]:
+    /(?:Rua|Avenida|Av\.|R\.|Travessa|Trav\.)\s{1,3}[A-Za-zà-ú\s]{1,100},?\s{0,2}\d+/gi,
 
   // Conta banc�ria: Ag 1234 C/C 12345-6
   [PIIType.CONTA_BANCARIA]: /(?:Ag|Agência|Conta|C\/C)[\s:]{0,3}\d{3,6}-?\d?/gi,

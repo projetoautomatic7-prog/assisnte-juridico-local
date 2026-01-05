@@ -169,7 +169,7 @@ function parseComarcaVara(text: string): { comarca?: string; vara?: string } {
   }
 
   // Vara
-  const varaMatch = text.match(/(\d+[ªº]?\s{0,2}Vara[^\n]{0,100})/i);
+  const varaMatch = text.match(/(\d+[ªº\s]{0,3}Vara[^\n]{0,100})/i);
   if (varaMatch) {
     result.vara = varaMatch[1].trim();
   }
