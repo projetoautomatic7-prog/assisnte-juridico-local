@@ -29,15 +29,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        uses: railwayapp/cli-action@v1
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-
       - name: Deploy to Railway
-        run: |
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway up --service assistente-juridico-pje --environment production
+        uses: railwayapp/railway-deploy@v0.0.4
+        with:
+          service: assistente-juridico-pje
+          environment: production
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Deployment Summary
         run: |
