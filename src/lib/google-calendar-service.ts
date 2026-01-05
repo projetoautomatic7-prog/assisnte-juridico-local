@@ -190,6 +190,10 @@ class GoogleCalendarService {
         gisScript.src = "https://accounts.google.com/gsi/client";
         gisScript.async = true;
         gisScript.defer = true;
+        // SEGURANÇA (S5725): Google Identity Services não fornece hash SRI estável
+        // Mitigação: crossOrigin + HTTPS + referrerPolicy + CSP
+        gisScript.crossOrigin = "anonymous";
+        gisScript.referrerPolicy = "strict-origin-when-cross-origin";
         gisScript.onload = () => {
           debug("GIS script loaded");
           clearTimeout(timeout);
@@ -212,6 +216,10 @@ class GoogleCalendarService {
       gapiScript.src = "https://apis.google.com/js/api.js";
       gapiScript.async = true;
       gapiScript.defer = true;
+      // SEGURANÇA (S5725): Google APIs não fornece hash SRI estável
+      // Mitigação: crossOrigin + HTTPS + referrerPolicy + CSP
+      gapiScript.crossOrigin = "anonymous";
+      gapiScript.referrerPolicy = "strict-origin-when-cross-origin";
       gapiScript.onload = () => {
         debug("GAPI script loaded");
         loadGis();

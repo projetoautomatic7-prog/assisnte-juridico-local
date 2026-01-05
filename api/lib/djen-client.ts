@@ -116,7 +116,8 @@ function parseOABWithPattern(value: string): { numero?: string; uf?: string } | 
 }
 
 function parseOABNumericUF(value: string): { numero?: string; uf?: string } | null {
-  const matchNumericUF = /(\d+)\s{0,2}\/\s{0,2}([A-Z]{2})/i.exec(value);
+  // SEGURANÇA: Limitar repetições para evitar ReDoS
+  const matchNumericUF = /(\d{1,10})\s{0,2}\/\s{0,2}([A-Z]{2})/i.exec(value);
   if (matchNumericUF) {
     return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
   }

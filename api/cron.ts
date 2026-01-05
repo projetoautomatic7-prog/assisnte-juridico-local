@@ -377,14 +377,15 @@ function normalizeText(text: string): string {
 function parseOAB(numeroOAB: string): { numero?: string; uf?: string } {
   if (!numeroOAB || numeroOAB.length > 50) return {};
   const value = numeroOAB.trim();
-  const matchOABPattern = /OAB\s{0,5}\/\s{0,5}([A-Z]{2})\s{1,5}(\d+)/i.exec(value);
+  // SEGURANÇA: Limitar repetições para evitar ReDoS
+  const matchOABPattern = /OAB\s{0,5}\/\s{0,5}([A-Z]{2})\s{1,5}(\d{1,10})/i.exec(value);
   if (matchOABPattern) return { numero: matchOABPattern[2], uf: matchOABPattern[1].toUpperCase() };
-  const matchNumericUF = /(\d+)\s{0,5}\/\s{0,5}([A-Z]{2})/i.exec(value);
+  const matchNumericUF = /(\d{1,10})\s{0,5}\/\s{0,5}([A-Z]{2})/i.exec(value);
   if (matchNumericUF) return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
-  const matchNumeric = /^(\d+)$/.exec(value);
+  const matchNumeric = /^(\d{1,10})$/.exec(value);
   if (matchNumeric) return { numero: matchNumeric[1] };
   // Handle MG184404 format
-  const matchUFNum = /^([A-Z]{2})(\d+)$/i.exec(value);
+  const matchUFNum = /^([A-Z]{2})(\d{1,10})$/i.exec(value);
   if (matchUFNum) return { uf: matchUFNum[1].toUpperCase(), numero: matchUFNum[2] };
   return {};
 }

@@ -15,10 +15,13 @@ export function redactPii(text: string): string {
   text = text.replace(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, "[REDACTED_CNPJ]");
   text = text.replace(/\b\d{14}\b/g, "[REDACTED_CNPJ]");
 
-  // Emails
-  text = text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[REDACTED_EMAIL]");
+  // Emails - SEGURANÇA: Limitar comprimento para evitar ReDoS
+  text = text.replace(
+    /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,255}\.[a-zA-Z]{2,10}/g,
+    "[REDACTED_EMAIL]"
+  );
 
-  // Phone numbers (simple patterns)
+  // Phone numbers - SEGURANÇA: Padrões específicos para evitar ReDoS
   text = text.replace(/\b\+?\d{2}\s?\(?\d{2}\)?\s?\d{4,5}-?\d{4}\b/g, "[REDACTED_PHONE]");
   text = text.replace(/\b\(?\d{2}\)?\s?\d{4,5}-?\d{4}\b/g, "[REDACTED_PHONE]");
 
