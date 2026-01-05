@@ -758,7 +758,7 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
       success: true,
       message: "Análise concluída com sucesso",
       data: {
-        confidence: 0.85 + Math.random() * 0.1,
+        confidence: 0.85 + (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.1,
         entities: ["partes", "valores", "datas"],
         summary: "Documento analisado com alta confiança",
       },
