@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import type { Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import type { Editor } from "@tiptap/react";
+import { useCallback, useEffect, useState } from "react";
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
@@ -189,7 +189,7 @@ export function useBlockquote(config?: UseBlockquoteConfig) {
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canToggle = canToggleBlockquote(editor);
-  const isActive = editor?.isActive("blockquote") || false;
+  const isActive = typeof editor?.isActive === "function" ? editor.isActive("blockquote") : false;
 
   useEffect(() => {
     if (!editor) return;

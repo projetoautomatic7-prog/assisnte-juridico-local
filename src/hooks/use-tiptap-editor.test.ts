@@ -1,6 +1,5 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useTiptapEditor } from "./use-tiptap-editor";
 
 // Mock @tiptap/react
 vi.mock("@tiptap/react", () => ({
@@ -21,15 +20,32 @@ vi.mock("@tiptap/react", () => ({
     }),
 }));
 
+async function loadHook() {
+  vi.resetModules();
+  const mod = await import("./use-tiptap-editor");
+  return mod.useTiptapEditor;
+}
+
 describe("useTiptapEditor", () => {
-  it("returns editor from context", () => {
+  it("returns editor from context", async () => {
+    const useTiptapEditor = await loadHook();
     const { result } = renderHook(() => useTiptapEditor());
     expect(result.current.editor).toBeDefined();
   });
 
-  it("returns provided editor if passed", () => {
+  it("returns provided editor if passed", async () => {
+    const useTiptapEditor = await loadHook();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockEditor = { state: {}, can: () => true } as any;
+    const mockEditor = {
+      state: {},
+      can: () => true,
+      on: () => {
+        // noop
+      },
+      off: () => {
+        // noop
+      },
+    } as any;
     const { result } = renderHook(() => useTiptapEditor(mockEditor));
     // O hook pode retornar o editor wrapeado em um objeto state do useEditorState
     // então verificamos se o editor está presente no resultado

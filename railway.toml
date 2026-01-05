@@ -1,31 +1,19 @@
 # Railway Deployment Configuration
-# For DSPy Bridge service
+# Assistente Jurídico PJe (frontend + backend)
 
-# This file configures Railway deployment for the DSPy Bridge
 # Documentation: https://docs.railway.app/reference/config-as-code
 
 [build]
-builder = "NIXPACKS"
-
-[build.env]
-PYTHON_VERSION = "3.11"
+builder = "DOCKERFILE"
 
 [deploy]
-startCommand = "python3 scripts/dspy_bridge.py"
+# Importante: o container NÃO precisa de npm para iniciar.
+# O servidor lê PORT/BACKEND_PORT e expõe /health.
+startCommand = "node backend/dist/backend/src/server.js"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-[deploy.env]
-# Required environment variables (set in Railway dashboard):
-# - DSPY_API_TOKEN (secret)
-# - DSPY_PORT (8765)
-# - ALLOWED_ORIGINS (comma-separated URLs)
-
-# Optional
-DSPY_LM_MODEL = "openai/gpt-3.5-turbo"
-
 [network]
-# Railway will auto-assign a port
-# DSPy bridge will use DSPY_PORT from env
+# Railway injeta a porta em PORT automaticamente

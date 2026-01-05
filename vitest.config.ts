@@ -26,13 +26,11 @@ export default defineConfig({
     // Aumentar timeout para testes de performance e integração
     testTimeout: 600000, // 10 minutos para testes de integração
     hookTimeout: 60000, // 1 minuto para hooks
-    // Configuração de pool para estabilidade (usar threads em vez de forks)
-    pool: "threads",
-    // Vitest 4 moved poolOptions to top-level
-    minThreads: 1,
-    maxThreads: process.env.CI ? 2 : 1,
+    // Estabilidade > performance: evita limite de memória dos worker threads (ERR_WORKER_OUT_OF_MEMORY)
+    pool: "forks",
+    singleFork: true,
     // Ajustar concorrência baseado em ambiente para estabilidade
-    maxConcurrency: process.env.CI ? 3 : 1,
+    maxConcurrency: 1,
     // ✅ Isolar testes no CI para melhor confiabilidade
     isolate: !!process.env.CI,
     // ✅ Suporte a sharding para execução paralela
@@ -59,14 +57,6 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
       VITEST: "true",
-    },
-  },
-  // Pool options agora no topo (Vitest 4) para evitar OOM e respeitar limites de threads
-  poolOptions: {
-    threads: {
-      // Ajuste conservador: poucas threads para evitar OOM/worker errors
-      minThreads: 1,
-      maxThreads: process.env.CI ? 2 : 1,
     },
   },
   resolve: {

@@ -1,30 +1,40 @@
-FROM node:25-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package files
+# Copiar manifests primeiro para maximizar cache
 COPY package*.json ./
+COPY backend/package*.json ./backend/
 
-# Instalar dependências
+# Instalar dependências (root + backend) para build
 RUN npm ci --legacy-peer-deps
+RUN cd backend && npm ci --legacy-peer-deps
 
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
+# Build do frontend
 RUN npm run build
 
-# Stage de produção - apenas nginx (SEM node/npm)
-FROM nginx:alpine
+# Build do backend
+RUN cd backend && npm run build
 
-# Copiar build para nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Stage de produção: Node (API + servir SPA)
+FROM node:22-alpine
 
-# Copiar configuração customizada do nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+ENV NODE_ENV=production
 
-# Expor porta 80
-EXPOSE 80
+# Copiar build do frontend e backend
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./backend/dist
 
-# Iniciar nginx (NÃO REQUER NPM/NODE)
-CMD ["nginx", "-g", "daemon off;"]
+# Instalar apenas dependências de produção do backend
+COPY --from=builder /app/backend/package*.json ./backend/
+RUN cd backend && npm ci --omit=dev --legacy-peer-deps
+
+# Railway define PORT; o servidor lê PORT/BACKEND_PORT
+EXPOSE 3001
+
+# Iniciar servidor backend (também serve o frontend estático em produção)
+CMD ["node", "backend/dist/backend/src/server.js"]
