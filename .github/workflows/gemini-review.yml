@@ -37,10 +37,22 @@ jobs:
       pull-requests: read
 
     steps:
+      - name: Verificar se API key está configurada
+        id: check_key
+        run: |
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "has_key=false" >> $GITHUB_OUTPUT
+            echo "⚠️ GEMINI_API_KEY não configurada. Workflow será pulado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_key=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout do repositório
+        if: steps.check_key.outputs.has_key == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        if: steps.check_key.outputs.has_key == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
@@ -48,7 +60,9 @@ jobs:
 
       - name: Rodar Gemini CLI (review)
         id: gemini
+        if: steps.check_key.outputs.has_key == 'true'
         uses: google-github-actions/run-gemini-cli@v0.1.18
+        continue-on-error: true
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_model: ${{ inputs.model }}
