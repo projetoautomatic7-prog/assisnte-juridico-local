@@ -46,11 +46,24 @@ jobs:
     name: "🏥 Verificação de Saúde"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'health' || github.event_name == 'schedule'
+    # Simplified condition: run on schedule or when explicitly requested
+    if: |
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' && (
+        github.event.inputs.check_type == 'all' ||
+        github.event.inputs.check_type == 'health'
+      )
 
     strategy:
       matrix:
-        environment: ${{ github.event_name != 'workflow_dispatch' && fromJSON('["production"]') || fromJSON(github.event.inputs.environment == 'both' && '["production", "staging"]' || github.event.inputs.environment == 'staging' && '["staging"]' || '["production"]') }}
+        # Simplified matrix strategy
+        environment: >-
+          ${{
+            github.event_name != 'workflow_dispatch' && fromJSON('["production"]') ||
+            github.event.inputs.environment == 'both' && fromJSON('["production", "staging"]') ||
+            github.event.inputs.environment == 'staging' && fromJSON('["staging"]') ||
+            fromJSON('["production"]')
+          }}
 
     steps:
       - name: 📥 Checkout código
@@ -372,6 +385,9 @@ jobs:
           if [[ "$CRITICAL_VULNS" -gt 0 ]]; then
             echo "CRITICAL_FOUND=true" >> $GITHUB_ENV
             echo "❌ ALERTA: Vulnerabilidades críticas encontradas!"
+            # Fail workflow for critical vulnerabilities in strict security mode
+            echo "::error::Vulnerabilidades críticas detectadas. O workflow deve falhar."
+            exit 1
           else
             echo "CRITICAL_FOUND=false" >> $GITHUB_ENV
             echo "✅ Nenhuma vulnerabilidade crítica encontrada"
@@ -440,7 +456,7 @@ jobs:
               '',
               'O relatório JSON completo do npm audit está disponível nos artefatos do workflow.',
               '',
-              `**Workflow Run**: \${{ github.server_url }}/\${{ github.repository }}/actions/runs/\${{ github.run_id }}`,
+              `**Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
               '',
               '---',
               `*Issue criada automaticamente pelo workflow de monitoramento em ${new Date().toISOString()}*`
@@ -493,7 +509,10 @@ jobs:
 
           # URL alvo
           TARGET_URL="https://assistente-juridico-github.vercel.app"
-          DOMAIN=$(echo $TARGET_URL | sed 's|https://||')
+          # Use parameter expansion for more robust domain extraction
+          DOMAIN="${TARGET_URL#https://}"
+          DOMAIN="${DOMAIN#http://}"
+          DOMAIN="${DOMAIN%/}"
 
           # Verificar validade do certificado
           CERT_INFO=$(openssl s_client -connect ${DOMAIN}:443 -servername ${DOMAIN} < /dev/null 2>/dev/null | openssl x509 -noout -dates)
@@ -553,6 +572,9 @@ jobs:
       - name: 🔍 Verificar Licenças
         run: |
           echo "🔍 Verificando licenças de dependências..."
+
+          # Install license-checker explicitly for better CI/CD reliability
+          npm install --no-save license-checker
 
           # Verificar licenças problemáticas
           npx license-checker --json > license-report.json

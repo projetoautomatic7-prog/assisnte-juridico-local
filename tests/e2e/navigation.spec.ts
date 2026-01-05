@@ -19,9 +19,9 @@ test.describe("Navegação e Interações", () => {
     // Verifica URL inicial
     await expect(page).toHaveURL(/\/$/);
 
-    // Tenta navegar para uma página que existe (calculadora)
-    try {
-      const calcButton = page.getByRole("button", { name: "Calc. Prazos" });
+    // Navega para a calculadora se o botão existir
+    const calcButton = page.getByRole("button", { name: "Calc. Prazos" });
+    if (await calcButton.isVisible({ timeout: 5000 }).catch(() => false)) {
       await calcButton.click();
       await expect(page.getByRole("heading", { name: "Calculadora de Prazos" })).toBeVisible();
 
@@ -29,9 +29,9 @@ test.describe("Navegação e Interações", () => {
       const dashboardButton = page.getByRole("button", { name: "Meu Painel" });
       await dashboardButton.click();
       await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    } catch {
-      // Se navegação falhar, apenas verifica que estamos na página inicial
-      await expect(page).toHaveURL(/\/$/);
+    } else {
+      // Se o botão não existir, pula este teste
+      test.skip();
     }
   });
 

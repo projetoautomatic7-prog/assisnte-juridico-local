@@ -67,17 +67,17 @@ function parseOAB(oab: string): { numero?: string; uf?: string } {
 
   const normalized = oab.trim().toUpperCase();
 
-  const matchNumericUF = /(\d+)[\s\/-]{1,2}([A-Z]{2})/i.exec(normalized);
+  const matchNumericUF = /(\d+)[\s/-]{1,2}([A-Z]{2})/i.exec(normalized);
   if (matchNumericUF) {
     return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
   }
 
-  const matchUFNumeric = /([A-Z]{2})[\s\/-]{1,2}(\d+)/i.exec(normalized);
+  const matchUFNumeric = /([A-Z]{2})[\s/-]{1,2}(\d+)/i.exec(normalized);
   if (matchUFNumeric) {
     return { numero: matchUFNumeric[2], uf: matchUFNumeric[1].toUpperCase() };
   }
 
-  const matchOABPattern = /OAB[\s\/-]{1,3}([A-Z]{2})[\s]{1,2}(\d+)/i.exec(normalized);
+  const matchOABPattern = /OAB[\s/-]{1,3}([A-Z]{2})[\s]{1,2}(\d+)/i.exec(normalized);
   if (matchOABPattern) {
     return { numero: matchOABPattern[2], uf: matchOABPattern[1].toUpperCase() };
   }
