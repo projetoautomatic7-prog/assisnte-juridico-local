@@ -418,26 +418,26 @@ O monitoramento automático de segurança detectou vulnerabilidades críticas na
 ### 🔧 Ações Recomendadas
 
 1. **Executar localmente**:
-   \`\`\`bash
+   ` + '```bash' + `
    npm audit --json > audit-results.json
    jq '.' audit-results.json
-   \`\`\`
+   ` + '```' + `
 
 2. **Tentar correção automática**:
-   \`\`\`bash
+   ` + '```bash' + `
    npm audit fix
    # Se necessário (cuidado com breaking changes):
    npm audit fix --force
-   \`\`\`
+   ` + '```' + `
 
 3. **Revisar e atualizar manualmente**:
-   - Verificar \`package.json\` para dependências desatualizadas
+   - Verificar package.json para dependências desatualizadas
    - Atualizar versões problemáticas
    - Considerar substituição de bibliotecas abandonadas
 
 ### 📄 Relatório Completo
 
-O relatório JSON completo do \`npm audit\` está disponível nos artefatos do workflow.
+O relatório JSON completo do npm audit está disponível nos artefatos do workflow.
 
 **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
