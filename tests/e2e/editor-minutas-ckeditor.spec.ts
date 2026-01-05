@@ -95,7 +95,8 @@ test.describe("Editor de Minutas - CKEditor 5", () => {
     await page.waitForTimeout(300);
 
     // Digitar texto usando fill que é mais confiável
-    const textoMinuta = "Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG.\n\nFulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA.";
+    const textoMinuta =
+      "Excelentíssimo Senhor Doutor Juiz de Direito da Vara Cível da Comarca de Belo Horizonte/MG.\n\nFulano de Tal, já qualificado nos autos, vem respeitosamente perante Vossa Excelência propor a presente AÇÃO DE COBRANÇA.";
     await editorContent.fill(textoMinuta);
 
     // Verificar se texto apareceu no editor

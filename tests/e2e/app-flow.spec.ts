@@ -35,29 +35,20 @@ test.describe("Fluxo Principal da Aplicação", () => {
   });
 
   test("deve navegar para o CRM de Processos", async ({ page }) => {
-    // No dashboard atual, não há navegação por hash
-    // Verifica se estamos no dashboard e se a seção de processos está acessível
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-
-    // Verifica se botão de navegação para CRM existe
+    // Clica no botão de navegação para CRM
     const crmButton = page.getByRole("button", { name: "Acervo (CRM)" });
-    if ((await crmButton.count()) > 0) {
-      await crmButton.click();
-      // Verifica se permanece no dashboard ou navega corretamente
-      await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    }
+    await crmButton.click();
+
+    // Verifica se navegou para a página de processos
+    await expect(page.getByRole("heading", { name: "Acervo de Processos" })).toBeVisible();
   });
 
   test("deve navegar para a Calculadora de Prazos", async ({ page }) => {
-    // No dashboard atual, verifica se botão de calculadora existe
+    // Clica no botão de navegação para calculadora
     const calcButton = page.getByRole("button", { name: "Calc. Prazos" });
-    if ((await calcButton.count()) > 0) {
-      await calcButton.click();
-      // Verifica se permanece no dashboard
-      await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    } else {
-      // Se não há botão específico, verifica se estamos no dashboard
-      await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    }
+    await calcButton.click();
+
+    // Verifica se navegou para a página da calculadora
+    await expect(page.getByRole("heading", { name: "Calculadora de Prazos" })).toBeVisible();
   });
 });

@@ -21,9 +21,7 @@ test.describe("Agentes IA - Testes de UI e Funcionalidade", () => {
     await page.waitForLoadState("networkidle");
 
     // Verifica se a página de agentes carregou usando o título do dashboard que contém agentes
-    await expect(
-      page.getByRole("heading", { name: "Dashboard" })
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 15000 });
 
     // Verificar se seção de agentes está presente
     await expect(page.getByText("Estatísticas de Agentes Híbridos")).toBeVisible();
@@ -41,7 +39,7 @@ test.describe("Agentes IA - Testes de UI e Funcionalidade", () => {
     await expect(page.getByText("100% dos agentes")).toBeVisible();
 
     // Verifica se lista de agentes está presente - procurando pelos badges dos agentes
-    await expect(page.locator('[data-slot="badge"]').filter({ hasText: 'harvey' })).toBeVisible();
+    await expect(page.locator('[data-slot="badge"]').filter({ hasText: "harvey" })).toBeVisible();
   });
 
   test("deve permitir alternar status dos agentes", async ({ page }) => {
@@ -49,7 +47,7 @@ test.describe("Agentes IA - Testes de UI e Funcionalidade", () => {
     await expect(page.getByText("Agentes com Suporte LangGraph")).toBeVisible();
 
     // Verifica se lista de agentes está presente - procurando pelos badges dos agentes
-    await expect(page.locator('[data-slot="badge"]').filter({ hasText: 'harvey' })).toBeVisible();
+    await expect(page.locator('[data-slot="badge"]').filter({ hasText: "harvey" })).toBeVisible();
 
     // Como é dashboard, não há switches individuais, apenas info
     // Verifica se métricas estão presentes
@@ -105,8 +103,8 @@ test.describe("Agentes IA - Testes de UI e Funcionalidade", () => {
 
   test("deve responder corretamente a comandos dos agentes via UI", async ({ page }) => {
     // No dashboard, verifica se agentes estão listados
-    await expect(page.locator('[data-slot="badge"]').filter({ hasText: 'harvey' })).toBeVisible();
-    await expect(page.locator('[data-slot="badge"]').filter({ hasText: 'justine' })).toBeVisible();
+    await expect(page.locator('[data-slot="badge"]').filter({ hasText: "harvey" })).toBeVisible();
+    await expect(page.locator('[data-slot="badge"]').filter({ hasText: "justine" })).toBeVisible();
   });
 
   test("deve mostrar pensamento e respostas dos agentes em tempo real", async ({ page }) => {
