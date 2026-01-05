@@ -50,50 +50,50 @@ const VALID_COURTS = [
  * });
  * ```
  */
-export function validateMonitorDJENInput(data: Record<string, unknown>): MonitorDJENInput {
-  // Validar lawyerOAB (opcional)
-  const lawyerOAB = data.lawyerOAB as string | undefined;
-  if (lawyerOAB) {
-    if (typeof lawyerOAB !== "string") {
-      throw new ValidationError("Campo 'lawyerOAB' deve ser uma string", "lawyerOAB", lawyerOAB);
-    }
+// Helper: Validar OAB
+function validateLawyerOAB(lawyerOAB: unknown): void {
+  if (!lawyerOAB) return;
 
-    // Formato esperado: "UF NUMERO" (ex: "MG 184404")
-    const oabPattern = /^[A-Z]{2}\s+\d{3,7}$/;
-    if (!oabPattern.test(lawyerOAB)) {
-      throw new ValidationError(
-        "Campo 'lawyerOAB' deve estar no formato 'UF NUMERO' (ex: 'MG 184404')",
-        "lawyerOAB",
-        lawyerOAB
-      );
-    }
+  if (typeof lawyerOAB !== "string") {
+    throw new ValidationError("Campo 'lawyerOAB' deve ser uma string", "lawyerOAB", lawyerOAB);
   }
 
-  // Validar courts (opcional)
-  const courts = data.courts as string[] | undefined;
-  if (courts) {
-    if (!Array.isArray(courts)) {
-      throw new ValidationError("Campo 'courts' deve ser um array", "courts", courts);
-    }
-
-    if (courts.length === 0) {
-      throw new ValidationError("Campo 'courts' não pode ser um array vazio", "courts", courts);
-    }
-
-    const invalidCourts = courts.filter(
-      (c) => !VALID_COURTS.includes(c as (typeof VALID_COURTS)[number])
+  const oabPattern = /^[A-Z]{2}\s+\d{3,7}$/;
+  if (!oabPattern.test(lawyerOAB)) {
+    throw new ValidationError(
+      "Campo 'lawyerOAB' deve estar no formato 'UF NUMERO' (ex: 'MG 184404')",
+      "lawyerOAB",
+      lawyerOAB
     );
-    if (invalidCourts.length > 0) {
-      throw new ValidationError(
-        `Tribunais inválidos: ${invalidCourts.join(", ")}. Valores aceitos: ${VALID_COURTS.join(", ")}`,
-        "courts",
-        invalidCourts
-      );
-    }
+  }
+}
+
+// Helper: Validar tribunais
+function validateCourts(courts: unknown): void {
+  if (!courts) return;
+
+  if (!Array.isArray(courts)) {
+    throw new ValidationError("Campo 'courts' deve ser um array", "courts", courts);
   }
 
-  // Validar startDate (opcional)
-  const startDate = data.startDate as string | undefined;
+  if (courts.length === 0) {
+    throw new ValidationError("Campo 'courts' não pode ser um array vazio", "courts", courts);
+  }
+
+  const invalidCourts = courts.filter(
+    (c) => !VALID_COURTS.includes(c as (typeof VALID_COURTS)[number])
+  );
+  if (invalidCourts.length > 0) {
+    throw new ValidationError(
+      `Tribunais inválidos: ${invalidCourts.join(", ")}. Valores aceitos: ${VALID_COURTS.join(", ")}`,
+      "courts",
+      invalidCourts
+    );
+  }
+}
+
+// Helper: Validar intervalo de datas
+function validateDateRange(startDate: string | undefined, endDate: string | undefined): void {
   if (startDate && !isValidDate(startDate)) {
     throw new ValidationError(
       `Data inválida: '${startDate}'. Use formato YYYY-MM-DD`,
@@ -102,8 +102,6 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
     );
   }
 
-  // Validar endDate (opcional)
-  const endDate = data.endDate as string | undefined;
   if (endDate && !isValidDate(endDate)) {
     throw new ValidationError(
       `Data inválida: '${endDate}'. Use formato YYYY-MM-DD`,
@@ -112,7 +110,6 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
     );
   }
 
-  // Validar intervalo de datas
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new ValidationError(
       `startDate (${startDate}) não pode ser posterior a endDate (${endDate})`,
@@ -120,6 +117,19 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
       { startDate, endDate }
     );
   }
+}
+
+export function validateMonitorDJENInput(data: Record<string, unknown>): MonitorDJENInput {
+  // Validar campos usando helpers
+  validateLawyerOAB(data.lawyerOAB);
+  validateCourts(data.courts);
+  validateDateRange(data.startDate as string | undefined, data.endDate as string | undefined);
+
+  // Extrair valores validados
+  const lawyerOAB = data.lawyerOAB as string | undefined;
+  const courts = data.courts as string[] | undefined;
+  const startDate = data.startDate as string | undefined;
+  const endDate = data.endDate as string | undefined;
 
   // Validar autoRegister (opcional)
   const autoRegister = data.autoRegister;

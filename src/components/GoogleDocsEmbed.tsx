@@ -32,20 +32,25 @@ function isValidDocId(docId: string): boolean {
   return /^[a-zA-Z0-9_-]{20,60}$/.test(docId);
 }
 
+// Helper: Construir URLs do Google Docs
+function buildGoogleDocsUrls(docId: string) {
+  const isValid = isValidDocId(docId);
+  if (!isValid) {
+    console.error("Invalid Google Docs ID format:", docId);
+  }
+
+  return {
+    viewUrl: isValid ? `https://docs.google.com/document/d/${docId}/preview` : "",
+    editUrl: isValid ? `https://docs.google.com/document/d/${docId}/edit` : "",
+  };
+}
+
 export function GoogleDocsEmbed({ docId, docUrl, title, onClose }: GoogleDocsEmbedProps) {
   const [activeTab, setActiveTab] = useState<"view" | "edit">("view");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // Validate docId on mount
-  if (!isValidDocId(docId)) {
-    console.error("Invalid Google Docs ID format:", docId);
-  }
-
-  // Construir URLs do Google Docs (only if valid)
-  const viewUrl = isValidDocId(docId) ? `https://docs.google.com/document/d/${docId}/preview` : "";
-  const editUrl = isValidDocId(docId) ? `https://docs.google.com/document/d/${docId}/edit` : "";
-
+  const { viewUrl, editUrl } = buildGoogleDocsUrls(docId);
   const iframeUrl = activeTab === "edit" ? editUrl : viewUrl;
 
   const handleFullscreen = () => {

@@ -52,10 +52,8 @@ export class ValidationError extends Error {
  * // { tema: "direito à greve", tribunal: "STF", dataInicio: "2020-01-01", ... }
  * ```
  */
-export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJurisInput {
-  // Validar tema (obrigatório)
-  const tema = data.tema;
-
+// Helper: Validar tema obrigatório
+function validateTema(tema: unknown): asserts tema is string {
   if (!tema) {
     throw new ValidationError("Campo 'tema' é obrigatório", "tema", tema);
   }
@@ -75,9 +73,10 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
       tema
     );
   }
+}
 
-  // Validar tribunal (opcional)
-  const tribunal = data.tribunal as string | undefined;
+// Helper: Validar tribunal
+function validateTribunal(tribunal: unknown): void {
   if (tribunal && !TRIBUNAIS_VALIDOS.includes(tribunal as TribunalValido)) {
     throw new ValidationError(
       `Tribunal inválido: '${tribunal}'. Valores aceitos: ${TRIBUNAIS_VALIDOS.join(", ")}`,
@@ -85,10 +84,11 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
       tribunal
     );
   }
+}
 
-  // Validar dataInicio (opcional)
-  const dataInicio = data.dataInicio as string | undefined;
-  if (dataInicio && !isValidDate(dataInicio)) {
+// Helper: Validar range de datas
+function validatePesquisaDateRange(dataInicio: unknown, dataFim: unknown): void {
+  if (dataInicio && !isValidDate(dataInicio as string)) {
     throw new ValidationError(
       `Data inválida: '${dataInicio}'. Use formato YYYY-MM-DD`,
       "dataInicio",
@@ -96,9 +96,7 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
     );
   }
 
-  // Validar dataFim (opcional)
-  const dataFim = data.dataFim as string | undefined;
-  if (dataFim && !isValidDate(dataFim)) {
+  if (dataFim && !isValidDate(dataFim as string)) {
     throw new ValidationError(
       `Data inválida: '${dataFim}'. Use formato YYYY-MM-DD`,
       "dataFim",
@@ -106,30 +104,45 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
     );
   }
 
-  // Validar intervalo de datas
-  if (dataInicio && dataFim && new Date(dataInicio) > new Date(dataFim)) {
+  if (dataInicio && dataFim && new Date(dataInicio as string) > new Date(dataFim as string)) {
     throw new ValidationError(
       `dataInicio (${dataInicio}) não pode ser posterior a dataFim (${dataFim})`,
       "dataInicio",
       { dataInicio, dataFim }
     );
   }
+}
 
-  // Validar limit (opcional)
-  const limit = data.limit as number | undefined;
-  if (limit !== undefined) {
-    if (typeof limit !== "number" || !Number.isInteger(limit)) {
-      throw new ValidationError("Campo 'limit' deve ser um número inteiro", "limit", limit);
-    }
+// Helper: Validar limit
+function validateLimit(limit: unknown): void {
+  if (limit === undefined) return;
 
-    if (limit < 1) {
-      throw new ValidationError("Campo 'limit' deve ser maior que 0", "limit", limit);
-    }
-
-    if (limit > 50) {
-      throw new ValidationError("Campo 'limit' não pode exceder 50 (performance)", "limit", limit);
-    }
+  if (typeof limit !== "number" || !Number.isInteger(limit)) {
+    throw new ValidationError("Campo 'limit' deve ser um número inteiro", "limit", limit);
   }
+
+  if (limit < 1) {
+    throw new ValidationError("Campo 'limit' deve ser maior que 0", "limit", limit);
+  }
+
+  if (limit > 50) {
+    throw new ValidationError("Campo 'limit' não pode exceder 50 (performance)", "limit", limit);
+  }
+}
+
+export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJurisInput {
+  // Validar usando helpers
+  validateTema(data.tema);
+  validateTribunal(data.tribunal);
+  validatePesquisaDateRange(data.dataInicio, data.dataFim);
+  validateLimit(data.limit);
+
+  // Extrair valores validados
+  const tema = data.tema as string;
+  const tribunal = data.tribunal as string | undefined;
+  const dataInicio = data.dataInicio as string | undefined;
+  const dataFim = data.dataFim as string | undefined;
+  const limit = data.limit as number | undefined;
 
   // Validar relevanceThreshold (opcional)
   const relevanceThreshold = data.relevanceThreshold as number | undefined;

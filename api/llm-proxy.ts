@@ -152,7 +152,7 @@ function setupLLMCorsHeaders(res: VercelResponse, req: VercelRequest): VercelRes
     .map((x) => x.trim())
     .filter(Boolean);
   const origin = (req.headers?.origin as string | undefined) || "";
-  
+
   if (origin && allowedOrigins.length > 0) {
     if (!allowedOrigins.includes(origin)) {
       return res.status(403).json({ error: "Origin not allowed" });
@@ -161,7 +161,7 @@ function setupLLMCorsHeaders(res: VercelResponse, req: VercelRequest): VercelRes
   } else if (allowedOrigins.length === 0) {
     res.setHeader("Access-Control-Allow-Origin", "*");
   }
-  
+
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return null;
@@ -180,7 +180,7 @@ function getLLMClientIP(req: VercelRequest): string {
 async function applyLLMRateLimit(clientIP: string, res: VercelResponse): Promise<boolean> {
   const rl = await rateLimitMiddleware(clientIP);
   Object.entries(rl.headers || {}).forEach(([k, v]) => res.setHeader(k, v));
-  
+
   if (!rl.allowed) {
     res.setHeader(
       "Retry-After",
@@ -192,7 +192,7 @@ async function applyLLMRateLimit(clientIP: string, res: VercelResponse): Promise
     res.status(429).json({ error: rl.error || "Rate limit exceeded" });
     return false;
   }
-  
+
   return true;
 }
 
@@ -221,33 +221,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rateLimitPassed = await applyLLMRateLimit(clientIP, res);
   if (!rateLimitPassed) return;
 
-  // Configurar provedores (ordem de prioridade)
-  const providers: ProviderConfig[] = [
-    // 1. OpenAI (prioridade máxima)
-    {
-      name: "OpenAI",
-      baseUrl: "https://api.openai.com/v1/chat/completions",
-      apiKey: process.env.OPENAI_API_KEY,
-      headers: (key) => ({
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      }),
-    },
-    // 2. Google Gemini (aceita GEMINI_API_KEY ou VITE_GEMINI_API_KEY)
-    {
-      name: "Gemini",
-      baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
-      apiKey: process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
-      headers: () => ({
-        "Content-Type": "application/json",
-      }),
-      transformRequest: transformToGemini,
-      transformResponse: transformFromGemini,
-    },
-  ];
+  // Helper: Obter provider configurado
+  const getConfiguredProvider = (): ProviderConfig | null => {
+    const providers: ProviderConfig[] = [
+      // 1. OpenAI (prioridade máxima)
+      {
+        name: "OpenAI",
+        baseUrl: "https://api.openai.com/v1/chat/completions",
+        apiKey: process.env.OPENAI_API_KEY,
+        headers: (key) => ({
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        }),
+      },
+      // 2. Google Gemini (aceita GEMINI_API_KEY ou VITE_GEMINI_API_KEY)
+      {
+        name: "Gemini",
+        baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
+        apiKey: process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
+        headers: () => ({
+          "Content-Type": "application/json",
+        }),
+        transformRequest: transformToGemini,
+        transformResponse: transformFromGemini,
+      },
+    ];
+    return providers.find((p) => p.apiKey) || null;
+  };
 
-  // Encontrar provedor disponível
-  const provider = providers.find((p) => p.apiKey);
+  const provider = getConfiguredProvider();
 
   if (!provider) {
     console.error("No LLM provider configured");

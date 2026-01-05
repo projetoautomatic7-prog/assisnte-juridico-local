@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { requireApiKey } from "./lib/auth.js";
 import {
-    sendDailySummaryEmail,
-    sendEmail,
-    sendNotificationEmail,
-    sendUrgentDeadlineAlert,
+  sendDailySummaryEmail,
+  sendEmail,
+  sendNotificationEmail,
+  sendUrgentDeadlineAlert,
 } from "./lib/email-service.js";
 import { rateLimitMiddleware } from "./lib/rate-limit.js";
 import { retryWithBackoff } from "./lib/retry.js";
@@ -35,7 +35,7 @@ function getClientIP(req: VercelRequest): string {
 async function applyEmailRateLimit(clientIP: string, res: VercelResponse): Promise<boolean> {
   const rl = await rateLimitMiddleware(clientIP);
   Object.entries(rl.headers || {}).forEach(([k, v]) => res.setHeader(k, v));
-  
+
   if (!rl.allowed) {
     res.setHeader(
       "Retry-After",
@@ -47,8 +47,47 @@ async function applyEmailRateLimit(clientIP: string, res: VercelResponse): Promi
     res.status(429).json({ error: rl.error || "Rate limit exceeded" });
     return false;
   }
-  
+
   return true;
+}
+
+// Helper: Enviar email de teste
+async function sendTestEmail(to: string | string[], subject?: string) {
+  const recipient = Array.isArray(to) ? to[0] : to;
+  return retryWithBackoff(
+    () =>
+      withTimeout(
+        30000,
+        sendEmail({
+          to: recipient,
+          subject: subject || "Email de Teste - Assistente Jurídico",
+          html: `
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 40px;">
+                <h1 style="color: #1e88e5;">✅ Email de Teste Enviado com Sucesso!</h1>
+                <p style="font-size: 16px; color: #666;">
+                  Resend está configurado corretamente no Vercel.
+                </p>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">
+                  Timestamp: ${new Date().toISOString()}
+                </p>
+              </body>
+            </html>
+          `,
+          tags: [{ name: "tipo", value: "teste" }],
+        })
+      ),
+    3,
+    200
+  );
+}
+
+// Helper: Validar campos de notificação
+function validateNotificationFields(body: EmailRequest): { error?: string } {
+  if (!body.to || !body.subject || !body.message) {
+    return { error: 'Campos "to", "subject" e "message" são obrigatórios' };
+  }
+  return {};
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -59,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const clientIP = getClientIP(req);
   const rateLimitPassed = await applyEmailRateLimit(clientIP, res);
   if (!rateLimitPassed) return;
-  
+
   // Apenas POST permitido
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -76,48 +115,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (body.type) {
       case "test":
-        // Email de teste
         if (!body.to) {
           return res.status(400).json({ error: 'Campo "to" é obrigatório' });
         }
-        result = await retryWithBackoff(
-          () =>
-            withTimeout(
-              30000,
-              sendEmail({
-                to: body.to,
-                subject: body.subject || "Email de Teste - Assistente Jurídico",
-                html: `
-            <html>
-              <body style="font-family: Arial, sans-serif; text-align: center; padding: 40px;">
-                <h1 style="color: #1e88e5;">✅ Email de Teste Enviado com Sucesso!</h1>
-                <p style="font-size: 16px; color: #666;">
-                  Resend está configurado corretamente no Vercel.
-                </p>
-                <p style="margin-top: 20px; font-size: 14px; color: #999;">
-                  Timestamp: ${new Date().toISOString()}
-                </p>
-              </body>
-            </html>
-          `,
-                tags: [{ name: "tipo", value: "teste" }],
-              })
-            ),
-          3,
-          200
-        );
+        result = await sendTestEmail(body.to, body.subject);
         break;
 
       case "notification": {
-        // Email de notificação
-        if (!body.to || !body.subject || !body.message) {
-          return res.status(400).json({
-            error: 'Campos "to", "subject" e "message" são obrigatórios',
-          });
+        const validation = validateNotificationFields(body);
+        if (validation.error) {
+          return res.status(400).json({ error: validation.error });
         }
         // sanitize subject/message
-        const subject = escapeHtml(body.subject);
-        const message = escapeHtml(body.message);
+        const subject = escapeHtml(body.subject!);
+        const message = escapeHtml(body.message!);
         const actionUrl = body.actionUrl;
         result = await retryWithBackoff(
           () =>

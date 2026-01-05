@@ -30,8 +30,8 @@ import {
   agentMetrics,
   classifyGeminiError,
   createFallbackResponse,
-  type StructuredError,
   type ExecutionOutcome,
+  type StructuredError,
 } from "./agent_utils";
 
 export interface LangGraphConfig {
@@ -120,12 +120,10 @@ export abstract class LangGraphAgent {
               }
             : undefined
         );
+      } else if (this.config.enableSentryTracing) {
+        result = await this.executeWithTracing(state);
       } else {
-        if (!this.config.enableSentryTracing) {
-          result = await this.executeInternal(state);
-        } else {
-          result = await this.executeWithTracing(state);
-        }
+        result = await this.executeInternal(state);
       }
 
       const isDegraded = wasDegraded || result.data?.degraded === true;

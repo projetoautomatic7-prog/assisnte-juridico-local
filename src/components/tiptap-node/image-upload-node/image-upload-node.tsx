@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import type { NodeViewProps } from "@tiptap/react";
-import { NodeViewWrapper } from "@tiptap/react";
-import { Button } from "@/components/tiptap-ui-primitive/button";
 import { CloseIcon } from "@/components/tiptap-icons/close-icon";
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
+import { Button } from "@/components/tiptap-ui-primitive/button";
 import { focusNextNode, isValidPosition } from "@/lib/tiptap-utils";
+import type { NodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper } from "@tiptap/react";
+import { useRef, useState } from "react";
 
 export interface FileItem {
   /**
@@ -148,16 +148,26 @@ function useFileUpload(options: UploadOptions) {
     }
   };
 
-  const uploadFiles = async (files: File[]): Promise<string[]> => {
+  // Helper: Validar arquivos antes do upload
+  const validateFiles = (files: File[]): { valid: boolean; error?: Error } => {
     if (!files || files.length === 0) {
-      options.onError?.(new Error("No files to upload"));
-      return [];
+      return { valid: false, error: new Error("No files to upload") };
     }
 
     if (options.limit && files.length > options.limit) {
-      options.onError?.(
-        new Error(`Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`)
-      );
+      return {
+        valid: false,
+        error: new Error(`Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`),
+      };
+    }
+
+    return { valid: true };
+  };
+
+  const uploadFiles = async (files: File[]): Promise<string[]> => {
+    const validation = validateFiles(files);
+    if (!validation.valid) {
+      options.onError?.(validation.error!);
       return [];
     }
 
