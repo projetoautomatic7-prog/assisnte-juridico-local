@@ -28,7 +28,10 @@ describe("LangGraph agent stubs (smoke tests)", () => {
   test("Analise Documental runs and completes", async () => {
     const documentoTexto =
       "Documento de exemplo com conteúdo suficiente para validar o agente. ".repeat(2);
-    const result = await runAnaliseDocumental({ documentoTexto });
+    const result = await runAnaliseDocumental({
+      documentoTexto,
+      tipoDocumento: "genérico",
+    });
     expect(result.completed).toBe(true);
   });
 
@@ -56,7 +59,9 @@ describe("LangGraph agent stubs (smoke tests)", () => {
   });
 
   test("Analise Risco runs and completes", async () => {
-    const result = await runAnaliseRisco();
+    const result = await runAnaliseRisco({
+      contextoProcesso: "Teste de análise de risco para validação do agente",
+    });
     expect(result.completed).toBe(true);
   });
 
@@ -72,28 +77,40 @@ describe("LangGraph agent stubs (smoke tests)", () => {
   });
 
   test("Comunicacao Clientes runs and completes", async () => {
-    const result = await runComunicacaoClientes();
+    const result = await runComunicacaoClientes({
+      mensagem: "Teste de comunicação com cliente",
+    });
     expect(result.completed).toBe(true);
   });
 
   test("Financeiro runs and completes", async () => {
-    const result = await runFinanceiro();
+    const result = await runFinanceiro({
+      operacao: "consulta",
+    });
     expect(result.completed).toBe(true);
   });
 
   test("Estrategia Processual returns a result object", async () => {
-    const result = await runEstrategiaProcessual();
+    const result = await runEstrategiaProcessual({
+      contextoProcesso: "Teste de estratégia processual",
+    });
     expect(result).toBeDefined();
     expect(typeof result.completed).toBe("boolean");
   });
 
   test("Traducao Juridica runs and completes", async () => {
-    const result = await runTraducaoJuridica();
+    const result = await runTraducaoJuridica({
+      textoOriginal: "Sample legal text for translation",
+      idiomaOrigem: "en",
+      idiomaDestino: "pt-BR",
+    });
     expect(result.completed).toBe(true);
   });
 
   test("Organizacao de Arquivos runs and completes", async () => {
-    const result = await runOrganizacaoArquivos();
+    const result = await runOrganizacaoArquivos({
+      operacao: "organizar",
+    });
     expect(result.completed).toBe(true);
   });
 });

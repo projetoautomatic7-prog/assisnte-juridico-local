@@ -7,7 +7,7 @@
 
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { executarManualmente } from "../../backend/src/services/djen-scheduler";
+import { executarManualmente } from "../../../backend/src/services/djen-scheduler";
 
 const shouldRun = process.env.ENABLE_DB_TEST === "true";
 const describeFn = shouldRun ? describe : describe.skip;

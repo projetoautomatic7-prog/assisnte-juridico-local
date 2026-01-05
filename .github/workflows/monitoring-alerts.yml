@@ -358,7 +358,7 @@ jobs:
           CRITICAL_VULNS=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
           HIGH_VULNS=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
           MODERATE_VULNS=$(jq '.metadata.vulnerabilities.moderate // 0' audit-results.json)
-          
+
           echo "🚨 Vulnerabilidades críticas: $CRITICAL_VULNS"
           echo "⚠️  Vulnerabilidades altas: $HIGH_VULNS"
           echo "🟡 Vulnerabilidades moderadas: $MODERATE_VULNS"
@@ -387,7 +387,7 @@ jobs:
             const critical = parseInt('${{ steps.audit.outputs.critical_vulns }}');
             const high = parseInt('${{ steps.audit.outputs.high_vulns }}');
             const moderate = parseInt('${{ steps.audit.outputs.moderate_vulns }}');
-            
+
             // Check if there's already an open issue about vulnerabilities
             const existingIssues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -395,16 +395,16 @@ jobs:
               state: 'open',
               labels: 'security,automated'
             });
-            
-            const hasOpenSecurityIssue = existingIssues.data.some(issue => 
+
+            const hasOpenSecurityIssue = existingIssues.data.some(issue =>
               issue.title.includes('critical npm vulnerability')
             );
-            
+
             if (hasOpenSecurityIssue) {
               console.log('⚠️  Já existe uma issue aberta sobre vulnerabilidades de segurança');
               return;
             }
-            
+
             const body = `## 🚨 Vulnerabilidades de Segurança Detectadas
 
 O monitoramento automático de segurança detectou vulnerabilidades críticas nas dependências do projeto.
@@ -443,7 +443,7 @@ O relatório JSON completo do npm audit está disponível nos artefatos do workf
 
 ---
 *Issue criada automaticamente pelo workflow de monitoramento em ${new Date().toISOString()}*`;
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -451,7 +451,7 @@ O relatório JSON completo do npm audit está disponível nos artefatos do workf
               body: body,
               labels: ['security', 'automated', 'dependencies']
             });
-            
+
             console.log('✅ Issue de segurança criada com sucesso');
 
       - name: 🛡️  Verificação de Headers de Segurança
