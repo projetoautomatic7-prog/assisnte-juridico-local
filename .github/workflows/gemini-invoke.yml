@@ -47,6 +47,17 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
+      - name: Preparar prompt
+        id: prepare-prompt
+        run: |
+          PROMPT="${{ inputs.prompt }}"
+          if [ -n "${{ inputs.additional_context }}" ]; then
+            PROMPT="${PROMPT}\n\nContexto adicional fornecido pelo usuário (PT-BR): ${{ inputs.additional_context }}"
+          fi
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Rodar Gemini CLI (invoke)
         id: gemini
         uses: google-github-actions/run-gemini-cli@v0.1.18
@@ -55,7 +66,7 @@ jobs:
           gemini_model: ${{ inputs.model }}
           gemini_cli_version: ${{ inputs.cli_version }}
           gemini_debug: ${{ inputs.debug }}
-          prompt: ${{ inputs.prompt }}${{ inputs.additional_context != '' && format('\n\nContexto adicional fornecido pelo usuário (PT-BR): {0}', inputs.additional_context) || '' }}
+          prompt: ${{ steps.prepare-prompt.outputs.prompt }}
 
       - name: Publicar resumo
         if: always()
