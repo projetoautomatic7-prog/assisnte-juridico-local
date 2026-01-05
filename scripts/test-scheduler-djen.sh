@@ -19,14 +19,18 @@ NC='\033[0m' # No Color
 check_test() {
     local test_name="$1"
     local test_command="$2"
-    
+
     echo -n "📋 Testando: $test_name... "
     
-    if eval "$test_command" > /dev/null 2>&1; then
+    local output
+    if output=$(eval "$test_command" 2>&1); then
         echo -e "${GREEN}✅ PASSOU${NC}"
         return 0
     else
         echo -e "${RED}❌ FALHOU${NC}"
+        if [ -n "${VERBOSE:-}" ]; then
+            echo "   Erro: $output"
+        fi
         return 1
     fi
 }
@@ -150,9 +154,9 @@ echo ""
 TOTAL=$((PASSED + FAILED))
 PERCENTAGE=$((PASSED * 100 / TOTAL))
 
-echo "✅ Testes passados: ${GREEN}$PASSED${NC}"
-echo "❌ Testes falhados: ${RED}$FAILED${NC}"
-echo "📈 Taxa de sucesso: ${GREEN}${PERCENTAGE}%${NC}"
+echo -e "✅ Testes passados: ${GREEN}$PASSED${NC}"
+echo -e "❌ Testes falhados: ${RED}$FAILED${NC}"
+echo -e "📈 Taxa de sucesso: ${GREEN}${PERCENTAGE}%${NC}"
 echo ""
 
 if [ $FAILED -eq 0 ]; then

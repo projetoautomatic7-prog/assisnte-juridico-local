@@ -223,13 +223,13 @@ tail -f backend/.sonar-results/auto-analyze.log
 
 ```sql
 -- Ver últimos expedientes processados
-SELECT * FROM expedientes 
-ORDER BY data_publicacao DESC 
+SELECT * FROM expedientes
+ORDER BY data_publicacao DESC
 LIMIT 10;
 
 -- Contar expedientes de hoje
-SELECT COUNT(*) 
-FROM expedientes 
+SELECT COUNT(*)
+FROM expedientes
 WHERE DATE(data_publicacao) = CURRENT_DATE;
 ```
 

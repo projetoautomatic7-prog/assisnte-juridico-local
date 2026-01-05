@@ -27,11 +27,14 @@ interface MonitoredLawyer {
   enabled: boolean;
 }
 
+// IMPORTANTE: Estes são dados de EXEMPLO genéricos.
+// NUNCA versione dados reais de clientes/advogados.
+// Configure os dados reais via variáveis de ambiente.
 const DEFAULT_LAWYERS: MonitoredLawyer[] = [
   {
-    id: "thiago-bodevan-veiga",
-    name: "Thiago Bodevan Veiga",
-    oab: "184404/MG",
+    id: "exemplo-advogado",
+    name: process.env.DJEN_ADVOGADO_NOME || "Advogado Exemplo",
+    oab: process.env.DJEN_ADVOGADO_OAB || "000000/XX",
     enabled: true,
   },
 ];
