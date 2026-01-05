@@ -21,6 +21,7 @@ import llmStreamRouter from "./routes/llm-stream.js";
 import llmRouter from "./routes/llm.js";
 import minutasRouter from "./routes/minutas.js";
 import observabilityRouter from "./routes/observability.js";
+import ragRouter from "./routes/rag.js";
 import sparkRouter from "./routes/spark.js";
 import { iniciarSchedulerDJEN } from "./services/djen-scheduler.js";
 
@@ -114,11 +115,13 @@ if (rateLimitEnabled && !isTestEnv) {
   app.use("/api/agents", aiLimiter, agentsRouter);
   app.use("/api/ai", aiLimiter, aiCommandsRouter);
   app.use("/api/llm-stream", aiLimiter, llmStreamRouter);
+  app.use("/api/rag", aiLimiter, ragRouter);
 } else {
   app.use("/api/llm", llmRouter);
   app.use("/api/agents", agentsRouter);
   app.use("/api/ai", aiCommandsRouter);
   app.use("/api/llm-stream", llmStreamRouter);
+  app.use("/api/rag", ragRouter);
 }
 // Rotas sem rate limiting adicional
 app.use("/api/minutas", minutasRouter);
