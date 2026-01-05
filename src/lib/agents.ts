@@ -208,7 +208,8 @@ export function calcularAtrasoRetry(
 ): number {
   const safeRetry = Math.max(0, retryCount);
   const expo = Math.pow(2, safeRetry);
-  const jitter = Math.random() * 0.3 + 0.85; // 0.85–1.15
+  // Use crypto for secure random jitter
+  const jitter = (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.3 + 0.85; // 0.85–1.15
   return Math.min(baseMs * expo * jitter, maxMs);
 }
 
@@ -738,7 +739,7 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
       success: true,
       message: "Monitoramento concluído com sucesso",
       data: {
-        publicationsFound: Math.floor(Math.random() * 10),
+        publicationsFound: crypto.getRandomValues(new Uint8Array(1))[0] % 10,
         lastChecked: new Date().toISOString(),
         source: "DJEN/DataJud",
       },
@@ -814,8 +815,9 @@ export function createTaskGenerator(
 
   const generateTask = (): AgentTask => {
     const agentsPool = currentConfig.agentIds;
-    const agentId =
-      agentsPool[Math.floor(Math.random() * Math.max(agentsPool.length, 1))] ?? "harvey";
+    const randomIndex =
+      crypto.getRandomValues(new Uint32Array(1))[0] % Math.max(agentsPool.length, 1);
+    const agentId = agentsPool[randomIndex] ?? "harvey";
 
     const taskTypes: TarefaSistemaTipo[] = [
       "MONITOR_DJEN",
@@ -826,10 +828,10 @@ export function createTaskGenerator(
     const priorities: TaskPriority[] = ["low", "medium", "high"];
 
     return {
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+      id: `task-${Date.now()}-${crypto.randomUUID().split("-")[0]}`,
       agentId,
-      type: taskTypes[Math.floor(Math.random() * taskTypes.length)],
-      priority: priorities[Math.floor(Math.random() * priorities.length)],
+      type: taskTypes[crypto.getRandomValues(new Uint32Array(1))[0] % taskTypes.length],
+      priority: priorities[crypto.getRandomValues(new Uint32Array(1))[0] % priorities.length],
       status: "queued",
       createdAt: new Date().toISOString(),
       data: {

@@ -97,7 +97,7 @@ async function getKv(): Promise<Redis> {
 
 // Gera ID único
 function generateId(): string {
-  return `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return `notif_${Date.now()}_${crypto.randomUUID().split("-")[0]}`;
 }
 
 // Mapas de prioridade
@@ -237,7 +237,7 @@ async function sendTeamsWebhook(webhookUrl: string, notification: Notification):
   try {
     const payload = {
       "@type": "MessageCard",
-      "@context": "http://schema.org/extensions",
+      "@context": "https://schema.org/extensions",
       themeColor: PRIORITY_COLOR_HEX[notification.priority],
       summary: notification.title,
       sections: [
