@@ -18,8 +18,8 @@ describe("AI Agents System", () => {
     it("should process monitoring tasks successfully", async () => {
       const task: AgentTask = {
         id: "1",
-        agentId: "djen-monitor",
-        type: "monitor-djen",
+        agentId: "monitor-djen",
+        type: "MONITOR_DJEN",
         priority: "high",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -27,7 +27,7 @@ describe("AI Agents System", () => {
       };
 
       const agent: Agent = {
-        id: "djen-monitor",
+        id: "monitor-djen",
         name: "DJEN Monitor",
         description: "Monitors DJEN",
         type: "monitor",
@@ -47,8 +47,8 @@ describe("AI Agents System", () => {
     it("should process analysis tasks successfully", async () => {
       const task: AgentTask = {
         id: "2",
-        agentId: "doc-analyzer",
-        type: "analyze-document",
+        agentId: "analise-documental",
+        type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -56,7 +56,7 @@ describe("AI Agents System", () => {
       };
 
       const agent: Agent = {
-        id: "doc-analyzer",
+        id: "analise-documental",
         name: "Document Analyzer",
         description: "Analyzes documents",
         type: "analyzer",
@@ -80,8 +80,8 @@ describe("AI Agents System", () => {
     it("should process deadline calculation tasks", async () => {
       const task: AgentTask = {
         id: "3",
-        agentId: "deadline-calc",
-        type: "calculate-deadline",
+        agentId: "gestao-prazos",
+        type: "CALCULATE_DEADLINE",
         priority: "high",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -89,7 +89,7 @@ describe("AI Agents System", () => {
       };
 
       const agent: Agent = {
-        id: "deadline-calc",
+        id: "gestao-prazos",
         name: "Deadline Calculator",
         description: "Calculates deadlines",
         type: "calculator",
@@ -114,7 +114,7 @@ describe("AI Agents System", () => {
 
   describe("shouldPauseForHuman", () => {
     const agent: Agent = {
-      id: "test-agent",
+      id: "harvey",
       name: "Test Agent",
       description: "Test",
       type: "test",
@@ -127,8 +127,8 @@ describe("AI Agents System", () => {
     it("should pause for critical priority tasks", () => {
       const task: AgentTask = {
         id: "1",
-        agentId: "test-agent",
-        type: "test-task",
+        agentId: "harvey",
+        type: "MONITOR_DJEN",
         priority: "critical",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -141,8 +141,8 @@ describe("AI Agents System", () => {
     it("should pause for tasks that failed multiple times", () => {
       const task: AgentTask = {
         id: "2",
-        agentId: "test-agent",
-        type: "test-task",
+        agentId: "harvey",
+        type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -157,8 +157,8 @@ describe("AI Agents System", () => {
     it("should pause for sensitive task types", () => {
       const task: AgentTask = {
         id: "3",
-        agentId: "test-agent",
-        type: "contract-signing",
+        agentId: "harvey",
+        type: "CONTRACT_REVIEW",
         priority: "medium",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -171,8 +171,8 @@ describe("AI Agents System", () => {
     it("should not pause for normal tasks", () => {
       const task: AgentTask = {
         id: "4",
-        agentId: "test-agent",
-        type: "monitor-check",
+        agentId: "harvey",
+        type: "RESEARCH_PRECEDENTS",
         priority: "medium",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -187,8 +187,8 @@ describe("AI Agents System", () => {
     it("should allow resume if explicitly marked", () => {
       const task: AgentTask = {
         id: "1",
-        agentId: "test-agent",
-        type: "test-task",
+        agentId: "harvey",
+        type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "human_intervention",
         createdAt: new Date().toISOString(),
@@ -202,8 +202,8 @@ describe("AI Agents System", () => {
     it("should allow resume for queued tasks", () => {
       const task: AgentTask = {
         id: "2",
-        agentId: "test-agent",
-        type: "test-task",
+        agentId: "harvey",
+        type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -218,8 +218,8 @@ describe("AI Agents System", () => {
 
       const task: AgentTask = {
         id: "3",
-        agentId: "test-agent",
-        type: "test-task",
+        agentId: "harvey",
+        type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "human_intervention",
         createdAt: new Date().toISOString(),
@@ -240,7 +240,7 @@ describe("AI Agents System", () => {
           enabled: true,
           intervalMinutes: 0.01, // bem curto pra teste
           maxTasksPerInterval: 2,
-          agentIds: ["agent-1", "agent-2"],
+          agentIds: ["harvey", "justine"],
         },
         (task) => generatedTasks.push(task)
       );
@@ -265,7 +265,7 @@ describe("AI Agents System", () => {
           enabled: true,
           intervalMinutes: 0.01,
           maxTasksPerInterval: 1,
-          agentIds: ["agent-1"],
+          agentIds: ["harvey"],
         },
         (task) => generatedTasks.push(task)
       );

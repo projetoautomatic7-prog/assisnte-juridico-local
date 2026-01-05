@@ -90,6 +90,83 @@ function validateNotificationFields(body: EmailRequest): { error?: string } {
   return {};
 }
 
+type EmailSendResult = {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+};
+
+async function sendWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+  return retryWithBackoff(() => withTimeout(30000, fn), 3, 200);
+}
+
+function badRequest(res: VercelResponse, error: string) {
+  return res.status(400).json({ error });
+}
+
+function serverError(res: VercelResponse, error: string) {
+  return res.status(500).json({ success: false, error, message: "Erro ao enviar email" });
+}
+
+async function handleTestEmail(body: EmailRequest, res: VercelResponse): Promise<EmailSendResult> {
+  if (!body.to) {
+    badRequest(res, 'Campo "to" é obrigatório');
+    return { success: false, error: 'Campo "to" é obrigatório' };
+  }
+  return sendWithRetry(() => sendTestEmail(body.to, body.subject)) as unknown as EmailSendResult;
+}
+
+async function handleNotificationEmail(
+  body: EmailRequest,
+  res: VercelResponse
+): Promise<EmailSendResult> {
+  const validation = validateNotificationFields(body);
+  if (validation.error) {
+    badRequest(res, validation.error);
+    return { success: false, error: validation.error };
+  }
+
+  const subject = escapeHtml(body.subject!);
+  const message = escapeHtml(body.message!);
+  const actionUrl = body.actionUrl;
+
+  return sendWithRetry(() =>
+    sendNotificationEmail(body.to as string, subject, message, actionUrl)
+  ) as unknown as EmailSendResult;
+}
+
+async function handleUrgentEmail(
+  body: EmailRequest,
+  res: VercelResponse
+): Promise<EmailSendResult> {
+  if (!body.to || !body.processNumber || !body.deadline) {
+    badRequest(res, 'Campos "to", "processNumber" e "deadline" são obrigatórios');
+    return { success: false, error: 'Campos "to", "processNumber" e "deadline" são obrigatórios' };
+  }
+
+  return sendWithRetry(() =>
+    sendUrgentDeadlineAlert(
+      body.to as string,
+      escapeHtml(body.processNumber),
+      escapeHtml(body.deadline),
+      "Manifestação Processual"
+    )
+  ) as unknown as EmailSendResult;
+}
+
+async function handleDailySummaryEmail(
+  body: EmailRequest,
+  res: VercelResponse
+): Promise<EmailSendResult> {
+  if (!body.to || !body.summary) {
+    badRequest(res, 'Campos "to" e "summary" são obrigatórios');
+    return { success: false, error: 'Campos "to" e "summary" são obrigatórios' };
+  }
+  return sendWithRetry(() =>
+    sendDailySummaryEmail(body.to as string, body.summary)
+  ) as unknown as EmailSendResult;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Auth via token header
   if (!requireApiKey(req, res, "EMAIL_API_KEY")) return;
@@ -111,97 +188,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const body: EmailRequest = parsed.data;
 
-    let result;
+    const handlers: Record<EmailRequest["type"], (b: EmailRequest) => Promise<EmailSendResult>> = {
+      test: (b) => handleTestEmail(b, res),
+      notification: (b) => handleNotificationEmail(b, res),
+      urgent: (b) => handleUrgentEmail(b, res),
+      daily_summary: (b) => handleDailySummaryEmail(b, res),
+    };
 
-    switch (body.type) {
-      case "test":
-        if (!body.to) {
-          return res.status(400).json({ error: 'Campo "to" é obrigatório' });
-        }
-        result = await sendTestEmail(body.to, body.subject);
-        break;
-
-      case "notification": {
-        const validation = validateNotificationFields(body);
-        if (validation.error) {
-          return res.status(400).json({ error: validation.error });
-        }
-        // sanitize subject/message
-        const subject = escapeHtml(body.subject!);
-        const message = escapeHtml(body.message!);
-        const actionUrl = body.actionUrl;
-        result = await retryWithBackoff(
-          () =>
-            withTimeout(
-              30000,
-              sendNotificationEmail(body.to as string, subject, message, actionUrl)
-            ),
-          3,
-          200
-        );
-        break;
-      }
-
-      case "urgent":
-        // Alerta urgente de prazo
-        if (!body.to || !body.processNumber || !body.deadline) {
-          return res.status(400).json({
-            error: 'Campos "to", "processNumber" e "deadline" são obrigatórios',
-          });
-        }
-        result = await retryWithBackoff(
-          () =>
-            withTimeout(
-              30000,
-              sendUrgentDeadlineAlert(
-                body.to as string,
-                escapeHtml(body.processNumber),
-                escapeHtml(body.deadline),
-                "Manifestação Processual"
-              )
-            ),
-          3,
-          200
-        );
-        break;
-
-      case "daily_summary":
-        // Resumo diário
-        if (!body.to || !body.summary) {
-          return res.status(400).json({
-            error: 'Campos "to" e "summary" são obrigatórios',
-          });
-        }
-        result = await retryWithBackoff(
-          () => withTimeout(30000, sendDailySummaryEmail(body.to as string, body.summary)),
-          3,
-          200
-        );
-        break;
-
-      default: {
-        // This branch should be unreachable because EmailUnion is a discriminated union
-        // but we keep a fallback for safety in case of unexpected payloads.
-        const unknownType = (body as any).type || "unknown";
-        return res.status(400).json({
-          error: `Tipo de email inválido: ${unknownType}. Use: test, notification, urgent, daily_summary`,
-        });
-      }
+    const handlerFn = handlers[body.type];
+    if (!handlerFn) {
+      return badRequest(
+        res,
+        `Tipo de email inválido: ${String(body.type)}. Use: test, notification, urgent, daily_summary`
+      );
     }
 
-    if (result.success) {
-      return res.status(200).json({
-        success: true,
-        messageId: result.messageId,
-        message: `Email de tipo "${body.type as string}" enviado com sucesso`,
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        error: result.error,
-        message: "Erro ao enviar email",
-      });
+    const result = await handlerFn(body);
+    if (!result.success) {
+      // Se algum handler já respondeu com 400, não forçar 500.
+      // Retornamos aqui para evitar double-send.
+      if (res.writableEnded) return;
+      return serverError(res, result.error || "Erro ao enviar email");
     }
+
+    return res.status(200).json({
+      success: true,
+      messageId: result.messageId,
+      message: `Email de tipo "${String(body.type)}" enviado com sucesso`,
+    });
   } catch (error) {
     console.error("Erro no endpoint de emails:", error);
     return res.status(500).json({

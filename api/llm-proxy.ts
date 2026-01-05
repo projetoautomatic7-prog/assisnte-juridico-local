@@ -60,6 +60,91 @@ interface ProviderConfig {
   transformResponse?: (data: unknown) => LLMResponse;
 }
 
+type ProviderName = "OpenAI" | "Gemini";
+
+function getConfiguredProvider(): ProviderConfig | null {
+  const providers: ProviderConfig[] = [
+    {
+      name: "OpenAI",
+      baseUrl: "https://api.openai.com/v1/chat/completions",
+      apiKey: process.env.OPENAI_API_KEY,
+      headers: (key) => ({
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      }),
+    },
+    {
+      name: "Gemini",
+      baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
+      apiKey: process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
+      headers: () => ({
+        "Content-Type": "application/json",
+      }),
+      transformRequest: transformToGemini,
+      transformResponse: transformFromGemini,
+    },
+  ];
+
+  return providers.find((p) => p.apiKey) || null;
+}
+
+function safeJsonParse(input: unknown): unknown {
+  if (typeof input !== "string") return input;
+  try {
+    return JSON.parse(input);
+  } catch {
+    return input;
+  }
+}
+
+function sanitizeMessagesInPlace(messages: ChatMessage[]) {
+  for (const m of messages) {
+    m.content = escapeHtml(m.content);
+  }
+}
+
+function resolveRequestedModel(body: LLMRequest, providerName: ProviderName): string {
+  const defaultModel = providerName === "OpenAI" ? "gpt-4o-mini" : "gemini-2.5-pro";
+  return (body.model as string | undefined) || defaultModel;
+}
+
+function buildTarget(
+  provider: ProviderConfig,
+  body: LLMRequest,
+  requestedModel: string
+): { targetUrl: string; requestBody: unknown } {
+  if (provider.name === "Gemini") {
+    const geminiModel = MODEL_MAPPING.gemini[requestedModel] || "gemini-2.5-pro";
+    console.log(`[Gemini] Modelo solicitado: ${requestedModel} → ${geminiModel}`);
+    return {
+      targetUrl: `${provider.baseUrl}/${geminiModel}:generateContent?key=${provider.apiKey}`,
+      requestBody: provider.transformRequest ? provider.transformRequest(body) : body,
+    };
+  }
+
+  // OpenAI
+  const mapped = MODEL_MAPPING.openai[requestedModel] || requestedModel;
+  return {
+    targetUrl: provider.baseUrl,
+    requestBody: { ...body, model: mapped },
+  };
+}
+
+async function fetchJsonOrThrow(provider: ProviderConfig, targetUrl: string, requestBody: unknown) {
+  const response = await fetch(targetUrl, {
+    method: "POST",
+    headers: provider.headers(provider.apiKey!),
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`${provider.name} API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
 // Mapeamento de modelos entre provedores
 const MODEL_MAPPING: Record<string, Record<string, string>> = {
   openai: {
@@ -221,34 +306,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rateLimitPassed = await applyLLMRateLimit(clientIP, res);
   if (!rateLimitPassed) return;
 
-  // Helper: Obter provider configurado
-  const getConfiguredProvider = (): ProviderConfig | null => {
-    const providers: ProviderConfig[] = [
-      // 1. OpenAI (prioridade máxima)
-      {
-        name: "OpenAI",
-        baseUrl: "https://api.openai.com/v1/chat/completions",
-        apiKey: process.env.OPENAI_API_KEY,
-        headers: (key) => ({
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        }),
-      },
-      // 2. Google Gemini (aceita GEMINI_API_KEY ou VITE_GEMINI_API_KEY)
-      {
-        name: "Gemini",
-        baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
-        apiKey: process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
-        headers: () => ({
-          "Content-Type": "application/json",
-        }),
-        transformRequest: transformToGemini,
-        transformResponse: transformFromGemini,
-      },
-    ];
-    return providers.find((p) => p.apiKey) || null;
-  };
-
   const provider = getConfiguredProvider();
 
   if (!provider) {
@@ -275,7 +332,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log(`Using LLM provider: ${provider.name}`);
 
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const body = safeJsonParse(req.body);
 
     // Simple validation using Zod
     const ChatMessageSchema = z.object({
@@ -296,48 +353,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // sanitize message contents
-    if (parsed.data.messages) {
-      parsed.data.messages.forEach((m) => {
-        m.content = escapeHtml(m.content);
-      });
-    }
+    if (parsed.data.messages) sanitizeMessagesInPlace(parsed.data.messages);
 
     // Modelo padrão baseado no provedor
-    const defaultModel = provider.name === "OpenAI" ? "gpt-4o-mini" : "gemini-2.5-pro";
-    const requestedModel = body.model || defaultModel;
+    const requestedModel = resolveRequestedModel(parsed.data, provider.name as ProviderName);
 
     // Construir URL e body baseado no provedor
-    let targetUrl = provider.baseUrl;
-    let requestBody = body;
-
-    if (provider.name === "Gemini") {
-      // Mapear modelo e construir URL específica do Gemini
-      const geminiModel = MODEL_MAPPING.gemini[requestedModel] || "gemini-2.5-pro";
-      console.log(`[Gemini] Modelo solicitado: ${requestedModel} → ${geminiModel}`);
-      targetUrl = `${provider.baseUrl}/${geminiModel}:generateContent?key=${provider.apiKey}`;
-      requestBody = provider.transformRequest!(body);
-    } else if (provider.name === "OpenAI") {
-      // Mapear modelo OpenAI
-      body.model = MODEL_MAPPING.openai[requestedModel] || requestedModel;
-      requestBody = body;
-    }
+    const { targetUrl, requestBody } = buildTarget(provider, parsed.data, requestedModel);
 
     // Fazer requisição
     // Make request with timeout + retry
-    const fetchFn = async () => {
-      const response = await fetch(targetUrl, {
-        method: "POST",
-        headers: provider.headers(provider.apiKey!),
-        body: JSON.stringify(requestBody),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`${provider.name} API error: ${response.status} - ${errorText}`);
-      }
-      return response.json();
-    };
-
-    const data = await retryWithBackoff(() => withTimeout(45000, fetchFn()), 3, 500);
+    const data = await retryWithBackoff(
+      () => withTimeout(45000, () => fetchJsonOrThrow(provider, targetUrl, requestBody)),
+      3,
+      500
+    );
 
     // Response status has already been checked inside fetchFn
 

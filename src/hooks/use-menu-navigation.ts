@@ -61,57 +61,53 @@ export function useMenuNavigation<T>({
 }: MenuNavigationOptions<T>) {
   const [selectedIndex, setSelectedIndex] = useState<number>(autoSelectFirstItem ? 0 : -1);
 
+  const getNextIndex = (current: number, delta: 1 | -1): number => {
+    if (!items.length) return -1;
+    if (current === -1) return delta === 1 ? 0 : items.length - 1;
+    return (current + delta + items.length) % items.length;
+  };
+
   useEffect(() => {
     const handleKeyboardNavigation = (event: KeyboardEvent) => {
       if (!items.length) return false;
 
-      const moveNext = () =>
-        setSelectedIndex((currentIndex) => {
-          if (currentIndex === -1) return 0;
-          return (currentIndex + 1) % items.length;
-        });
-
-      const movePrev = () =>
-        setSelectedIndex((currentIndex) => {
-          if (currentIndex === -1) return items.length - 1;
-          return (currentIndex - 1 + items.length) % items.length;
-        });
+      const move = (delta: 1 | -1) => setSelectedIndex((current) => getNextIndex(current, delta));
 
       switch (event.key) {
         case "ArrowUp": {
           if (orientation === "horizontal") return false;
           event.preventDefault();
-          movePrev();
+          move(-1);
           return true;
         }
 
         case "ArrowDown": {
           if (orientation === "horizontal") return false;
           event.preventDefault();
-          moveNext();
+          move(1);
           return true;
         }
 
         case "ArrowLeft": {
           if (orientation === "vertical") return false;
           event.preventDefault();
-          movePrev();
+          move(-1);
           return true;
         }
 
         case "ArrowRight": {
           if (orientation === "vertical") return false;
           event.preventDefault();
-          moveNext();
+          move(1);
           return true;
         }
 
         case "Tab": {
           event.preventDefault();
           if (event.shiftKey) {
-            movePrev();
+            move(-1);
           } else {
-            moveNext();
+            move(1);
           }
           return true;
         }

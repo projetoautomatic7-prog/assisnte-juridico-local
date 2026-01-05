@@ -201,7 +201,7 @@ class ChromaCloudService {
     try {
       const client = await this.ensureClient();
       const collections = await client.listCollections();
-      return collections.map((c) => c.name);
+      return collections.map((c: Collection) => c.name);
     } catch (err) {
       logError("[Chroma Cloud] Failed to list collections:", err);
       return [];

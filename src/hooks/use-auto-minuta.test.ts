@@ -5,7 +5,7 @@
 
 import type { AgentTask } from "@/lib/agents";
 import * as minutaServiceModule from "@/services/minuta-service";
-import type { Minuta } from "@/types/minuta";
+import type { Minuta } from "@/types";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAutoMinuta } from "./use-auto-minuta";
@@ -42,12 +42,12 @@ describe("useAutoMinuta", () => {
     // Mock useKV
     vi.spyOn(kvModule, "useKV").mockImplementation((key: string, defaultValue: unknown) => {
       if (key === "minutas") {
-        return [mockMinutas, mockSetMinutas] as [unknown, typeof mockSetMinutas];
+        return [mockMinutas, mockSetMinutas] as ReturnType<typeof kvModule.useKV>;
       }
       if (key === "completed-agent-tasks") {
-        return [mockCompletedTasks, vi.fn()] as [unknown, typeof vi.fn];
+        return [mockCompletedTasks, vi.fn()] as ReturnType<typeof kvModule.useKV>;
       }
-      return [defaultValue, vi.fn()] as [unknown, typeof vi.fn];
+      return [defaultValue, vi.fn()] as ReturnType<typeof kvModule.useKV>;
     });
 
     // Mock createMinutaFromAgentTask
@@ -56,10 +56,11 @@ describe("useAutoMinuta", () => {
       titulo: `Minuta da tarefa ${task.id}`,
       conteudo: "Conteúdo da minuta",
       tipo: "peticao",
-      status: "rascunho",
+      status: "pendente-revisao",
       criadoPorAgente: true,
-      taskId: task.id,
-      createdAt: new Date().toISOString(),
+      criadoEm: new Date().toISOString(),
+      atualizadoEm: new Date().toISOString(),
+      autor: "Agente Redação (IA)",
     }));
   });
 
@@ -203,10 +204,11 @@ describe("useAutoMinuta", () => {
           titulo: `Minuta da tarefa ${task.id}`,
           conteudo: "Conteúdo",
           tipo: "peticao",
-          status: "rascunho",
+          status: "pendente-revisao",
           criadoPorAgente: true,
-          taskId: task.id,
-          createdAt: new Date().toISOString(),
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString(),
+          autor: "Agente Redação (IA)",
         };
       });
 
@@ -315,16 +317,20 @@ describe("useAutoMinuta", () => {
           tipo: "peticao",
           status: "pendente-revisao",
           criadoPorAgente: true,
-          createdAt: new Date().toISOString(),
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString(),
+          autor: "Agente Redação (IA)",
         },
         {
           id: "2",
           titulo: "Minuta 2",
           conteudo: "Conteúdo",
           tipo: "peticao",
-          status: "aprovada",
+          status: "finalizada",
           criadoPorAgente: true,
-          createdAt: new Date().toISOString(),
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString(),
+          autor: "Agente Redação (IA)",
         },
         {
           id: "3",
@@ -333,7 +339,9 @@ describe("useAutoMinuta", () => {
           tipo: "peticao",
           status: "rascunho",
           criadoPorAgente: false,
-          createdAt: new Date().toISOString(),
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString(),
+          autor: "Advogado",
         },
       ];
 

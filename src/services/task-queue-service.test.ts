@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { TaskWithRetry } from "./task-queue-service";
+import type { DeadLetterTask, TaskWithRetry } from "./task-queue-service";
 import {
   calculateQueueMetrics,
   calculateRetryDelay,
@@ -81,7 +81,7 @@ describe("task-queue-service", () => {
     it("deve permitir retry se abaixo do limite", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
@@ -103,7 +103,7 @@ describe("task-queue-service", () => {
     it("deve negar retry se atingiu o limite", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
@@ -127,7 +127,7 @@ describe("task-queue-service", () => {
     it("deve retornar true se não tem nextRetryAt", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
@@ -144,7 +144,7 @@ describe("task-queue-service", () => {
 
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
@@ -162,7 +162,7 @@ describe("task-queue-service", () => {
 
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "queued",
@@ -180,7 +180,7 @@ describe("task-queue-service", () => {
     it("deve incrementar retryCount e definir nextRetryAt", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "failed",
@@ -214,7 +214,7 @@ describe("task-queue-service", () => {
     it("deve criar DeadLetterTask com timestamp e erro final", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "test-agent",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "failed",
@@ -240,7 +240,7 @@ describe("task-queue-service", () => {
       const queue: TaskWithRetry[] = [
         {
           id: "task-1",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "queued",
@@ -250,7 +250,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-2",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "queued",
@@ -261,7 +261,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-3",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "processing",
@@ -290,7 +290,7 @@ describe("task-queue-service", () => {
       const queue: TaskWithRetry[] = [
         {
           id: "task-1",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "failed",
@@ -300,7 +300,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-2",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "failed",
@@ -328,7 +328,7 @@ describe("task-queue-service", () => {
     it("deve completar tarefa em caso de sucesso", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "agent-1",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "processing",
@@ -347,7 +347,7 @@ describe("task-queue-service", () => {
     it("deve preparar retry em caso de falha com retries disponíveis", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "agent-1",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "processing",
@@ -367,7 +367,7 @@ describe("task-queue-service", () => {
     it("deve mover para DLQ quando esgotados os retries", () => {
       const task: TaskWithRetry = {
         id: "task-1",
-        agentId: "agent-1",
+        agentId: "harvey",
         type: "ANALYZE_DOCUMENT",
         priority: "medium",
         status: "processing",
@@ -389,7 +389,7 @@ describe("task-queue-service", () => {
       const queue: TaskWithRetry[] = [
         {
           id: "task-1",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "queued",
@@ -399,7 +399,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-2",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "processing",
@@ -409,7 +409,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-3",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "completed",
@@ -419,7 +419,7 @@ describe("task-queue-service", () => {
         },
         {
           id: "task-4",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "failed",
@@ -429,10 +429,10 @@ describe("task-queue-service", () => {
         },
       ];
 
-      const dlq = [
+      const dlq: DeadLetterTask[] = [
         {
           id: "task-5",
-          agentId: "agent-1",
+          agentId: "harvey",
           type: "ANALYZE_DOCUMENT",
           priority: "medium",
           status: "failed" as const,

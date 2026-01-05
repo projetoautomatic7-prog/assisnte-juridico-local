@@ -46,6 +46,56 @@ function parseSSELine(line: string): SSEEvent | null {
   }
 }
 
+async function readJsonSafely(response: Response): Promise<Record<string, unknown>> {
+  try {
+    const data = await response.json();
+    return (data && typeof data === "object" ? (data as Record<string, unknown>) : {}) as Record<
+      string,
+      unknown
+    >;
+  } catch {
+    return {};
+  }
+}
+
+async function streamSSE(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  onChunk: (chunk: string) => void,
+  onDone: () => void,
+  onError: (message: string) => void
+): Promise<void> {
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const event = parseSSELine(line);
+      if (!event) continue;
+
+      if (event.text) {
+        onChunk(event.text);
+        continue;
+      }
+
+      if (event.error) {
+        onError(event.error);
+        return;
+      }
+
+      if (event.done) {
+        onDone();
+      }
+    }
+  }
+}
+
 export function useAICommands(): UseAICommandsReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,16 +164,19 @@ export function useAICommands(): UseAICommandsReturn {
         });
 
         if (response.status === 429) {
-          const data = await response.json();
+          const data = await readJsonSafely(response);
           setCanRequest(false);
-          setWaitTime(data.waitTime || 2000);
-          setError(data.message || "Rate limit exceeded");
-          throw new Error(data.message || "Rate limit exceeded");
+          const wait = typeof data.waitTime === "number" ? data.waitTime : 2000;
+          const msg = typeof data.message === "string" ? data.message : "Rate limit exceeded";
+          setWaitTime(wait);
+          setError(msg);
+          throw new Error(msg);
         }
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          const errorMsg = data.message || `HTTP ${response.status}`;
+          const data = await readJsonSafely(response);
+          const msgFromApi = typeof data.message === "string" ? data.message : "";
+          const errorMsg = msgFromApi || `HTTP ${response.status}`;
           setError(errorMsg);
           throw new Error(errorMsg);
         }
@@ -133,32 +186,18 @@ export function useAICommands(): UseAICommandsReturn {
           throw new Error("Streaming not supported");
         }
 
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            const event = parseSSELine(line);
-            if (!event) continue;
-
-            if (event.text) {
-              onChunk(event.text);
-            } else if (event.error) {
-              setError(event.error);
-              throw new Error(event.error);
-            } else if (event.done) {
-              setCanRequest(true);
-              setWaitTime(0);
-            }
+        await streamSSE(
+          reader,
+          onChunk,
+          () => {
+            setCanRequest(true);
+            setWaitTime(0);
+          },
+          (message) => {
+            setError(message);
+            throw new Error(message);
           }
-        }
+        );
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
           return;

@@ -106,8 +106,10 @@ const aiLimiter = rateLimit({
 });
 
 logInfo(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
-logInfo(`[Rate Limiting] API Max: ${apiMaxRequests} req/window`);
-logInfo(`[Rate Limiting] AI Max: ${aiMaxRequests} req/window`);
+// @ts-expect-error - Rate limiter instance tem propriedade max mas tipo não reflete
+logInfo(`[Rate Limiting] API Max: ${apiLimiter.max ?? apiMaxRequests} req/window`);
+// @ts-expect-error - Rate limiter instance tem propriedade max mas tipo não reflete
+logInfo(`[Rate Limiting] AI Max: ${aiLimiter.max ?? aiMaxRequests} req/window`);
 
 // Aplicar rate limiting geral em todas as rotas de API (se habilitado)
 if (rateLimitEnabled && !isTestEnv) {

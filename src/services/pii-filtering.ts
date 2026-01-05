@@ -187,8 +187,7 @@ export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_
   if (obj && typeof obj === "object") {
     const sanitized: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(obj)) {
-      // Chaves sensíveis são sempre redactadas (case-insensitive)
+    const isSensitiveKey = (key: string): boolean => {
       const sensibleKeys = [
         "password",
         "senha",
@@ -204,13 +203,11 @@ export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_
         "session",
       ];
 
-      // Case-insensitive matching com word boundaries para evitar falsos positivos
       const keyLower = key.toLowerCase();
-      const isSensitive = sensibleKeys.some((k) => {
-        // Match exato
+
+      return sensibleKeys.some((k) => {
         if (keyLower === k) return true;
 
-        // Verifica se key contém o termo sensível como palavra completa (com separadores _ ou -)
         const separators = ["_", "-"];
         return separators.some(
           (sep) =>
@@ -219,15 +216,19 @@ export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_
             keyLower.includes(sep + k + sep)
         );
       });
+    };
 
-      if (isSensitive) {
+    const shouldRedactValueString = (value: unknown): boolean =>
+      typeof value === "string" && /senha\d+/gi.test(value);
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (isSensitiveKey(key)) {
         sanitized[key] = "[REDACTED]";
       } else {
         // Sanitizar o valor recursivamente
         const sanitizedValue = sanitizeObject(value, config);
 
-        // Detectar padrões de senha no valor (senha seguida de dígitos)
-        if (typeof sanitizedValue === "string" && /senha\d+/gi.test(sanitizedValue)) {
+        if (shouldRedactValueString(sanitizedValue)) {
           sanitized[key] = "[REDACTED]";
         } else {
           sanitized[key] = sanitizedValue;
@@ -275,6 +276,8 @@ export function isValidCPF(cpf: string): boolean {
 export function detectPII(text: string): PIIType[] {
   const detected: PIIType[] = [];
 
+  const hasValidCpf = (matches: string[]) => matches.some(isValidCPF);
+
   for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
     // Reset lastIndex para evitar problemas com regex global
     pattern.lastIndex = 0;
@@ -285,9 +288,7 @@ export function detectPII(text: string): PIIType[] {
     if (matches && matches.length > 0) {
       // Validação especial para CPF (reduzir falsos positivos)
       if (type === PIIType.CPF) {
-        if (matches.some(isValidCPF)) {
-          detected.push(type as PIIType);
-        }
+        if (hasValidCpf(matches)) detected.push(type as PIIType);
       } else {
         detected.push(type as PIIType);
       }

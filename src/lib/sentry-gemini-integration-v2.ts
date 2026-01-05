@@ -26,8 +26,9 @@
  * @version 2.1.0 - Adicionado PII filtering para LGPD compliance
  */
 
+import { DEFAULT_PII_CONFIG, sanitizePII, type PIIFilterConfig } from "@/services/pii-filtering";
+import type { SpanAttributes } from "@sentry/core";
 import * as Sentry from "@sentry/react";
-import { sanitizePII, DEFAULT_PII_CONFIG, type PIIFilterConfig } from "@/services/pii-filtering";
 
 /**
  * Opções de configuração da integração Gemini (padrão oficial SDK)
@@ -161,28 +162,69 @@ function sanitizeSpanAttributes(
   const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(attributes)) {
-    // Sanitiza strings
-    if (typeof value === "string") {
-      sanitized[key] = sanitizePII(value, config);
-    }
-    // Sanitiza objetos JSON (messages, tool input/output)
-    else if (value && typeof value === "object") {
-      try {
-        const jsonStr = JSON.stringify(value);
-        const sanitizedStr = sanitizePII(jsonStr, config);
-        sanitized[key] = JSON.parse(sanitizedStr);
-      } catch {
-        // Se falhar parsing, mantém original
-        sanitized[key] = value;
-      }
-    }
-    // Outros tipos passam direto
-    else {
-      sanitized[key] = value;
-    }
+    sanitized[key] = sanitizeAttributeValue(value, config);
   }
 
   return sanitized;
+}
+
+function sanitizeAttributeValue(value: unknown, config: PIIFilterConfig): unknown {
+  if (typeof value === "string") {
+    return sanitizePII(value, config);
+  }
+
+  if (value && typeof value === "object") {
+    try {
+      const jsonStr = JSON.stringify(value);
+      const sanitizedStr = sanitizePII(jsonStr, config);
+      return JSON.parse(sanitizedStr);
+    } catch {
+      // Se falhar parsing, mantém original
+      return value;
+    }
+  }
+
+  return value;
+}
+
+function isAISpan(span: any): boolean {
+  return (
+    span?.op?.startsWith("gen_ai.") ||
+    span?.op?.startsWith("gen_ai_") ||
+    span?.description?.includes("gen_ai") ||
+    span?.description?.includes("invoke_agent") ||
+    span?.description?.includes("execute_tool")
+  );
+}
+
+function sanitizeSpan(span: any, config: PIIFilterConfig) {
+  if (span?.data) {
+    span.data = sanitizeSpanAttributes(span.data, config);
+  }
+
+  if (span?.description && typeof span.description === "string") {
+    span.description = sanitizePII(span.description, config);
+  }
+}
+
+function sanitizeTransactionSpans(transaction: any, config: PIIFilterConfig): void {
+  const spans = transaction?.spans;
+  if (!Array.isArray(spans)) return;
+
+  for (const span of spans) {
+    if (!isAISpan(span)) continue;
+    sanitizeSpan(span, config);
+  }
+}
+
+function sanitizeTransactionContexts(transaction: any, config: PIIFilterConfig): void {
+  const contexts = transaction?.contexts;
+  if (!contexts || typeof contexts !== "object") return;
+
+  for (const [contextName, contextData] of Object.entries(contexts)) {
+    if (!contextData || typeof contextData !== "object") continue;
+    contexts[contextName] = sanitizeSpanAttributes(contextData as Record<string, unknown>, config);
+  }
 }
 
 /**
@@ -203,44 +245,72 @@ export function createAISanitizingBeforeSendTransaction(
       return transaction;
     }
 
-    // Sanitiza spans de AI (gen_ai.*)
-    if (transaction.spans) {
-      for (const span of transaction.spans) {
-        // Verifica se é span de AI
-        if (
-          span.op?.startsWith("gen_ai.") ||
-          span.op?.startsWith("gen_ai_") ||
-          span.description?.includes("gen_ai") ||
-          span.description?.includes("invoke_agent") ||
-          span.description?.includes("execute_tool")
-        ) {
-          // Sanitiza atributos do span
-          if (span.data) {
-            span.data = sanitizeSpanAttributes(span.data, config);
-          }
-
-          // Sanitiza description (pode conter nome do agente com dados sensíveis)
-          if (span.description && typeof span.description === "string") {
-            span.description = sanitizePII(span.description, config);
-          }
-        }
-      }
-    }
-
-    // Sanitiza contexts (extra, tags, etc.)
-    if (transaction.contexts) {
-      for (const [contextName, contextData] of Object.entries(transaction.contexts)) {
-        if (contextData && typeof contextData === "object") {
-          transaction.contexts[contextName] = sanitizeSpanAttributes(
-            contextData as Record<string, unknown>,
-            config
-          );
-        }
-      }
-    }
+    sanitizeTransactionSpans(transaction, config);
+    sanitizeTransactionContexts(transaction, config);
 
     return transaction;
   };
+}
+
+function buildInvokeAgentAttributesForRecording(
+  config: AIAgentConfig,
+  conversation: AIConversationMetadata
+): Record<string, unknown> {
+  const attributes: Record<string, unknown> = {
+    "gen_ai.operation.name": "invoke_agent",
+    "gen_ai.agent.name": config.agentName,
+    "gen_ai.system": config.system,
+    "gen_ai.request.model": config.model,
+    "gen_ai.response.model": config.model,
+    "conversation.session_id": conversation.sessionId,
+    "conversation.turn": conversation.turn,
+  };
+
+  if (config.temperature !== undefined) {
+    attributes["gen_ai.request.temperature"] = config.temperature;
+  }
+
+  if (config.maxTokens !== undefined) {
+    attributes["gen_ai.request.max_tokens"] = config.maxTokens;
+  }
+
+  if (conversation.messages) {
+    attributes["gen_ai.request.messages"] = JSON.stringify(conversation.messages);
+  }
+
+  return attributes;
+}
+
+function buildInvokeAgentAttributesMinimal(
+  config: AIAgentConfig,
+  conversation: AIConversationMetadata
+): Record<string, unknown> {
+  return {
+    "gen_ai.operation.name": "invoke_agent",
+    "gen_ai.agent.name": config.agentName,
+    "gen_ai.system": config.system,
+    "gen_ai.request.model": config.model,
+    "conversation.turn": conversation.turn,
+  };
+}
+
+function buildChatSpanAttributes(config: AIAgentConfig, messages: ChatMessage[]): SpanAttributes {
+  const attributes: SpanAttributes = {
+    "gen_ai.operation.name": "chat",
+    "gen_ai.system": config.system,
+    "gen_ai.request.model": config.model,
+    "gen_ai.request.messages": JSON.stringify(messages),
+  };
+
+  if (config.temperature !== undefined) {
+    attributes["gen_ai.request.temperature"] = config.temperature;
+  }
+
+  if (config.maxTokens !== undefined) {
+    attributes["gen_ai.request.max_tokens"] = config.maxTokens;
+  }
+
+  return attributes;
 }
 
 /**
@@ -282,33 +352,10 @@ export async function createInvokeAgentSpan<T>(
 
   const sanitizedAttributes = shouldRecord
     ? sanitizeSpanAttributes(
-        {
-          "gen_ai.operation.name": "invoke_agent",
-          "gen_ai.agent.name": config.agentName,
-          "gen_ai.system": config.system,
-          "gen_ai.request.model": config.model,
-          "gen_ai.response.model": config.model,
-          "conversation.session_id": conversation.sessionId,
-          "conversation.turn": conversation.turn,
-          ...(config.temperature !== undefined && {
-            "gen_ai.request.temperature": config.temperature,
-          }),
-          ...(config.maxTokens !== undefined && {
-            "gen_ai.request.max_tokens": config.maxTokens,
-          }),
-          ...(conversation.messages && {
-            "gen_ai.request.messages": JSON.stringify(conversation.messages),
-          }),
-        },
+        buildInvokeAgentAttributesForRecording(config, conversation),
         piiConfig
       )
-    : {
-        "gen_ai.operation.name": "invoke_agent",
-        "gen_ai.agent.name": config.agentName,
-        "gen_ai.system": config.system,
-        "gen_ai.request.model": config.model,
-        "conversation.turn": conversation.turn,
-      };
+    : buildInvokeAgentAttributesMinimal(config, conversation);
 
   return Sentry.startSpan(
     {
@@ -379,16 +426,7 @@ export async function createChatSpan<T>(
     {
       name: `chat ${config.model}`,
       op: "gen_ai.chat",
-      attributes: {
-        "gen_ai.operation.name": "chat",
-        "gen_ai.system": config.system,
-        "gen_ai.request.model": config.model,
-        "gen_ai.request.messages": JSON.stringify(messages),
-        ...(config.temperature !== undefined && {
-          "gen_ai.request.temperature": config.temperature,
-        }),
-        ...(config.maxTokens !== undefined && { "gen_ai.request.max_tokens": config.maxTokens }),
-      },
+      attributes: buildChatSpanAttributes(config, messages),
     },
     async (span) => {
       try {

@@ -117,6 +117,25 @@ function convertExpedienteToProcessEvent(exp: Expediente): ProcessEvent {
   };
 }
 
+function isValidSyncMessage(message: unknown): message is SyncMessage {
+  if (!message || typeof message !== "object") return false;
+  return typeof (message as SyncMessage).type === "string";
+}
+
+function shouldIgnoreMessage(event: MessageEvent<SyncMessage>): boolean {
+  return event.source !== window && event.origin !== window.location.origin;
+}
+
+function dedupeById<T extends { id: string }>(incoming: T[], existing: T[]): T[] {
+  const existingIds = new Set(existing.map((e) => e.id));
+  return incoming.filter((e) => !existingIds.has(e.id));
+}
+
+function dedupeByNumeroCNJ(incoming: Process[], existing: Process[]): Process[] {
+  const existingNumbers = new Set(existing.map((p) => p.numeroCNJ));
+  return incoming.filter((p) => !existingNumbers.has(p.numeroCNJ));
+}
+
 /**
  * Hook principal
  */
@@ -141,16 +160,10 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
   const handleExtensionMessage = useCallback(
     (event: MessageEvent<SyncMessage>) => {
       // Validar origem (apenas mensagens da própria janela ou da extensão)
-      if (event.source !== window && event.origin !== window.location.origin) {
-        return;
-      }
+      if (shouldIgnoreMessage(event)) return;
 
-      const message = event.data;
-
-      // Verificar se é uma mensagem da extensão PJe
-      if (!message || typeof message !== "object" || !message.type) {
-        return;
-      }
+      const message = event.data as unknown;
+      if (!isValidSyncMessage(message)) return;
 
       console.log("[PJE Sync] Mensagem recebida:", message.type);
 
@@ -180,11 +193,7 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
             const newProcesses = processosPJe.map(convertProcessoPJeToProcess);
             const currentProcesses = processes || [];
 
-            // Evitar duplicados (por numeroCNJ)
-            const existingNumbers = new Set(currentProcesses.map((p) => p.numeroCNJ));
-            const uniqueNewProcesses = newProcesses.filter(
-              (p) => !existingNumbers.has(p.numeroCNJ)
-            );
+            const uniqueNewProcesses = dedupeByNumeroCNJ(newProcesses, currentProcesses);
 
             if (uniqueNewProcesses.length > 0) {
               setProcesses([...currentProcesses, ...uniqueNewProcesses]);
@@ -227,9 +236,7 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
             const newEvents = expedientes.map(convertExpedienteToProcessEvent);
             const currentEvents = processEvents || [];
 
-            // Evitar duplicados (por id)
-            const existingIds = new Set(currentEvents.map((e) => e.id));
-            const uniqueNewEvents = newEvents.filter((e) => !existingIds.has(e.id));
+            const uniqueNewEvents = dedupeById(newEvents, currentEvents);
 
             if (uniqueNewEvents.length > 0) {
               setProcessEvents([...currentEvents, ...uniqueNewEvents]);

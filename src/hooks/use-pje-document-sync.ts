@@ -32,21 +32,31 @@ export function usePJeDocumentSync(): PJeDocumentSync {
   const [extensaoAtivaNoTab, setExtensaoAtivaNoTab] = useState(false);
   const tabIdRef = useRef<number | null>(null);
 
+  const hasChromeTabsApi = () => {
+    // @ts-expect-error - chrome API types might be missing in web context
+    return typeof chrome !== "undefined" && Boolean(chrome.tabs);
+  };
+
+  const hasChromeRuntimeApi = () => {
+    // @ts-expect-error - chrome API types might be missing in web context
+    return typeof chrome !== "undefined" && Boolean(chrome.runtime && chrome.runtime.onMessage);
+  };
+
+  const queryActiveTabId = async (): Promise<number | null> => {
+    if (!hasChromeTabsApi()) return null;
+    // @ts-expect-error - chrome API types might be missing in web context
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tabs.length > 0 ? tabs[0].id || null : null;
+  };
+
   // Detectar aba ativa
   useEffect(() => {
-    const detectarAbaAtiva = async () => {
-      // @ts-expect-error - chrome API types might be missing in web context
-      if (typeof chrome !== "undefined" && chrome.tabs) {
-        // @ts-expect-error - chrome API types might be missing in web context
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tabs.length > 0) {
-          tabIdRef.current = tabs[0].id || null;
-          verificarExtensaoAtiva();
-        }
-      }
+    const run = async () => {
+      tabIdRef.current = await queryActiveTabId();
+      await verificarExtensaoAtiva();
     };
 
-    detectarAbaAtiva();
+    void run();
   }, []);
 
   // Verificar se extensão está ativa nesta aba
@@ -93,8 +103,7 @@ export function usePJeDocumentSync(): PJeDocumentSync {
       }
     };
 
-    // @ts-expect-error - chrome API types might be missing in web context
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+    if (hasChromeRuntimeApi()) {
       // @ts-expect-error - chrome API types might be missing in web context
       chrome.runtime.onMessage.addListener(handleMessage);
       // @ts-expect-error - chrome API types might be missing in web context
@@ -198,14 +207,13 @@ export function useAutoSavePJeDocuments() {
   useEffect(() => {
     if (!autoSaveAtivo || documentosPendentes.length === 0) return;
 
+    const isAllowedType = (documento: DocumentoPJe) =>
+      (crituriosAutoSave.salvarCertidoes && documento.tipo === "certidao") ||
+      (crituriosAutoSave.salvarDecisoes && documento.tipo === "sentenca") ||
+      (crituriosAutoSave.salvarDespachos && documento.tipo === "despacho");
+
     const processarDocumento = async (documento: DocumentoPJe) => {
-      const tipoPermitido =
-        (crituriosAutoSave.salvarCertidoes && documento.tipo === "certidao") ||
-        (crituriosAutoSave.salvarDecisoes && documento.tipo === "sentenca") ||
-        (crituriosAutoSave.salvarDespachos && documento.tipo === "despacho");
-
-      if (!tipoPermitido) return;
-
+      if (!isAllowedType(documento)) return;
       try {
         await salvarDocumento(documento);
       } catch (error) {
