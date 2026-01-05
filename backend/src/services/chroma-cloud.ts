@@ -30,6 +30,8 @@ class ChromaCloudService {
   private client: CloudClient | null = null;
   private collection: Collection | null = null;
   private config: ChromaConfig | null = null;
+  private clientPromise: Promise<CloudClient> | null = null;
+  private collectionPromise: Promise<Collection> | null = null;
 
   constructor() {
     this.loadConfig();
@@ -63,16 +65,26 @@ class ChromaCloudService {
       throw new Error("Chroma Cloud not configured");
     }
 
-    if (!this.client) {
-      this.client = new CloudClient({
-        apiKey: this.config.apiKey,
-        tenant: this.config.tenant,
-        database: this.config.database,
-      });
-      console.log("[Chroma Cloud] Client initialized");
+    if (this.client) {
+      return this.client;
     }
 
-    return this.client;
+    if (this.clientPromise) {
+      return this.clientPromise;
+    }
+
+    this.clientPromise = (async () => {
+      this.client = new CloudClient({
+        apiKey: this.config!.apiKey,
+        tenant: this.config!.tenant,
+        database: this.config!.database,
+      });
+      console.log("[Chroma Cloud] Client initialized");
+      this.clientPromise = null;
+      return this.client;
+    })();
+
+    return this.clientPromise;
   }
 
   private async ensureCollection(): Promise<Collection> {
@@ -80,20 +92,31 @@ class ChromaCloudService {
       throw new Error("Chroma Cloud not configured");
     }
 
-    if (!this.collection) {
+    if (this.collection) {
+      return this.collection;
+    }
+
+    if (this.collectionPromise) {
+      return this.collectionPromise;
+    }
+
+    this.collectionPromise = (async () => {
       const client = await this.ensureClient();
       try {
         this.collection = await client.getCollection({
-          name: this.config.collectionName,
+          name: this.config!.collectionName,
         });
-        console.log(`[Chroma Cloud] Collection "${this.config.collectionName}" loaded`);
+        console.log(`[Chroma Cloud] Collection "${this.config!.collectionName}" loaded`);
+        this.collectionPromise = null;
+        return this.collection;
       } catch (err) {
+        this.collectionPromise = null;
         console.error("[Chroma Cloud] Failed to get collection:", err);
-        throw new Error(`Collection "${this.config.collectionName}" not found`);
+        throw new Error(`Collection "${this.config!.collectionName}" not found`);
       }
-    }
+    })();
 
-    return this.collection;
+    return this.collectionPromise;
   }
 
   /**
