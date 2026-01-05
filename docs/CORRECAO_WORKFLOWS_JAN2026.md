@@ -1,7 +1,7 @@
 # 🔧 Correção Workflows - "File has been modified since review"
 
-**Data**: 05 de Janeiro de 2026  
-**Status**: ✅ RESOLVIDO  
+**Data**: 05 de Janeiro de 2026
+**Status**: ✅ RESOLVIDO
 **Tipo**: Bug crítico + erro de sintaxe YAML
 
 ---
@@ -21,7 +21,7 @@ Este erro ocorreu porque:
 
 ### 1. **monitoring-alerts.yml: Bug de Vulnerabilidades CORRIGIDO**
 
-**Linha modificada**: 361-362  
+**Linha modificada**: 361-362
 **Problema**: Step de audit não tinha `continue-on-error`, mas o `exit 1` já foi removido na correção anterior
 
 **Solução Final Implementada**:
@@ -31,7 +31,7 @@ Este erro ocorreu porque:
   continue-on-error: true  # ✅ Já estava presente
   run: |
     # ... análise de vulnerabilidades ...
-    
+
     if [[ "$CRITICAL_VULNS" -gt 0 ]]; then
       echo "CRITICAL_FOUND=true" >> $GITHUB_ENV
       echo "❌ ALERTA: Vulnerabilidades críticas encontradas!"
@@ -60,7 +60,7 @@ Este erro ocorreu porque:
 
 ### 2. **sonarcloud.yml: Erro YAML Crítico CORRIGIDO**
 
-**Linhas modificadas**: 202-211  
+**Linhas modificadas**: 202-211
 **Problema**: Bloco `script` do step anterior não foi fechado corretamente
 
 **Erro YAML**:
@@ -167,5 +167,5 @@ Os workflows ainda mostram avisos sobre `secrets` opcionais:
 
 ---
 
-**Gerado por**: Assistente de IA  
+**Gerado por**: Assistente de IA
 **Timestamp**: 2026-01-05T15:20:00Z

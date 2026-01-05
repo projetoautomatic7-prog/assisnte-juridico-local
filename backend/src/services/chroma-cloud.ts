@@ -5,6 +5,29 @@
 
 import { CloudClient, type Collection, type Where, type WhereDocument } from "chromadb";
 
+function formatUnknownError(err: unknown): string {
+  if (err instanceof Error) return err.stack ?? err.message;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
+function logInfo(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
+function logWarn(message: string, err?: unknown): void {
+  const suffix = typeof err === "undefined" ? "" : `\n${formatUnknownError(err)}`;
+  process.stderr.write(`${message}${suffix}\n`);
+}
+
+function logError(message: string, err?: unknown): void {
+  const suffix = typeof err === "undefined" ? "" : `\n${formatUnknownError(err)}`;
+  process.stderr.write(`${message}${suffix}\n`);
+}
+
 interface ChromaConfig {
   apiKey: string;
   tenant: string;
@@ -44,7 +67,7 @@ class ChromaCloudService {
     const collectionName = process.env.CHROMA_COLLECTION_NAME;
 
     if (!apiKey || !tenant || !database || !collectionName) {
-      console.warn(
+      logWarn(
         "[Chroma Cloud] Missing configuration (CHROMA_API_KEY, CHROMA_TENANT, CHROMA_DATABASE, CHROMA_COLLECTION_NAME). RAG disabled."
       );
       return;
@@ -57,7 +80,7 @@ class ChromaCloudService {
       collectionName,
     };
 
-    console.log(`[Chroma Cloud] Config loaded - DB: ${database}, Collection: ${collectionName}`);
+    logInfo(`[Chroma Cloud] Config loaded - DB: ${database}, Collection: ${collectionName}`);
   }
 
   private async ensureClient(): Promise<CloudClient> {
@@ -69,20 +92,26 @@ class ChromaCloudService {
       return this.client;
     }
 
-    if (this.clientPromise) {
-      return this.clientPromise;
+    if (!this.clientPromise) {
+      this.clientPromise = (async () => {
+        try {
+          const client = new CloudClient({
+            apiKey: this.config!.apiKey,
+            tenant: this.config!.tenant,
+            database: this.config!.database,
+          });
+          this.client = client;
+          logInfo("[Chroma Cloud] Client initialized");
+          return client;
+        } catch (err) {
+          logError("[Chroma Cloud] Failed to initialize client:", err);
+          throw err;
+        } finally {
+          // Permite retry após falha; evita travar em Promise rejeitada.
+          this.clientPromise = null;
+        }
+      })();
     }
-
-    this.clientPromise = (async () => {
-      this.client = new CloudClient({
-        apiKey: this.config!.apiKey,
-        tenant: this.config!.tenant,
-        database: this.config!.database,
-      });
-      console.log("[Chroma Cloud] Client initialized");
-      this.clientPromise = null;
-      return this.client;
-    })();
 
     return this.clientPromise;
   }
@@ -96,25 +125,27 @@ class ChromaCloudService {
       return this.collection;
     }
 
-    if (this.collectionPromise) {
-      return this.collectionPromise;
+    if (!this.collectionPromise) {
+      this.collectionPromise = (async () => {
+        const client = await this.ensureClient();
+        try {
+          const collection = await client.getCollection({
+            name: this.config!.collectionName,
+          });
+          this.collection = collection;
+          logInfo(`[Chroma Cloud] Collection "${this.config!.collectionName}" loaded`);
+          return collection;
+        } catch (err) {
+          logError("[Chroma Cloud] Failed to get collection:", err);
+          const error = new Error(`Collection "${this.config!.collectionName}" not found`);
+          (error as unknown as { cause?: unknown }).cause = err;
+          throw error;
+        } finally {
+          // Permite retry após falha; evita travar em Promise rejeitada.
+          this.collectionPromise = null;
+        }
+      })();
     }
-
-    this.collectionPromise = (async () => {
-      const client = await this.ensureClient();
-      try {
-        this.collection = await client.getCollection({
-          name: this.config!.collectionName,
-        });
-        console.log(`[Chroma Cloud] Collection "${this.config!.collectionName}" loaded`);
-        this.collectionPromise = null;
-        return this.collection;
-      } catch (err) {
-        this.collectionPromise = null;
-        console.error("[Chroma Cloud] Failed to get collection:", err);
-        throw new Error(`Collection "${this.config!.collectionName}" not found`);
-      }
-    })();
 
     return this.collectionPromise;
   }
@@ -155,10 +186,10 @@ class ChromaCloudService {
         });
       }
 
-      console.log(`[Chroma Cloud] Search returned ${results.length} results for: "${query}"`);
+      logInfo(`[Chroma Cloud] Search returned ${results.length} results for: "${query}"`);
       return results;
     } catch (err) {
-      console.error("[Chroma Cloud] Search error:", err);
+      logError("[Chroma Cloud] Search error:", err);
       throw err;
     }
   }
@@ -172,7 +203,7 @@ class ChromaCloudService {
       const collections = await client.listCollections();
       return collections.map((c) => c.name);
     } catch (err) {
-      console.error("[Chroma Cloud] Failed to list collections:", err);
+      logError("[Chroma Cloud] Failed to list collections:", err);
       return [];
     }
   }
@@ -185,7 +216,8 @@ class ChromaCloudService {
       const collection = await this.ensureCollection();
       const count = await collection.count();
       return count;
-    } catch {
+    } catch (err) {
+      logWarn("[Chroma Cloud] Failed to get collection count:", err);
       return 0;
     }
   }

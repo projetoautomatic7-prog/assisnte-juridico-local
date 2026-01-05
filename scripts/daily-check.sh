@@ -28,19 +28,19 @@ WARNINGS=0
 # Função para reportar sucesso
 pass() {
     echo -e "${GREEN}✓${NC} $1"
-    ((PASSED++))
+    ((PASSED+=1))
 }
 
 # Função para reportar falha
 fail() {
     echo -e "${RED}✗${NC} $1"
-    ((FAILED++))
+    ((FAILED+=1))
 }
 
 # Função para reportar warning
 warn() {
     echo -e "${YELLOW}⚠${NC} $1"
-    ((WARNINGS++))
+    ((WARNINGS+=1))
 }
 
 # Função para info
@@ -54,7 +54,8 @@ echo "????????????????????????????????????????????????????????????"
 echo ""
 
 # 1. Health Check
-BASE_URL="https://assistente-juridico-github.vercel.app"
+# Permite sobrescrever via variável de ambiente (útil para ambientes/staging).
+BASE_URL="${DAILY_CHECK_BASE_URL:-https://assistente-juridico-github.vercel.app}"
 info "Verificando health check..."
 
 HEALTH_OK=false
@@ -62,13 +63,14 @@ HEALTH_ENDPOINT=""
 HTTP_CODE="000"
 BODY=""
 
-for endpoint in "/health" "/api/health"; do
+# Ordem prioriza o endpoint documentado no checklist de deploy.
+for endpoint in "/api/status?type=health" "/api/health" "/health"; do
     info "Verificando ${endpoint}..."
     HEALTH_RESPONSE=$(curl -s --max-time 30 --connect-timeout 10 -w "\n%{http_code}" "${BASE_URL}${endpoint}" || echo "000")
     HTTP_CODE=$(echo "$HEALTH_RESPONSE" | tail -n1)
     BODY=$(echo "$HEALTH_RESPONSE" | sed '$d')
 
-    if [ "$HTTP_CODE" = "200" ] && echo "$BODY" | grep -q '"status":"ok"'; then
+    if [ "$HTTP_CODE" = "200" ] && echo "$BODY" | grep -Eq '"status"\s*:\s*"ok"'; then
         HEALTH_OK=true
         HEALTH_ENDPOINT="$endpoint"
         break
@@ -79,7 +81,7 @@ if [ "$HEALTH_OK" = true ]; then
     pass "API Health: OK (${HEALTH_ENDPOINT}) (HTTP $HTTP_CODE)"
 else
     fail "API Health: FALHOU (HTTP $HTTP_CODE)"
-    echo "   Endpoint testado: ${BASE_URL}/health e ${BASE_URL}/api/health"
+    echo "   Endpoint testado: ${BASE_URL}/api/status?type=health, ${BASE_URL}/api/health e ${BASE_URL}/health"
     echo "   Verifique: https://vercel.com/thiagobodevan-a11y/assistente-juridico-p/logs"
 fi
 
@@ -99,12 +101,13 @@ echo "  3️⃣  TYPE CHECK (1 min)"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
 
-if npm run type-check 2>&1 | tee /tmp/type-check.log | grep -q "0 errors"; then
+TYPECHECK_LOG="/tmp/type-check.log"
+if npm run type-check >"$TYPECHECK_LOG" 2>&1; then
     pass "Type Check: SEM ERROS"
 else
-    ERROR_COUNT=$(grep -oP '\d+(?= errors?)' /tmp/type-check.log | head -1)
-    fail "Type Check: $ERROR_COUNT ERROS ENCONTRADOS"
+    fail "Type Check: ERROS ENCONTRADOS"
     echo "   Execute: npm run type-check"
+    echo "   Verifique: $TYPECHECK_LOG"
 fi
 
 echo ""
@@ -113,11 +116,24 @@ echo "  4️⃣  LINT (1 min)"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
 
-LINT_OUTPUT=$(npm run lint 2>&1 || true)
-ERROR_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+(?= error)' | head -1 || echo "0")
-WARNING_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+(?= warning)' | head -1 || echo "0")
+LINT_LOG="/tmp/lint.log"
+LINT_EXIT=0
+if npm run lint >"$LINT_LOG" 2>&1; then
+    LINT_EXIT=0
+else
+    LINT_EXIT=$?
+fi
 
-if [ "$ERROR_COUNT" -eq 0 ]; then
+LINT_OUTPUT=$(cat "$LINT_LOG" 2>/dev/null || echo "")
+SUMMARY_LINE=$(echo "$LINT_OUTPUT" | grep -E 'problems? \(' | tail -n 1 || true)
+
+ERROR_COUNT=$(echo "$SUMMARY_LINE" | grep -Eo '[0-9]+ errors?' | head -n 1 | grep -Eo '[0-9]+' || true)
+WARNING_COUNT=$(echo "$SUMMARY_LINE" | grep -Eo '[0-9]+ warnings?' | head -n 1 | grep -Eo '[0-9]+' || true)
+
+ERROR_COUNT=${ERROR_COUNT:-0}
+WARNING_COUNT=${WARNING_COUNT:-0}
+
+if [ "$LINT_EXIT" -eq 0 ]; then
     if [ "$WARNING_COUNT" -le 150 ]; then
         pass "Lint: $ERROR_COUNT erros, $WARNING_COUNT warnings (OK)"
     else
@@ -126,6 +142,7 @@ if [ "$ERROR_COUNT" -eq 0 ]; then
 else
     fail "Lint: $ERROR_COUNT ERROS, $WARNING_COUNT warnings"
     echo "   Execute: npm run lint:fix"
+    echo "   Verifique: $LINT_LOG"
 fi
 
 echo ""

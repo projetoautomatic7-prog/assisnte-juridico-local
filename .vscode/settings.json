@@ -479,6 +479,9 @@
         "aitk-foundry/Microsoft Foundry/gpt-4.1-mini",
         "copilot/oswe-vscode-prime"
       ]
+    },
+    "assistente-jur-dico-principalrepli/.vscode/mcp.json: chroma": {
+      "allowedModels": ["copilot/auto", "copilot/gpt-5.2"]
     }
   },
   "agentSonar.token": "525735eccb98cf7cdcf0dccf920275f4d37dbe4c",
@@ -496,5 +499,15 @@
     "editor.defaultFormatter": "vscode.css-language-features"
   },
   "DockerRun.DisableDockerrc": true,
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "editor.maxTokenizationLineLength": 10000,
+  "chat.mcp.assisted.nuget.enabled": true,
+  "chat.mcp.discovery.enabled": {
+    "claude-desktop": true,
+    "windsurf": true,
+    "cursor-global": true,
+    "cursor-workspace": true
+  },
+  "chat.mcp.gallery.enabled": true,
+  "github.copilot.chat.githubMcpServer.enabled": true
 }

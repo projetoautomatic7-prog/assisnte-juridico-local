@@ -1,15 +1,15 @@
 # 📊 Progresso da Correção de Workflows - Janeiro 2026
 
-**Data**: 05 de Janeiro de 2026  
-**Última Atualização**: 05/01/2026 18:20 UTC  
+**Data**: 05 de Janeiro de 2026
+**Última Atualização**: 05/01/2026 18:20 UTC
 **Commits**: `a84a9752`, `e2049102`
 
 ## 🎯 Objetivo
 Corrigir workflows falhando nas GitHub Actions, eliminando falhas desnecessárias e tornando o CI/CD mais robusto.
 
 ## 🔑 Secrets Configurados
-✅ **SONAR_TOKEN** - Configurado em 05/01/2026 18:18 UTC  
-✅ **GEMINI_API_KEY** - Já configurado  
+✅ **SONAR_TOKEN** - Configurado em 05/01/2026 18:18 UTC
+✅ **GEMINI_API_KEY** - Já configurado
 ✅ **RAILWAY_TOKEN** - Já configurado
 
 ---

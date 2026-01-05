@@ -7,6 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
 import { inicializarTabelaExpedientes } from "./db/expedientes.js";
@@ -33,14 +34,31 @@ interface ErrorWithStatus extends Error {
   status?: number;
 }
 
+function logInfo(message: string) {
+  process.stdout.write(`${message}\n`);
+}
+
+function logError(message: string) {
+  process.stderr.write(`${message}\n`);
+}
+
 // Load environment variables
 const envPath = path.resolve(__dirname, "../../.env.local");
-console.log("Loading env from:", envPath);
+logInfo(`Loading env from: ${envPath}`);
 dotenv.config({ path: envPath });
 dotenv.config(); // Fallback to default .env if needed
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
+
+// Security headers
+// CSP é tratado no frontend (Vite/Vercel). Mantemos CSP desligado aqui para não quebrar assets.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // Middleware - Allow all origins for Replit proxy
 app.use(
@@ -61,9 +79,16 @@ const isTestEnv = process.env.NODE_ENV === "test";
 const isDevEnv = process.env.NODE_ENV === "development";
 const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED !== "false";
 
+const apiMaxRequests = parseInt(
+  process.env.RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "1000" : "100")
+);
+const aiMaxRequests = parseInt(
+  process.env.AI_RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "500" : isDevEnv ? "100" : "30")
+);
+
 const apiLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 min default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "1000" : "100")),
+  max: apiMaxRequests,
   skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
@@ -73,18 +98,16 @@ const apiLimiter = rateLimit({
 // Rate limiting mais restritivo para endpoints de IA
 const aiLimiter = rateLimit({
   windowMs: parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS || "900000"), // 15 min
-  max: parseInt(
-    process.env.AI_RATE_LIMIT_MAX_REQUESTS || (isTestEnv ? "500" : isDevEnv ? "100" : "30")
-  ),
+  max: aiMaxRequests,
   skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
   message: { error: "Too many AI requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-console.log(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
-console.log(`[Rate Limiting] API Max: ${apiLimiter.max || "unlimited"} req/window`);
-console.log(`[Rate Limiting] AI Max: ${aiLimiter.max || "unlimited"} req/window`);
+logInfo(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
+logInfo(`[Rate Limiting] API Max: ${apiMaxRequests} req/window`);
+logInfo(`[Rate Limiting] AI Max: ${aiMaxRequests} req/window`);
 
 // Aplicar rate limiting geral em todas as rotas de API (se habilitado)
 if (rateLimitEnabled && !isTestEnv) {
@@ -93,7 +116,7 @@ if (rateLimitEnabled && !isTestEnv) {
 
 // Request logging
 app.use((req, _res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  logInfo(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -138,7 +161,7 @@ const isProduction = process.env.NODE_ENV === "production";
 const distPath = path.resolve(__dirname, "../../../../dist");
 
 if (isProduction) {
-  console.log(`📂 Serving static files from: ${distPath}`);
+  logInfo(`📂 Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
   app.get("*", (req, res, next) => {
@@ -166,7 +189,7 @@ app.use(
     res: express.Response,
     _next: express.NextFunction
   ) => {
-    console.error("Error:", err);
+    logError(`Error: ${err.message}`);
     res.status(err.status || 500).json({
       error: "Internal Server Error",
       message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong",
@@ -176,23 +199,24 @@ app.use(
 
 // Start server - bind to 0.0.0.0 for network accessibility
 app.listen(Number(PORT), "0.0.0.0", async () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
-  console.log(`✅ Health check: http://localhost:${PORT}/health`);
+  logInfo(`🚀 Backend server running on port ${PORT}`);
+  logInfo(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
+  logInfo(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
+  logInfo(`✅ Health check: http://localhost:${PORT}/health`);
 
   // Inicializar tabela de expedientes
   try {
     await inicializarTabelaExpedientes();
   } catch (error) {
-    console.error(`❌ Erro ao inicializar banco de dados:`, error);
+    const msg = error instanceof Error ? error.message : String(error);
+    logError(`❌ Erro ao inicializar banco de dados: ${msg}`);
   }
 
   // Iniciar scheduler DJEN (apenas em produção ou se explicitamente habilitado)
   if (process.env.DJEN_SCHEDULER_ENABLED === "true") {
     iniciarSchedulerDJEN();
   } else {
-    console.log(`ℹ️ DJEN Scheduler desabilitado (defina DJEN_SCHEDULER_ENABLED=true para ativar)`);
+    logInfo(`ℹ️ DJEN Scheduler desabilitado (defina DJEN_SCHEDULER_ENABLED=true para ativar)`);
   }
 });
 

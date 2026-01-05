@@ -54,6 +54,10 @@ dist-ssr
 .env.local.backup
 .env.vercel.backup
 
+# Chroma MCP (local secrets)
+.chroma_env
+.chroma_env.*
+
 # Test output and coverage
 playwright-report/
 playwright-report/**

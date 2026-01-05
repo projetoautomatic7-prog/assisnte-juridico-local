@@ -386,9 +386,7 @@ jobs:
           if [[ "$CRITICAL_VULNS" -gt 0 ]]; then
             echo "CRITICAL_FOUND=true" >> $GITHUB_ENV
             echo "❌ ALERTA: Vulnerabilidades críticas encontradas!"
-            # Fail workflow for critical vulnerabilities in strict security mode
             echo "::error::Vulnerabilidades críticas detectadas. O workflow deve falhar."
-            exit 1
           else
             echo "CRITICAL_FOUND=false" >> $GITHUB_ENV
             echo "✅ Nenhuma vulnerabilidade crítica encontrada"
@@ -472,6 +470,12 @@ jobs:
             });
 
             console.log('✅ Issue de segurança criada com sucesso');
+
+      - name: ❌ Falhar workflow se vulnerabilidades críticas existirem
+        if: steps.audit.outputs.critical_vulns != '0'
+        run: |
+          echo "::error::Workflow falhando devido a vulnerabilidades críticas"
+          exit 1
 
       - name: 🛡️  Verificação de Headers de Segurança
         run: |

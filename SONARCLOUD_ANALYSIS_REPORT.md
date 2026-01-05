@@ -1,9 +1,9 @@
 # 📊 Relatório Completo - Análise SonarCloud
 
-**Data:** 05/12/2025  
-**Projeto:** assistente-juridico-p  
-**Organização:** thiagobodevan-a11y  
-**URL:** https://sonarcloud.io/project/overview?id=thiagobodevan-a11y_assistente-juridico-p
+**Data:** 05/12/2025
+**Projeto:** assistente-jur-dico-principalrepli
+**Organização:** portprojetoautomacao-debug
+**URL:** https://sonarcloud.io/project/overview?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli
 
 ---
 
@@ -202,7 +202,7 @@ for script in $(find . -name "*.sh"); do
   # 1. Substituir [ por [[
   sed -i 's/if \[ /if [[ /g' "$script"
   sed -i 's/ \] ;/ ]] ;/g' "$script"
-  
+
   # 2. Adicionar return em funções
   # (requer análise manual por contexto)
 done
@@ -368,11 +368,11 @@ cat SONARCLOUD_ANALYSIS_REPORT.md
 
 ## 📚 Referências
 
-- **SonarCloud Dashboard:** https://sonarcloud.io/project/overview?id=thiagobodevan-a11y_assistente-juridico-p
-- **Quality Gate:** https://sonarcloud.io/project/quality_gate?id=thiagobodevan-a11y_assistente-juridico-p
-- **Security Hotspots:** https://sonarcloud.io/project/security_hotspots?id=thiagobodevan-a11y_assistente-juridico-p
-- **Duplications:** https://sonarcloud.io/component_measures?id=thiagobodevan-a11y_assistente-juridico-p&metric=duplicated_lines_density
-- **Issues:** https://sonarcloud.io/project/issues?id=thiagobodevan-a11y_assistente-juridico-p
+- **SonarCloud Dashboard:** https://sonarcloud.io/project/overview?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli
+- **Quality Gate:** https://sonarcloud.io/project/quality_gate?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli
+- **Security Hotspots:** https://sonarcloud.io/project/security_hotspots?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli
+- **Duplications:** https://sonarcloud.io/component_measures?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli&metric=duplicated_lines_density
+- **Issues:** https://sonarcloud.io/project/issues?id=portprojetoautomacao-debug_assistente-jur-dico-principalrepli
 
 ---
 
@@ -380,11 +380,11 @@ cat SONARCLOUD_ANALYSIS_REPORT.md
 
 ### **Trabalho Realizado (Concluído):**
 
-✅ **42 Security Hotspots de ReDoS corrigidos** (100%)  
-✅ **16 arquivos TypeScript refatorados** com métodos seguros  
-✅ **TypeScript validation passing** (0 errors)  
-✅ **Análise completa de duplicação** realizada  
-✅ **Relatório detalhado de 1.522 violações** gerado  
+✅ **42 Security Hotspots de ReDoS corrigidos** (100%)
+✅ **16 arquivos TypeScript refatorados** com métodos seguros
+✅ **TypeScript validation passing** (0 errors)
+✅ **Análise completa de duplicação** realizada
+✅ **Relatório detalhado de 1.522 violações** gerado
 
 ### **Próximos Passos Críticos:**
 
@@ -403,6 +403,6 @@ cat SONARCLOUD_ANALYSIS_REPORT.md
 
 ---
 
-**Relatório gerado em:** 05/12/2025  
-**Autor:** GitHub Copilot + MCP SonarQube  
+**Relatório gerado em:** 05/12/2025
+**Autor:** GitHub Copilot + MCP SonarQube
 **Versão:** 1.0.0

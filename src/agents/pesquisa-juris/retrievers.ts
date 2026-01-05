@@ -82,7 +82,8 @@ export class JurisprudenceRetriever {
    * @throws {Error} Se embeddings falharem
    */
   async search(input: PesquisaJurisInput): Promise<SearchResult> {
-    const startTime = Date.now();
+    const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+    const startTime = nowMs();
 
     try {
       // 1. Gerar embeddings para o tema
@@ -103,7 +104,9 @@ export class JurisprudenceRetriever {
       // 5. Limitar resultados
       const finalPrecedentes = filteredPrecedentes.slice(0, input.limit || 10);
 
-      const executionTimeMs = Date.now() - startTime;
+      // Em execuções muito rápidas (especialmente com fallback), o delta pode ser < 1ms.
+      // Garantimos valor mínimo 1ms para manter consistência e evitar flakiness em CI.
+      const executionTimeMs = Math.max(1, Math.round(nowMs() - startTime));
 
       return {
         precedentes: finalPrecedentes,

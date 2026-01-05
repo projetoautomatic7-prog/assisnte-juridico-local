@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock hoisted - garante que seja aplicado antes de qualquer import no worker
 const { mockKvData, mockSetKv } = vi.hoisted(() => {
@@ -29,6 +29,12 @@ vi.mock("./use-kv", () => ({
 }));
 
 describe("useTimelineSync", () => {
+  beforeEach(() => {
+    // Garante que o módulo do hook não venha cacheado de outros testes no mesmo worker,
+    // o que poderia ignorar o vi.mock("./use-kv") e causar flakiness (especialmente em coverage).
+    vi.resetModules();
+  });
+
   it("deve filtrar expedientes ignorando formatação (replaceAll)", async () => {
     const { useTimelineSync } = await import("./use-timeline-sync");
     // Simula um processId buscando por "123456"

@@ -10,6 +10,17 @@ function getEnv(name, { required = false } = {}) {
   return value?.trim();
 }
 
+function getFirstEnv(names, { required = false } = {}) {
+  for (const name of names) {
+    const value = getEnv(name);
+    if (value) return value;
+  }
+  if (required) {
+    throw new Error(`Missing required env var: one of ${names.join(", ")}`);
+  }
+  return null;
+}
+
 function safeJsonParse(text) {
   try {
     return JSON.parse(text);
@@ -67,7 +78,11 @@ async function chromaFetch(path, { method = "GET", token, body } = {}) {
 
   if (!res.ok) {
     const message = json?.error ?? json?.message ?? text ?? `HTTP ${res.status}`;
-    const err = new Error(`Chroma Sync API error (${res.status}): ${message}`);
+    const hint =
+      res.status === 401
+        ? " (401 Unauthorized: token inválido. Gere um novo token no Chroma Cloud e atualize CHROMA_SYNC_TOKEN.)"
+        : "";
+    const err = new Error(`Chroma Sync API error (${res.status}): ${message}${hint}`);
     err.status = res.status;
     err.payload = json;
     throw err;
@@ -181,7 +196,11 @@ async function main() {
   const argv = process.argv.slice(2);
   const args = parseArgs(argv);
 
-  const token = getEnv("CHROMA_SYNC_TOKEN", { required: true });
+  // Aceita aliases para reduzir confusão em ambientes diferentes.
+  // CHROMA_API_KEY é para consultas ao banco (Chroma Cloud API) e NÃO é o token do Sync.
+  const token = getFirstEnv(["CHROMA_SYNC_TOKEN", "CHROMA_SYNC_API_KEY", "CHROMA_SYNC_KEY"], {
+    required: true,
+  });
   const databaseName = args.database ?? getEnv("CHROMA_SYNC_DATABASE_NAME", { required: true });
   const embeddingModel =
     args.embeddingModel ?? getEnv("CHROMA_SYNC_EMBEDDING_MODEL") ?? "Qwen/Qwen3-Embedding-0.6B";
