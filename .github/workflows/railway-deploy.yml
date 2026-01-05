@@ -29,13 +29,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Railway
-        uses: railwayapp/actions-deploy@v1
+      - name: Install Railway CLI
+        uses: railwayapp/cli-action@v1
         with:
           railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          project_id: ${{ secrets.RAILWAY_PROJECT_ID }}
-          environment: ${{ github.event.inputs.environment || 'production' }}
-          service: ${{ secrets.RAILWAY_SERVICE_NAME || 'assistente-juridico-pje' }}
+
+      - name: Deploy to Railway
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --service assistente-juridico-pje --environment production
 
       - name: Deployment Summary
         run: |
