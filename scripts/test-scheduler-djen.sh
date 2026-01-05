@@ -12,7 +12,6 @@ echo ""
 # Cores para output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Função de validação
@@ -21,7 +20,7 @@ check_test() {
     local test_command="$2"
 
     echo -n "📋 Testando: $test_name... "
-    
+
     local output
     if output=$(eval "$test_command" 2>&1); then
         echo -e "${GREEN}✅ PASSOU${NC}"

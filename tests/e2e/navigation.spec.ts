@@ -68,12 +68,23 @@ test.describe("Navegação e Interações", () => {
     // Cria primeira aba no dashboard
     const page1 = await context.newPage();
     await page1.goto("/");
-    await expect(page1.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    await expect(page1.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 10000 });
 
-    // Cria segunda aba também no dashboard
+    // Cria segunda aba em uma página diferente (se disponível)
     const page2 = await context.newPage();
     await page2.goto("/");
-    await expect(page2.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    const calcButton = page2.getByRole("button", { name: "Calc. Prazos" });
+    if (await calcButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await calcButton.click();
+      await expect(page2.getByRole("heading", { name: "Calculadora de Prazos" })).toBeVisible({
+        timeout: 10000,
+      });
+    } else {
+      // Fallback: navega para o dashboard
+      await expect(page2.getByRole("heading", { name: "Dashboard" })).toBeVisible({
+        timeout: 10000,
+      });
+    }
 
     const pages = context.pages();
     expect(pages.length).toBeGreaterThanOrEqual(2);

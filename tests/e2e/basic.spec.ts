@@ -77,6 +77,7 @@ test.describe("Assistente Jurídico - Testes Básicos", () => {
       const data = await response.json();
       expect(data).toHaveProperty("status");
     } catch (error) {
+      console.warn("Falha na verificação de health:", error);
       isBackendAvailable = false;
     }
 
