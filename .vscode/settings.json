@@ -494,5 +494,7 @@
   "editor.suggestOnTriggerCharacters": false,
   "[scss]": {
     "editor.defaultFormatter": "vscode.css-language-features"
-  }
+  },
+  "DockerRun.DisableDockerrc": true,
+  "java.compile.nullAnalysis.mode": "automatic"
 }

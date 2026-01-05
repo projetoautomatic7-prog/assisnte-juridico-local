@@ -1,3 +1,8 @@
+// ⚠️ IMPORTANTE: Datadog tracer carregado via -r flag (NODE_OPTIONS) ou import
+// Em produção (Railway/Vercel): via -r ./backend/dist/backend/src/datadog.js
+// Em dev: via import abaixo
+import "./datadog.js";
+
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";

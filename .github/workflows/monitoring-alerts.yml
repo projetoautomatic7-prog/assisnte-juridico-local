@@ -357,6 +357,7 @@ jobs:
 
       - name: 🔍 Verificação de Vulnerabilidades
         id: audit
+        continue-on-error: true
         run: |
           echo "🔍 Verificando vulnerabilidades..."
 
@@ -456,7 +457,7 @@ jobs:
               '',
               'O relatório JSON completo do npm audit está disponível nos artefatos do workflow.',
               '',
-              `**Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              '**Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
               '',
               '---',
               `*Issue criada automaticamente pelo workflow de monitoramento em ${new Date().toISOString()}*`

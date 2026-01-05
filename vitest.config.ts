@@ -26,11 +26,12 @@ export default defineConfig({
     // Aumentar timeout para testes de performance e integração
     testTimeout: 600000, // 10 minutos para testes de integração
     hookTimeout: 60000, // 1 minuto para hooks
-    // Estabilidade > performance: evita limite de memória dos worker threads (ERR_WORKER_OUT_OF_MEMORY)
+    // Estabilidade com paralelismo controlado: limita memória por fork mantendo performance
     pool: "forks",
-    singleFork: true,
+    // Vitest 4+: poolOptions foi movido para nível superior
+    memoryLimit: "2GB", // Limite de memória por fork para evitar ERR_WORKER_OUT_OF_MEMORY
     // Ajustar concorrência baseado em ambiente para estabilidade
-    maxConcurrency: 1,
+    maxConcurrency: process.env.CI ? 1 : 3, // CI: sequencial, Dev: até 3 paralelos
     // ✅ Isolar testes no CI para melhor confiabilidade
     isolate: !!process.env.CI,
     // ✅ Suporte a sharding para execução paralela

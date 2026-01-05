@@ -57,6 +57,7 @@ export default function HumanAgentCollaboration({
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inactivityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inactivitySecondsRef = useRef(0);
   const previousPhaseRef = useRef(phase);
   const onCompleteRef = useRef(onComplete);
 
@@ -116,6 +117,7 @@ export default function HumanAgentCollaboration({
 
     // Reset timer when transitioning out of human_editing phase
     if (prevPhase === "human_editing" && phase !== "human_editing") {
+      inactivitySecondsRef.current = 0;
       setTimeWithoutActivity(0);
     }
 
@@ -130,6 +132,7 @@ export default function HumanAgentCollaboration({
 
     // Reset timer when entering human_editing phase
     if (prevPhase !== "human_editing") {
+      inactivitySecondsRef.current = 0;
       setTimeWithoutActivity(0);
     }
 
@@ -145,30 +148,30 @@ export default function HumanAgentCollaboration({
     inactivityIntervalRef.current = setInterval(() => {
       if (isCancelled) return;
 
-      setTimeWithoutActivity((prev) => {
-        // Early return for human activity
-        if (isHumanActive) {
-          return 0;
+      if (isHumanActive) {
+        inactivitySecondsRef.current = 0;
+        setTimeWithoutActivity(0);
+        return;
+      }
+
+      inactivitySecondsRef.current += 1;
+      const next = inactivitySecondsRef.current;
+
+      if (next < INACTIVITY_LIMIT_SECONDS) {
+        setTimeWithoutActivity(next);
+        return;
+      }
+
+      // Limite atingido: retoma o agente
+      inactivitySecondsRef.current = 0;
+      setTimeWithoutActivity(0);
+      setPhase("agent_resuming");
+
+      resumeTimeoutId = setTimeout(() => {
+        if (!isCancelled) {
+          setPhase("agent_working");
         }
-
-        const next = prev + 1;
-
-        // Check if agent should resume
-        if (next >= INACTIVITY_LIMIT_SECONDS) {
-          setPhase("agent_resuming");
-
-          // Track timeout to clean up properly
-          resumeTimeoutId = setTimeout(() => {
-            if (!isCancelled) {
-              setPhase("agent_working");
-            }
-          }, RESUME_DELAY_MS);
-
-          return 0;
-        }
-
-        return next;
-      });
+      }, RESUME_DELAY_MS);
     }, 1000);
 
     return () => {

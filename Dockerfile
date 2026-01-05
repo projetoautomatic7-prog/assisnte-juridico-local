@@ -37,4 +37,5 @@ RUN cd backend && npm ci --omit=dev --legacy-peer-deps
 EXPOSE 3001
 
 # Iniciar servidor backend (também serve o frontend estático em produção)
-CMD ["node", "backend/dist/backend/src/server.js"]
+# IMPORTANTE: NODE_OPTIONS para carregar datadog tracer ANTES do app
+CMD ["node", "-r", "./backend/dist/backend/src/datadog.js", "backend/dist/backend/src/server.js"]

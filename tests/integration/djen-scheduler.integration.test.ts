@@ -7,15 +7,22 @@
 
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { executarManualmente } from "../../../backend/src/services/djen-scheduler";
 
 const shouldRun = process.env.ENABLE_DB_TEST === "true";
 const describeFn = shouldRun ? describe : describe.skip;
 
 describeFn("DJEN Scheduler - Integração Real", () => {
   let pool: Pool;
+  let executarManualmente: (() => Promise<unknown>) | null = null;
 
   beforeAll(async () => {
+    if (shouldRun) {
+      // Import dinâmico evita falhar em ambientes onde o teste está skipado.
+      // Além disso, o caminho relativo correto a partir de tests/integration é ../../backend/...
+      const mod = await import("../../backend/src/services/djen-scheduler");
+      executarManualmente = mod.executarManualmente as () => Promise<unknown>;
+    }
+
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
@@ -37,6 +44,10 @@ describeFn("DJEN Scheduler - Integração Real", () => {
 
   it("deve executar scheduler manualmente e processar publicações reais", async () => {
     console.log("\n🧪 Testando execução manual do scheduler DJEN...");
+
+    if (!executarManualmente) {
+      throw new Error("executarManualmente não foi carregado");
+    }
 
     // Executar scheduler
     const resultado = await executarManualmente();

@@ -85,6 +85,18 @@ export interface UploadOptions {
 function useFileUpload(options: UploadOptions) {
   const [fileItems, setFileItems] = useState<FileItem[]>([]);
 
+  const updateFileItem = (fileId: string, patch: Partial<FileItem>) => {
+    setFileItems((prev) => {
+      const next = [...prev];
+      for (let i = 0; i < next.length; i++) {
+        if (next[i].id !== fileId) continue;
+        next[i] = { ...next[i], ...patch };
+        break;
+      }
+      return next;
+    });
+  };
+
   const uploadFile = async (file: File): Promise<string | null> => {
     if (file.size > options.maxSize) {
       const error = new Error(
@@ -115,9 +127,7 @@ function useFileUpload(options: UploadOptions) {
       const url = await options.upload(
         file,
         (event: { progress: number }) => {
-          setFileItems((prev) =>
-            prev.map((item) => (item.id === fileId ? { ...item, progress: event.progress } : item))
-          );
+          updateFileItem(fileId, { progress: event.progress });
         },
         abortController.signal
       );
@@ -125,11 +135,7 @@ function useFileUpload(options: UploadOptions) {
       if (!url) throw new Error("Upload failed: No URL returned");
 
       if (!abortController.signal.aborted) {
-        setFileItems((prev) =>
-          prev.map((item) =>
-            item.id === fileId ? { ...item, status: "success", url, progress: 100 } : item
-          )
-        );
+        updateFileItem(fileId, { status: "success", url, progress: 100 });
         options.onSuccess?.(url);
         return url;
       }
@@ -137,11 +143,7 @@ function useFileUpload(options: UploadOptions) {
       return null;
     } catch (error) {
       if (!abortController.signal.aborted) {
-        setFileItems((prev) =>
-          prev.map((item) =>
-            item.id === fileId ? { ...item, status: "error", progress: 0 } : item
-          )
-        );
+        updateFileItem(fileId, { status: "error", progress: 0 });
         options.onError?.(error instanceof Error ? error : new Error("Upload failed"));
       }
       return null;

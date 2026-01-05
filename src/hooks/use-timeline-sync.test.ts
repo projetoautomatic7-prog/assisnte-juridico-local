@@ -1,11 +1,9 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-// Observação: no config atual (pool=forks + singleFork), o cache de módulos pode
-// vazar entre arquivos. Para manter o teste determinístico, registramos o mock
-// de use-kv de forma hoisted e sempre reimportamos o hook após resetModules.
-const hoisted = vi.hoisted(() => ({
-  kvData: [
+// Mock hoisted - garante que seja aplicado antes de qualquer import no worker
+const { mockKvData, mockSetKv } = vi.hoisted(() => {
+  const data = [
     {
       id: "1",
       processId: "123.456",
@@ -18,44 +16,21 @@ const hoisted = vi.hoisted(() => ({
       numeroProcesso: "999.999",
       source: "djen",
     },
-  ],
-  setKv: vi.fn(),
-}));
+  ];
+  return {
+    mockKvData: data,
+    mockSetKv: vi.fn(),
+  };
+});
 
+// Mock aplicado em nível de módulo antes de imports
 vi.mock("./use-kv", () => ({
-  useKV: () => [hoisted.kvData, hoisted.setKv],
+  useKV: () => [mockKvData, mockSetKv],
 }));
-
-async function loadHook() {
-  // Importante: no config atual (pool=forks + singleFork), módulos podem ficar em cache
-  // entre arquivos de teste. Resetar módulos aqui garante que o useKV leia do
-  // mock recém-preparado para este teste.
-  vi.resetModules();
-  const mod = await import("./use-timeline-sync");
-  return mod.useTimelineSync;
-}
 
 describe("useTimelineSync", () => {
-  beforeEach(() => {
-    hoisted.setKv.mockClear();
-    hoisted.kvData = [
-      {
-        id: "1",
-        processId: "123.456",
-        numeroProcesso: "123.456",
-        source: "djen",
-      },
-      {
-        id: "2",
-        processId: "999.999",
-        numeroProcesso: "999.999",
-        source: "djen",
-      },
-    ];
-  });
-
   it("deve filtrar expedientes ignorando formatação (replaceAll)", async () => {
-    const useTimelineSync = await loadHook();
+    const { useTimelineSync } = await import("./use-timeline-sync");
     // Simula um processId com formatação diferente mas mesmos dígitos
     const { result } = renderHook(() =>
       useTimelineSync({ processId: "123456", autoRefresh: false })
@@ -75,7 +50,7 @@ describe("useTimelineSync", () => {
   });
 
   it("deve retornar vazio se não houver match", async () => {
-    const useTimelineSync = await loadHook();
+    const { useTimelineSync } = await import("./use-timeline-sync");
     const { result } = renderHook(() =>
       useTimelineSync({ processId: "000000", autoRefresh: false })
     );

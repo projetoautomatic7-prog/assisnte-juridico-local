@@ -22,6 +22,7 @@ describe("MinutasManager smoke", () => {
     // Filters: type and status selects exist
     expect(await screen.findByPlaceholderText(/Buscar minutas/i)).toBeDefined();
     // Badge with count should be present (0 or more)
-    expect(await screen.findByText(/minuta\(s\)/i)).toBeDefined();
+    const badges = await screen.findAllByText(/minuta\(s\)/i);
+    expect(badges.length).toBeGreaterThan(0);
   });
 });

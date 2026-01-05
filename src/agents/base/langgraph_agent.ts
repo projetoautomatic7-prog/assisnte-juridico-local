@@ -92,50 +92,8 @@ export abstract class LangGraphAgent {
     const agentName = this.config.agentName || "unknown-agent";
 
     try {
-      let result: AgentState;
-      let wasDegraded = false;
-
-      if (this.config.enableCircuitBreaker) {
-        let capturedError: unknown = null;
-
-        result = await this.circuitBreaker.execute(
-          async () => {
-            try {
-              if (!this.config.enableSentryTracing) {
-                return await this.executeInternal(state);
-              }
-              return await this.executeWithTracing(state);
-            } catch (err) {
-              capturedError = err;
-              throw err;
-            }
-          },
-          this.config.enableGracefulDegradation
-            ? () => {
-                wasDegraded = true;
-                this.lastError = capturedError
-                  ? classifyGeminiError(capturedError)
-                  : classifyGeminiError(new Error("Circuit breaker open - service unavailable"));
-                return this.createFallbackState(state, this.lastError);
-              }
-            : undefined
-        );
-      } else if (this.config.enableSentryTracing) {
-        result = await this.executeWithTracing(state);
-      } else {
-        result = await this.executeInternal(state);
-      }
-
-      const isDegraded = wasDegraded || result.data?.degraded === true;
-      let outcome: ExecutionOutcome;
-
-      if (isDegraded) {
-        outcome = "degraded";
-      } else if (result.error) {
-        outcome = "failure";
-      } else {
-        outcome = "success";
-      }
+      const { result, wasDegraded } = await this.executeWithConfiguredResilience(state);
+      const { outcome, isDegraded } = this.determineOutcome(result, wasDegraded);
 
       agentMetrics.recordExecution(
         agentName,
@@ -146,17 +104,76 @@ export abstract class LangGraphAgent {
 
       return result;
     } catch (error) {
-      this.lastError = classifyGeminiError(error);
-
-      if (this.config.enableGracefulDegradation) {
-        console.warn(`[${agentName}] Usando fallback após erro:`, this.lastError);
-        agentMetrics.recordExecution(agentName, "degraded", Date.now() - startTime, this.lastError);
-        return this.createFallbackState(state, this.lastError);
-      }
-
-      agentMetrics.recordExecution(agentName, "failure", Date.now() - startTime, this.lastError);
-      return this.handleExecutionError(state, error);
+      return this.handleExecuteFailure(state, agentName, startTime, error);
     }
+  }
+
+  private async executeWithConfiguredResilience(
+    state: AgentState
+  ): Promise<{ result: AgentState; wasDegraded: boolean }> {
+    if (!this.config.enableCircuitBreaker) {
+      const result = this.config.enableSentryTracing
+        ? await this.executeWithTracing(state)
+        : await this.executeInternal(state);
+      return { result, wasDegraded: false };
+    }
+
+    let capturedError: unknown = null;
+    let wasDegraded = false;
+
+    const result = await this.circuitBreaker.execute(
+      async () => {
+        try {
+          if (!this.config.enableSentryTracing) {
+            return await this.executeInternal(state);
+          }
+          return await this.executeWithTracing(state);
+        } catch (err) {
+          capturedError = err;
+          throw err;
+        }
+      },
+      this.config.enableGracefulDegradation
+        ? () => {
+            wasDegraded = true;
+            this.lastError = capturedError
+              ? classifyGeminiError(capturedError)
+              : classifyGeminiError(new Error("Circuit breaker open - service unavailable"));
+            return this.createFallbackState(state, this.lastError);
+          }
+        : undefined
+    );
+
+    return { result, wasDegraded };
+  }
+
+  private determineOutcome(
+    result: AgentState,
+    wasDegraded: boolean
+  ): { outcome: ExecutionOutcome; isDegraded: boolean } {
+    const isDegraded = wasDegraded || result.data?.degraded === true;
+
+    if (isDegraded) return { outcome: "degraded", isDegraded: true };
+    if (result.error) return { outcome: "failure", isDegraded: false };
+    return { outcome: "success", isDegraded: false };
+  }
+
+  private handleExecuteFailure(
+    state: AgentState,
+    agentName: string,
+    startTime: number,
+    error: unknown
+  ): AgentState {
+    this.lastError = classifyGeminiError(error);
+
+    if (this.config.enableGracefulDegradation) {
+      console.warn(`[${agentName}] Usando fallback após erro:`, this.lastError);
+      agentMetrics.recordExecution(agentName, "degraded", Date.now() - startTime, this.lastError);
+      return this.createFallbackState(state, this.lastError);
+    }
+
+    agentMetrics.recordExecution(agentName, "failure", Date.now() - startTime, this.lastError);
+    return this.handleExecutionError(state, error);
   }
 
   /**
