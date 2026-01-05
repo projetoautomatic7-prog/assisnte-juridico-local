@@ -1,10 +1,7 @@
 name: 🚀 Codespaces Auto-Setup
 
 on:
-  # Trigger ao criar um novo Codespace
-  codespace:
-
-  # Também pode ser executado manualmente
+  # Pode ser executado manualmente
   workflow_dispatch:
 
 jobs:
@@ -12,7 +9,6 @@ jobs:
     name: Configurar Codespaces para Copilot
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'codespace'
 
     steps:
       - name: 📥 Checkout código
