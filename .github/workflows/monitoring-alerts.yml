@@ -395,7 +395,7 @@ jobs:
           fi
 
       - name: 🚨 Criar Issue para Vulnerabilidades Críticas
-        if: steps.audit.outputs.critical_vulns != '0'
+        if: always() && steps.audit.outputs.critical_vulns != '0'
         uses: actions/github-script@v7
         with:
           script: |

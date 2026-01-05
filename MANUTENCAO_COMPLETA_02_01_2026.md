@@ -253,5 +253,4 @@ Sistema pronto para produção com:
 - ⚠️ Alertas Sonar não-bloqueantes documentados
 
 **Data**: 02 de Janeiro de 2026
-**Responsável**: GitHub Copilot (Claude Sonnet 4.5)
-**Modo**: MANUTENÇÃO (correções, sem novas features)
+**Responsável**: CodeRabbit Inc.

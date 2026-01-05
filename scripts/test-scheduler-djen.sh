@@ -43,23 +43,23 @@ echo "────────────────────────�
 
 # Teste 1: Arquivo do scheduler existe
 if check_test "Arquivo djen-scheduler.ts existe" "test -f backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 2: node-cron instalado
 if check_test "Pacote node-cron instalado" "grep -q '\"node-cron\"' backend/package.json"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 3: Importação no server.ts
 if check_test "Scheduler importado em server.ts" "grep -q 'iniciarSchedulerDJEN' backend/src/server.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 echo ""
@@ -68,37 +68,37 @@ echo "────────────────────────�
 
 # Teste 4: Função processarPublicacoesDJEN existe
 if check_test "Função processarPublicacoesDJEN implementada" "grep -q 'export async function processarPublicacoesDJEN' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 5: Função iniciarSchedulerDJEN existe
 if check_test "Função iniciarSchedulerDJEN implementada" "grep -q 'export function iniciarSchedulerDJEN' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 6: Cron job 01:00 configurado
 if check_test "Cron job 01:00 configurado" "grep -q '0 1 \* \* \*' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 7: Cron job 09:00 configurado
 if check_test "Cron job 09:00 configurado" "grep -q '0 9 \* \* \*' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 8: Timezone configurado
 if check_test "Timezone America/Sao_Paulo configurado" "grep -q 'America/Sao_Paulo' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 echo ""
@@ -107,23 +107,23 @@ echo "────────────────────────�
 
 # Teste 9: Documentação existe
 if check_test "DJEN_SCHEDULER_README.md existe" "test -f DJEN_SCHEDULER_README.md"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 10: .env.example atualizado
 if check_test "DJEN_SCHEDULER_ENABLED em .env.example" "grep -q 'DJEN_SCHEDULER_ENABLED' .env.example"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 11: Variável TZ em .env.example
 if check_test "TZ em .env.example" "grep -q 'TZ=America/Sao_Paulo' .env.example"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 echo ""
@@ -132,16 +132,16 @@ echo "────────────────────────�
 
 # Teste 12: Rota de trigger manual existe
 if check_test "Rota /api/djen existe" "test -f backend/src/routes/djen.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 # Teste 13: Função executarManualmente exportada
 if check_test "Função executarManualmente implementada" "grep -q 'export async function executarManualmente' backend/src/services/djen-scheduler.ts"; then
-    ((PASSED++))
+    ((PASSED+=1))
 else
-    ((FAILED++))
+    ((FAILED+=1))
 fi
 
 echo ""
@@ -153,9 +153,9 @@ echo ""
 TOTAL=$((PASSED + FAILED))
 PERCENTAGE=$((PASSED * 100 / TOTAL))
 
-echo -e "✅ Testes passados: ${GREEN}$PASSED${NC}"
-echo -e "❌ Testes falhados: ${RED}$FAILED${NC}"
-echo -e "📈 Taxa de sucesso: ${GREEN}${PERCENTAGE}%${NC}"
+printf "✅ Testes passados: %b%s%b\n" "$GREEN" "$PASSED" "$NC"
+printf "❌ Testes falhados: %b%s%b\n" "$RED" "$FAILED" "$NC"
+printf "📈 Taxa de sucesso: %b%s%%%b\n" "$GREEN" "$PERCENTAGE" "$NC"
 echo ""
 
 if [ $FAILED -eq 0 ]; then
