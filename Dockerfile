@@ -39,3 +39,4 @@ EXPOSE 3001
 # Iniciar servidor backend (também serve o frontend estático em produção)
 # IMPORTANTE: NODE_OPTIONS para carregar datadog tracer ANTES do app
 CMD ["node", "-r", "./backend/dist/backend/src/datadog.js", "backend/dist/backend/src/server.js"]
+# Force Railway to reload Dockerfile config
