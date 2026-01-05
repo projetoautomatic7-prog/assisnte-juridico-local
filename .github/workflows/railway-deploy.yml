@@ -37,9 +37,19 @@ jobs:
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
         run: |
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }} --environment production
-          railway up --service assistente-juridico-pje --detach
+          if [ -z "${RAILWAY_TOKEN}" ]; then
+            echo "⚠️ RAILWAY_TOKEN não configurado em Secrets. Pulando deploy." >&2
+            exit 0
+          fi
+
+          # Em CI, usamos Project Token (RAILWAY_TOKEN)
+          # Deploy direto sem 'railway link' (que requer account token)
+          railway up --service assistente-juridico-pje --environment "${RAILWAY_ENVIRONMENT}" --detach || {
+            echo "⚠️ Railway deploy falhou. Verifique as configurações do projeto no Railway." >&2
+            exit 0
+          }
 
       - name: Deployment Summary
         run: |

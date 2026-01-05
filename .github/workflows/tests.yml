@@ -44,19 +44,22 @@ jobs:
       - name: Run unit tests with OOM monitoring
         run: |
           echo "🔍 Monitoring Worker OOM during test execution..."
-          npm run test:run -- --reporter json --pool forks 2>&1 | tee test-output.log || true
+          npm run test:run -- --pool forks 2>&1 | tee test-output.log
+
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
 
           # Check for Worker OOM errors
           if grep -q "Worker exited unexpectedly" test-output.log; then
             echo "⚠️ Worker OOM detected! Retrying with forks pool and more conservative settings..."
             export NODE_OPTIONS="--max-old-space-size=16384 --expose-gc"
             npm run test:run -- --pool forks
+            TEST_EXIT_CODE=$?
           fi
 
-          # Verify tests passed
-          if ! grep -q "Test Files.*passed" test-output.log; then
-            echo "❌ Tests failed!"
-            exit 1
+          # Exit with the test command's exit code
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "❌ Tests failed with exit code $TEST_EXIT_CODE"
+            exit $TEST_EXIT_CODE
           fi
 
           echo "✅ Tests completed successfully"

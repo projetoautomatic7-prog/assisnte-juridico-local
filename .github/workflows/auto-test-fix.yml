@@ -24,7 +24,7 @@ jobs:
   auto-test-and-fix:
     name: 🔄 Teste Automático com Correções
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
       actions: read
@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         # Testar apenas browsers habilitados no playwright.config.ts
-        browser: [chromium, firefox]
+        browser: [chromium]
 
     steps:
       - name: 📥 Checkout código

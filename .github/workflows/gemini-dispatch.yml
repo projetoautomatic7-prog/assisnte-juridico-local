@@ -69,12 +69,24 @@ jobs:
       additional_context: "${{ steps.extract_command.outputs.additional_context }}"
       prompt: "${{ steps.extract_command.outputs.prompt }}"
       issue_number: "${{ github.event.pull_request.number || github.event.issue.number }}"
+      has_credentials: "${{ steps.check_credentials.outputs.has_credentials }}"
     steps:
+      - name: "Check credentials"
+        id: "check_credentials"
+        run: |
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ] || [ -n "${{ vars.APP_ID }}" ]; then
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Gemini credentials not configured. Skipping." >&2
+          fi
+
       - name: "Mint identity token"
         id: "mint_identity_token"
         if: |-
-          ${{ vars.APP_ID }}
+          ${{ vars.APP_ID && steps.check_credentials.outputs.has_credentials == 'true' }}
         uses: "actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf"
+        continue-on-error: true
         with:
           app-id: "${{ vars.APP_ID }}"
           private-key: "${{ secrets.APP_PRIVATE_KEY }}"
@@ -87,7 +99,7 @@ jobs:
         uses: "actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea"
         env:
           EVENT_TYPE: "${{ github.event_name }}.${{ github.event.action }}"
-          REQUEST: "${{ github.event.comment.body || github.event.review.body || github.event.issue.body || ' }}"
+          REQUEST: "${{ github.event.comment.body || github.event.review.body || github.event.issue.body || '' }}"
         with:
           script: |
             const eventType = process.env.EVENT_TYPE;
@@ -138,8 +150,9 @@ jobs:
             core.setOutput('prompt', prompt);
 
       - name: "Acknowledge request"
+        if: steps.check_credentials.outputs.has_credentials == 'true'
         env:
-          GITHUB_TOKEN: "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}"
+          GH_TOKEN: "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}"
           ISSUE_NUMBER: "${{ github.event.pull_request.number || github.event.issue.number }}"
           MESSAGE: |-
             🤖 Hi @${{ github.actor }}, I've received your request, and I'm working on it now! You can track my progress [in the logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
@@ -152,7 +165,7 @@ jobs:
   review:
     needs: "dispatch"
     if: |-
-      ${{ needs.dispatch.outputs.command == 'review' }}
+      ${{ needs.dispatch.outputs.command == 'review' && needs.dispatch.outputs.has_credentials == 'true' }}
     uses: "./.github/workflows/gemini-review.yml"
     permissions:
       contents: "read"
@@ -170,7 +183,7 @@ jobs:
   triage:
     needs: "dispatch"
     if: |-
-      ${{ needs.dispatch.outputs.command == 'triage' }}
+      ${{ needs.dispatch.outputs.command == 'triage' && needs.dispatch.outputs.has_credentials == 'true' }}
     uses: "./.github/workflows/gemini-triage.yml"
     permissions:
       contents: "read"
@@ -188,7 +201,7 @@ jobs:
   invoke:
     needs: "dispatch"
     if: |-
-      ${{ needs.dispatch.outputs.command == 'invoke' }}
+      ${{ needs.dispatch.outputs.command == 'invoke' && needs.dispatch.outputs.has_credentials == 'true' }}
     uses: "./.github/workflows/gemini-invoke.yml"
     permissions:
       contents: "read"
@@ -231,7 +244,7 @@ jobs:
 
       - name: "Send failure comment"
         env:
-          GITHUB_TOKEN: "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}"
+          GH_TOKEN: "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}"
           ISSUE_NUMBER: "${{ github.event.pull_request.number || github.event.issue.number }}"
           MESSAGE: |-
             🤖 I'm sorry @${{ github.actor }}, but I was unable to process your request. Please [see the logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
