@@ -194,16 +194,38 @@ function transformToGemini(body: LLMRequest): unknown {
   };
 }
 
+interface GeminiCandidate {
+  content?: {
+    parts?: Array<{ text?: string }>;
+    finish_reason?: string;
+  };
+  finishReason?: string;
+}
+
+interface GeminiResponse {
+  id?: string;
+  model?: string;
+  candidates?: GeminiCandidate[];
+  result?: {
+    candidates?: GeminiCandidate[];
+  };
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    totalTokenCount?: number;
+  };
+}
+
 // Transformar resposta Gemini para formato OpenAI-like LLMResponse
 function transformFromGemini(data: unknown): LLMResponse {
-  const geminiData = data as any;
+  const geminiData = data as GeminiResponse;
   const candidate = geminiData?.candidates?.[0] || geminiData?.result?.candidates?.[0] || {};
   if (!geminiData?.candidates?.[0] && !geminiData?.result?.candidates?.[0]) {
     console.warn("[Gemini] Resposta sem candidatos válidos, usando objeto vazio", geminiData);
   }
 
   const text = Array.isArray(candidate?.content?.parts)
-    ? candidate.content.parts.map((p: any) => p.text || "").join("")
+    ? candidate.content.parts.map((p) => p.text || "").join("")
     : typeof candidate === "string"
       ? candidate
       : "";
