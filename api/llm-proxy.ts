@@ -180,38 +180,42 @@ function transformToGemini(body: LLMRequest): unknown {
   // Adicionar system instruction se existir
   const systemMessage = messages.find((m: ChatMessage) => m.role === "system");
 
+  const generationConfig: Record<string, unknown> = {
+    temperature: body.temperature ?? 0.2,
+    maxOutputTokens: body.max_tokens ?? 512,
+    candidateCount: 1,
+    // valores padrão razoáveis; Gemini aceita outros parâmetros se necessário
+  };
+
   return {
     contents,
     systemInstruction: systemMessage ? { parts: [{ text: systemMessage.content }] } : undefined,
-    generationConfig: {
-      temperature: body.temperature || 0.7,
-      maxOutputTokens: body.max_tokens || 4096,
-    },
+    generationConfig,
   };
 }
 
-// Transformar resposta Gemini para formato OpenAI
+// Transformar resposta Gemini para formato OpenAI-like LLMResponse
 function transformFromGemini(data: unknown): LLMResponse {
-  const geminiData = data as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-      finishReason?: string;
-    }>;
-    usageMetadata?: {
-      promptTokenCount?: number;
-      candidatesTokenCount?: number;
-      totalTokenCount?: number;
-    };
-  };
+  const geminiData = data as any;
+  const candidate = geminiData?.candidates?.[0] || geminiData?.result?.candidates?.[0] || {};
 
-  const candidate = geminiData.candidates?.[0];
-  const text = candidate?.content?.parts?.[0]?.text || "";
+  const text = Array.isArray(candidate?.content?.parts)
+    ? candidate.content.parts.map((p: any) => p.text || "").join("")
+    : typeof candidate === "string"
+      ? candidate
+      : "";
+
+  const finishReason = (
+    candidate?.finishReason ||
+    candidate?.content?.finish_reason ||
+    "stop"
+  ).toString();
 
   return {
-    id: `gemini-${Date.now()}`,
+    id: geminiData?.id || `gemini-${Date.now()}`,
     object: "chat.completion",
     created: Math.floor(Date.now() / 1000),
-    model: "gemini-2.5-pro",
+    model: geminiData?.model || "gemini-2.5-pro",
     choices: [
       {
         index: 0,
@@ -219,14 +223,15 @@ function transformFromGemini(data: unknown): LLMResponse {
           role: "assistant",
           content: text,
         },
-        finish_reason: candidate?.finishReason?.toLowerCase() || "stop",
+        finish_reason: finishReason,
       },
     ],
     usage: {
-      prompt_tokens: geminiData.usageMetadata?.promptTokenCount || 0,
-      completion_tokens: geminiData.usageMetadata?.candidatesTokenCount || 0,
-      total_tokens: geminiData.usageMetadata?.totalTokenCount || 0,
+      prompt_tokens: geminiData?.usageMetadata?.promptTokenCount || 0,
+      completion_tokens: geminiData?.usageMetadata?.candidatesTokenCount || 0,
+      total_tokens: geminiData?.usageMetadata?.totalTokenCount || 0,
     },
+    _provider: "gemini",
   };
 }
 
@@ -363,8 +368,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Fazer requisição
     // Make request with timeout + retry
-    const data = await retryWithBackoff(
-      () => withTimeout(45000, () => fetchJsonOrThrow(provider, targetUrl, requestBody)),
+    const data = await retryWithBackoff<unknown>(
+      () => withTimeout(45000, fetchJsonOrThrow(provider, targetUrl, requestBody)),
       3,
       500
     );
@@ -374,8 +379,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // data already set from retryWithBackoff
 
     // Transformar resposta se necessário
-    let transformed = data;
-    if (provider.transformResponse) transformed = provider.transformResponse(data);
+    const transformed: LLMResponse = provider.transformResponse
+      ? provider.transformResponse(data)
+      : (data as LLMResponse);
 
     // Adicionar metadata sobre o provedor usado
     transformed._provider = provider.name;
