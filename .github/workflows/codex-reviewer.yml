@@ -44,14 +44,14 @@ jobs:
           language: "portuguese"
           custom_prompt: |
             Faça uma revisão criteriosa e objetiva do PR (modo MANUTENÇÃO).
-            
+
             Requisitos:
             - Resuma as mudanças em bullets.
             - Aponte riscos de bugs/regressões e edge cases.
             - Sugira melhorias pequenas e seguras (evitar novas features).
             - Respeite segurança/LGPD: não sugerir logs de dados sensíveis.
             - Se houver problemas de tipagem TypeScript, aponte exatamente onde.
-            
+
             Formato da resposta:
             1) Resumo
             2) Pontos positivos

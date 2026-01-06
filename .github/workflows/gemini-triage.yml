@@ -73,6 +73,12 @@ jobs:
         if: always()
         shell: bash
         run: |
+          if [ "${{ steps.check_key.outputs.has_key }}" != "true" ]; then
+            echo "## Triagem do Gemini" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ Workflow pulado: GEMINI_API_KEY não configurada." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           echo "## Resultado da triagem do Gemini" >> "$GITHUB_STEP_SUMMARY"
 
           SUMMARY="${{ steps.gemini.outputs.summary }}"

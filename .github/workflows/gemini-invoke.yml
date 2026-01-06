@@ -85,6 +85,12 @@ jobs:
       - name: Publicar resumo
         if: always()
         run: |
+          if [ "${{ steps.check_key.outputs.has_key }}" != "true" ]; then
+            echo "## Gemini (invoke)" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ Workflow pulado: GEMINI_API_KEY não configurada." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           echo "## Resultado do Gemini (invoke)" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ steps.gemini.outputs.summary }}" ]; then
             echo "${{ steps.gemini.outputs.summary }}" >> "$GITHUB_STEP_SUMMARY"

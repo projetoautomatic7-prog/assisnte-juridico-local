@@ -25,7 +25,7 @@ defaults:
 jobs:
   debugger:
     if: |-
-      ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || 'false') }}
+      ${{ vars.GEMINI_DEBUG == 'true' || vars.ACTIONS_STEP_DEBUG == 'true' }}
     runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
@@ -196,7 +196,7 @@ jobs:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
       model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
-      debug: ${{ fromJSON(vars.GEMINI_DEBUG || 'false') }}
+      debug: ${{ vars.GEMINI_DEBUG == 'true' }}
       cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
     secrets: "inherit"
 
