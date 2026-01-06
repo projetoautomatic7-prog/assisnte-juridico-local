@@ -37,7 +37,7 @@ jobs:
         if: steps.check_key.outputs.has_key == 'true'
         uses: p2achAI/codex-reviewer@v1
         with:
-          github_token: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           label: "codex-review"
           model: "gpt-4o-mini"
