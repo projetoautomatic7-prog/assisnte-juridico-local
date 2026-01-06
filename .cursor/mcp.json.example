@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "chroma": {
+      "command": "/caminho/absoluto/para/seu/workspace/.mcp/chroma-venv/bin/chroma-mcp",
+      "args": ["--dotenv-path", "/caminho/absoluto/para/seu/workspace/.env"]
+    },
     "todoist": {
       "command": "npx",
       "args": ["-y", "mcp-remote", "https://ai.todoist.net/mcp"]

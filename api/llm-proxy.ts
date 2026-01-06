@@ -198,12 +198,18 @@ function transformToGemini(body: LLMRequest): unknown {
 function transformFromGemini(data: unknown): LLMResponse {
   const geminiData = data as any;
   const candidate = geminiData?.candidates?.[0] || geminiData?.result?.candidates?.[0] || {};
+  if (!geminiData?.candidates?.[0] && !geminiData?.result?.candidates?.[0]) {
+    console.warn("[Gemini] Resposta sem candidatos válidos, usando objeto vazio", geminiData);
+  }
 
   const text = Array.isArray(candidate?.content?.parts)
     ? candidate.content.parts.map((p: any) => p.text || "").join("")
     : typeof candidate === "string"
       ? candidate
       : "";
+  if (text === "" && candidate) {
+    console.warn("[Gemini] Não foi possível extrair texto do candidato", candidate);
+  }
 
   const finishReason = (
     candidate?.finishReason ||

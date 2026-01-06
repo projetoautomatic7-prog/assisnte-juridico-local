@@ -102,7 +102,13 @@ type UrgentEmailRequest = Extract<EmailRequest, { type: "urgent" }>;
 type DailySummaryEmailRequest = Extract<EmailRequest, { type: "daily_summary" }>;
 
 function toSingleRecipient(to: string | string[]): string {
-  return Array.isArray(to) ? to[0] : to;
+  if (Array.isArray(to)) {
+    if (to.length === 0) {
+      throw new Error("Recipient array cannot be empty");
+    }
+    return to[0];
+  }
+  return to;
 }
 
 async function sendWithRetry<T>(fn: () => Promise<T>): Promise<T> {

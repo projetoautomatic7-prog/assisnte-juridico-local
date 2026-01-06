@@ -14,7 +14,7 @@
       "mcp/sonarqube"
     ],
     "env": {
-      "SONARQUBE_TOKEN": "a515db8e4bb85ae420c8adaf30829a2de7e4ce53",
+      "SONARQUBE_TOKEN": "${env:SONARQUBE_TOKEN}",
       "SONARQUBE_ORG": "portprojetoautomacao-debug",
       "TELEMETRY_DISABLED": "true"
     }

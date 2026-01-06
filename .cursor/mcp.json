@@ -1,5 +1,13 @@
 {
   "mcpServers": {
+    "chroma": {
+      "command": "/workspaces/https-github.com-portprojetoautomacao-debug-assistente-jur-dico-principalrepli.git2/.mcp/chroma-venv/bin/chroma-mcp",
+      "args": [
+        "--dotenv-path",
+        "/workspaces/https-github.com-portprojetoautomacao-debug-assistente-jur-dico-principalrepli.git2/.env"
+      ],
+      "env": {}
+    },
     "todoist": {
       "command": "npx",
       "args": ["-y", "mcp-remote", "https://ai.todoist.net/mcp"],

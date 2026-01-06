@@ -33,10 +33,11 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch')
     environment: ${{ github.event.inputs.environment || 'production' }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,14 +65,14 @@ jobs:
           set -euo pipefail
 
           if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "⚠️ RAILWAY_TOKEN não configurado em Secrets. Falhando o job." >&2
+            echo "❌ RAILWAY_TOKEN não configurado em Secrets. Falhando o job." >&2
             exit 1
           fi
 
           # Em CI, usamos Project Token (RAILWAY_TOKEN)
           # Deploy direto sem 'railway link' (que requer account token)
           if ! railway up --service assistente-juridico-pje --environment "${RAILWAY_ENVIRONMENT}" --detach; then
-            echo "⚠️ Railway deploy falhou. Verifique as configurações do projeto no Railway." >&2
+            echo "❌ Railway deploy falhou. Verifique as configurações do projeto no Railway." >&2
             exit 1
           fi
 

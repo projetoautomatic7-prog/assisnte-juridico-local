@@ -1,0 +1,59 @@
+name: Codex PR Review
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Revisor do Codex
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    if: github.event.label.name == 'codex-review'
+
+    steps:
+      - name: Verificar se OPENAI_API_KEY está configurada
+        id: check_key
+        run: |
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "has_key=false" >> $GITHUB_OUTPUT
+            echo "⚠️ OPENAI_API_KEY não configurada. Workflow será pulado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_key=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout code
+        if: steps.check_key.outputs.has_key == 'true'
+        uses: actions/checkout@v4
+
+      - name: Revisor do Codex
+        if: steps.check_key.outputs.has_key == 'true'
+        uses: p2achAI/codex-reviewer@v1
+        with:
+          github_token: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          label: "codex-review"
+          model: "o4-mini"
+          language: "portuguese"
+          custom_prompt: |
+            Faça uma revisão criteriosa e objetiva do PR (modo MANUTENÇÃO).
+            
+            Requisitos:
+            - Resuma as mudanças em bullets.
+            - Aponte riscos de bugs/regressões e edge cases.
+            - Sugira melhorias pequenas e seguras (evitar novas features).
+            - Respeite segurança/LGPD: não sugerir logs de dados sensíveis.
+            - Se houver problemas de tipagem TypeScript, aponte exatamente onde.
+            
+            Formato da resposta:
+            1) Resumo
+            2) Pontos positivos
+            3) Problemas encontrados (com severidade)
+            4) Sugestões de correção (passo a passo)
