@@ -40,7 +40,7 @@ jobs:
           github_token: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           label: "codex-review"
-          model: "o4-mini"
+          model: "gpt-4o-mini"
           language: "portuguese"
           custom_prompt: |
             Faça uma revisão criteriosa e objetiva do PR (modo MANUTENÇÃO).
