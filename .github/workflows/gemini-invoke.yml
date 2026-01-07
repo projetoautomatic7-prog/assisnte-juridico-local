@@ -38,10 +38,22 @@ jobs:
       pull-requests: read
 
     steps:
+      - name: Verificar se API key está configurada
+        id: check_key
+        run: |
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ GEMINI_API_KEY não configurada. Workflow será pulado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout do repositório
+        if: steps.check_key.outputs.has_key == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        if: steps.check_key.outputs.has_key == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
@@ -49,6 +61,7 @@ jobs:
 
       - name: Preparar prompt
         id: prepare-prompt
+        if: steps.check_key.outputs.has_key == 'true'
         run: |
           PROMPT="${{ inputs.prompt }}"
           if [ -n "${{ inputs.additional_context }}" ]; then
@@ -60,6 +73,7 @@ jobs:
 
       - name: Rodar Gemini CLI (invoke)
         id: gemini
+        if: steps.check_key.outputs.has_key == 'true'
         uses: google-github-actions/run-gemini-cli@v0.1.18
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -71,6 +85,12 @@ jobs:
       - name: Publicar resumo
         if: always()
         run: |
+          if [ "${{ steps.check_key.outputs.has_key }}" != "true" ]; then
+            echo "## Gemini (invoke)" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ Workflow pulado: GEMINI_API_KEY não configurada." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           echo "## Resultado do Gemini (invoke)" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ steps.gemini.outputs.summary }}" ]; then
             echo "${{ steps.gemini.outputs.summary }}" >> "$GITHUB_STEP_SUMMARY"
