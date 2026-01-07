@@ -509,5 +509,8 @@
     "cursor-workspace": true
   },
   "chat.mcp.gallery.enabled": true,
-  "github.copilot.chat.githubMcpServer.enabled": true
+  "github.copilot.chat.githubMcpServer.enabled": true,
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  }
 }
