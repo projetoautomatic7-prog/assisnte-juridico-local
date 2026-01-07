@@ -25,7 +25,7 @@ defaults:
 jobs:
   debugger:
     if: |-
-      ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}
+      ${{ vars.GEMINI_DEBUG == 'true' || vars.ACTIONS_STEP_DEBUG == 'true' }}
     runs-on: "ubuntu-latest"
     permissions:
       contents: "read"
@@ -74,11 +74,13 @@ jobs:
       - name: "Check credentials"
         id: "check_credentials"
         run: |
-          if [ -n "${{ secrets.GEMINI_API_KEY }}" ] || [ -n "${{ vars.APP_ID }}" ]; then
-            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          # Gemini CLI precisa de autenticação Google (neste repo: GEMINI_API_KEY).
+          # APP_ID é apenas para autenticação GitHub (comentários/PRs) e não substitui a credencial do Gemini.
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "has_credentials=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_credentials=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Gemini credentials not configured. Skipping." >&2
+            echo "has_credentials=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ GEMINI_API_KEY não configurada. Pulando execução do Gemini." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: "Mint identity token"
@@ -176,7 +178,7 @@ jobs:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
       model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
-      debug: ${{ vars.GEMINI_DEBUG || 'false' }}
+      debug: ${{ vars.GEMINI_DEBUG == 'true' }}
       cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
     secrets: "inherit"
 
@@ -194,7 +196,7 @@ jobs:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
       model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
-      debug: ${{ vars.GEMINI_DEBUG || 'false' }}
+      debug: ${{ vars.GEMINI_DEBUG == 'true' }}
       cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
     secrets: "inherit"
 
@@ -212,7 +214,7 @@ jobs:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
       model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
-      debug: ${{ vars.GEMINI_DEBUG || 'false' }}
+      debug: ${{ vars.GEMINI_DEBUG == 'true' }}
       cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
     secrets: "inherit"
 
