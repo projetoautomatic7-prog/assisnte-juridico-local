@@ -1,3 +1,7 @@
+---
+applyTo: "**"
+---
+
 # Instruções para o GitHub Copilot
 
 Regra absoluta de ética do app e do codificador, copilot etc: esta proibido usar qualquer tipo de simulação: Stub,  Mock, Synthetic Data, Fake,Dummy, Test Doubles,  no app em desenvolvimento e em produção, sendo permitido somente testes reais.

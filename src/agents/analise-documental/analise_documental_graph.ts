@@ -95,7 +95,56 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
             validatedInput.documentoTexto.length
           );
 
-          return this.addAgentMessage(current, resultMessage);
+          // ✅ Tentar parsear como structured output
+          const parsed = parseStructuredOutput(
+            AnaliseDocumentalOutputSchema,
+            analysisText,
+            "Análise Documental"
+          );
+
+          if (parsed.success && parsed.data) {
+            const formatted = formatAnaliseDocumentalOutput(parsed.data);
+
+            span?.setAttribute("analise.structured_output", "true");
+            span?.setAttribute(
+              "analise.pessoas_count",
+              parsed.data.entidades_extraidas.pessoas.length
+            );
+            span?.setAttribute(
+              "analise.empresas_count",
+              parsed.data.entidades_extraidas.empresas.length
+            );
+
+            current = updateState(current, {
+              currentStep: "analise-documental:extracted",
+              data: {
+                ...current.data,
+                entities: entitiesExtracted,
+                tipoDocumento: validatedInput.tipoDocumento,
+                structuredOutput: parsed.data,
+                useStructuredFormat: true,
+              },
+              completed: true,
+            });
+
+            return this.addAgentMessage(current, formatted);
+          } else {
+            // Fallback: usar resultado original
+            span?.setAttribute("analise.structured_output", "false");
+
+            current = updateState(current, {
+              currentStep: "analise-documental:extracted",
+              data: {
+                ...current.data,
+                entities: entitiesExtracted,
+                tipoDocumento: validatedInput.tipoDocumento,
+              },
+              completed: true,
+            });
+
+            return this.addAgentMessage(current, analysisText);
+          }
+>>>>>>> Stashed changes
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);

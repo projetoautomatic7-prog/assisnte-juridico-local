@@ -11,6 +11,9 @@ dist/
 dist-ssr/
 *.local
 
+# Ignorar cache de módulos Go (não faz parte do app)
+pkg/
+
 # Ignorar arquivos de log
 npm-debug.log*
 yarn-debug.log*
