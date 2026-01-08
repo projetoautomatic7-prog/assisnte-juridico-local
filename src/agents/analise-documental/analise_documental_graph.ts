@@ -144,7 +144,6 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
 
             return this.addAgentMessage(current, analysisText);
           }
->>>>>>> Stashed changes
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);
