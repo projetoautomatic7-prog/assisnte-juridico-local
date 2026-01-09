@@ -10,7 +10,6 @@
 
 import { Span as OtelSpan, SpanStatusCode, trace } from "@opentelemetry/api";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { Resource } from "@opentelemetry/resources";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
@@ -21,9 +20,14 @@ const SERVICE_NAME = "assistente-juridico-pje";
 const SERVICE_VERSION = "1.0.1";
 
 // Endpoint do AI Toolkit (HTTP OTLP)
+// Suporta: AI Toolkit, Azure Monitor, Dynatrace, Datadog, Honeycomb, Jaeger
 const rawOtlpEndpoint = import.meta.env.VITE_OTLP_ENDPOINT;
 const OTLP_ENDPOINT = typeof rawOtlpEndpoint === "string" ? rawOtlpEndpoint : undefined;
 const TRACING_ENABLED = import.meta.env.VITE_ENABLE_TRACING;
+
+// Dynatrace-specific configuration
+const DYNATRACE_API_TOKEN = import.meta.env.VITE_DYNATRACE_API_TOKEN;
+const DYNATRACE_ENV_ID = import.meta.env.VITE_DYNATRACE_ENV_ID;
 
 // Provider global
 let tracerProvider: WebTracerProvider | null = null;
@@ -73,11 +77,19 @@ export function initializeOpenTelemetry(): void {
     });
 
     // Configurar exportador OTLP
+    const exporterHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Adicionar header de autenticação para Dynatrace se configurado
+    if (DYNATRACE_API_TOKEN && OTLP_ENDPOINT.includes("dynatrace")) {
+      exporterHeaders["Authorization"] = `Api-Token ${DYNATRACE_API_TOKEN}`;
+      console.log("🔍 [OpenTelemetry] Configurando autenticação Dynatrace");
+    }
+
     const otlpExporter = new OTLPTraceExporter({
       url: OTLP_ENDPOINT,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: exporterHeaders,
       // Timeout para evitar travar a aplicação
       timeoutMillis: 5000,
     });

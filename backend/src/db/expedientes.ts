@@ -102,13 +102,13 @@ export async function salvarExpediente(expediente: Expediente): Promise<Expedien
 export async function inicializarTabelaExpedientes() {
   const query = `
     CREATE TABLE IF NOT EXISTS expedientes (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id TEXT PRIMARY KEY,
       numero_processo VARCHAR(255) NOT NULL,
       tribunal VARCHAR(50),
       tipo VARCHAR(100),
       titulo TEXT,
       conteudo TEXT,
-      data_disponibilizacao DATE,
+      data_disponibilizacao TIMESTAMP,
       nome_orgao VARCHAR(255),
       autor TEXT,
       reu TEXT,
@@ -123,10 +123,10 @@ export async function inicializarTabelaExpedientes() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE INDEX IF NOT EXISTS idx_expedientes_numero_processo ON expedientes(numero_processo);
-    CREATE INDEX IF NOT EXISTS idx_expedientes_tribunal ON expedientes(tribunal);
-    CREATE INDEX IF NOT EXISTS idx_expedientes_data ON expedientes(data_disponibilizacao);
-    CREATE INDEX IF NOT EXISTS idx_expedientes_lawyer ON expedientes(lawyer_name);
+    -- CREATE INDEX IF NOT EXISTS idx_expedientes_numero_processo ON expedientes(numero_processo);
+    -- CREATE INDEX IF NOT EXISTS idx_expedientes_tribunal ON expedientes(tribunal);
+    -- CREATE INDEX IF NOT EXISTS idx_expedientes_data ON expedientes(data_disponibilizacao);
+    -- CREATE INDEX IF NOT EXISTS idx_expedientes_lawyer ON expedientes(lawyer_name);
   `;
 
   try {

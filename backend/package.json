@@ -21,6 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@dynatrace/oneagent-sdk": "^1.5.0",
     "@google/adk": "^0.2.1",
     "@google/generative-ai": "^0.21.0",
     "@types/express-rate-limit": "^5.1.3",

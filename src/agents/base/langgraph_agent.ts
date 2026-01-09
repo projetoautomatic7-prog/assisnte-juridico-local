@@ -430,8 +430,11 @@ export abstract class LangGraphAgent {
     if (process.env.DEBUG_TESTS === "true") {
       console.debug(`[${this.config.agentName}] Attempt ${attempt} failed:`, error);
     }
-    if (this.isLastAttempt(attempt)) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isAbortError = errorMessage.toLowerCase().includes("abort");
+
+    if (this.isLastAttempt(attempt) || isAbortError) {
       return updateState(state, {
         error: errorMessage,
         completed: true,
@@ -448,7 +451,23 @@ export abstract class LangGraphAgent {
    */
   private async applyBackoffDelay(attempt: number): Promise<void> {
     const delay = this.config.retryDelayMs * Math.pow(2, attempt);
-    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    // Check if aborted before starting delay
+    if (this.abortController?.signal.aborted) {
+      throw new Error("Execution aborted during backoff");
+    }
+
+    await new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(resolve, delay);
+
+      // Listen for abort during backoff
+      if (this.abortController) {
+        this.abortController.signal.addEventListener("abort", () => {
+          clearTimeout(timeoutId);
+          reject(new Error("Execution aborted during backoff"));
+        });
+      }
+    });
   }
 
   /**

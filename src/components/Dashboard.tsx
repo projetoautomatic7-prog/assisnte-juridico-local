@@ -200,7 +200,7 @@ export default function Dashboard({ onNavigate }: Readonly<DashboardProps>) {
   }, [processes]);
 
   return (
-    <div className="p-4 lg:p-8 flex flex-col gap-6">
+    <div className="p-4 lg:p-8 flex flex-col gap-6" data-testid="dashboard">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div>

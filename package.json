@@ -51,6 +51,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@doist/todoist-api-typescript": "^6.1.10",
     "@floating-ui/react": "^0.27.16",
+    "@google-cloud/workflows": "^5.0.0",
     "@google/adk": "^0.2.1",
     "@hookform/resolvers": "^5.2.2",
     "@langchain/core": "^1.1.8",
