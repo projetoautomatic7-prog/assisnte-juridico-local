@@ -689,9 +689,21 @@
   "workbench.iconTheme": "material-icon-theme",
   "workbench.startupEditor": "none",
 
-  // Terminal
+  // Terminal (login shell + tokens para Copilot CLI)
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.fontSize": 13,
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "/bin/bash",
+      "args": ["-l"],
+      "env": {
+        "GH_TOKEN": "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",
+        "GITHUB_TOKEN": "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",
+        "NVM_DIR": "/usr/local/share/nvm/current",
+        "PATH": "${env:PATH}:/usr/local/share/nvm/current/bin"
+      }
+    }
+  },
 
   // Editor
   "editor.tabSize": 2,

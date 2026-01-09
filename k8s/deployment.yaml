@@ -15,53 +15,55 @@ spec:
         app: assistente-juridico
     spec:
       containers:
-      - name: assistente-juridico
-        image: assistente-juridico-p:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 80
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: VITE_APP_ENV
-          valueFrom:
-            secretKeyRef:
-              name: assistente-juridico-secrets
-              key: app-env
-        - name: VITE_GOOGLE_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: assistente-juridico-secrets
-              key: google-client-id
-        - name: VITE_GOOGLE_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: assistente-juridico-secrets
-              key: google-api-key
-        - name: VITE_TODOIST_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: assistente-juridico-secrets
-              key: todoist-api-key
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: assistente-juridico
+          image: assistente-juridico-p:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: VITE_APP_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: assistente-juridico-secrets
+                  key: app-env
+            - name: VITE_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: assistente-juridico-secrets
+                  key: google-client-id
+            - name: VITE_GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: assistente-juridico-secrets
+                  key: google-api-key
+            - name: VITE_TODOIST_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: assistente-juridico-secrets
+                  key: todoist-api-key
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -74,4 +76,4 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: 3000

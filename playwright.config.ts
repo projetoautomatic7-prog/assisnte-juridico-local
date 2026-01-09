@@ -51,7 +51,8 @@ export default defineConfig({
         env: {
           ...(process.env || {}),
           DISABLE_API_PROXY: "false",
-          VITE_API_TARGET: `http://127.0.0.1:${process.env.DEV_API_PORT || 5252}`,
+          VITE_API_TARGET:
+            process.env.VITE_API_TARGET || `http://127.0.0.1:${process.env.DEV_API_PORT || 5252}`,
         },
       },
   use: {

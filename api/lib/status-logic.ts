@@ -134,7 +134,9 @@ function buildHealthInfo(geminiKey: string | undefined): Record<string, string |
 
   return {
     ai_provider: aiProvider,
-    ai_configured: aiProvider !== "none",
+    // ✅ Core do sistema: consideramos "configurado" apenas quando Gemini está disponível.
+    // OPENAI_API_KEY pode existir no ambiente por outros motivos e não deve marcar o app como saudável.
+    ai_configured: !!geminiKey,
     openai_key_preview: getKeyPreview(process.env.OPENAI_API_KEY, "sk-"),
     gemini_key_preview: getKeyPreview(geminiKey),
     gemini_var_source: getGeminiVarSource(geminiKey),
@@ -147,7 +149,8 @@ function buildHealthInfo(geminiKey: string | undefined): Record<string, string |
  * Determina o status baseado em checks
  */
 function getHealthStatus(checks: Record<string, boolean>): { status: string; code: number } {
-  const aiConfigured = checks.openai_api_key || checks.gemini_api_key;
+  // ✅ Core do sistema: saúde depende do Gemini estar configurado.
+  const aiConfigured = checks.gemini_api_key;
   return {
     status: aiConfigured ? "healthy" : "unhealthy",
     code: aiConfigured ? 200 : 500,

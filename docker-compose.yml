@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  # Banco de dados principal (Minutas/Expedientes)
+  postgres:
+    image: postgres:15-alpine
+    container_name: assistente_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: assistente_juridico
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.docker/data/postgres:/var/lib/postgresql/data
+    networks:
+      - assistente-stack
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d assistente_juridico"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Banco de dados chave-valor (Cache/Rate Limiter)
+  redis:
+    image: redis:alpine
+    container_name: assistente_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker/data/redis:/data
+    networks:
+      - assistente-stack
+    restart: unless-stopped
+    # Habilitar persistência
+    command: redis-server --appendonly yes
+
+  # Banco de dados vetorial (RAG/Busca Semântica)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: assistente_qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./.docker/data/qdrant:/qdrant/storage
+    networks:
+      - assistente-stack
+    restart: unless-stopped
+
+  # Interface visual para gerenciar banco de dados (Opcional)
+  adminer:
+    image: adminer
+    container_name: assistente_adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - assistente-stack
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+networks:
+  assistente-stack:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:

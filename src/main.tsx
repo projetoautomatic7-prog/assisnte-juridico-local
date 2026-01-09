@@ -51,6 +51,14 @@ const initAnalyticsServices = () => {
 // 1. Monitoring: Carrega após primeira interação ou após 3s (o que ocorrer primeiro)
 // 2. Analytics: Carrega após 2s para não impactar FCP/LCP
 
+// Porta padrão do servidor `vite preview` usada nos testes E2E
+const VITE_PREVIEW_PORT = "4173";
+
+// Detectar ambiente de teste
+const isTest =
+  import.meta.env.MODE === "test" ||
+  (typeof window !== "undefined" && window.location.port === VITE_PREVIEW_PORT);
+
 // Monitoring - Carregar após interação do usuário
 const initOnInteraction = () => {
   const events = ["click", "keydown", "scroll", "touchstart"];
@@ -76,12 +84,12 @@ const initOnIdle = () => {
   }
 };
 
-// Analytics - Inicializa após 2s
-setTimeout(initAnalyticsServices, 2000);
-
-// Monitoring - Estratégias paralelas
-initOnInteraction();
-initOnIdle();
+// Analytics e Monitoring - Pular em testes para acelerar
+if (!isTest) {
+  setTimeout(initAnalyticsServices, 2000);
+  initOnInteraction();
+  initOnIdle();
+}
 
 createRoot(rootElement).render(
   <ErrorBoundary>

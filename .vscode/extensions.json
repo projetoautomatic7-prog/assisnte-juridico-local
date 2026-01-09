@@ -24,6 +24,9 @@
     // YAML & JSON
     "redhat.vscode-yaml",
 
+    // Azure Functions (necessário para comandos appFunction.*)
+    "ms-azuretools.vscode-azurefunctions",
+
     // Utilities
     "formulahendry.auto-close-tag",
     "pkief.material-icon-theme",

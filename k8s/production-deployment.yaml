@@ -18,36 +18,41 @@ spec:
         environment: production
     spec:
       containers:
-      - name: assistente-juridico
-        image: registry.gitlab.com/thiagobodevan-a11y/assistente-juridico-p:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 3000
-          name: http
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "3000"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "200m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /api/status
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/status
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: assistente-juridico
+          image: registry.gitlab.com/thiagobodevan-a11y/assistente-juridico-p:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: assistente-juridico-secrets
+                  key: database-url
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -60,9 +65,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
   selector:
     app: assistente-juridico

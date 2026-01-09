@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: assistente-juridico-metrics
+  labels:
+    app: assistente-juridico
+    monitoring: prometheus
+spec:
+  type: ClusterIP
+  selector:
+    app: assistente-juridico
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: assistente-juridico-monitor
+  labels:
+    app: assistente-juridico
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: assistente-juridico
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

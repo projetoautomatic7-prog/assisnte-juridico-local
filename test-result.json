@@ -79,7 +79,7 @@ Call log:
       "stderr": "pipe",
       "env": {
         "GIT_COMMITTER_NAME": "GitHub",
-        "GITHUB_TOKEN": "ghu_LpWeFGDmAY0VoYcTQjHvie8HDtat2l1WtkII",
+        "GITHUB_TOKEN": "<TOKEN_REDACTED>",
         "GITHUB_CODESPACE_TOKEN": "B3ZZNULOWPZOHAQTXJEJ7STJLJ3ZVANCNFSM4ASLHHIQ",
         "DATABASE_URL": "postgresql://neondb_owner:npg_6qYj5hXWJzLB@ep-lively-firefly-a85y0w0i-pooler.eastus2.azure.neon.tech/neondb?sslmode=require",
         "USER": "node",
