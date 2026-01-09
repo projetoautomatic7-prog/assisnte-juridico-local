@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import pg from "pg";
 import { fileURLToPath } from "url";
+// import { inicializarTabelaExpedientes } from "./expedientes.js"; // Removido para usar import dinâmico
 
 console.log("Starting db init script...");
 
@@ -31,6 +32,7 @@ async function initDb() {
 
   const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
   });
 
   try {
@@ -44,6 +46,12 @@ async function initDb() {
     console.log("📝 Applying schema...");
     await client.query(schemaSql);
     console.log("✅ Schema applied successfully.");
+
+    console.log("📝 Initializing 'expedientes' table...");
+    // Import dinâmico para garantir que env vars já estejam carregadas
+    const { inicializarTabelaExpedientes } = await import("./expedientes.js");
+    await inicializarTabelaExpedientes();
+    console.log("✅ 'expedientes' table initialized.");
 
     client.release();
   } catch (err) {
