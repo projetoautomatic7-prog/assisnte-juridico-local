@@ -76,14 +76,29 @@ export interface GeminiResponse {
 // ============================================================================
 
 /** Configuração padrão do Gemini */
+function getDefaultGeminiModel(): string {
+  const fromProcessEnv =
+    typeof process !== "undefined" && process.env
+      ? (process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL)
+      : undefined;
+
+  const fromImportMetaEnv =
+    typeof import.meta !== "undefined" && import.meta.env
+      ? (import.meta.env.VITE_GEMINI_MODEL as string | undefined)
+      : undefined;
+
+  const model = (fromProcessEnv || fromImportMetaEnv || "gemini-2.5-pro").trim();
+  return model || "gemini-2.5-pro";
+}
+
 const DEFAULT_CONFIG: GeminiConfig = {
-  model: "gemini-2.5-pro",
+  model: getDefaultGeminiModel(),
   temperature: 0.7,
   maxOutputTokens: 4096,
 };
 
 /** URL base da API Gemini */
-const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1/models";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** Timeout padrão de requisição (em ms) para evitar funções travadas */
 const DEFAULT_TIMEOUT_MS = 25_000;
@@ -202,32 +217,18 @@ export async function callGemini(
   prompt: string,
   config: Partial<GeminiConfig> = {}
 ): Promise<GeminiResponse> {
-  // 🧪 MOCK para testes (retorna resposta simulada instantaneamente)
-  const useMock = process.env.USE_MOCK_GEMINI === "true" || process.env.NODE_ENV === "test";
-  if (useMock) {
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Simular latência mínima
-    return {
-      text: "Resposta mockada do Gemini para testes",
-      metadata: {
-        model: config.model || "gemini-2.5-pro",
-        promptTokens: 50,
-        responseTokens: 20,
-        totalTokens: 70,
-      },
-    };
-  }
+  // Variáveis no escopo externo para uso no catch
+  const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  // Criar span de tracing para chamada LLM
-  const llmSpan = startLLMSpan("gemini-2.5-pro", {
-    temperature: config.temperature,
-    maxTokens: config.maxOutputTokens,
+  // Criar span de tracing para chamada LLM (usa o modelo efetivo)
+  const llmSpan = startLLMSpan(finalConfig.model, {
+    temperature: finalConfig.temperature,
+    maxTokens: finalConfig.maxOutputTokens,
     attributes: {
       "llm.operation": "generateContent",
       "llm.prompt_length": prompt.length,
     },
   });
-  // Variáveis no escopo externo para uso no catch
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
   let endpoint = "";
 
   try {

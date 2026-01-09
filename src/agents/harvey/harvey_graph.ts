@@ -1,21 +1,16 @@
+import { callGemini } from "@/lib/gemini-service";
+import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import { logAgentExecution, logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { callGemini } from "@/lib/gemini-service";
-import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
-import { validateHarveyInput, ValidationError } from "./validators";
 import {
-  HARVEY_SYSTEM_PROMPT,
+  formatErrorMessage,
   generateAnalysisPrompt,
   generateUrgencyPrompt,
-  formatErrorMessage,
+  HARVEY_SYSTEM_PROMPT,
 } from "./templates";
-import {
-  logger,
-  logAgentExecution,
-  logStructuredError,
-  logValidationError,
-} from "../base/agent_logger";
+import { validateHarveyInput, ValidationError } from "./validators";
 
 export class HarveyAgent extends LangGraphAgent {
   protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {

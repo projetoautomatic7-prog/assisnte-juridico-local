@@ -16,11 +16,11 @@
 /** Chave da API do Gemini (definida em .env) */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-/** Modelo padrão do Gemini */
-const GEMINI_MODEL = "gemini-2.5-pro";
+/** Modelo padrão do Gemini (configurável via env) */
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-pro";
 
 /** URL base da API do Gemini */
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
  * Configurações opcionais para chamadas ao Gemini

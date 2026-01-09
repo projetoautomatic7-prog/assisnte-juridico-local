@@ -205,7 +205,7 @@ export function isValidApiKey(key: string | null | undefined, provider?: string)
  */
 export class GeminiClient {
   private readonly apiKey: string | null;
-  private readonly baseUrl = "https://generativelanguage.googleapis.com/v1/models";
+  private readonly baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
   private readonly retryConfig: RetryConfig;
 
   /**
@@ -282,7 +282,15 @@ export class GeminiClient {
       );
     }
 
-    const modelId = model || "gemini-2.5-pro";
+    const envModel =
+      (typeof process !== "undefined" && process.env
+        ? (process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL)
+        : undefined) ||
+      (typeof import.meta !== "undefined" && import.meta.env
+        ? (import.meta.env.VITE_GEMINI_MODEL as string | undefined)
+        : undefined);
+
+    const modelId = (model || envModel || "gemini-2.5-pro").trim() || "gemini-2.5-pro";
     const prompt = this.buildPromptFromMessages(messages);
 
     const url = `${this.baseUrl}/${modelId}:generateContent?key=${encodeURIComponent(this.apiKey)}`;

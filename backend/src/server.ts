@@ -3,6 +3,14 @@
 // Em dev: via import abaixo
 import "./datadog.js";
 
+// 🔍 Dynatrace OneAgent SDK - Monitoramento APM e tracing
+import { initializeDynatrace } from "./dynatrace.js";
+import {
+  addDynatraceBusinessContext,
+  dynatraceAgentMiddleware,
+  dynatraceLLMMiddleware,
+} from "./middlewares/dynatrace-middleware.js";
+
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -73,6 +81,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 🔍 Dynatrace: Middleware para adicionar contexto de agentes
+app.use(addDynatraceBusinessContext);
+app.use(dynatraceAgentMiddleware);
+
 // Rate Limiting - Proteção contra abuso de API
 // Configurável via variáveis de ambiente para testes
 const isTestEnv = process.env.NODE_ENV === "test";
@@ -136,16 +148,16 @@ app.use("/api/spark", sparkRouter);
 app.use("/api/kv", kvRouter);
 // Rate limiting específico para endpoints de IA (se habilitado)
 if (rateLimitEnabled && !isTestEnv) {
-  app.use("/api/llm", aiLimiter, llmRouter);
+  app.use("/api/llm", aiLimiter, dynatraceLLMMiddleware, llmRouter);
   app.use("/api/agents", aiLimiter, agentsRouter);
-  app.use("/api/ai", aiLimiter, aiCommandsRouter);
-  app.use("/api/llm-stream", aiLimiter, llmStreamRouter);
+  app.use("/api/ai", aiLimiter, dynatraceLLMMiddleware, aiCommandsRouter);
+  app.use("/api/llm-stream", aiLimiter, dynatraceLLMMiddleware, llmStreamRouter);
   app.use("/api/rag", aiLimiter, ragRouter);
 } else {
-  app.use("/api/llm", llmRouter);
+  app.use("/api/llm", dynatraceLLMMiddleware, llmRouter);
   app.use("/api/agents", agentsRouter);
-  app.use("/api/ai", aiCommandsRouter);
-  app.use("/api/llm-stream", llmStreamRouter);
+  app.use("/api/ai", dynatraceLLMMiddleware, aiCommandsRouter);
+  app.use("/api/llm-stream", dynatraceLLMMiddleware, llmStreamRouter);
   app.use("/api/rag", ragRouter);
 }
 // Rotas sem rate limiting adicional
@@ -205,6 +217,9 @@ app.listen(Number(PORT), "0.0.0.0", async () => {
   logInfo(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
   logInfo(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
   logInfo(`✅ Health check: http://localhost:${PORT}/health`);
+
+  // 🔍 Inicializar Dynatrace OneAgent SDK
+  initializeDynatrace();
 
   // Inicializar tabela de expedientes
   try {

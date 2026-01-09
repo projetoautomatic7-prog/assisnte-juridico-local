@@ -1,0 +1,184 @@
+[
+  {
+    "id": "harvey-001",
+    "input": {
+      "problema": "Cliente foi demitido sem justa causa durante pandemia e não recebeu verbas rescisórias completas",
+      "contexto": "Empregado CLT, 5 anos de empresa, demissão em maio/2020, trabalhou presencialmente durante lockdown"
+    },
+    "expected_output": {
+      "estrategia_recomendada": "Ação trabalhista para cobrança de verbas rescisórias + indenização por exposição ao risco",
+      "fundamento_legal": ["CLT art. 477", "CLT art. 467", "Lei 14.020/2020 art. 8º"],
+      "chances_sucesso": "alta",
+      "valor_causa_estimado": "R$ 15.000 - R$ 25.000",
+      "prazo_acao": "2 anos (prescrição bienal - CLT art. 11)",
+      "documentos_necessarios": [
+        "CTPS",
+        "Contratos de trabalho",
+        "Holerites últimos 12 meses",
+        "Termo de rescisão",
+        "Comprovante de depósito FGTS"
+      ],
+      "riscos_identificados": [
+        "Prescrição bienal próxima do vencimento",
+        "Necessidade de prova do trabalho presencial durante pandemia"
+      ],
+      "observacoes": [
+        "Verificar se empresa recebeu auxílio emergencial",
+        "Documentar exposição ao risco COVID-19"
+      ]
+    },
+    "metadata": {
+      "difficulty": "medium",
+      "tags": ["trabalhista", "rescisao", "pandemia", "verbas-rescisorias"]
+    }
+  },
+  {
+    "id": "harvey-002",
+    "input": {
+      "problema": "Consumidor comprou carro com defeito oculto no motor, concessionária se recusa a reparar",
+      "contexto": "Veículo 0km comprado há 8 meses, motor apresentou falha grave aos 6 meses, ainda em garantia"
+    },
+    "expected_output": {
+      "estrategia_recomendada": "Ação de rescisão contratual com devolução de valores + danos morais",
+      "fundamento_legal": ["CDC art. 18", "CDC art. 20", "CDC art. 35", "CC art. 441"],
+      "chances_sucesso": "muito_alta",
+      "valor_causa_estimado": "R$ 80.000 - R$ 120.000",
+      "prazo_acao": "5 anos (prescrição decenal - CC art. 205)",
+      "documentos_necessarios": [
+        "Nota fiscal de compra",
+        "Contrato de compra e venda",
+        "Laudo técnico do defeito",
+        "Notificação extrajudicial",
+        "Comunicações com concessionária"
+      ],
+      "riscos_identificados": [
+        "Necessidade de perícia técnica judicial",
+        "Possível alegação de mau uso"
+      ],
+      "observacoes": [
+        "Solicitar laudo de perito independente antes da ação",
+        "Fotografar e documentar todos os defeitos"
+      ]
+    },
+    "metadata": {
+      "difficulty": "easy",
+      "tags": ["consumidor", "defeito-oculto", "veiculo", "garantia"]
+    }
+  },
+  {
+    "id": "harvey-003",
+    "input": {
+      "problema": "Divórcio litigioso com disputa de guarda, pensão alimentícia e partilha de bens",
+      "contexto": "Casamento de 12 anos, 2 filhos menores (8 e 10 anos), patrimônio de R$ 800 mil (1 imóvel + veículos + poupança), cônjuge com histórico de violência doméstica"
+    },
+    "expected_output": {
+      "estrategia_recomendada": "Ação de divórcio litigioso cumulada com guarda unilateral, alimentos e partilha de bens",
+      "fundamento_legal": [
+        "CC art. 1.571",
+        "CC art. 1.584",
+        "CC art. 1.694",
+        "Lei 11.340/2006 (Lei Maria da Penha)"
+      ],
+      "chances_sucesso": "alta",
+      "valor_causa_estimado": "R$ 400.000 (50% do patrimônio)",
+      "prazo_acao": "Imediato (sem prazo prescricional)",
+      "documentos_necessarios": [
+        "Certidão de casamento",
+        "Certidões de nascimento dos filhos",
+        "Boletins de ocorrência",
+        "Medidas protetivas",
+        "Laudos médicos",
+        "Documentos dos bens"
+      ],
+      "riscos_identificados": [
+        "Possível litígio prolongado",
+        "Necessidade de avaliação psicológica dos menores",
+        "Risco de ocultação patrimonial"
+      ],
+      "observacoes": [
+        "Requerer medidas de urgência para guarda provisória",
+        "Solicitar bloqueio de bens para evitar dilapidação",
+        "Avaliar necessidade de acompanhamento psicológico para crianças"
+      ]
+    },
+    "metadata": {
+      "difficulty": "hard",
+      "tags": ["familia", "divorcio", "guarda", "violencia-domestica", "partilha"]
+    }
+  },
+  {
+    "id": "harvey-004",
+    "input": {
+      "problema": "Empresa sofreu cobrança indevida de ICMS-ST por 3 anos, totalizando R$ 2 milhões",
+      "contexto": "Comércio varejista de eletrônicos, substituição tributária aplicada incorretamente pelo fornecedor, documentação fiscal completa disponível"
+    },
+    "expected_output": {
+      "estrategia_recomendada": "Ação de repetição de indébito tributário",
+      "fundamento_legal": ["CTN art. 165", "CTN art. 168", "Súmula 546 STJ"],
+      "chances_sucesso": "alta",
+      "valor_causa_estimado": "R$ 2.000.000",
+      "prazo_acao": "5 anos (prescrição quinquenal - CTN art. 168)",
+      "documentos_necessarios": [
+        "Notas fiscais de entrada",
+        "DAREs de pagamento",
+        "Livros fiscais",
+        "Parecer contábil",
+        "Documentos do regime de ST"
+      ],
+      "riscos_identificados": [
+        "Necessidade de prova robusta da cobrança indevida",
+        "Possível contestação da Fazenda Estadual"
+      ],
+      "observacoes": [
+        "Calcular juros SELIC sobre valor a restituir",
+        "Avaliar possibilidade de compensação tributária",
+        "Verificar jurisprudência específica do Estado"
+      ]
+    },
+    "metadata": {
+      "difficulty": "hard",
+      "tags": ["tributario", "icms", "repeticao-indebito", "empresarial"]
+    }
+  },
+  {
+    "id": "harvey-005",
+    "input": {
+      "problema": "Paciente sofreu erro médico em cirurgia, resultando em sequelas permanentes",
+      "contexto": "Cirurgia ortopédica em hospital particular, objeto esquecido no corpo do paciente, 3 cirurgias corretivas necessárias, afastamento do trabalho por 1 ano"
+    },
+    "expected_output": {
+      "estrategia_recomendada": "Ação de indenização por danos materiais e morais contra hospital e médico cirurgião",
+      "fundamento_legal": [
+        "CC art. 186",
+        "CC art. 927",
+        "CC art. 950",
+        "CDC art. 14 (responsabilidade objetiva do hospital)"
+      ],
+      "chances_sucesso": "muito_alta",
+      "valor_causa_estimado": "R$ 300.000 - R$ 500.000",
+      "prazo_acao": "3 anos (prescrição trienal - CC art. 206, §3º, V)",
+      "documentos_necessarios": [
+        "Prontuário médico completo",
+        "Laudos de exames",
+        "Relatório das cirurgias corretivas",
+        "Laudo pericial",
+        "Comprovantes de despesas médicas",
+        "Documentos de afastamento do trabalho"
+      ],
+      "riscos_identificados": [
+        "Necessidade de perícia médica complexa",
+        "Possível alegação de intercorrência cirúrgica"
+      ],
+      "observacoes": [
+        "Solicitar prontuário via judicial se houver recusa",
+        "Contratar perito assistente",
+        "Documentar todas sequelas e limitações",
+        "Calcular lucros cessantes do período de afastamento"
+      ]
+    },
+    "metadata": {
+      "difficulty": "hard",
+      "tags": ["civil", "erro-medico", "saude", "danos-morais", "responsabilidade-civil"]
+    }
+  }
+]

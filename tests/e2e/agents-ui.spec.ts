@@ -14,6 +14,9 @@ test.describe("Agentes IA - Testes de UI e Funcionalidade", () => {
     });
     // Navega para a página inicial onde os agentes são exibidos no dashboard
     await page.goto("/");
+    // Aguarda o React hidratar e o dashboard carregar
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForSelector('[data-testid="dashboard"]', { timeout: 15000 });
   });
 
   test("deve carregar a página de Agentes IA", async ({ page }) => {

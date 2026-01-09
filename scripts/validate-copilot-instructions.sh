@@ -2,7 +2,7 @@
 
 # ?? VALIDA��O DE INSTRU��ES DO COPILOT
 # Verifica se as instru��es est�o configuradas corretamente
-Regra absoluta de ética do app e do codificador, copilot etc: esta proibido usar qualquer tipo de simulação: Stub,  Mock, Synthetic Data, Fake,Dummy, Test Doubles,  no app em desenvolvimento e em produção, sendo permitido somente testes reais.
+# Regra absoluta de ética do app e do codificador, copilot etc: esta proibido usar qualquer tipo de simulação: Stub, Mock, Synthetic Data, Fake, Dummy, Test Doubles, no app em desenvolvimento e em produção, sendo permitido somente testes reais.
 set -e
 
 # Cores
@@ -23,13 +23,13 @@ FAILED=0
 # Fun��o para reportar sucesso
 pass() {
     echo -e "${GREEN}?${NC} $1"
-    ((PASSED++))
+    ((PASSED+=1))
 }
 
 # Fun��o para reportar falha
 fail() {
     echo -e "${RED}?${NC} $1"
-    ((FAILED++))
+    ((FAILED+=1))
 }
 
 # Fun��o para info
@@ -47,7 +47,10 @@ if [ -f ".github/copilot-instructions.md" ]; then
     pass "Arquivo .github/copilot-instructions.md existe"
 
     # Verificar tamanho
-    SIZE=$(stat -f%z ".github/copilot-instructions.md" 2>/dev/null || stat -c%s ".github/copilot-instructions.md" 2>/dev/null)
+    SIZE=$( (stat -c%s ".github/copilot-instructions.md" 2>/dev/null || stat -f%z ".github/copilot-instructions.md" 2>/dev/null) || true )
+    if [ -z "$SIZE" ]; then
+        SIZE=0
+    fi
     SIZE_KB=$((SIZE / 1024))
 
     if [ $SIZE_KB -lt 100 ]; then
@@ -171,14 +174,14 @@ if command -v code &> /dev/null; then
     if code --list-extensions | grep -q "GitHub.copilot"; then
         pass "Extens�o GitHub.copilot instalada"
     else
-        fail "Extens�o GitHub.copilot N�O INSTALADA"
+        info "Extens�o GitHub.copilot N�O instalada (verifique no seu VS Code local/codespace)"
         echo "   Instale com: code --install-extension GitHub.copilot"
     fi
 
     if code --list-extensions | grep -q "GitHub.copilot-chat"; then
         pass "Extens�o GitHub.copilot-chat instalada"
     else
-        fail "Extens�o GitHub.copilot-chat N�O INSTALADA"
+        info "Extens�o GitHub.copilot-chat N�O instalada (verifique no seu VS Code local/codespace)"
         echo "   Instale com: code --install-extension GitHub.copilot-chat"
     fi
 else

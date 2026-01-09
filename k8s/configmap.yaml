@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assistente-juridico-config
+  labels:
+    app: assistente-juridico
+data:
+  # Configurações da aplicação
+  NODE_ENV: "production"
+  PORT: "3001"
+  LOG_LEVEL: "info"
+  
+  # Configurações de performance
+  NODE_OPTIONS: "--max-old-space-size=2048"
+  
+  # URLs base
+  API_BASE_URL: "/api"
+  
+  # Features flags
+  ENABLE_ANALYTICS: "true"
+  ENABLE_SENTRY: "true"
+  ENABLE_DATADOG: "true"
+  
+  # Rate limiting
+  RATE_LIMIT_WINDOW: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # CORS
+  CORS_ORIGIN: "*"
+  
+  # Timeouts (ms)
+  REQUEST_TIMEOUT: "30000"
+  HEALTH_CHECK_INTERVAL: "10000"
