@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS minutas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   titulo TEXT NOT NULL,
   process_id TEXT,
   tipo TEXT NOT NULL,
@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS minutas (
   agente_id TEXT,
   template_id TEXT,
   expediente_id TEXT,
-  variaveis JSONB
+  variaveis OBJECT(DYNAMIC)
 );
 
 -- Create index for faster searches
-CREATE INDEX IF NOT EXISTS idx_minutas_status ON minutas(status);
-CREATE INDEX IF NOT EXISTS idx_minutas_tipo ON minutas(tipo);
-CREATE INDEX IF NOT EXISTS idx_minutas_autor ON minutas(autor);
+-- Note: CrateDB indexes columns by default, so explicit CREATE INDEX using Postgres syntax might cause issues or be redundant.
+-- CREATE INDEX IF NOT EXISTS idx_minutas_status ON minutas(status);
+-- CREATE INDEX IF NOT EXISTS idx_minutas_tipo ON minutas(tipo);
+-- CREATE INDEX IF NOT EXISTS idx_minutas_autor ON minutas(autor);

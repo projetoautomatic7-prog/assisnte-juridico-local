@@ -1,8 +1,9 @@
-# Ignorar node_modules
-node_modules/
-
-# Ignorar arquivos de ambiente
-.env
+node_modules
+.git
+.github
+dist
+build
+.env*
 .env.local
 .env.*.local
 

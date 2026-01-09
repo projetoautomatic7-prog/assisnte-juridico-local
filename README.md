@@ -18,19 +18,25 @@
 📖 **[GUIA COMPLETO DE CONFIGURAÇÃO DO AMBIENTE DE IMPLANTAÇÃO](GUIA_CONFIGURACAO_AMBIENTE_IMPLANTACAO.md)**
 
 Este guia passo a passo cobre:
+
 - ✅ Configuração de variáveis de ambiente
-- ✅ Setup local de desenvolvimento  
+- ✅ Setup local de desenvolvimento
 - ✅ Deploy em produção (Vercel/Railway/Docker)
 - ✅ Validação e testes automatizados
 - ✅ Troubleshooting completo
 
 **Scripts de Setup Rápido:**
+
 ```bash
 # Setup automático (5 minutos)
 ./scripts/setup-rapido.sh
 
 # Validar configuração
 ./scripts/validar-ambiente-deploy.sh
+
+# 🐳 Deploy Local com Docker (Offline/Híbrido)
+./scripts/setup-local-docker.ps1  # Windows
+# (Cria Postgres, Redis e Qdrant locais e configura .env.local)
 
 # Iniciar desenvolvimento
 npm run dev
