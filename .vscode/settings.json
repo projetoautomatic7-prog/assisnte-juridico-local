@@ -972,5 +972,7 @@
   "powershell.integratedConsole.showOnStartup": true,
   "powershell.powerShellAdditionalExePaths": ["/usr/local/bin/pwsh"],
   "powershell.developer.editorServicesWaitForDebugger": false,
-  "powershell.trace.server": "messages"
+  "powershell.trace.server": "messages",
+  "IDX.agenticWorkspace": true,
+  "IDX.aI.showChatInEditorTab": true
 }

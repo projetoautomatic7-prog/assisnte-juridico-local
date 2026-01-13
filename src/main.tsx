@@ -1,13 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { initializeOpenTelemetry } from "./lib/otel-integration";
 import "./index.css";
 
 // 🔍 TRACING: Importar e inicializar OpenTelemetry (DEVE ser primeiro)
-import { initializeOpenTelemetry } from "./lib/otel-integration";
-
-// Inicializar tracing ANTES de qualquer outra coisa
 initializeOpenTelemetry();
 
 const rootElement = document.getElementById("root");
@@ -57,13 +56,13 @@ const VITE_PREVIEW_PORT = "4173";
 // Detectar ambiente de teste
 const isTest =
   import.meta.env.MODE === "test" ||
-  (typeof window !== "undefined" && window.location.port === VITE_PREVIEW_PORT);
+  (typeof globalThis !== "undefined" && globalThis.location.port === VITE_PREVIEW_PORT);
 
 // Monitoring - Carregar após interação do usuário
 const initOnInteraction = () => {
-  const events = ["click", "keydown", "scroll", "touchstart"];
+  const events: Array<keyof WindowEventMap> = ["click", "keydown", "scroll", "touchstart"];
   const handler = () => {
-    events.forEach((e) => globalThis.window.removeEventListener(e, handler, { capture: true }));
+    events.forEach((e) => globalThis.removeEventListener(e, handler, { capture: true }));
     if ("requestIdleCallback" in globalThis) {
       requestIdleCallback(() => initMonitoring(), { timeout: 2000 });
     } else {
@@ -71,7 +70,7 @@ const initOnInteraction = () => {
     }
   };
   events.forEach((e) =>
-    globalThis.window.addEventListener(e, handler, { capture: true, passive: true })
+    globalThis.addEventListener(e, handler, { capture: true, passive: true })
   );
 };
 
@@ -100,9 +99,6 @@ createRoot(rootElement).render(
 );
 
 // ✅ Limpa o timeout de loading quando o React carrega
-if (
-  globalThis.window !== undefined &&
-  (globalThis.window as unknown as { __clearLoadingTimeout?: () => void }).__clearLoadingTimeout
-) {
-  (globalThis.window as unknown as { __clearLoadingTimeout: () => void }).__clearLoadingTimeout();
+if (typeof (globalThis as any).__clearLoadingTimeout === "function") {
+  (globalThis as any).__clearLoadingTimeout();
 }

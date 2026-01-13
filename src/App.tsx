@@ -1,17 +1,18 @@
+import { lazy, Suspense, useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
+import type { User, ViewType } from "@/types";
+import { useAutoMinuta } from "@/hooks/use-auto-minuta";
+import { useKV } from "@/hooks/use-kv";
 import GlobalSearch from "@/components/GlobalSearch";
 import NotificationCenter from "@/components/NotificationCenter";
 import Sidebar from "@/components/Sidebar";
 import { SimpleAuth } from "@/components/SimpleAuth";
 import { Toaster } from "@/components/ui/sonner";
-import { useAutoMinuta } from "@/hooks/use-auto-minuta";
-import { useKV } from "@/hooks/use-kv";
-import type { User, ViewType } from "@/types";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // SpeedInsights só funciona no Vercel - desabilitar em outros hosts
 const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-import { lazy, Suspense, useEffect, useState } from "react";
 
 // QueryClient global (criado fora do componente para evitar recriação)
 const queryClient = new QueryClient({
@@ -53,6 +54,34 @@ const LoadingFallback = () => (
   </div>
 );
 
+const viewTypes = {
+  DASHBOARD: "dashboard",
+  ACERVO: "acervo",
+  ACERVO_PJE: "acervo-pje",
+  CRM: "crm",
+  PROCESSOS: "processos",
+  PROCESSES: "processes",
+  CALENDAR: "calendar",
+  CALENDARIO: "calendario",
+  FINANCEIRO: "financial",
+  FINANCIAL: "financial",
+  PRAZOS: "prazos",
+  CALCULADORA: "calculadora",
+  CALCULATOR: "calculator",
+  UPLOAD_PDF: "upload-pdf",
+  MINUTAS: "minutas",
+  DONNA: "donna",
+  ASSISTENTE: "assistente",
+  AI_AGENTS: "ai-agents",
+  ANALYTICS: "analytics",
+  EXPEDIENTES: "expedientes",
+  BATCH: "batch",
+  AUDIO: "audio",
+  QUERIES: "queries",
+  DATAJUD: "datajud",
+  KNOWLEDGE: "knowledge",
+};
+
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [user, setUser] = useKV<User | null>("user", null);
@@ -72,7 +101,7 @@ function App() {
     applyHashView();
     globalThis.addEventListener("hashchange", applyHashView);
     return () => globalThis.removeEventListener("hashchange", applyHashView);
-  }, []);
+  }, [setCurrentView]);
 
   const handleSimpleAuthSuccess = (user: User) => {
     setUser(user);
@@ -80,132 +109,132 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
-    setCurrentView("dashboard");
+    setCurrentView(viewTypes.DASHBOARD);
   };
 
-  const handleNavigate = (view: string, _data?: unknown) => {
+  const handleNavigate = (view: string) => {
     setCurrentView(view as ViewType);
   };
 
   const renderContent = () => {
     switch (currentView) {
-      case "dashboard":
+      case viewTypes.DASHBOARD:
         return <Dashboard onNavigate={setCurrentView} />;
 
-      case "acervo":
-      case "acervo-pje":
+      case viewTypes.ACERVO:
+      case viewTypes.ACERVO_PJE:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <AcervoPJe />
           </Suspense>
         );
 
-      case "crm":
-      case "processos":
-      case "processes":
+      case viewTypes.CRM:
+      case viewTypes.PROCESSOS:
+      case viewTypes.PROCESSES:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <ProcessCRM />
           </Suspense>
         );
 
-      case "calendar":
-      case "calendario":
+      case viewTypes.CALENDAR:
+      case viewTypes.CALENDARIO:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <Calendar />
           </Suspense>
         );
 
-      case "financeiro":
-      case "financial":
+      case viewTypes.FINANCEIRO:
+      case viewTypes.FINANCIAL:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <FinancialManagement />
           </Suspense>
         );
 
-      case "prazos":
-      case "calculadora":
-      case "calculator":
+      case viewTypes.PRAZOS:
+      case viewTypes.CALCULADORA:
+      case viewTypes.CALCULATOR:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <CalculadoraPrazos />
           </Suspense>
         );
 
-      case "upload-pdf":
+      case viewTypes.UPLOAD_PDF:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <PDFUploader />
           </Suspense>
         );
 
-      case "minutas":
+      case viewTypes.MINUTAS:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <MinutasManager />
           </Suspense>
         );
 
-      case "donna":
-      case "assistente":
+      case viewTypes.DONNA:
+      case viewTypes.ASSISTENTE:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <HarveySpecterChat />
           </Suspense>
         );
 
-      case "ai-agents":
+      case viewTypes.AI_AGENTS:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <AIAgents onNavigate={setCurrentView} />
           </Suspense>
         );
 
-      case "analytics":
+      case viewTypes.ANALYTICS:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <AnalyticsDashboard />
           </Suspense>
         );
 
-      case "expedientes":
+      case viewTypes.EXPEDIENTES:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <ExpedientePanel />
           </Suspense>
         );
 
-      case "batch":
+      case viewTypes.BATCH:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <BatchAnalysis />
           </Suspense>
         );
 
-      case "audio":
+      case viewTypes.AUDIO:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <AudioTranscription />
           </Suspense>
         );
 
-      case "queries":
+      case viewTypes.QUERIES:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <DatabaseQueries />
           </Suspense>
         );
 
-      case "datajud":
+      case viewTypes.DATAJUD:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <DatajudChecklist />
           </Suspense>
         );
 
-      case "knowledge":
+      case viewTypes.KNOWLEDGE:
         return (
           <Suspense fallback={<LoadingFallback />}>
             <KnowledgeBase />
