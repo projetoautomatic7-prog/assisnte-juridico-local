@@ -10,6 +10,7 @@
 
 import { Redis } from "@upstash/redis";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { randomUUID } from "node:crypto";
 
 /**
  * Get color based on notification priority
@@ -94,7 +95,7 @@ async function getKv(): Promise<Redis> {
 // Gera ID único
 // Usa crypto.randomUUID() para geração segura de IDs
 function generateId(): string {
-  return `notif_${Date.now()}_${crypto.randomUUID().split("-")[0]}`;
+  return `notif_${Date.now()}_${randomUUID().split("-")[0]}`;
 }
 
 // Mapas de prioridade
@@ -174,11 +175,11 @@ async function sendSlackWebhook(webhookUrl: string, notification: Notification):
       ],
       attachments: notification.metadata
         ? [
-            {
-              color: getPriorityColor(notification.priority),
-              fields: formatMetadataFieldsAlt(notification.metadata),
-            },
-          ]
+          {
+            color: getPriorityColor(notification.priority),
+            fields: formatMetadataFieldsAlt(notification.metadata),
+          },
+        ]
         : undefined,
     };
 
@@ -244,11 +245,11 @@ async function sendTeamsWebhook(webhookUrl: string, notification: Notification):
           text: notification.message,
           facts: notification.metadata
             ? Object.entries(notification.metadata)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => ({
-                  name: k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
-                  value: String(v),
-                }))
+              .filter(([, v]) => v !== undefined)
+              .map(([k, v]) => ({
+                name: k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
+                value: String(v),
+              }))
             : [],
         },
       ],
@@ -357,9 +358,9 @@ function buildEmailHtml(notification: Notification): string {
         <h4 style="margin: 0 0 10px 0; color: #333;">Detalhes:</h4>
         <ul style="margin: 0; padding-left: 20px;">
           ${Object.entries(notification.metadata)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => `<li><strong>${k}:</strong> ${v}</li>`)
-            .join("")}
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `<li><strong>${k}:</strong> ${v}</li>`)
+      .join("")}
         </ul>
       </div>`
     : "";

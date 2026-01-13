@@ -260,10 +260,10 @@ async function processGeminiStream(
 
     for (const line of lines) {
       const result = processGeminiLine(line);
-      
+
       if (result.text) {
-        sendEvent({ 
-          type: "content", 
+        sendEvent({
+          type: "content",
           content: result.text,
           tokens: result.tokens, // 🔥 Enviar tokens ao cliente
         });
@@ -288,7 +288,7 @@ async function processGeminiStream(
     const inputCost = ((lastTokens.prompt || 0) / 1000) * 0.001875;
     const outputCost = ((lastTokens.completion || 0) / 1000) * 0.00375;
     const totalCost = inputCost + outputCost;
-    
+
     span.setAttribute("gen_ai.cost.input", inputCost);
     span.setAttribute("gen_ai.cost.output", outputCost);
     span.setAttribute("gen_ai.cost.total", totalCost);
@@ -361,7 +361,7 @@ async function streamGemini(
   // Normaliza o nome do modelo para garantir versão válida
   let model = requestedModel;
   if (!model || model === "gemini" || !model.startsWith("gemini-")) {
-    model = "gemini-2.5-pro"; // Modelo padrão válido
+    model = process.env.GEMINI_MODEL || "gemini-1.5-pro"; // Modelo padrão válido
     console.log(`[LLM-Stream] Modelo normalizado: ${requestedModel} → ${model}`);
   }
 

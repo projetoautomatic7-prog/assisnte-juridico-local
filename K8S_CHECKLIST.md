@@ -48,7 +48,7 @@
 
 ### Pré-requisitos
 - [ ] gcloud CLI instalado
-- [ ] Acesso ao projeto GCP `sonic-terminal-474321-s1`
+- [ ] Acesso ao projeto GCP `terminal-sonico-474321-s1`
 - [ ] Credenciais de autenticação configuradas
 
 ### Conexão com GKE
@@ -59,12 +59,12 @@ exec -l $SHELL
 
 # 2. Autenticar
 gcloud auth login
-gcloud config set project sonic-terminal-474321-s1
+gcloud config set project terminal-sonico-474321-s1
 
 # 3. Conectar ao cluster
 gcloud container clusters get-credentials autopilot-cluster-1 \
   --region us-central1 \
-  --project sonic-terminal-474321-s1
+  --project terminal-sonico-474321-s1
 
 # 4. Verificar
 kubectl cluster-info
@@ -409,7 +409,7 @@ cat K8S_IMPLEMENTACAO_FINAL.md
 
 ### Links Importantes
 - **GitLab Project:** https://gitlab.com/thiagobodevan-a11y-group/assistente-juridico-p
-- **GCP Console:** https://console.cloud.google.com/kubernetes/list?project=sonic-terminal-474321-s1
+- **GCP Console:** https://console.cloud.google.com/kubernetes/list?project=terminal-sonico-474321-s1
 - **Documentação K8s:** https://kubernetes.io/docs/
 
 ---

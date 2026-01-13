@@ -4,6 +4,7 @@
  */
 
 import { Redis } from "@upstash/redis";
+import { randomUUID } from "node:crypto";
 import { apiRetryConfig, httpWithRetry } from "./lib/retry.js";
 import { SafeLogger } from "./lib/safe-logger.js";
 import { validateExpedientes, validateProcessos } from "./lib/validation.js";
@@ -268,7 +269,7 @@ async function createExpedienteFromChange(novo: ProcessoPJe, antigo: ProcessoPJe
   }
 
   const expediente: Expediente = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     processNumber: novo.numeroFormatado,
     description: novo.ultimoMovimento.descricao,
     type: detectExpedienteType(novo.ultimoMovimento.descricao),

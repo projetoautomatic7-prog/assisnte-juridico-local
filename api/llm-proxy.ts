@@ -104,7 +104,8 @@ function sanitizeMessagesInPlace(messages: ChatMessage[]) {
 }
 
 function resolveRequestedModel(body: LLMRequest, providerName: ProviderName): string {
-  const defaultModel = providerName === "OpenAI" ? "gpt-4o-mini" : "gemini-2.5-pro";
+  const geminiDefault = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+  const defaultModel = providerName === "OpenAI" ? "gpt-4o-mini" : geminiDefault;
   return (body.model as string | undefined) || defaultModel;
 }
 
@@ -114,7 +115,8 @@ function buildTarget(
   requestedModel: string
 ): { targetUrl: string; requestBody: unknown } {
   if (provider.name === "Gemini") {
-    const geminiModel = MODEL_MAPPING.gemini[requestedModel] || "gemini-2.5-pro";
+    const geminiDefault = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+    const geminiModel = MODEL_MAPPING.gemini[requestedModel] || geminiDefault;
     console.log(`[Gemini] Modelo solicitado: ${requestedModel} → ${geminiModel}`);
     return {
       targetUrl: `${provider.baseUrl}/${geminiModel}:generateContent?key=${provider.apiKey}`,
@@ -154,16 +156,16 @@ const MODEL_MAPPING: Record<string, Record<string, string>> = {
     "gpt-3.5-turbo": "gpt-3.5-turbo",
   },
   gemini: {
-    "gpt-4o": "gemini-2.5-pro",
-    "gpt-4o-mini": "gemini-2.5-pro",
-    "gpt-4": "gemini-2.5-pro",
-    "gpt-3.5-turbo": "gemini-2.5-pro",
-    gemini: "gemini-2.5-pro",
-    "gemini-pro": "gemini-2.5-pro",
-    "gemini-1.5-pro": "gemini-2.5-pro",
-    "gemini-1.5-flash": "gemini-2.5-pro",
-    "gemini-2.0-flash": "gemini-2.5-pro",
-    "gemini-2.5-pro": "gemini-2.5-pro",
+    "gpt-4o": "gemini-1.5-pro",
+    "gpt-4o-mini": "gemini-1.5-flash",
+    "gpt-4": "gemini-1.5-pro",
+    "gpt-3.5-turbo": "gemini-1.5-flash",
+    gemini: "gemini-1.5-pro",
+    "gemini-pro": "gemini-1.5-pro",
+    "gemini-1.5-pro": "gemini-1.5-pro",
+    "gemini-1.5-flash": "gemini-1.5-flash",
+    "gemini-2.0-flash": "gemini-1.5-pro",
+    "gemini-2.5-pro": "gemini-1.5-pro",
   },
 };
 
@@ -243,7 +245,7 @@ function transformFromGemini(data: unknown): LLMResponse {
     id: geminiData?.id || `gemini-${Date.now()}`,
     object: "chat.completion",
     created: Math.floor(Date.now() / 1000),
-    model: geminiData?.model || "gemini-2.5-pro",
+    model: geminiData?.model || "gemini-1.5-pro",
     choices: [
       {
         index: 0,

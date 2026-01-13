@@ -3,6 +3,7 @@
 // Baseado em: LangGraph, CrewAI, AutoGen patterns (2024/2025)
 
 import type { SimpleAgent } from "./core-agent";
+import { CircuitBreaker, type CircuitBreakerStats } from "./circuit-breaker";
 
 export type OrchestrationPattern =
   | "sequential" // Agentes executam em sequência
@@ -32,112 +33,6 @@ export interface OrchestrationResult {
   totalDuration: number;
 }
 
-// ============================================================================
-// CIRCUIT BREAKER IMPLEMENTATION
-// ============================================================================
-
-type CircuitState = "closed" | "open" | "half-open";
-
-interface CircuitBreakerConfig {
-  failureThreshold: number; // Number of failures before opening
-  resetTimeout: number; // Time in ms to wait before half-open
-  successThreshold: number; // Successes needed in half-open to close
-}
-
-interface CircuitBreakerState {
-  state: CircuitState;
-  failures: number;
-  successes: number;
-  lastFailureTime: number | null;
-  lastError?: string;
-}
-
-const DEFAULT_CIRCUIT_CONFIG: CircuitBreakerConfig = {
-  failureThreshold: 3,
-  resetTimeout: 30000, // 30 seconds
-  successThreshold: 2,
-};
-
-/**
- * Circuit Breaker por agente
- */
-class CircuitBreaker {
-  private state: CircuitBreakerState;
-  private readonly config: CircuitBreakerConfig;
-
-  constructor(config: Partial<CircuitBreakerConfig> = {}) {
-    this.config = { ...DEFAULT_CIRCUIT_CONFIG, ...config };
-    this.state = {
-      state: "closed",
-      failures: 0,
-      successes: 0,
-      lastFailureTime: null,
-    };
-  }
-
-  /**
-   * Verifica se o circuito permite execução
-   */
-  canExecute(): boolean {
-    if (this.state.state === "closed") return true;
-
-    if (this.state.state === "open") {
-      const now = Date.now();
-      const timeSinceFailure = now - (this.state.lastFailureTime || 0);
-
-      if (timeSinceFailure >= this.config.resetTimeout) {
-        this.state.state = "half-open";
-        this.state.successes = 0;
-        return true;
-      }
-      return false;
-    }
-
-    // half-open: permite tentativa
-    return true;
-  }
-
-  /**
-   * Registra sucesso
-   */
-  recordSuccess(): void {
-    if (this.state.state === "half-open") {
-      this.state.successes++;
-      if (this.state.successes >= this.config.successThreshold) {
-        this.state.state = "closed";
-        this.state.failures = 0;
-        this.state.lastError = undefined;
-      }
-    } else if (this.state.state === "closed") {
-      this.state.failures = 0;
-    }
-  }
-
-  /**
-   * Registra falha
-   */
-  recordFailure(error: string): void {
-    this.state.failures++;
-    this.state.lastFailureTime = Date.now();
-    this.state.lastError = error;
-
-    if (this.state.state === "half-open" || this.state.failures >= this.config.failureThreshold) {
-      this.state.state = "open";
-    }
-  }
-
-  /**
-   * Retorna status atual
-   */
-  getStatus(): { state: CircuitState; failures: number; lastError?: string } {
-    return {
-      state: this.state.state,
-      failures: this.state.failures,
-      lastError: this.state.lastError,
-    };
-  }
-}
-
 /**
  * Orquestrador de múltiplos agentes
  * Patterns: Sequential, Parallel, Hierarchical, Collaborative
@@ -160,21 +55,21 @@ export class AgentOrchestrator {
 
     // Inicializa circuit breaker para cada agente
     for (const agentId of agents.keys()) {
-      this.circuitBreakers.set(agentId, new CircuitBreaker());
+      this.circuitBreakers.set(agentId, new CircuitBreaker(agentId, {
+        failureThreshold: 3,
+        timeout: 30000,
+        successThreshold: 2
+      }));
     }
   }
 
   /**
    * Obtém status dos circuit breakers de todos os agentes
    */
-  getCircuitBreakerStatus(): Record<
-    string,
-    { state: CircuitState; failures: number; lastError?: string }
-  > {
-    const status: Record<string, { state: CircuitState; failures: number; lastError?: string }> =
-      {};
+  getCircuitBreakerStatus(): Record<string, CircuitBreakerStats> {
+    const status: Record<string, CircuitBreakerStats> = {};
     for (const [agentId, breaker] of this.circuitBreakers) {
-      status[agentId] = breaker.getStatus();
+      status[agentId] = breaker.getStats();
     }
     return status;
   }
@@ -228,23 +123,13 @@ export class AgentOrchestrator {
         continue;
       }
 
-      // Check circuit breaker
-      if (breaker && !breaker.canExecute()) {
-        traces.push({
-          agentId: task.assignedTo,
-          taskId: task.id,
-          result: null,
-          duration: 0,
-          error: `Circuit breaker OPEN para ${task.assignedTo}`,
-        });
-        continue;
-      }
-
       const taskStart = Date.now();
       try {
-        const result = await this.executeWithTimeout(agent, task);
+        const result = breaker 
+          ? await breaker.execute(() => this.executeWithTimeout(agent, task))
+          : await this.executeWithTimeout(agent, task);
+          
         results.set(task.id, result);
-        breaker?.recordSuccess();
 
         traces.push({
           agentId: task.assignedTo,
@@ -254,7 +139,6 @@ export class AgentOrchestrator {
         });
       } catch (e: unknown) {
         const errorMsg = e instanceof Error ? e.message : "Unknown error";
-        breaker?.recordFailure(errorMsg);
 
         traces.push({
           agentId: task.assignedTo,
@@ -299,22 +183,13 @@ export class AgentOrchestrator {
         };
       }
 
-      // Check circuit breaker
-      if (breaker && !breaker.canExecute()) {
-        return {
-          agentId: task.assignedTo,
-          taskId: task.id,
-          result: null,
-          duration: 0,
-          error: `Circuit breaker OPEN para ${task.assignedTo}`,
-        };
-      }
-
       const taskStart = Date.now();
       try {
-        const result = await this.executeWithTimeout(agent, task);
+        const result = breaker 
+          ? await breaker.execute(() => this.executeWithTimeout(agent, task))
+          : await this.executeWithTimeout(agent, task);
+          
         results.set(task.id, result);
-        breaker?.recordSuccess();
 
         return {
           agentId: task.assignedTo,
@@ -324,7 +199,6 @@ export class AgentOrchestrator {
         };
       } catch (e: unknown) {
         const errorMsg = e instanceof Error ? e.message : "Unknown error";
-        breaker?.recordFailure(errorMsg);
 
         return {
           agentId: task.assignedTo,
@@ -387,8 +261,13 @@ export class AgentOrchestrator {
 
     for (const [agentId, agent] of this.agents.entries()) {
       const taskStart = Date.now();
+      const breaker = this.circuitBreakers.get(agentId);
+
       try {
-        const result = await this.executeWithTimeout(agent, mainTask);
+        const result = breaker 
+          ? await breaker.execute(() => this.executeWithTimeout(agent, mainTask))
+          : await this.executeWithTimeout(agent, mainTask);
+          
         votes.push(result);
 
         traces.push({

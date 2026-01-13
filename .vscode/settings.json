@@ -2,22 +2,18 @@
   // ========================================
   // 🤖 GITHUB COPILOT - AGENTE DE CODIFICAÇÃO
   // ========================================
-
   // Habilitar Copilot Instruction Files (copilot-instructions.md)
   "github.copilot.chat.useInstructionFiles": true,
-
   // Configuração de Ambiente para Testes (PostgreSQL)
   "terminal.integrated.env.linux": {
     "DATABASE_URL": "postgresql://neondb_owner:npg_6qYj5hXWJzLB@ep-lively-firefly-a85y0w0i-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
   },
-
   // Configurações avançadas do Copilot
   "github.copilot.chat.alternateGptPrompt.enabled": true,
   "github.copilot.chat.anthropic.thinking.enabled": true,
   "github.copilot.chat.anthropic.tools.websearch.enabled": true,
   "github.copilot.chat.codesearch.enabled": true,
   "github.copilot.editor.enableAutoCompletions": true,
-
   // 🚀 AUTOMAÇÃO MÁXIMA - Copilot trabalha sozinho
   "github.copilot.enable": {
     "*": true,
@@ -30,7 +26,6 @@
     "inlineSuggestCount": 3,
     "listCount": 10
   },
-
   // Instruções contextuais para geração de código
   "github.copilot.chat.codeGeneration.instructions": [
     {
@@ -52,27 +47,65 @@
       "text": "Mantenha compatibilidade com Vercel serverless (Node.js 22.x)"
     }
   ],
-
   // ========================================
   // 🐍 PYTHON & JUPYTER CONFIGURATION
   // ========================================
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv-1/bin/python",
   "python.terminal.activateEnvironment": true,
-
   // Jupyter Settings (Official Configuration)
   "jupyter.allowUnauthorizedRemoteConnection": false,
   "jupyter.askForKernelRestart": true,
   "jupyter.askForLargeDataFrames": true,
   "jupyter.completionTriggerCharacters": {
-    "bash": ["$", "{"],
-    "java": [".", "@", "#"],
-    "javascript": [".", "\"", "'", "/", "@"],
-    "python": [".", "%", "'", "\""],
-    "julia": ["."],
-    "r": ["[", "(", ",", "$", "@", "\"", "'"],
-    "rust": [".", ":"],
-    "scala": ["."],
-    "typescript": [".", "\"", "'", "/", "@", "<"]
+    "bash": [
+      "$",
+      "{"
+    ],
+    "java": [
+      ".",
+      "@",
+      "#"
+    ],
+    "javascript": [
+      ".",
+      "\"",
+      "'",
+      "/",
+      "@"
+    ],
+    "python": [
+      ".",
+      "%",
+      "'",
+      "\""
+    ],
+    "julia": [
+      "."
+    ],
+    "r": [
+      "[",
+      "(",
+      ",",
+      "$",
+      "@",
+      "\"",
+      "'"
+    ],
+    "rust": [
+      ".",
+      ":"
+    ],
+    "scala": [
+      "."
+    ],
+    "typescript": [
+      ".",
+      "\"",
+      "'",
+      "/",
+      "@",
+      "<"
+    ]
   },
   "jupyter.debugJustMyCode": true,
   "jupyter.debugpyDistPath": "",
@@ -124,38 +157,29 @@
   "jupyter.useDefaultConfigForJupyter": true,
   "jupyter.variableExplorerExclude": "module;function;builtin_function_or_method;ABCMeta;type;ModelMetaclass",
   "jupyter.widgetScriptSources": [],
-
   // ========================================
   // 🛠️ CONFIGURAÇÕES GERAIS
   // ========================================
-
   // ========================================
   // 🐰 CODERABBIT - AI CODE REVIEW
   // ========================================
-
   // Agente IA para aplicar fixes (Native = GitHub Copilot integrado)
   "coderabbit.agentType": "Native",
-
   // Modo de review automático após commits
   // "prompt" = Pergunta se quer revisar | "auto" = Revisa automaticamente | "off" = Desabilitado
   "coderabbit.autoReviewMode": "prompt",
-
   // ========================================
   // 🎯 SONAR COPILOT ASSISTANT (INTEGRAÇÃO)
   // ========================================
-
   // SonarLint + GitHub Copilot = Sonar Copilot Assistant
   "github.copilot.chat.codeGeneration.useCodeAnalysis": true,
   "github.copilot.chat.localeOverride": "pt-BR",
   "github.copilot.chat.welcomeMessage": "first",
-
   // Copilot Instructions customizadas para SonarQube fixes
   "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-
   // ========================================
   // 🎫 GITHUB ISSUES - CRIAÇÃO AUTOMÁTICA
   // ========================================
-
   // Triggers para criar issues automaticamente
   "githubIssues.createIssueTriggers": [
     "TODO",
@@ -166,29 +190,24 @@
     "JURIDICO",
     "LGPD"
   ],
-
   // ========================================
   // 📝 EDITOR - AUTOMAÇÃO E FORMATAÇÃO
   // ========================================
-
   // Auto-save rápido
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
-
   // Format on save
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "editor.formatOnType": false,
-
   // ESLint auto-fix on save
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
-
   // Prettier como formatador padrão
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "vscode.typescript-language-features",
     "editor.formatOnSave": true
   },
   "[typescriptreact]": {
@@ -207,16 +226,14 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-
   // ========================================
   // 🔍 TYPESCRIPT & JAVASCRIPT
   // ========================================
-
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 4096,
@@ -230,51 +247,50 @@
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.updateImportsOnFileMove.enabled": "always",
   "javascript.updateImportsOnFileMove.enabled": "always",
-
   // Inlay Hints (sugestões visuais)
   "typescript.inlayHints.parameterNames.enabled": "all",
   "typescript.inlayHints.parameterTypes.enabled": true,
   "typescript.inlayHints.variableTypes.enabled": true,
   "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
-
   // ========================================
   // 🎨 TAILWIND CSS
   // ========================================
-
-  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]],
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ]
+  ],
   "tailwindCSS.emmetCompletions": true,
-
   // ========================================
   // ✅ ESLINT
   // ========================================
-
   "eslint.enable": true,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
   "eslint.format.enable": true,
   "eslint.workingDirectories": [
     {
       "mode": "auto"
     }
   ],
-
   // ========================================
   // 🧪 TESTES - VITEST
   // ========================================
-
   "vitest.enable": true,
   "vitest.commandLine": "npm run test",
-
   // ========================================
   // 🚀 TASKS AUTOMÁTICAS
   // ========================================
-
   "task.allowAutomaticTasks": "on",
   "task.autoDetect": "on",
-
   // ========================================
   // 🔐 SEGURANÇA & PRIVACIDADE
   // ========================================
-
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -286,18 +302,15 @@
     "**/dist": true,
     "**/.vite": true
   },
-
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
     "**/.vite": true,
     "**/coverage": true
   },
-
   // ========================================
   // 🔧 SONARQUBE/SONARLINT
   // ========================================
-
   // Conexão com SonarCloud
   // Projeto: assistente-jur-dico-principal
   // Organization: thiagobodevanadv-alt
@@ -309,7 +322,6 @@
       "token": "525735eccb98cf7cdcf0dccf920275f4d37dbe4c"
     }
   ],
-
   // Análise em tempo real
   "sonarlint.pathToNodeExecutable": "/usr/local/share/nvm/versions/node/v22.21.1/bin/node",
   "sonarlint.ls.javaHome": "/usr/lib/jvm/java-21-openjdk-amd64",
@@ -317,27 +329,22 @@
   "sonarlint.output.showVerboseLogs": false,
   "sonarlint.trace.server": "off",
   "sonarlint.disableTelemetry": true,
-
   // Code Actions: Permitir quick fixes do SonarLint
   "sonarlint.rules": {
     "typescript:S1128": {
       "level": "off"
     }
   },
-
   // Integração com Copilot para fixes automáticos
   "sonarlint.focusOnNewCode": true,
   "sonarlint.testFilePattern": "**/*.{test,spec}.{ts,tsx,js,jsx}",
-
   // ========================================
   // 🎯 EXPERIENCE & UI
   // ========================================
-
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
   "workbench.iconTheme": "material-icon-theme",
   "workbench.startupEditor": "none",
-
   // Terminal
   "terminal.integrated.profiles.linux": {
     "bash": {
@@ -351,7 +358,9 @@
     "pwsh": {
       "path": "/usr/local/bin/pwsh",
       "icon": "terminal-powershell",
-      "args": ["-NoLogo"]
+      "args": [
+        "-NoLogo"
+      ]
     },
     "sh": {
       "path": "/bin/sh"
@@ -359,7 +368,6 @@
   },
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.fontSize": 13,
-
   // Editor
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
@@ -370,14 +378,18 @@
   "editor.inlineSuggest.enabled": true,
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": true,
-
   // IntelliSense
   "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*test.py"],
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "*test.py"
+  ],
   "python.testing.pytestEnabled": false,
   "python.testing.unittestEnabled": true,
   "chat.tools.terminal.autoReplyToPrompts": true,
-
   // ⚠️ AUTO-APROVAÇÃO (como solicitado): permite que o chat aplique edições e rode comandos sem pedir confirmação.
   // Use com cuidado: isso inclui comandos potencialmente destrutivos.
   "chat.tools.edits.autoApprove": {
@@ -598,7 +610,10 @@
       ]
     },
     "assistente-jur-dico-principalrepli/.vscode/mcp.json: chroma": {
-      "allowedModels": ["copilot/auto", "copilot/gpt-5.2"]
+      "allowedModels": [
+        "copilot/auto",
+        "copilot/gpt-5.2"
+      ]
     },
     "https-github.com-portprojetoautomacao-debug-assistente-jur-dico-principalrepli.git2/.cursor/mcp.json: chroma": {
       "allowedModels": [
@@ -890,7 +905,6 @@
   "[github-actions-workflow]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
-
   // ========================================
   // 📱 REACT NATIVE TOOLS
   // ========================================
@@ -904,7 +918,11 @@
   "react-native.android.env.simulator": {},
   "react-native.android.envFile.device": "",
   "react-native.android.envFile.simulator": "",
-  "react-native.android.logCatArguments": ["*:S", "ReactNative:V", "ReactNativeJS:V"],
+  "react-native.android.logCatArguments": [
+    "*:S",
+    "ReactNative:V",
+    "ReactNativeJS:V"
+  ],
   "react-native.android.runArguments.device": [],
   "react-native.android.runArguments.simulator": [],
   "react-native.expo.dependencies": {
@@ -927,11 +945,9 @@
   "remote.autoForwardPortsFallback": 6,
   "quokka.automaticRestart": true,
   "chatgpt.runCodexInWindowsSubsystemForLinux": true,
-
   // ========================================
   // 🔌 VS CODE REMOTE - OTIMIZAÇÕES DE CONEXÃO
   // ========================================
-
   // Timeout e Keep-Alive para conexões remotas (anti-desconexão)
   "remote.SSH.connectTimeout": 120,
   "remote.SSH.keepAlive": 20,
@@ -939,40 +955,55 @@
   "remote.SSH.useLocalServer": false,
   "remote.SSH.remoteServerListenOnSocket": true,
   "remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-linux-x64/stable",
-
   // Configurações de desempenho e reconexão
   "remote.SSH.maxReconnectionAttempts": 12,
   "remote.SSH.lockfilesInTmp": true,
   "remote.SSH.useFlock": true,
   "remote.autoForwardPorts": false,
   "remote.autoForwardPortsSource": "process",
-
   // Otimizações de rede e latência
   "remote.SSH.enableDynamicForwarding": true,
   "remote.SSH.enableRemoteCommand": true,
   "remote.SSH.useExecServer": true,
   "remote.SSH.path": "ssh",
-
   // Logs de debug para diagnóstico (desabilite após resolver problemas)
   "remote.SSH.logLevel": "debug",
-
   // Configurações adicionais de estabilidade
   "remote.extensionKind": {
-    "ms-azuretools.vscode-docker": ["ui"],
-    "GitHub.copilot": ["ui"],
-    "GitHub.copilot-chat": ["ui"]
+    "ms-azuretools.vscode-docker": [
+      "ui"
+    ],
+    "GitHub.copilot": [
+      "ui"
+    ],
+    "GitHub.copilot-chat": [
+      "ui"
+    ]
   },
   "remote.portsAttributes": {
-    "3000": { "label": "Frontend", "onAutoForward": "notify" },
-    "3001": { "label": "Backend", "onAutoForward": "notify" },
-    "5000": { "label": "Vite Dev", "onAutoForward": "notify" }
+    "3000": {
+      "label": "Frontend",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "Backend",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Vite Dev",
+      "onAutoForward": "notify"
+    }
   },
   "powershell.buttons.showPanelMovementButtons": true,
   "powershell.startAsLoginShell.linux": true,
   "powershell.integratedConsole.showOnStartup": true,
-  "powershell.powerShellAdditionalExePaths": ["/usr/local/bin/pwsh"],
+  "powershell.powerShellAdditionalExePaths": [
+    "/usr/local/bin/pwsh"
+  ],
   "powershell.developer.editorServicesWaitForDebugger": false,
   "powershell.trace.server": "messages",
   "IDX.agenticWorkspace": true,
-  "IDX.aI.showChatInEditorTab": true
+  "IDX.aI.showChatInEditorTab": true,
+  "IDX.corgiMode": true,
+  "geminicodeassist.project": "promising-experience-h9gfd"
 }

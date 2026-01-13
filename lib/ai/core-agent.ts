@@ -67,16 +67,18 @@ export interface AgentOptions {
 // ===== Implementação simples de memória em RAM (dev) =====
 // Em produção, trocar por UpstashMemoryStore usando /api/kv
 
-const inMemoryStore = new Map<string, ChatMessage[]>();
+export class VolatileMemoryStore implements MemoryStore {
+  private store = new Map<string, ChatMessage[]>();
 
-export const InMemoryMemoryStore: MemoryStore = {
   async load(sessionId: string) {
-    return inMemoryStore.get(sessionId) ?? [];
-  },
+    return this.store.get(sessionId) ?? [];
+  }
   async save(sessionId: string, history: ChatMessage[]) {
-    inMemoryStore.set(sessionId, history);
-  },
-};
+    this.store.set(sessionId, history);
+  }
+}
+
+export const InMemoryMemoryStore = new VolatileMemoryStore();
 
 // ===== Núcleo do agente =====
 
@@ -169,7 +171,11 @@ Sempre responda ESTRITAMENTE em JSON válido, usando um destes formatos:
     error?: string;
   } {
     try {
-      return { parsed: JSON.parse(rawContent) };
+      const parsed = JSON.parse(rawContent);
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return { parsed: null, error: "Response is not a valid JSON object" };
+      }
+      return { parsed };
     } catch {
       return { parsed: null, error: "JSON parsing failed" };
     }
@@ -359,7 +365,12 @@ Sempre responda ESTRITAMENTE em JSON válido, usando um destes formatos:
     usedTools: string[]
   ): Promise<boolean> {
     const toolName = typeof parsed.tool === "string" ? parsed.tool : String(parsed.tool || "");
-    const toolArgs = (parsed.args ?? {}) as Record<string, unknown>;
+
+    const rawArgs = parsed.args;
+    const toolArgs = (rawArgs && typeof rawArgs === "object" && !Array.isArray(rawArgs))
+      ? (rawArgs as Record<string, unknown>)
+      : {};
+
     const tool = this.allowedTools().find((t) => t.name === toolName);
 
     if (!tool) {

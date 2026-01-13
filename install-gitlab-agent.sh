@@ -4,7 +4,7 @@ set -e
 # Configurações
 CLUSTER_NAME="autopilot-cluster-1"
 REGION="us-central1"
-PROJECT_ID="sonic-terminal-474321-s1"
+PROJECT_ID="terminal-sonico-474321-s1"
 AGENT_TOKEN="glagent-vVkeKg1E00kVh9S0F_QnkW86MQpwOjE5ZjN4dww.01.131inxgy0"
 KAS_ADDRESS="wss://kas.gitlab.com"
 

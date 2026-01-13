@@ -34,7 +34,7 @@
 ```bash
 Cluster: autopilot-cluster-1
 Região: us-central1
-Projeto: sonic-terminal-474321-s1
+Projeto: terminal-sonico-474321-s1
 ```
 
 **⚠️ Status**: Cluster existe mas gcloud SDK não está instalado no container

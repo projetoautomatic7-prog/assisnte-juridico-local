@@ -13,8 +13,7 @@
 # 1. Login no GCP
 gcloud auth login
 
-# 2. Criar projeto (ou usar existente)
-export GCP_PROJECT_ID="assistente-juridico"
+export GCP_PROJECT_ID="terminal-sonico-474321-s1"
 gcloud projects create $GCP_PROJECT_ID --name="Assistente Jurídico"
 
 # 3. Habilitar billing (via console: https://console.cloud.google.com/billing)
@@ -29,7 +28,7 @@ Crie um arquivo `.env.gke` (não commitar!):
 
 ```bash
 # Obrigatórias
-export GCP_PROJECT_ID="assistente-juridico"
+export GCP_PROJECT_ID="terminal-sonico-474321-s1"
 export DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require"
 
 # Opcionais (substituir placeholders se usar)

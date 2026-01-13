@@ -16,7 +16,7 @@
 import { Redis } from "@upstash/redis";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 // Import estático de createHash (Node 22) para uso em fallback de hash
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 // ================= KV UTILS (INLINE) =================
 
@@ -248,7 +248,7 @@ async function queueNotification(notification: {
       }>) || [];
     queue.push({
       ...notification,
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       createdAt: new Date().toISOString(),
       sent: false,
     });
@@ -1706,7 +1706,7 @@ async function processDataJudHits(
 
   // Create task for analysis
   await addTaskToQueue({
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     agentId: "analise-documental",
     type: "analyze_movement",
     priority: "medium",
@@ -2156,7 +2156,7 @@ async function processDJENPublication(
   }
 
   const storedPub = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     djenId: comunicacao.id,
     tribunal: comunicacao.tribunal,
     data: comunicacao.data,
@@ -2181,7 +2181,7 @@ async function processDJENPublication(
   result.publicationsFound++;
 
   await addTaskToQueue({
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     agentId: "justine",
     type: "analyze_intimation",
     priority: "high",

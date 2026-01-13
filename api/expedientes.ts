@@ -186,7 +186,7 @@ function buildBaseUrl(req: VercelRequest): string {
 // ===========================
 // Handler: POST /api/expedientes/sync
 // ===========================
-async function handlePostSync(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
+async function handleSync(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
   // Require API key to trigger manual sync
   if (!requireApiKey(req, res, "DJEN_SYNC_API_KEY")) return res;
 
@@ -310,12 +310,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const kv = await getKv();
 
-    if (req.method === "GET") {
-      return handleGetExpedientes(req, res, kv);
+    if (isSyncRequest(req)) {
+      return handleSync(req, res);
     }
 
-    if (req.method === "POST" && isSyncRequest(req)) {
-      return handlePostSync(req, res);
+    if (req.method === "GET") {
+      return handleGetExpedientes(req, res, kv);
     }
 
     if (req.method === "GET" && req.query.action === "pending") {

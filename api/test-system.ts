@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Redis } from "@upstash/redis";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { randomUUID } from "node:crypto";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const results: Record<string, any> = {
@@ -42,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.query.inject === "true") {
       // Inject Test Notification
       const testNotification = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         type: "system",
         title: "Teste de Sistema",
         message: "Esta é uma notificação de teste gerada manualmente.",
@@ -54,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Inject Test Task
       const testTask = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         agentId: "harvey",
         type: "system_test",
         status: "pending",

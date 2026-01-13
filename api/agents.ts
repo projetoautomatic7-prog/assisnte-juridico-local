@@ -117,9 +117,13 @@ export enum AgentType {
   ORGANIZER = "organizer",
   RESEARCHER = "researcher",
   STRATEGIC = "strategic",
-  COMPLIANCE = "compliance",
+  COMPLIANCE = "compliance-checker",
   TRANSLATOR = "translator",
   COMMUNICATOR = "communicator",
+  RISK_ANALYZER = "risk-analyzer",
+  CONTRACT_REVIEWER = "contract-reviewer",
+  FINANCIAL_ANALYZER = "financial-analyzer",
+  STRATEGY_ADVISOR = "strategy-advisor",
 }
 
 export enum AgentStatus {
@@ -231,73 +235,73 @@ interface TaskMapping {
 const TASK_MAPPINGS: TaskMapping[] = [
   {
     keywords: ["prazo", "deadline"],
-    agentId: "deadline-tracker",
+    agentId: "gestao-prazos",
     type: AgentTaskType.CALCULATE_DEADLINE,
     priority: TaskPriority.HIGH,
   },
   {
     keywords: ["petição", "peticao", "defesa", "recurso", "manifestação", "manifestacao"],
-    agentId: "petition-writer",
+    agentId: "redacao-peticoes",
     type: AgentTaskType.DRAFT_PETITION,
     priority: TaskPriority.MEDIUM,
   },
   {
     keywords: ["pesquisa", "jurisprudência", "jurisprudencia"],
-    agentId: "precedent-researcher",
+    agentId: "pesquisa-juris",
     type: AgentTaskType.RESEARCH_PRECEDENTS,
     priority: TaskPriority.LOW,
   },
   {
     keywords: ["avisar", "comunicar", "informar", "cliente"],
-    agentId: "client-communicator",
+    agentId: "comunicacao-clientes",
     type: AgentTaskType.CLIENT_COMMUNICATION,
     priority: TaskPriority.MEDIUM,
   },
   {
     keywords: ["datajud", "andamento", "autos", "movimentação", "movimentacao"],
-    agentId: "datajud-query",
-    type: AgentTaskType.CHECK_DATAJUD,
+    agentId: "monitor-djen",
+    type: AgentTaskType.MONITOR_DJEN,
     priority: TaskPriority.MEDIUM,
   },
   {
     keywords: ["sentença", "sentenca", "decisão", "decisao", "acórdão", "acordao", "risco"],
-    agentId: "risk-analyst",
+    agentId: "analise-risco",
     type: AgentTaskType.RISK_ANALYSIS,
     priority: TaskPriority.HIGH,
   },
   {
     keywords: ["custas", "honorários", "honorarios", "depósito", "deposito", "guia", "pagamento"],
-    agentId: "billing-analyst",
+    agentId: "financeiro",
     type: AgentTaskType.BILLING_ANALYSIS,
     priority: TaskPriority.HIGH,
   },
   {
     keywords: ["arquivar", "salvar", "pasta", "organizar"],
-    agentId: "document-organizer",
+    agentId: "organizacao-arquivos",
     type: AgentTaskType.ORGANIZE_FILES,
     priority: TaskPriority.LOW,
   },
   {
     keywords: ["lgpd", "sigilo", "segredo", "ética", "etica", "compliance"],
-    agentId: "compliance-officer",
+    agentId: "compliance",
     type: AgentTaskType.COMPLIANCE_CHECK,
     priority: TaskPriority.HIGH,
   },
   {
     keywords: ["explicar", "simplificar", "traduzir", "leigo"],
-    agentId: "legal-translator",
+    agentId: "traducao-juridica",
     type: AgentTaskType.LEGAL_TRANSLATION,
     priority: TaskPriority.MEDIUM,
   },
   {
     keywords: ["contrato", "minuta", "aditivo", "cláusula", "clausula", "rescisão", "rescissao"],
-    agentId: "contract-reviewer",
+    agentId: "revisao-contratual",
     type: AgentTaskType.CONTRACT_REVIEW,
     priority: TaskPriority.HIGH,
   },
   {
     keywords: ["estratégia", "estrategia", "plano", "probabilidade", "tese", "linha de defesa"],
-    agentId: "case-strategist",
+    agentId: "estrategia-processual",
     type: AgentTaskType.CASE_STRATEGY,
     priority: TaskPriority.HIGH,
   },
@@ -385,9 +389,25 @@ Retorne JSON com: simplifiedText, glossary, readabilityScore.`,
   [AgentType.COMMUNICATOR]: `Você é um especialista em comunicação com clientes jurídicos.
 Redija comunicações claras, empáticas e profissionais.
 Retorne JSON com: messageText, tone, channels, urgency.`,
+
+  [AgentType.RISK_ANALYZER]: `Você é um especialista em análise de riscos processuais e jurídicos.
+Avalie probabilidades de êxito, riscos financeiros e contingências.
+Retorne JSON com: riskLevel, probability, financialExposure, mitigationStrategies.`,
+
+  [AgentType.CONTRACT_REVIEWER]: `Você é um especialista em revisão contratual.
+Analise cláusulas, identifique riscos, abusividades e sugira melhorias.
+Retorne JSON com: criticalClauses, risks, suggestions, complianceStatus.`,
+
+  [AgentType.FINANCIAL_ANALYZER]: `Você é um analista financeiro jurídico.
+Analise custas, honorários, cálculos de liquidação e viabilidade econômica.
+Retorne JSON com: calculations, fees, expenses, economicViability.`,
+
+  [AgentType.STRATEGY_ADVISOR]: `Você é um consultor de estratégia processual avançada.
+Desenvolva teses, planeje etapas processuais e antecipe movimentos da parte contrária.
+Retorne JSON com: strategyMap, nextMoves, counterArguments, thesisStrength.`,
 };
 
-function getSystemPrompt(agentType: AgentType): string {
+export function getSystemPrompt(agentType: AgentType): string {
   const prompt = SYSTEM_PROMPTS[agentType];
 
   if (!prompt) {
@@ -619,15 +639,21 @@ function getGeminiApiKey(): string {
   return apiKey;
 }
 
+function getGeminiModel(): string {
+  return process.env.GEMINI_MODEL || process.env.VITE_GEMINI_MODEL || "gemini-1.5-pro";
+}
+
 /**
  * Parseia resposta JSON do Gemini
  */
 function parseGeminiResponse(aiContent: string): TaskResult {
   try {
-    const start = aiContent.indexOf("{");
-    const end = aiContent.lastIndexOf("}");
+    // Remove markdown code blocks if present
+    const cleanContent = aiContent.replace(/```json\n?|\n?```/g, "").trim();
+    const start = cleanContent.indexOf("{");
+    const end = cleanContent.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
-      return JSON.parse(aiContent.substring(start, end + 1));
+      return JSON.parse(cleanContent.substring(start, end + 1));
     }
     return { rawResponse: aiContent };
   } catch (parseError) {
@@ -674,8 +700,9 @@ async function callGeminiAPI(
   requestBody: unknown,
   controller: AbortController
 ): Promise<{ aiContent: string; tokensUsed?: number }> {
+  const model = getGeminiModel();
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: {
@@ -1393,26 +1420,26 @@ function isVercelEnvironment(req: VercelRequest): boolean {
  */
 function hasValidAuthentication(req: VercelRequest): boolean {
   const authHeader = req.headers.authorization;
-  
+
   // Check Bearer token
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7).trim();
     // Validate token - must be non-empty and at least 32 characters for a valid token
     const validBearerToken = token.length >= 32;
-    
+
     // Check against configured API keys
     const validApiKeys = [
       process.env.AGENTS_API_KEY,
       process.env.API_KEY,
       process.env.CRON_SECRET,
     ].filter(Boolean);
-    
+
     // Token must either be long enough (secure) or match a configured key
     if (validBearerToken || validApiKeys.includes(token)) {
       return true;
     }
   }
-  
+
   // Check x-api-key header
   const apiKey = req.headers["x-api-key"];
   if (apiKey && typeof apiKey === "string") {
@@ -1421,12 +1448,12 @@ function hasValidAuthentication(req: VercelRequest): boolean {
       process.env.API_KEY,
       process.env.CRON_SECRET,
     ].filter(Boolean);
-    
+
     if (validApiKeys.includes(apiKey)) {
       return true;
     }
   }
-  
+
   return false;
 }
 

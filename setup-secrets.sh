@@ -2,7 +2,7 @@
 set -e
 
 # Configurações
-PROJECT_ID="sonic-terminal-474321-s1"
+PROJECT_ID="terminal-sonico-474321-s1"
 REGION="us-central1"
 CLUSTER_NAME="autopilot-cluster-1"
 

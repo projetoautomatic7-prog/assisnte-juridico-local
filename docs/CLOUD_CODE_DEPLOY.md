@@ -31,7 +31,7 @@ Se ainda não estiver autenticado:
 
 ```bash
 gcloud auth login
-gcloud config set project sonic-terminal-474321-s1
+gcloud config set project terminal-sonico-474321-s1
 ```
 
 ## Deploy com Cloud Code (Método Recomendado)
@@ -42,7 +42,7 @@ gcloud config set project sonic-terminal-474321-s1
 2. Digitar: `Cloud Code: Deploy to Kubernetes`
 3. Selecionar:
    - **Cluster**: `autopilot-cluster-1` (us-central1)
-   - **Context**: `gke_sonic-terminal-474321-s1_us-central1_autopilot-cluster-1`
+   - **Context**: `gke_terminal-sonico-474321-s1_us-central1_autopilot-cluster-1`
 4. Cloud Code irá:
    - Build da imagem Docker
    - Push para o Google Container Registry
@@ -53,10 +53,10 @@ gcloud config set project sonic-terminal-474321-s1
 
 ```bash
 # Build e deploy
-skaffold run --default-repo=gcr.io/sonic-terminal-474321-s1
+skaffold run --default-repo=gcr.io/terminal-sonico-474321-s1
 
 # Modo desenvolvimento (hot-reload)
-skaffold dev --default-repo=gcr.io/sonic-terminal-474321-s1
+skaffold dev --default-repo=gcr.io/terminal-sonico-474321-s1
 ```
 
 ## Estrutura dos Arquivos
@@ -142,7 +142,7 @@ Acesse: `http://localhost:8080`
 ### Hot Reload com Skaffold Dev
 
 ```bash
-skaffold dev --default-repo=gcr.io/sonic-terminal-474321-s1
+skaffold dev --default-repo=gcr.io/terminal-sonico-474321-s1
 ```
 
 Benefícios:
@@ -166,7 +166,7 @@ Benefícios:
 
 ```bash
 # Build e deploy da nova versão
-skaffold run --default-repo=gcr.io/sonic-terminal-474321-s1
+skaffold run --default-repo=gcr.io/terminal-sonico-474321-s1
 
 # Ou via Cloud Code UI (botão Deploy)
 ```
@@ -246,7 +246,7 @@ kubectl get secrets
 Verificar permissões do GCR:
 
 ```bash
-gcloud projects add-iam-policy-binding sonic-terminal-474321-s1 \
+gcloud projects add-iam-policy-binding terminal-sonico-474321-s1 \
     --member=serviceAccount:$(gcloud iam service-accounts list --format='value(email)' --filter='name:default') \
     --role=roles/storage.objectViewer
 ```
