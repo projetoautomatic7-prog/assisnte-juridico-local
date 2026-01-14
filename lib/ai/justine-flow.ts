@@ -1,0 +1,83 @@
+import { z } from 'zod';
+import { AgentResponseSchema, ai, askLawyer } from './genkit';
+import { petitionFlow } from './petition-flow';
+import { riskAnalysisFlow } from './risk-flow';
+import { strategyFlow } from './strategy-flow';
+import { researchFlow } from './research-flow';
+import { buscarIntimacaoPendente, calcularPrazos, consultarProcessoPJe, criarTarefa, indexarAnaliseCaso } from './tools';
+
+/**
+ * Ferramentas de Especialistas encapsuladas para a Justine
+ */
+const runRiskAnalysis = ai.defineTool(
+  { name: 'runRiskAnalysis', description: 'Aciona o Agente de Risco para análise financeira.', inputSchema: z.object({ numeroProcesso: z.string() }), outputSchema: z.any() },
+  async (i) => riskAnalysisFlow(i)
+);
+
+const runStrategy = ai.defineTool(
+  { name: 'runStrategy', description: 'Aciona o Agente de Estratégia para definir o próximo passo processual.', inputSchema: z.object({ numeroProcesso: z.string() }), outputSchema: z.any() },
+  async (i) => strategyFlow(i)
+);
+
+const runPetitionDraft = ai.defineTool(
+  { name: 'runPetitionDraft', description: 'Aciona o Agente de Redação para criar uma minuta.', inputSchema: z.object({ numeroProcesso: z.string(), instrucoes: z.string() }), outputSchema: z.any() },
+  async (i) => petitionFlow(i)
+);
+
+const runResearch = ai.defineTool(
+  { name: 'runResearch', description: 'Pesquisa jurisprudência e popula a base de conhecimento.', inputSchema: z.object({ tema: z.string() }), outputSchema: z.any() },
+  async (i) => researchFlow(i)
+);
+
+export const justineFlow = ai.defineFlow(
+  {
+    name: 'justineFlow',
+    inputSchema: z.object({ expedienteId: z.string(), numeroProcesso: z.string().optional() }),
+    outputSchema: AgentResponseSchema,
+  },
+  async (input) => {
+    const response = await ai.generate({
+      model: 'gemini-2.0-pro',
+      system: `Você é Mrs. Justin-e, a Supervisora Autônoma da Controladoria Jurídica.
+      Sua missão é processar expedientes e garantir que todas as providências sejam tomadas.
+
+      PROTOCOLO DE INVESTIGAÇÃO (OBRIGATÓRIO):
+      1. Se faltar alguma informação (número do processo, data, teor), você DEVE usar 'consultarProcessoPJe' ou 'buscarIntimacaoPendente' para tentar sanar a dúvida sozinho.
+      2. Analise o histórico de andamentos para entender o contexto antes de decidir.
+      3. Use 'askLawyer' APENAS em último caso, quando:
+         - A informação não existe em nenhum sistema digital.
+         - Existe uma contradição insolúvel nos autos.
+         - A decisão exige um juízo de valor puramente humano/subjetivo.
+
+      REGRAS DE ACIONAMENTO:
+      - Risco alto/valor da causa elevado -> runRiskAnalysis.
+      - Fase complexa (Recursal/Execução) -> runStrategy.
+      - Necessidade de fundamentação ou tese nova -> runResearch.
+      - Necessidade de peticionar -> runPetitionDraft.
+      
+      Sempre finalize:
+      1. Criando as tarefas no Todoist.
+      2. Indexando a análise do caso no Qdrant usando 'indexarAnaliseCaso' para memória futura.
+      3. Registrando o log.`,
+      prompt: `Processe o expediente ID: ${input.expedienteId}. Processo sugerido: ${input.numeroProcesso || 'Desconhecido'}.`,
+      tools: [
+        buscarIntimacaoPendente,
+        consultarProcessoPJe,
+        calcularPrazos,
+        criarTarefa,
+        runRiskAnalysis,
+        runStrategy,
+        runResearch,
+        runPetitionDraft,
+        askLawyer,
+        indexarAnaliseCaso
+      ],
+      maxTurns: 12, // Aumentado para permitir mais passos de investigação
+    });
+
+    return {
+      answer: response.text,
+      usedTools: response.toolCalls?.map(tc => tc.name)
+    };
+  }
+);

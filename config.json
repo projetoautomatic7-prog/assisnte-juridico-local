@@ -1,0 +1,7 @@
+{
+  "FEATURE_ONE": true,
+  "FEATURE_TWO": false,
+  "FEATURE_THREE": true,
+  "FEATURE_UNUSED": true,
+  "FEATURE_IN_USE_BUT_WRONG_NAME": false
+}

@@ -1,6 +1,8 @@
 /**
  * Utilitários para sanitização de logs e dados sensíveis
  * Remove informações confidenciais antes do logging
+ * 
+ * ATUALIZADO: Foco estrito em LGPD / PII
  */
 
 export interface SanitizeOptions {
@@ -33,7 +35,7 @@ const SENSITIVE_FIELDS: string[] = [
 ]
 
 /**
- * Campos que contêm dados pessoais (PII)
+ * Campos que contêm dados pessoais (PII) - LGPD Compliance
  */
 const PII_FIELDS: string[] = [
   'email',
@@ -47,37 +49,45 @@ const PII_FIELDS: string[] = [
   'nome_completo',
   'data_nascimento',
   'numero_oab',
-  'uf_oab'
+  'uf_oab',
+  'clientname',
+  'advogado',
+  'teor', // Conteúdo de intimações pode conter PII
+  'texto'
 ]
 
 /**
- * Mascara uma string sensível
+ * Mascara uma string sensível (ex: CPF, OAB)
  */
 export function maskSensitive(value: string, visibleChars: number = 4): string {
+  if (!value) return '';
   if (value.length <= visibleChars * 2) {
     return '*'.repeat(value.length)
   }
 
   const start = value.substring(0, visibleChars)
   const end = value.substring(value.length - visibleChars)
-  const masked = '*'.repeat(value.length - visibleChars * 2)
+  const masked = '*'.repeat(8) // Máscara fixa para não revelar o tamanho original
 
   return `${start}${masked}${end}`
 }
-
-// ===== Helper functions for sanitizeObject (reduces S3776) =====
 
 function isPrimitive(obj: unknown): boolean {
   return obj === null || obj === undefined || 
          typeof obj === 'number' || typeof obj === 'boolean'
 }
 
-function looksLikeToken(str: string): boolean {
-  return str.length > 20 && /^[A-Za-z0-9+/=.\-_]+$/.test(str)
+function looksLikePII(str: string): boolean {
+  // Regex simples para CPF
+  if (/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(str)) return true;
+  // Regex simples para E-mail
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str)) return true;
+  return false;
 }
 
 function sanitizeString(str: string): string {
-  return looksLikeToken(str) ? maskSensitive(str) : str
+  if (looksLikePII(str)) return maskSensitive(str);
+  return str.length > 100 ? str.substring(0, 100) + '...' : str;
 }
 
 function shouldRemoveField(key: string, options: SanitizeOptions): boolean {
@@ -93,18 +103,6 @@ function shouldMaskAsPII(key: string): boolean {
   return PII_FIELDS.some(field => lowerKey.includes(field))
 }
 
-function shouldMaskExplicitly(key: string, options: SanitizeOptions): boolean {
-  const lowerKey = key.toLowerCase()
-  return options.maskFields?.includes(lowerKey) || false
-}
-
-function sanitizeValue(value: unknown, forPII: boolean): unknown {
-  if (typeof value === 'string') {
-    return maskSensitive(value)
-  }
-  return forPII ? '[REDACTED]' : value
-}
-
 function sanitizeObjectFields(
   input: Record<string, unknown>,
   options: SanitizeOptions
@@ -115,12 +113,7 @@ function sanitizeObjectFields(
     if (shouldRemoveField(key, options)) continue
 
     if (shouldMaskAsPII(key)) {
-      sanitized[key] = sanitizeValue(value, true)
-      continue
-    }
-
-    if (shouldMaskExplicitly(key, options)) {
-      sanitized[key] = sanitizeValue(value, false)
+      sanitized[key] = typeof value === 'string' ? maskSensitive(value) : '[PII REDACTED]'
       continue
     }
 
@@ -130,16 +123,11 @@ function sanitizeObjectFields(
   return sanitized
 }
 
-/**
- * Sanitiza um valor removendo ou mascarando campos sensíveis
- * Refactored to reduce cognitive complexity (S3776)
- */
 export function sanitizeObject(
   obj: unknown,
   options: SanitizeOptions = {}
 ): unknown {
   if (isPrimitive(obj)) return obj
-
   if (typeof obj === 'string') return sanitizeString(obj)
 
   if (Array.isArray(obj)) {
@@ -153,21 +141,14 @@ export function sanitizeObject(
   return obj
 }
 
-/**
- * Sanitiza uma mensagem de erro
- */
 export function sanitizeError(error: unknown): unknown {
   if (!error) return error
-
   return sanitizeObject(error, {
     removeFields: ['stack', 'cause'],
     maskFields: ['message']
   })
 }
 
-/**
- * Logger seguro que sanitiza automaticamente
- */
 export class SafeLogger {
   private readonly context: string
 
@@ -180,71 +161,21 @@ export class SafeLogger {
   }
 
   info(message: string, ...args: unknown[]): void {
-     
     console.log(`[${this.context}] ${message}`, ...this.sanitizeArgs(args))
   }
 
   warn(message: string, ...args: unknown[]): void {
-     
     console.warn(`[${this.context}] ${message}`, ...this.sanitizeArgs(args))
   }
 
   error(message: string, error?: unknown, ...args: unknown[]): void {
     const sanitizedError = error ? sanitizeError(error) : undefined
-     
-    console.error(
-      `[${this.context}] ${message}`,
-      sanitizedError,
-      ...this.sanitizeArgs(args)
-    )
+    console.error(`[${this.context}] ${message}`, sanitizedError, ...this.sanitizeArgs(args))
   }
 
   debug(message: string, ...args: unknown[]): void {
     if (process.env.NODE_ENV === 'development') {
-       
       console.debug(`[${this.context}] ${message}`, ...this.sanitizeArgs(args))
     }
-  }
-}
-
-/**
- * Sanitiza headers HTTP
- */
-export function sanitizeHeaders(
-  headers: Record<string, string>
-): Record<string, string> {
-  const sanitized: Record<string, string> = {}
-
-  for (const [key, value] of Object.entries(headers)) {
-    const lowerKey = key.toLowerCase()
-
-    if (SENSITIVE_FIELDS.some(field => lowerKey.includes(field))) {
-      sanitized[key] = maskSensitive(value)
-    } else {
-      sanitized[key] = value
-    }
-  }
-
-  return sanitized
-}
-
-/**
- * Sanitiza URL removendo query parameters sensíveis
- */
-export function sanitizeUrl(url: string): string {
-  try {
-    const urlObj = new URL(url)
-    const params = urlObj.searchParams
-
-    params.forEach((value, param) => {
-      if (SENSITIVE_FIELDS.some(field => param.toLowerCase().includes(field))) {
-        params.set(param, maskSensitive(value || ''))
-      }
-    })
-
-    return urlObj.toString()
-  } catch {
-    // Se não for uma URL válida, devolve como veio
-    return url
   }
 }

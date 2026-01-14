@@ -10,6 +10,10 @@ import * as Sentry from "@sentry/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  AILogViewer, type LogEntry
+} from "@/components/ai-log-viewer";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -338,8 +342,22 @@ export default function ExpedientePanel() {
   const [selectedExp, setSelectedExp] = useState<Expediente | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [showMichaelRossDialog, setShowMichaelRossDialog] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string>("");
+  const [activeInterrupt, setActiveInterrupt] = useState<any>(null);
+  const [lawyerAnswer, setLawyerAnswer] = useState("");
+  const [aiLogs, setAiLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+
+  // Helper para adicionar logs de atividade
+  const addLog = useCallback((entry: Omit<LogEntry, 'id' | 'timestamp'>) => {
+    const newLog: LogEntry = {
+      ...entry,
+      id: Math.random().toString(36).substring(7),
+      timestamp: new Date().toISOString(),
+    };
+    setAiLogs(prev => [newLog, ...prev].slice(0, 50)); // Mantém os últimos 50 logs
+  }, []);
 
   // Estado para análise automática
   const [autoAnalyzing, setAutoAnalyzing] = useState(false);
@@ -452,8 +470,8 @@ export default function ExpedientePanel() {
       return createInvokeAgentSpan(
         {
           agentName: "Mrs. Justin-e",
-          system: "gcp.gemini",
-          model: "gemini-2.5-pro",
+          system: "genkit",
+          model: "justine-flow",
           temperature: 0.3,
           maxTokens: 2000,
         },
@@ -475,62 +493,31 @@ export default function ExpedientePanel() {
             span?.setAttribute("expediente.tribunal", exp.tribunal || "unknown");
             span?.setAttribute("task.type", "ANALYZE_INTIMATION");
 
-            const response = await fetch("/api/llm-proxy", {
+            setCurrentStep("Iniciando fluxo Genkit...");
+            addLog({ agentName: "Mrs. Justin-e", type: "thinking", message: "Iniciando processamento autônomo de expediente..." });
+            
+            // Chamada para o novo fluxo Genkit no backend
+            const response = await fetch("/api/agents", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                model: "gemini-2.5-pro",
-                messages: [
-                  {
-                    role: "system",
-                    content: `Você é Mrs. Justin-e, especialista em análise de intimações judiciais brasileiras.
-
-INSTRUÇÕES CRÍTICAS:
-1. Identifique EXATAMENTE o tipo de processo (ex: Inventário, Ação Cível, Execução)
-2. Identifique a AÇÃO ESPECÍFICA solicitada (ex: "Apresentar Primeiras Declarações de Inventário", não "Apresentar rol de testemunhas")
-3. Calcule a data do prazo com base na DATA DE RECEBIMENTO + número de dias (úteis ou corridos)
-4. Use SEMPRE o ano atual (2025) para cálculo de prazos - NUNCA use anos anteriores
-5. Se a intimação pedir "Primeiras Declarações", NÃO sugira "rol de testemunhas"
-
-Retorne APENAS JSON neste formato:
-{
-  "summary": "Resumo claro identificando: processo de [TIPO] + ação solicitada + prazo",
-  "documentType": "Tipo exato do documento",
-  "processType": "Tipo do processo (Inventário, Ação Cível, etc)",
-  "priority": "alta" | "média" | "baixa",
-  "deadline": {
-    "days": número de dias do prazo,
-    "type": "úteis" | "corridos",
-    "endDate": "DD/MM/2025" (calcular a partir da data de recebimento)
-  },
-  "suggestedActions": ["Ação EXATA solicitada na intimação"],
-  "nextSteps": ["Próximos passos específicos para a ação solicitada"]
-}`,
-                  },
-                  {
-                    role: "user",
-                    content: `Analise esta intimação:
-
-PROCESSO: ${exp.numeroProcesso || "Não informado"}
-TRIBUNAL: ${exp.tribunal || "Não informado"}
-DATA DE RECEBIMENTO: ${exp.receivedAt || exp.dataRecebimento || new Date().toISOString()}
-
-CONTEÚDO DA INTIMAÇÃO:
-${exp.content || exp.teor || "Sem conteúdo"}
-
-IMPORTANTE:
-- Se a intimação mencionar "inventário" ou "inventariante", é processo de INVENTÁRIO
-- Se mencionar "Primeiras Declarações", a ação é "Apresentar Primeiras Declarações de Inventário"
-- Calcule a data final considerando APENAS dias ÚTEIS (segunda a sexta, excluindo feriados)
-- Use o ANO 2025 para calcular a data limite`,
-                  },
-                ],
+                agentId: "justine",
+                expedienteId: exp.id,
+                message: `Analise o expediente ${exp.id} do processo ${exp.numeroProcesso}`
               }),
             });
 
             const data = await response.json();
-            const responseText = data.choices?.[0]?.message?.content || data.message?.content || "";
-            const analysisData = parseAnalysisResponse(responseText, exp);
+
+            // 🛑 Detectar Interrupção (Human-in-the-loop)
+            if (data.interrupts && data.interrupts.length > 0) {
+              addLog({ agentName: "Mrs. Justin-e", type: "info", message: "Ação pausada: aguardando instrução do advogado." });
+              setActiveInterrupt(data.interrupts[0]);
+              throw new Error("INTERRUPT_REQUIRED");
+            }
+
+            const analysisData = parseAnalysisResponse(data.answer, exp);
+            addLog({ agentName: "Mrs. Justin-e", type: "success", message: "Análise e distribuição de tarefas concluída." });
 
             const analyzedExp: Expediente = {
               ...exp,
@@ -543,31 +530,18 @@ IMPORTANTE:
               draftPetition: buildDraftPetition(analysisData, exp),
             };
 
-            // Criar tarefas para outros agentes com base na análise
-            const agentTasks = getAgentTasksFromAnalysis(analyzedExp, analysisData);
-            let createdTasks = 0;
-
-            for (const taskData of agentTasks) {
-              // Só cria tarefa se o agente estiver habilitado
-              const agent = agents.find((a) => a.id === taskData.agentId);
-              if (agent?.enabled) {
-                const task: AgentTask = {
-                  id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-                  agentId: taskData.agentId!,
-                  type: taskData.type!,
-                  priority: taskData.priority as "low" | "medium" | "high" | "critical",
-                  status: "queued",
-                  createdAt: new Date().toISOString(),
-                  data: taskData.data as Record<string, unknown>,
-                };
-                addTask(task);
-                createdTasks++;
-              }
+            // O Genkit Flow já pode ter criado as tarefas no backend
+            // Aqui apenas atualizamos o contador visual se o backend retornar
+            const createdTasks = data.usedTools?.length || 0;
+            if (data.usedTools) {
+              data.usedTools.forEach((tool: string) => {
+                let msg = `Ferramenta utilizada: ${tool}`;
+                if (tool === 'runResearch') msg = "Acionando Agente DataJud para pesquisa de jurisprudência...";
+                if (tool === 'indexarNoQdrant') msg = "Populando Qdrant com novos precedentes localizados...";
+                addLog({ agentName: "Mrs. Justin-e", type: "tool", message: msg });
+              });
             }
-
-            if (createdTasks > 0) {
-              setTasksCreated((prev) => prev + createdTasks);
-            }
+            setTasksCreated((prev) => prev + createdTasks);
 
             // Atributos de conclusão para Sentry
             span?.setAttribute("analysis.completed", true);
@@ -590,9 +564,12 @@ IMPORTANTE:
 
             return analyzedExp;
           } catch (error) {
+            setCurrentStep("Erro na análise");
             console.error("Erro ao analisar expediente:", error);
             // Sentry captura erro automaticamente via span
             throw error;
+          } finally {
+            setCurrentStep("");
           }
         }
       );
@@ -657,6 +634,102 @@ IMPORTANTE:
       }, 2000);
     }
   }, [safeExpedientes, loading, runAutoAnalysis]);
+
+  /**
+   * Retoma a execução de um agente após a resposta do advogado
+   */
+  const handleResumeAgent = async () => {
+    if (!activeInterrupt || !selectedExp) return;
+
+    setAnalyzing(true);
+    setCurrentStep("Enviando resposta para o agente...");
+    addLog({ agentName: "Sistema", type: "info", message: "Retomando execução com instrução do advogado..." });
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume: {
+            respond: [{
+              interruptId: activeInterrupt.id,
+              metadata: activeInterrupt.metadata,
+              output: lawyerAnswer
+            }]
+          }
+        }),
+      });
+
+      const data = await res.json();
+      // Se o agente terminou após o resume, atualizamos o expediente
+      if (data.answer) {
+        addLog({ agentName: "Sistema", type: "success", message: "Agente concluiu a tarefa após intervenção." });
+        toast.success("Agente retomou e concluiu a tarefa!");
+      }
+    } catch (err) {
+      addLog({ agentName: "Sistema", type: "error", message: "Erro ao retomar o agente." });
+      toast.error("Erro ao retomar agente.");
+    } finally {
+      setActiveInterrupt(null);
+      setLawyerAnswer("");
+      setAnalyzing(false);
+    }
+  };
+
+  /**
+   * Executa o fluxo de Análise de Risco do Genkit
+   */
+  const handleRiskAnalysis = async (exp: Expediente) => {
+    setAnalyzing(true);
+    setCurrentStep("Iniciando Análise de Risco Iterativa...");
+    addLog({ agentName: "Agente de Risco", type: "thinking", message: `Analisando riscos financeiros do processo ${exp.numeroProcesso}...` });
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: "analise-risco", numeroProcesso: exp.numeroProcesso }),
+      });
+      const data = await res.json();
+      
+      setExpedientes(current => current.map(e => e.id === exp.id ? { 
+        ...e, 
+        summary: `${e.summary}\n\n⚠️ ANÁLISE DE RISCO: ${data.answer}` 
+      } : e));
+      
+      addLog({ agentName: "Agente de Risco", type: "success", message: "Análise de risco finalizada com refinamento iterativo." });
+      toast.success("Análise de risco concluída com refinamento!");
+    } catch (err) {
+      addLog({ agentName: "Agente de Risco", type: "error", message: "Erro na análise de risco." });
+      toast.error("Falha na análise de risco.");
+    } finally {
+      setAnalyzing(false);
+      setCurrentStep("");
+    }
+  };
+
+  /**
+   * Executa o fluxo de Estratégia Processual do Genkit
+   */
+  const handleStrategyAnalysis = async (exp: Expediente) => {
+    setAnalyzing(true);
+    setCurrentStep("Roteando Estratégia Processual...");
+    addLog({ agentName: "Estratégia", type: "thinking", message: "Definindo melhor caminho processual baseado na fase atual..." });
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: "estrategia-processual", numeroProcesso: exp.numeroProcesso }),
+      });
+      const data = await res.json();
+      addLog({ agentName: "Estratégia", type: "success", message: "Estratégia processual definida e registrada." });
+      toast.success("Estratégia processual definida!");
+    } catch (err) {
+      addLog({ agentName: "Estratégia", type: "error", message: "Erro ao definir estratégia." });
+      toast.error("Falha na estratégia.");
+    } finally {
+      setAnalyzing(false);
+      setCurrentStep("");
+    }
+  };
 
   // Análise com IA real via API Gemini direta (mantida para uso manual)
   const handleAnalyze = async (exp: Expediente) => {
@@ -954,7 +1027,7 @@ Crie o workflow de controladoria para esta tarefa.`,
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-foreground">
-                      🤖 Mrs. Justin-e analisando intimações e distribuindo tarefas...
+                      🤖 {currentStep || "Mrs. Justin-e analisando intimações..."}
                     </p>
                     <span className="text-sm text-muted-foreground">
                       {analysisProgress.current}/{analysisProgress.total}
@@ -1006,6 +1079,11 @@ Crie o workflow de controladoria para esta tarefa.`,
           )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Console de Logs IA */}
+          <div className="lg:col-span-3 h-48">
+            <AILogViewer logs={aiLogs} />
+          </div>
+
           <div className="lg:col-span-1 space-y-4">
             <Card>
               <CardHeader>
@@ -1101,6 +1179,20 @@ Crie o workflow de controladoria para esta tarefa.`,
                         >
                           Análise Padrão
                         </Button>
+                      </div>
+                    )}
+                    {selectedExp.analyzed && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleRiskAnalysis(selectedExp)}
+                          variant="outline"
+                          size="sm"
+                        >Análise de Risco</Button>
+                        <Button
+                          onClick={() => handleStrategyAnalysis(selectedExp)}
+                          variant="outline"
+                          size="sm"
+                        >Estratégia</Button>
                       </div>
                     )}
                     {selectedExp.analyzed && needsReanalysis(selectedExp) && (
@@ -1243,6 +1335,35 @@ Crie o workflow de controladoria para esta tarefa.`,
                 <br />• Gerar minuta de petição
               </p>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Intervenção Humana (Human-in-the-loop) */}
+      <Dialog open={!!activeInterrupt} onOpenChange={() => setActiveInterrupt(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Intervenção Necessária</DialogTitle>
+            <DialogDescription>
+              O agente jurídico encontrou uma dúvida e precisa da sua orientação para continuar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm font-medium text-amber-900">Pergunta do Agente:</p>
+              <p className="text-sm text-amber-800 mt-1">
+                {activeInterrupt?.toolRequest?.input?.question || "O que devo fazer a seguir?"}
+              </p>
+            </div>
+            <Textarea
+              placeholder="Sua resposta ou instrução técnica..."
+              value={lawyerAnswer}
+              onChange={(e) => setLawyerAnswer(e.target.value)}
+              className="min-h-[100px]"
+            />
+            <Button onClick={handleResumeAgent} className="w-full" disabled={!lawyerAnswer || analyzing}>
+              Enviar Instrução e Retomar Agente
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

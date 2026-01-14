@@ -9,7 +9,7 @@
  */
 
 import type { DJENPublication } from "@/types/djen-publication";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 
 // Correção para erro "process is not defined" no Vite
 const VITE_DJEN_ADVOGADO_NOME = import.meta.env.VITE_DJEN_ADVOGADO_NOME || "Advogado Exemplo";

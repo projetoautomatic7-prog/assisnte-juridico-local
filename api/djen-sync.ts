@@ -10,7 +10,7 @@
 
 import * as Sentry from "@sentry/node";
 import { Redis } from "@upstash/redis";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "@vercel node";
 import { randomUUID } from "node:crypto";
 
 // Rate limiting para evitar abuso
@@ -21,7 +21,6 @@ interface MonitoredLawyer {
   id: string;
   name: string;
   oab: string;
-  email?: string;
   enabled: boolean;
   tribunals: string[];
 }
@@ -98,8 +97,6 @@ async function getKv(): Promise<Redis> {
   if (_kvClient) return _kvClient;
 
   if (
-
-ximos passos
     !process.env.UPSTASH_REDIS_REST_URL?.trim() ||
     !process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
   ) {

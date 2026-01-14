@@ -42,7 +42,8 @@
     "azure:validate": "node scripts/validate-azure-integration.js",
     "azure:deploy-dashboard": "pwsh scripts/deploy-azure-dashboard.ps1",
     "azure:load-test": "az load test-run create --load-test-resource assistente-juridico-load-test --resource-group assistente-juridico-rg --test-id agents-stress-test",
-    "sonar": "sonar-scanner"
+    "sonar": "sonar-scanner",
+    "genkit:ui": "genkit start -- npx tsx --watch src/recipeGenerator.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

@@ -1,255 +1,202 @@
-// lib/ai/tools.ts
-// Ferramentas REAIS conectadas às APIs do sistema
-// Substituem completamente os dados simulados
-// Circuit Breaker Pattern para resiliência
+import { z } from 'zod';
+import { ai } from './genkit';
 
-import type { Tool, ToolContext } from "./core-agent";
-import { CircuitBreakerRegistry } from "./circuit-breaker";
+const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
 
-export interface GlobalToolContext extends ToolContext {
-  baseUrl: string;          // URL base do app (ex: https://assistente-juridico-github.vercel.app)
-  evolutionApiUrl: string;  // URL da Evolution API
-  evolutionApiKey: string;
-}
-
-/**
- * 1) Buscar intimação pendente (PJe / DJEN / DataJud)
- * Conecta com /api/djen/check - DADOS REAIS
- * Circuit Breaker: 5 falhas = OPEN, 60s timeout
- */
-export const buscarIntimacaoPendente: Tool = {
-  name: "buscarIntimacaoPendente",
-  description:
-    "Busca a próxima intimação pendente de análise no sistema (PJe / DJEN / DataJud). Retorna dados REAIS das APIs jurídicas.",
-  async run(args, ctx: ToolContext) {
-    const globalCtx = ctx as GlobalToolContext;
-    const url = `${globalCtx.baseUrl}/api/djen/check`;
-    const breaker = CircuitBreakerRegistry.get('djen-api', {
-      failureThreshold: 5,
-      timeout: 60000, // 60s
+export const buscarIntimacaoPendente = ai.defineTool(
+  {
+    name: 'buscarIntimacaoPendente',
+    description: 'Busca a próxima intimação pendente de análise no sistema.',
+    inputSchema: z.object({ mode: z.string().optional() }),
+    outputSchema: z.any(),
+  },
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/djen/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'next-pending', ...input }),
     });
-    
-    try {
-      return await breaker.execute(async () => {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "next-pending", ...args }),
-        });
+    return res.json();
+  }
+);
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errorText}`);
-        }
-
-        return await res.json();
-      });
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[buscarIntimacaoPendente] Erro:`, error);
-      throw new Error(`Erro ao buscar intimação: ${error.message}`);
-    }
+export const criarTarefa = ai.defineTool(
+  {
+    name: 'criarTarefa',
+    description: 'Cria uma tarefa jurídica no sistema Todoist/CRM.',
+    inputSchema: z.object({
+      content: z.string(),
+      due_string: z.string().optional(),
+      priority: z.number().optional(),
+    }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/todoist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create-task', ...input }),
+    });
+    return res.json();
+  }
+);
 
-/**
- * 2) Criar tarefa (Todoist / CRM interno)
- * Conecta com /api/todoist - TAREFAS REAIS
- */
-export const criarTarefa: Tool = {
-  name: "criarTarefa",
-  description:
-    "Cria uma tarefa jurídica REAL no sistema de tarefas (Todoist/CRM). Retorna o ID da tarefa criada.",
-  async run(args, ctx: GlobalToolContext) {
-    const url = `${ctx.baseUrl}/api/todoist`;
-    
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create-task",
-          ...args,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[criarTarefa] Erro:`, error);
-      throw new Error(`Erro ao criar tarefa: ${error.message}`);
-    }
+export const calcularPrazos = ai.defineTool(
+  {
+    name: 'calcularPrazos',
+    description: 'Calcula prazos processuais considerando feriados e dias úteis.',
+    inputSchema: z.object({
+      startDate: z.string(),
+      days: z.number(),
+      type: z.enum(['úteis', 'corridos']),
+    }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/deadline/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    return res.json();
+  }
+);
 
-/**
- * 3) Calcular prazos processuais REAIS
- * Conecta com /api/deadline/calculate - CÁLCULOS REAIS
- */
-export const calcularPrazos: Tool = {
-  name: "calcularPrazos",
-  description:
-    "Calcula prazos processuais REAIS a partir de uma data base, tipo de prazo e tribunal. Considera feriados e dias úteis.",
-  async run(args, ctx: GlobalToolContext) {
-    const url = `${ctx.baseUrl}/api/deadline/calculate`;
-    
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(args),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[calcularPrazos] Erro:`, error);
-      throw new Error(`Erro ao calcular prazo: ${error.message}`);
-    }
+export const consultarProcessoPJe = ai.defineTool(
+  {
+    name: 'consultarProcessoPJe',
+    description: 'Consulta dados de um processo pelo número CNJ.',
+    inputSchema: z.object({ numeroProcesso: z.string() }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/legal-services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'consultar-processo', ...input }),
+    });
+    return res.json();
+  }
+);
 
-/**
- * 4) Consultar processo REAL no PJe / serviços-legais
- * Conecta com /api/serviços-legais - PROCESSOS REAIS
- */
-export const consultarProcessoPJe: Tool = {
-  name: "consultarProcessoPJe",
-  description:
-    "Consulta dados REAIS de um processo (PJe / DJEN / DataJud) pelo número CNJ. Retorna andamentos, partes e status atualizados.",
-  async run(args, ctx: GlobalToolContext) {
-    const url = `${ctx.baseUrl}/api/legal-services`;
-    
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "consultar-processo", ...args }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[consultarProcessoPJe] Erro:`, error);
-      throw new Error(`Erro ao consultar processo: ${error.message}`);
-    }
+export const enviarMensagemWhatsApp = ai.defineTool(
+  {
+    name: 'enviarMensagemWhatsApp',
+    description: 'Envia mensagem via WhatsApp.',
+    inputSchema: z.object({ numero: z.string(), mensagem: z.string() }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${process.env.EVOLUTION_API_URL}/message/sendText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: process.env.EVOLUTION_API_KEY! },
+      body: JSON.stringify({ number: input.numero, textMessage: { text: input.mensagem } }),
+    });
+    return res.json();
+  }
+);
 
-/**
- * 5) Enviar mensagem REAL via WhatsApp (Evolution API)
- * Conecta com Evolution API - MENSAGENS REAIS
- */
-export const enviarMensagemWhatsApp: Tool = {
-  name: "enviarMensagemWhatsApp",
-  description:
-    "Envia uma mensagem de texto REAL via WhatsApp usando a Evolution API. Retorna status de envio.",
-  async run(args, ctx: GlobalToolContext) {
-    const { numero, mensagem } = args ?? {};
-    
-    if (!numero || !mensagem) {
-      throw new Error("Campos 'numero' e 'mensagem' são obrigatórios.");
-    }
-
-    if (!ctx.evolutionApiUrl || !ctx.evolutionApiKey) {
-      throw new Error("Evolution API não configurada. Defina EVOLUTION_API_URL e EVOLUTION_API_KEY.");
-    }
-
-    try {
-      const res = await fetch(`${ctx.evolutionApiUrl}/message/sendText`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: ctx.evolutionApiKey,
-        },
-        body: JSON.stringify({
-          number: numero,
-          textMessage: { text: mensagem },
-          options: { delay: 0 },
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[enviarMensagemWhatsApp] Erro:`, error);
-      throw new Error(`Erro ao enviar WhatsApp: ${error.message}`);
-    }
+export const registrarLogAgente = ai.defineTool(
+  {
+    name: 'registrarLogAgente',
+    description: 'Registra log de execução para auditoria.',
+    inputSchema: z.object({ agentId: z.string(), action: z.string(), details: z.any() }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/kv`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'log-agent', payload: input }),
+    });
+    return res.json();
+  }
+);
 
-/**
- * 6) Registrar log de execução REAL do agente em KV/Redis
- * Conecta com /api/kv - LOGS REAIS
- */
-export const registrarLogAgente: Tool = {
-  name: "registrarLogAgente",
-  description:
-    "Registra log estruturado REAL da execução do agente em KV/Redis para auditoria e telemetria.",
-  async run(args, ctx: GlobalToolContext) {
-    const url = `${ctx.baseUrl}/api/kv`;
-    
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "log-agent",
-          payload: {
-            timestamp: new Date().toISOString(),
-            ...args,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const data = await res.json();
-      return data;
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e : new Error(String(e));
-      console.error(`[registrarLogAgente] Erro:`, error);
-      throw new Error(`Erro ao registrar log: ${error.message}`);
-    }
+export const buscarJurisprudenciaDataJud = ai.defineTool(
+  {
+    name: 'buscarJurisprudenciaDataJud',
+    description: 'Busca jurisprudência e precedentes atualizados no DataJud/CNJ.',
+    inputSchema: z.object({ query: z.string(), tribunal: z.string().optional() }),
+    outputSchema: z.any(),
   },
-};
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/legal-services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'search-jurisprudence', ...input }),
+    });
+    return res.json();
+  }
+);
 
-/**
- * Lista de TODAS as ferramentas disponíveis
- * Cada agente escolhe quais pode usar via toolNames
- */
-export const ALL_TOOLS: Tool[] = [
+export const pesquisarQdrant = ai.defineTool(
+  {
+    name: 'pesquisarQdrant',
+    description: 'Consulta a base de conhecimento interna (Qdrant) por teses e precedentes já salvos.',
+    inputSchema: z.object({ query: z.string() }),
+    outputSchema: z.any(),
+  },
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/qdrant/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    return res.json();
+  }
+);
+
+export const indexarNoQdrant = ai.defineTool(
+  {
+    name: 'indexarNoQdrant',
+    description: 'Salva uma tese ou jurisprudência relevante no Qdrant para uso futuro.',
+    inputSchema: z.object({ content: z.string(), metadata: z.any() }),
+    outputSchema: z.any(),
+  },
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/qdrant/upsert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    return res.json();
+  }
+);
+
+export const indexarAnaliseCaso = ai.defineTool(
+  {
+    name: 'indexarAnaliseCaso',
+    description: 'Salva o resumo e a estratégia de um caso analisado no Qdrant para consulta futura.',
+    inputSchema: z.object({ 
+      numeroProcesso: z.string(), 
+      resumo: z.string(), 
+      estrategia: z.string().optional() 
+    }),
+    outputSchema: z.any(),
+  },
+  async (input) => {
+    const res = await fetch(`${BASE_URL}/api/qdrant/upsert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `Processo: ${input.numeroProcesso}\nResumo: ${input.resumo}\nEstratégia: ${input.estrategia || 'N/A'}`,
+        metadata: { type: 'case-analysis', processNumber: input.numeroProcesso, date: new Date().toISOString() }
+      }),
+    });
+    return res.json();
+  }
+);
+
+export const ALL_TOOLS = [
   buscarIntimacaoPendente,
   criarTarefa,
   calcularPrazos,
   consultarProcessoPJe,
   enviarMensagemWhatsApp,
   registrarLogAgente,
+  buscarJurisprudenciaDataJud,
+  pesquisarQdrant,
+  indexarNoQdrant,
+  indexarAnaliseCaso,
 ];
