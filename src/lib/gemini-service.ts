@@ -79,7 +79,7 @@ export interface GeminiResponse {
 function getDefaultGeminiModel(): string {
   const fromProcessEnv =
     typeof process !== "undefined" && process.env
-      ? (process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL)
+      ? process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL
       : undefined;
 
   const fromImportMetaEnv =

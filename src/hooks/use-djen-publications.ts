@@ -267,7 +267,7 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
         setIsGeoBlocked(true);
         setError(
           browserResult.error ||
-          "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
+            "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
         );
         setLawyersCount(browserResult.lawyersConfigured);
         return;

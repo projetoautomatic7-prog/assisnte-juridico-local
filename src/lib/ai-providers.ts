@@ -284,7 +284,7 @@ export class GeminiClient {
 
     const envModel =
       (typeof process !== "undefined" && process.env
-        ? (process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL)
+        ? process.env.VITE_GEMINI_MODEL || process.env.GEMINI_MODEL
         : undefined) ||
       (typeof import.meta !== "undefined" && import.meta.env
         ? (import.meta.env.VITE_GEMINI_MODEL as string | undefined)

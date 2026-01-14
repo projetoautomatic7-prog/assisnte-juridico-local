@@ -69,9 +69,7 @@ const initOnInteraction = () => {
       setTimeout(initMonitoring, 100);
     }
   };
-  events.forEach((e) =>
-    globalThis.addEventListener(e, handler, { capture: true, passive: true })
-  );
+  events.forEach((e) => globalThis.addEventListener(e, handler, { capture: true, passive: true }));
 };
 
 // Monitoring - Fallback após 3s se não houver interação
