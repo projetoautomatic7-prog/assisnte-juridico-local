@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ai } from './genkit';
 
-const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3001';
 
 export const buscarIntimacaoPendente = ai.defineTool(
   {
@@ -16,6 +16,7 @@ export const buscarIntimacaoPendente = ai.defineTool(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'next-pending', ...input }),
     });
+    if (!res.ok) throw new Error(`Erro ao buscar intimação: ${res.statusText}`);
     return res.json();
   }
 );
@@ -141,8 +142,12 @@ export const pesquisarQdrant = ai.defineTool(
     const res = await fetch(`${BASE_URL}/api/qdrant/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        ...input,
+        limit: 5 // Limite de segurança para contexto de IA
+      }),
     });
+    if (!res.ok) throw new Error(`Erro na busca Qdrant: ${res.statusText}`);
     return res.json();
   }
 );

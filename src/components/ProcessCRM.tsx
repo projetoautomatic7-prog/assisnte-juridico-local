@@ -24,7 +24,7 @@ import { useProcessSync } from "@/hooks/use-process-sync";
 import { config } from "@/lib/config";
 import { extractPartiesWithFallback } from "@/lib/extract-parties-service";
 import { generatePremonicaoJuridica } from "@/lib/premonicao-service";
-import { createProcessTasks, initializeTodoistClient } from "@/lib/todoist-integration";
+import { checkTodoistConfig, createProcessTasks } from "@/lib/todoist-integration";
 import type { Expediente, PremonicaoJuridica, Process } from "@/types";
 import { Bot, FileText, Mail, Plus, Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -154,27 +154,28 @@ export default function ProcessCRM() {
     setProcesses((current) => [...(current || []), process]);
 
     // Integração com Todoist
-    if (config.todoist.apiKey) {
-      try {
-        initializeTodoistClient(config.todoist.apiKey);
-        await createProcessTasks({
-          number: process.numeroCNJ,
-          type: process.titulo,
-          deadlines: [
-            {
-              type: "Análise Inicial",
-              date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +2 dias
-              description: "Analisar processo recém cadastrado",
-            },
-          ],
-        });
-        toast.success("Tarefas criadas no Todoist!");
-      } catch (error) {
-        console.error("Erro ao criar tarefas no Todoist:", error);
-        toast.error("Erro na integração com Todoist");
+    try {
+      const todoistConfigured = await checkTodoistConfig();
+      if (!todoistConfigured) {
+        throw new Error("Todoist não configurado no backend");
       }
-    }
 
+      await createProcessTasks({
+        number: process.numeroCNJ,
+        type: process.titulo,
+        deadlines: [
+          {
+            type: "Análise Inicial",
+            date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +2 dias
+            description: "Analisar processo recém cadastrado",
+          },
+        ],
+      });
+      toast.success("Tarefas criadas no Todoist!");
+    } catch (error) {
+      console.error("Erro ao criar tarefas no Todoist:", error);
+      toast.error("Erro na integração com Todoist");
+    }
     setShowDialog(false);
     setNewProcess({
       numeroCNJ: "",

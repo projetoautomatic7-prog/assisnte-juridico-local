@@ -9,8 +9,6 @@ import type { AnaliseDocumentalInput } from "./validators";
 
 const EMBEDDING_API_URL =
   "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
-const EMBEDDING_DIMENSION = 768;
-
 export interface DocumentoJuridico {
   titulo: string;
   conteudo: string;
@@ -41,11 +39,10 @@ export interface DocumentSearchInput {
 export class DocumentoRetriever {
   private readonly collectionName = "documentos_juridicos";
   private qdrantService: QdrantService | null = null;
-  private useMockData: boolean = true;
 
   constructor() {
-    const qdrantUrl = import.meta.env.VITE_QDRANT_URL || import.meta.env.QDRANT_URL;
-    const qdrantKey = import.meta.env.VITE_QDRANT_API_KEY || import.meta.env.QDRANT_API_KEY;
+    const qdrantUrl = process.env.QDRANT_URL;
+    const qdrantKey = process.env.QDRANT_API_KEY;
 
     if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
       try {
@@ -55,15 +52,12 @@ export class DocumentoRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        this.useMockData = false;
         console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
       } catch (error) {
-        console.warn("⚠️ Qdrant connection failed, using mock data:", error);
-        this.useMockData = true;
+        console.error("❌ Qdrant connection failed:", error);
       }
     } else {
-      console.log("ℹ️ Qdrant credentials not found, using mock data");
-      this.useMockData = true;
+      console.error("❌ Qdrant credentials not found");
     }
   }
 
@@ -111,8 +105,7 @@ export class DocumentoRetriever {
 
   private async generateEmbeddings(text: string): Promise<number[]> {
     if (!isGeminiConfigured()) {
-      console.warn("⚠️ [Embeddings] Gemini API não configurada, usando mock embeddings");
-      return this.generateMockEmbeddings();
+      throw new Error("Gemini API não configurada para embeddings");
     }
 
     try {
@@ -165,32 +158,23 @@ export class DocumentoRetriever {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
-        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        "❌ [Embeddings] Falha ao gerar embedding real:",
         errorMessage
       );
-      return this.generateMockEmbeddings();
+      throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
-  }
-
-  private generateMockEmbeddings(): number[] {
-    console.log("📦 [Embeddings] Usando mock embeddings (768 dimensões)");
-    return Array.from({ length: EMBEDDING_DIMENSION }, () => Math.random());
   }
 
   private async searchVectorDatabase(
     embeddings: number[],
     input: DocumentSearchInput
   ): Promise<DocumentoJuridico[]> {
-    if (this.qdrantService && !this.useMockData) {
-      try {
-        const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
-        return this.mapQdrantResultsToDocumentos(qdrantResults);
-      } catch (error) {
-        console.warn("⚠️ Qdrant search failed, falling back to mock data:", error);
-      }
+    if (!this.qdrantService) {
+      throw new Error("Qdrant não configurado");
     }
 
-    return this.getMockDocumentos();
+    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    return this.mapQdrantResultsToDocumentos(qdrantResults);
   }
 
   private mapQdrantResultsToDocumentos(results: QdrantSearchResult[]): DocumentoJuridico[] {
@@ -207,72 +191,6 @@ export class DocumentoRetriever {
     }));
   }
 
-  private getMockDocumentos(): DocumentoJuridico[] {
-    const mockDocumentos: DocumentoJuridico[] = [
-      {
-        titulo: "Contrato de Prestação de Serviços - Modelo Padrão",
-        conteudo:
-          "Contrato de prestação de serviços que entre si celebram as partes identificadas... Cláusula 1ª - Do Objeto...",
-        relevancia: 0.94,
-        tipoDocumento: "contrato",
-        data: "2024-06-15",
-        numeroProcesso: undefined,
-        partes: ["Empresa Contratante LTDA", "Prestador de Serviços ME"],
-        clausulasChave: ["objeto", "prazo", "valor", "rescisão"],
-        tags: ["prestação de serviços", "B2B", "modelo padrão"],
-      },
-      {
-        titulo: "Petição Inicial - Reclamação Trabalhista",
-        conteudo:
-          "Exmo. Sr. Dr. Juiz do Trabalho da 99ª Vara do Trabalho de São Paulo... O reclamante vem expor e requerer...",
-        relevancia: 0.88,
-        tipoDocumento: "petição",
-        data: "2024-08-20",
-        numeroProcesso: "0001234-56.2024.5.02.0099",
-        partes: ["João da Silva (Reclamante)", "Empresa XYZ S.A. (Reclamada)"],
-        clausulasChave: [],
-        tags: ["trabalhista", "petição inicial", "reclamação"],
-      },
-      {
-        titulo: "Sentença - Ação de Cobrança",
-        conteudo:
-          "Vistos, relatados e discutidos estes autos... JULGO PROCEDENTE o pedido para condenar a ré...",
-        relevancia: 0.82,
-        tipoDocumento: "sentença",
-        data: "2024-05-10",
-        numeroProcesso: "0009876-54.2023.8.26.0100",
-        partes: ["Credor Ltda", "Devedor ME"],
-        clausulasChave: [],
-        tags: ["cível", "cobrança", "sentença condenatória"],
-      },
-      {
-        titulo: "Procuração Ad Judicia",
-        conteudo:
-          "Pelo presente instrumento particular de mandato, o outorgante constitui como seu procurador...",
-        relevancia: 0.75,
-        tipoDocumento: "procuração",
-        data: "2024-09-01",
-        numeroProcesso: undefined,
-        partes: ["Outorgante", "Advogado OAB/SP 123.456"],
-        clausulasChave: ["poderes", "foro", "revogação"],
-        tags: ["procuração", "mandato", "advocacia"],
-      },
-      {
-        titulo: "Decisão Interlocutória - Tutela de Urgência",
-        conteudo:
-          "Defiro a tutela de urgência requerida, ante a presença dos requisitos do art. 300 do CPC...",
-        relevancia: 0.7,
-        tipoDocumento: "decisão",
-        data: "2024-07-22",
-        numeroProcesso: "1005678-90.2024.8.26.0100",
-        partes: ["Autor", "Réu"],
-        clausulasChave: [],
-        tags: ["tutela de urgência", "liminar", "decisão interlocutória"],
-      },
-    ];
-
-    return mockDocumentos;
-  }
 
   private reRankResults(documentos: DocumentoJuridico[], threshold: number): DocumentoJuridico[] {
     return documentos

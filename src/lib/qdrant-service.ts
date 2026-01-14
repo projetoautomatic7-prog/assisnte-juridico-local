@@ -24,6 +24,15 @@ export interface QdrantPoint {
   payload: Record<string, unknown>;
 }
 
+export interface QdrantClient {
+  search(
+    vector: number[],
+    limit?: number,
+    filter?: Record<string, unknown>
+  ): Promise<SearchResult[]>;
+  upsert(points: QdrantPoint[]): Promise<void>;
+}
+
 export interface SearchResult {
   id: string | number;
   score: number;

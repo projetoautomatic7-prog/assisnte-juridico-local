@@ -7,7 +7,7 @@
 import { DataJudService } from "@/lib/datajud-service";
 import { GeminiEmbeddingService } from "@/lib/gemini-embedding-service";
 import { QdrantAutoPopulator } from "@/lib/qdrant-auto-populator";
-import { QdrantService } from "@/lib/qdrant-service";
+import { QdrantApiClient } from "@/lib/qdrant-api-client";
 import { TemaExtractorService } from "@/lib/tema-extractor";
 import type { Expediente } from "@/types";
 import { useState } from "react";
@@ -42,13 +42,8 @@ export function useQdrantAutoPopulate(options: UseQdrantAutoPopulateOptions = {}
       setState((prev) => ({ ...prev, status: "processing", isProcessing: true, error: null }));
 
       // Inicializa serviços
-      const qdrantUrl = import.meta.env.VITE_QDRANT_URL;
-      const qdrantApiKey = import.meta.env.VITE_QDRANT_API_KEY;
-      const qdrant = new QdrantService({
-        url: typeof qdrantUrl === "string" ? qdrantUrl : "",
-        apiKey: typeof qdrantApiKey === "string" ? qdrantApiKey : "",
-        collectionName: "legal_docs",
-      });
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const qdrant = new QdrantApiClient(baseUrl);
       const dataJud = new DataJudService();
       const temaExtractor = new TemaExtractorService();
       const embeddings = new GeminiEmbeddingService();

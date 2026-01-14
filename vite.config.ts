@@ -127,6 +127,9 @@ export default defineConfig({
     exclude: ["@doist/todoist-api-typescript"],
   },
   server: {
+    hmr: {
+      overlay: false,
+    },
     proxy: {
       "/api": {
         target: "http://localhost:3001",
@@ -156,6 +159,11 @@ export default defineConfig({
         "**/.sonar-results/**",
         "**/tests/e2e/**",
       ],
+    },
+  },
+  css: {
+    postcss: {
+      parser: "postcss-scss",
     },
   },
   build: {

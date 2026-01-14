@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { cn, handleImageUpload, isMac, MAC_SYMBOLS, MAX_FILE_SIZE, SR_ONLY } from "./tiptap-utils";
 
 describe("tiptap-utils", () => {
@@ -89,7 +89,10 @@ describe("tiptap-utils", () => {
         type: "image/jpeg",
       });
 
-      const onProgress = vi.fn();
+      const progressValues: number[] = [];
+      const onProgress = (value: number) => {
+        progressValues.push(value);
+      };
 
       try {
         await handleImageUpload(largeFile, onProgress);
@@ -103,7 +106,10 @@ describe("tiptap-utils", () => {
     it("validates file type", async () => {
       const textFile = new File(["text"], "file.txt", { type: "text/plain" });
 
-      const onProgress = vi.fn();
+      const progressValues: number[] = [];
+      const onProgress = (value: number) => {
+        progressValues.push(value);
+      };
 
       try {
         await handleImageUpload(textFile, onProgress);
@@ -119,12 +125,15 @@ describe("tiptap-utils", () => {
         type: "image/jpeg",
       });
 
-      const onProgress = vi.fn();
+      const progressValues: number[] = [];
+      const onProgress = (value: number) => {
+        progressValues.push(value);
+      };
       const result = await handleImageUpload(validFile, onProgress);
 
       // Should return data URL or upload result
       expect(result).toBeTruthy();
-      expect(onProgress).toHaveBeenCalled();
+      expect(progressValues.length).toBeGreaterThan(0);
     });
 
     // Upload errors are handled internally by throwing Error
@@ -143,15 +152,13 @@ describe("tiptap-utils", () => {
     });
 
     it("handles very large file gracefully", async () => {
-      // Avoid allocating a huge string in the test runner to prevent OOM.
-      // Create a lightweight fake File-like object with a size > MAX_FILE_SIZE.
-      const hugeFile = {
-        name: "huge.jpg",
-        size: 100 * 1024 * 1024,
-        type: "image/jpeg",
-      } as unknown as File;
+      const oversizedBuffer = new Uint8Array(6 * 1024 * 1024);
+      const hugeFile = new File([oversizedBuffer], "huge.jpg", { type: "image/jpeg" });
 
-      const onProgress = vi.fn();
+      const progressValues: number[] = [];
+      const onProgress = (value: number) => {
+        progressValues.push(value);
+      };
 
       try {
         await handleImageUpload(hugeFile, onProgress);

@@ -32,12 +32,26 @@ const runResearch = ai.defineTool(
 export const justineFlow = ai.defineFlow(
   {
     name: 'justineFlow',
-    inputSchema: z.object({ expedienteId: z.string(), numeroProcesso: z.string().optional() }),
+    inputSchema: z.object({ 
+      expedienteId: z.string(), 
+      numeroProcesso: z.string().optional(),
+      history: z.array(z.any()).optional()
+    }),
     outputSchema: AgentResponseSchema,
   },
   async (input) => {
+    // Execução Paralela: Busca dados do processo e intimações simultaneamente
+    const contextData = await ai.run('initial-investigation', async () => {
+      const [processo, intimação] = await Promise.all([
+        input.numeroProcesso ? consultarProcessoPJe.run({ numeroProcesso: input.numeroProcesso }) : Promise.resolve(null),
+        buscarIntimacaoPendente.run({ expedienteId: input.expedienteId })
+      ]);
+      return { processo, intimação };
+    });
+
     const response = await ai.generate({
       model: 'gemini-2.0-pro',
+      messages: input.history,
       system: `Você é Mrs. Justin-e, a Supervisora Autônoma da Controladoria Jurídica.
       Sua missão é processar expedientes e garantir que todas as providências sejam tomadas.
 
@@ -59,7 +73,9 @@ export const justineFlow = ai.defineFlow(
       1. Criando as tarefas no Todoist.
       2. Indexando a análise do caso no Qdrant usando 'indexarAnaliseCaso' para memória futura.
       3. Registrando o log.`,
-      prompt: `Processe o expediente ID: ${input.expedienteId}. Processo sugerido: ${input.numeroProcesso || 'Desconhecido'}.`,
+      prompt: `Processe o expediente ID: ${input.expedienteId}. 
+      Dados obtidos: ${JSON.stringify(contextData)}
+      Instrução atual: Analise e distribua as tarefas necessárias.`,
       tools: [
         buscarIntimacaoPendente,
         consultarProcessoPJe,

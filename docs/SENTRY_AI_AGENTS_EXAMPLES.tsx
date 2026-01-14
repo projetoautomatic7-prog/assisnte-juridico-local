@@ -25,7 +25,7 @@ import {
 // EXEMPLO 1: Chamada simples de agente
 // ============================================
 
-export async function exemploInvokeAgentSimples() {
+export async function exemploInvokeAgentSimples(intimationText: string) {
   const agentConfig: AIAgentConfig = {
     agentName: "Harvey Specter",
     system: "gcp.gemini",
@@ -37,14 +37,13 @@ export async function exemploInvokeAgentSimples() {
     sessionId: `session_${Date.now()}`,
     turn: 1,
     messages: [
-      { role: "system", content: "You are a legal assistant." },
-      { role: "user", content: "Analyze this intimation" },
+      { role: "system", content: "Você é um assistente jurídico." },
+      { role: "user", content: intimationText },
     ],
   };
 
   const result = await createInvokeAgentSpan(agentConfig, conversationMetadata, async (span) => {
-    // Simula chamada à API Gemini
-    const response = await callGeminiAPI("Analyze this intimation");
+    const response = await callGeminiAPI(intimationText);
 
     // Adiciona atributos de resposta
     span?.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
@@ -63,7 +62,7 @@ export async function exemploInvokeAgentSimples() {
 // EXEMPLO 2: Chat com histórico de mensagens
 // ============================================
 
-export async function exemploChatComHistorico() {
+export async function exemploChatComHistorico(intimationText: string) {
   const agentConfig: AIAgentConfig = {
     agentName: "Legal Analyst",
     system: "gcp.gemini",
@@ -71,8 +70,8 @@ export async function exemploChatComHistorico() {
   };
 
   const messages = [
-    { role: "system" as const, content: "You are a legal document analyzer." },
-    { role: "user" as const, content: "What is the deadline for this intimation?" },
+    { role: "system" as const, content: "Você é um analisador de documentos jurídicos." },
+    { role: "user" as const, content: intimationText },
   ];
 
   const response = await createChatSpan(agentConfig, messages, async (span) => {
@@ -94,7 +93,7 @@ export async function exemploChatComHistorico() {
 // EXEMPLO 3: Agente com execução de ferramentas
 // ============================================
 
-export async function exemploAgenteComFerramentas() {
+export async function exemploAgenteComFerramentas(intimationText: string) {
   const agentConfig: AIAgentConfig = {
     agentName: "Mrs. Justin-e",
     system: "gcp.gemini",
@@ -110,9 +109,9 @@ export async function exemploAgenteComFerramentas() {
     // 1. Chamada LLM inicial
     const llmResponse = await createChatSpan(
       agentConfig,
-      [{ role: "user", content: "Calculate deadline for this intimation" }],
+      [{ role: "user", content: intimationText }],
       async (chatSpan) => {
-        const response = await callGeminiAPI("Calculate deadline");
+        const response = await callGeminiAPI(intimationText);
 
         chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
         chatSpan?.setAttribute("gen_ai.usage.total_tokens", response.usage.totalTokens);
@@ -154,9 +153,16 @@ export async function exemploAgenteComFerramentas() {
       // 3. Envia resultados das ferramentas de volta ao LLM
       const finalResponse = await createChatSpan(
         agentConfig,
-        [{ role: "user", content: "Tool results: " + JSON.stringify(toolResults) }],
+        [
+          {
+            role: "user",
+            content: `Sintetize os resultados reais das ferramentas: ${JSON.stringify(toolResults)}`,
+          },
+        ],
         async (span) => {
-          const result = await callGeminiAPI("Synthesize response");
+          const result = await callGeminiAPI(
+            `Sintetize os resultados reais das ferramentas: ${JSON.stringify(toolResults)}`
+          );
           span?.setAttribute("gen_ai.response.text", JSON.stringify([result.text]));
           return result;
         }
@@ -187,7 +193,7 @@ export async function exemploAgenteComFerramentas() {
 // EXEMPLO 4: Handoff entre agentes
 // ============================================
 
-export async function exemploHandoffEntreAgentes() {
+export async function exemploHandoffEntreAgentes(intimationText: string) {
   // 1. Primeiro agente (Harvey) detecta que precisa transferir
   const harveyConfig: AIAgentConfig = {
     agentName: "Harvey Specter",
@@ -199,12 +205,12 @@ export async function exemploHandoffEntreAgentes() {
     harveyConfig,
     { sessionId: "session_123", turn: 1 },
     async (span) => {
-      const response = await callGeminiAPI("Should I analyze this intimation?");
+      const response = await callGeminiAPI(intimationText);
 
       span?.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
 
       // Harvey detecta que deve transferir para Justin-e
-      const shouldHandoff = response.text.includes("analyze intimation");
+      const shouldHandoff = response.text.includes("transferir");
 
       return { ...response, shouldHandoff };
     }
@@ -225,7 +231,7 @@ export async function exemploHandoffEntreAgentes() {
       justinConfig,
       { sessionId: "session_123", turn: 2 },
       async (span) => {
-        const response = await callGeminiAPI("Analyze intimation details");
+        const response = await callGeminiAPI(intimationText);
 
         span?.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
 
@@ -248,6 +254,7 @@ export function ExemploComponenteReact() {
   const [conversationHistory, setConversationHistory] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
+  const [userMessage, setUserMessage] = useState("");
   const [sessionId, setSessionId] = useState("");
 
   // Gera sessionId no client-side para evitar hydration mismatch
@@ -308,7 +315,14 @@ export function ExemploComponenteReact() {
   return (
     <div>
       {/* UI do chat */}
-      <button onClick={() => handleSendMessage("Hello")}>Send Message</button>
+      <input
+        value={userMessage}
+        onChange={(event) => setUserMessage(event.target.value)}
+        placeholder="Digite uma mensagem real"
+      />
+      <button onClick={() => handleSendMessage(userMessage)} disabled={!userMessage}>
+        Enviar mensagem
+      </button>
     </div>
   );
 }
@@ -317,7 +331,7 @@ export function ExemploComponenteReact() {
 // EXEMPLO 6: Span standalone sem contexto de transação
 // ============================================
 
-export async function exemploSpanStandalone() {
+export async function exemploSpanStandalone(documentText: string) {
   // Se não houver transação ativa, Sentry.startSpan cria uma automaticamente
   const result = await Sentry.startSpan(
     {
@@ -331,7 +345,7 @@ export async function exemploSpanStandalone() {
       },
     },
     async (span) => {
-      const response = await callGeminiAPI("Analyze document");
+      const response = await callGeminiAPI(documentText);
 
       span?.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
       span?.setAttribute("gen_ai.usage.total_tokens", response.usage.totalTokens);
@@ -344,7 +358,7 @@ export async function exemploSpanStandalone() {
 }
 
 // ============================================
-// Funções auxiliares (mock)
+// Funções auxiliares (integração real)
 // ============================================
 
 interface GeminiResponse {
@@ -358,26 +372,5 @@ interface GeminiResponse {
   toolCalls?: Array<{ name: string; arguments: unknown }>;
 }
 
-async function callGeminiAPI(_prompt: string): Promise<GeminiResponse> {
-  // Simula chamada à API
-  return {
-    id: `gen_${Date.now()}`,
-    text: "This is a mock response from Gemini API",
-    usage: {
-      promptTokens: 50,
-      responseTokens: 100,
-      totalTokens: 150,
-    },
-  };
-}
-
-async function executeToolFunction(toolName: string, _args: unknown): Promise<unknown> {
-  // Simula execução de ferramenta
-  if (toolName === "search_knowledge_base") {
-    return {
-      results: ["Result 1", "Result 2"],
-    };
-  }
-
-  return { status: "ok" };
-}
+declare function callGeminiAPI(prompt: string): Promise<GeminiResponse>;
+declare function executeToolFunction(toolName: string, args: unknown): Promise<unknown>;

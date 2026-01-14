@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Task, Project } from "@/lib/todoist-stub";
+import type { Task, Project } from "@/lib/todoist-types";
 
 // API client que chama endpoints serverless ao invés de usar Todoist diretamente
 async function apiCall<T>(action: string, body?: unknown): Promise<T> {

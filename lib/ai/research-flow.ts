@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ai, AgentResponseSchema } from './genkit';
 import { AGENTS } from './agents-registry';
+import { AgentResponseSchema, ai } from './genkit';
 
 /**
  * Tool para busca de jurisprudência.
@@ -20,11 +20,15 @@ export const buscarJurisprudencia = ai.defineTool(
     }),
   },
   async (input) => {
-    // Na V2, esta chamada será substituída por um crawler real ou API paga.
-    return {
-      ementas: [`Precedente vinculante sobre ${input.tema}: Entendimento consolidado favorável à tese...`],
-      links: ['https://www.stj.jus.br/jurisprudencia/exemplo']
-    };
+    const res = await fetch(`${process.env.APP_BASE_URL}/api/legal-services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'search-jurisprudence', query: input.tema, tribunal: input.tribunal }),
+    });
+
+    if (!res.ok) throw new Error('Falha na consulta real de jurisprudência (DataJud)');
+    const data = await res.json();
+    return data;
   }
 );
 
@@ -33,17 +37,5 @@ export const researchFlow = ai.defineFlow(
     name: 'researchFlow',
     inputSchema: z.object({
       tema: z.string(),
-    }),
-    outputSchema: AgentResponseSchema,
-  },
-  async (input) => {
-    const persona = AGENTS['pesquisa-juris'];
-    const response = await ai.generate({
-      system: persona.systemPrompt,
-      prompt: `Realize uma pesquisa jurisprudencial exaustiva sobre: ${input.tema}`,
-      tools: [buscarJurisprudencia],
-    });
-
-    return { answer: response.text };
-  }
-);
+      history: z.array(z.any()).optional()
+    

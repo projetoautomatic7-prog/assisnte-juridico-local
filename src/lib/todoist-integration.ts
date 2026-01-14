@@ -5,11 +5,10 @@
  * no contexto do assistente jurídico, permitindo gerenciar tarefas relacionadas
  * a processos judiciais, prazos e atividades jurídicas.
  *
- * @note Este módulo usa o stub do Todoist para compatibilidade client-side.
- * As chamadas reais ao Todoist devem ser feitas via endpoints /api/todoist-*.
+ * @note As chamadas reais ao Todoist são feitas via endpoints /api/todoist.
  */
 
-import { TodoistApi, type Task } from "@/lib/todoist-stub";
+import type { Task } from "@/lib/todoist-types";
 
 // Prioridade no Todoist: 4 (Vermelho/Urgente) a 1 (Branco/Normal)
 type Priority = 1 | 2 | 3 | 4;
@@ -23,27 +22,20 @@ interface LegalTaskInput {
   projectId?: string;
 }
 
-/**
- * Cliente Todoist singleton
- */
-let todoistClient: TodoistApi | null = null;
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
 
-/**
- * Inicializa o cliente Todoist com a API key
- */
-export function initializeTodoistClient(apiKey: string): TodoistApi {
-  todoistClient ??= new TodoistApi(apiKey);
-  return todoistClient;
-}
+async function callTodoist<T>(action: string, payload?: Record<string, unknown>): Promise<T> {
+  const response = await fetch(`${baseUrl}/api/todoist?action=${encodeURIComponent(action)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
 
-/**
- * Obtém o cliente Todoist (deve ser inicializado primeiro)
- */
-export function getTodoistClient(): TodoistApi {
-  if (!todoistClient) {
-    throw new Error("Cliente Todoist não inicializado. Chame initializeTodoistClient primeiro.");
+  if (!response.ok) {
+    throw new Error(`Todoist API error: ${response.status}`);
   }
-  return todoistClient;
+
+  return (await response.json()) as T;
 }
 
 /**
@@ -59,11 +51,9 @@ export function getTodoistClient(): TodoistApi {
  * }])
  */
 export async function addLegalTasks(tasks: LegalTaskInput[]): Promise<Task[]> {
-  const client = getTodoistClient();
-
   const createdTasks: Task[] = [];
   for (const task of tasks) {
-    const created = await client.addTask({
+    const response = await callTodoist<{ ok: boolean; task: Task }>("addTask", {
       content: task.content,
       description: task.description,
       dueString: task.dueDate,
@@ -71,6 +61,7 @@ export async function addLegalTasks(tasks: LegalTaskInput[]): Promise<Task[]> {
       labels: task.labels,
       projectId: task.projectId,
     });
+    const created = response.task;
     createdTasks.push(created);
   }
 
@@ -85,10 +76,10 @@ export async function addLegalTasks(tasks: LegalTaskInput[]): Promise<Task[]> {
  * const tasks = await findLegalTasksByDate("2024-12-15");
  */
 export async function findLegalTasksByDate(date: string): Promise<Task[]> {
-  const client = getTodoistClient();
-  // No SDK oficial, o filtro é via getTasks({ filter })
-  const tasks = await client.getTasks({ filter: date });
-  return tasks;
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
+    filter: date,
+  });
+  return response.tasks;
 }
 
 /**
@@ -99,23 +90,10 @@ export async function findLegalTasksByDate(date: string): Promise<Task[]> {
  * const urgentTasks = await searchLegalTasks("@processo & p1");
  */
 export async function searchLegalTasks(searchText: string): Promise<Task[]> {
-  const client = getTodoistClient();
-
-  // Tenta usar como filtro do Todoist primeiro
-  try {
-    const tasks = await client.getTasks({ filter: searchText });
-    return tasks;
-  } catch {
-    // Se falhar (filtro inválido), busca todas e filtra localmente (menos eficiente)
-    const allTasks = await client.getTasks();
-    const lower = searchText.toLowerCase();
-
-    return allTasks.filter(
-      (task) =>
-        task.content.toLowerCase().includes(lower) ||
-        task.description?.toLowerCase().includes(lower)
-    );
-  }
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
+    filter: searchText,
+  });
+  return response.tasks;
 }
 
 /**
@@ -134,13 +112,13 @@ export async function updateLegalTask(
     labels?: string[];
   }
 ) {
-  const client = getTodoistClient();
   const { dueDate, ...rest } = updates;
-
-  return await client.updateTask(taskId, {
+  const response = await callTodoist<{ ok: boolean; task: Task }>("updateTask", {
+    id: taskId,
     ...rest,
     dueString: dueDate,
   });
+  return response.task;
 }
 
 /**
@@ -149,8 +127,7 @@ export async function updateLegalTask(
  * @param taskId ID da tarefa no Todoist
  */
 export async function completeLegalTask(taskId: string) {
-  const client = getTodoistClient();
-  return await client.closeTask(taskId);
+  return await callTodoist<{ ok: boolean; message: string }>("closeTask", { id: taskId });
 }
 
 /**
@@ -231,9 +208,18 @@ export async function getTodayTasks() {
  * Obtém tarefas urgentes (próximos 3 dias)
  */
 export async function getUrgentTasks() {
-  const client = getTodoistClient();
-  const tasks = await client.getTasks({ filter: "3 days" });
-  return tasks;
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
+    filter: "3 days",
+  });
+  return response.tasks;
+}
+
+/**
+ * Verifica se o Todoist está configurado no backend
+ */
+export async function checkTodoistConfig(): Promise<boolean> {
+  const response = await callTodoist<{ ok: boolean; configured: boolean }>("checkConfig");
+  return response.configured === true;
 }
 
 /**
@@ -249,23 +235,28 @@ export async function getUrgentTasks() {
  * @param _client Cliente TodoistApi (não utilizado no stub)
  * @returns Objeto com ferramentas mockadas
  */
-export function getTodoistTools(_client: TodoistApi) {
-  // No browser, retorna stubs que lançam erro orientando para usar a API
-  const createStub = (name: string) => ({
-    name,
-    execute: () => {
-      throw new Error(
-        `[Todoist] A função ${name} não está disponível no browser. ` +
-          `Use os endpoints /api/todoist-* para operações com o Todoist.`
-      );
-    },
-  });
-
+export function getTodoistTools() {
   return {
-    findTasksByDate: createStub("findTasksByDate"),
-    addTasks: createStub("addTasks"),
-    findTasks: createStub("findTasks"),
-    updateTasks: createStub("updateTasks"),
-    completeTasks: createStub("completeTasks"),
+    findTasksByDate: {
+      name: "findTasksByDate",
+      execute: (input: { date: string }) => findLegalTasksByDate(input.date),
+    },
+    addTasks: {
+      name: "addTasks",
+      execute: (input: { tasks: LegalTaskInput[] }) => addLegalTasks(input.tasks),
+    },
+    findTasks: {
+      name: "findTasks",
+      execute: (input: { query: string }) => searchLegalTasks(input.query),
+    },
+    updateTasks: {
+      name: "updateTasks",
+      execute: (input: { id: string; updates: Parameters<typeof updateLegalTask>[1] }) =>
+        updateLegalTask(input.id, input.updates),
+    },
+    completeTasks: {
+      name: "completeTasks",
+      execute: (input: { id: string }) => completeLegalTask(input.id),
+    },
   };
 }

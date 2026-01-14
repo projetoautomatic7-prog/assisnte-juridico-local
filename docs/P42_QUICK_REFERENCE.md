@@ -82,9 +82,9 @@ if (['a', 'b', 'c'].includes(x)) {
 ### 6️⃣ **Template Literal**
 ```typescript
 // Antes
-const msg = 'Hello ' + name + '!';
+const msg = 'Ola ' + name + '!';
 // P42: Convert to template literal
-const msg = `Hello ${name}!`;
+const msg = `Ola ${name}!`;
 ```
 
 ### 7️⃣ **Arrow Function**

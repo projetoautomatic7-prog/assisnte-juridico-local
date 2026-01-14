@@ -1,6 +1,12 @@
 @import "./styles/_variables.scss";
 @import "./styles/_keyframe-animations.scss";
 
+/* 🧪 Teste de Verificação SCSS */
+.debug-scss-vars {
+  /* Substitua '$azul-primario' por uma variável real do seu _variables.scss */
+  color: $blue-9; 
+}
+
 /* ========================================
  * 📌 CSS IMPORTS - DEVEM VIR PRIMEIRO
  * Tailwind CSS + Radix Colors
@@ -323,6 +329,17 @@ textarea {
 }
 
 @theme {
+  /* Injeção automática das cores do mapa SCSS */
+  @each $name, $value in $theme-colors {
+    --color-#{$name}: #{$value};
+    
+    /* Gera automaticamente uma variante de hover (8% mais escura) */
+    --color-#{$name}-hover: color-mix(in oklab, #{$value}, black 8%);
+    
+    /* Gera automaticamente uma variante de active/focus (15% mais escura) */
+    --color-#{$name}-active: color-mix(in oklab, #{$value}, black 15%);
+  }
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -349,6 +366,53 @@ textarea {
   --radius-xl: calc(var(--radius) * 2);
   --radius-2xl: calc(var(--radius) * 3);
   --radius-full: 9999px;
+}
+
+/* ========================================
+   SMART UTILITIES - Automação de Estados
+   ======================================== */
+@utility bg-auto-* {
+  background-color: --value(--color-*);
+  transition-property: background-color, transform;
+  transition-duration: var(--tt-transition-duration-default);
+
+  &:hover {
+    background-color: --value(--color-*-hover);
+  }
+
+  &:active {
+    background-color: --value(--color-*-active);
+    transform: scale(0.95);
+  }
+}
+
+@utility border-auto-* {
+  border-color: --value(--color-*);
+  transition-property: border-color;
+  transition-duration: var(--tt-transition-duration-default);
+
+  &:hover {
+    border-color: --value(--color-*-hover);
+  }
+
+  &:active {
+    border-color: --value(--color-*-active);
+  }
+}
+
+@utility ring-auto-* {
+  outline: 3px solid --value(--color-*) !important;
+  outline-offset: 2px !important;
+  transition-property: outline-color;
+  transition-duration: var(--tt-transition-duration-default);
+
+  &:hover {
+    outline-color: --value(--color-*-hover) !important;
+  }
+
+  &:active {
+    outline-color: --value(--color-*-active) !important;
+  }
 }
 
 /* ========================================

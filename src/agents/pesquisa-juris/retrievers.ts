@@ -46,12 +46,11 @@ export interface SearchResult {
 export class JurisprudenceRetriever {
   private readonly collectionName = "jurisprudencias";
   private readonly qdrantService: QdrantService | null = null;
-  private readonly useMockData: boolean;
 
   constructor() {
     // ✅ Conectar Qdrant real se credenciais disponíveis
-    const qdrantUrl = import.meta.env.VITE_QDRANT_URL || import.meta.env.QDRANT_URL;
-    const qdrantKey = import.meta.env.VITE_QDRANT_API_KEY || import.meta.env.QDRANT_API_KEY;
+    const qdrantUrl = process.env.QDRANT_URL;
+    const qdrantKey = process.env.QDRANT_API_KEY;
 
     if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
       try {
@@ -61,15 +60,12 @@ export class JurisprudenceRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        this.useMockData = false;
         console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
       } catch (error) {
-        console.warn("⚠️ Qdrant connection failed, using mock data:", error);
-        this.useMockData = true;
+        console.error("❌ Qdrant connection failed:", error);
       }
     } else {
-      console.log("ℹ️ Qdrant credentials not found, using mock data");
-      this.useMockData = true;
+      console.error("❌ Qdrant credentials not found");
     }
   }
 
@@ -130,12 +126,11 @@ export class JurisprudenceRetriever {
   /**
    * Gera embeddings usando Google Gemini Text Embedding API
    * Modelo: text-embedding-004 (768 dimensões)
-   * ✅ Fallback para mock embeddings se API falhar
+   * Gera embeddings via Gemini API
    */
   private async generateEmbeddings(text: string): Promise<number[]> {
     if (!isGeminiConfigured()) {
-      console.warn("⚠️ [Embeddings] Gemini API não configurada, usando mock embeddings");
-      return this.generateMockEmbeddings();
+      throw new Error("Gemini API não configurada para embeddings");
     }
 
     try {
@@ -194,43 +189,27 @@ export class JurisprudenceRetriever {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
-        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        "❌ [Embeddings] Falha ao gerar embedding real:",
         errorMessage
       );
-      return this.generateMockEmbeddings();
+      throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
 
   /**
-   * Gera embeddings mock para fallback quando API não disponível
-   * Retorna vetor de 768 dimensões com valores aleatórios
-   */
-  private generateMockEmbeddings(): number[] {
-    console.log("📦 [Embeddings] Usando mock embeddings (768 dimensões)");
-    return Array.from({ length: EMBEDDING_DIMENSION }, () => Math.random());
-  }
-
-  /**
    * Busca na base vetorial Qdrant
-   * ✅ Usa QdrantService real ou mock conforme disponibilidade
+   * Busca na base vetorial Qdrant
    */
   private async searchVectorDatabase(
     embeddings: number[],
     input: PesquisaJurisInput
   ): Promise<Precedente[]> {
-    // ✅ Se Qdrant real disponível, usar
-    if (this.qdrantService && !this.useMockData) {
-      try {
-        const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
-        return this.mapQdrantResultsToPrecedentes(qdrantResults);
-      } catch (error) {
-        console.warn("⚠️ Qdrant search failed, falling back to mock data:", error);
-        // Fallback para mock em caso de erro
-      }
+    if (!this.qdrantService) {
+      throw new Error("Qdrant não configurado");
     }
 
-    // ✅ Usar mock data se Qdrant indisponível
-    return this.getMockPrecedentes();
+    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    return this.mapQdrantResultsToPrecedentes(qdrantResults);
   }
 
   /**
@@ -249,69 +228,6 @@ export class JurisprudenceRetriever {
     }));
   }
 
-  /**
-   * Retorna dados simulados quando Qdrant não está disponível
-   */
-  private getMockPrecedentes(): Precedente[] {
-    const mockPrecedentes: Precedente[] = [
-      {
-        titulo: "STF - Tema 1234 - Direito à greve",
-        ementa:
-          "É constitucional o exercício do direito de greve no serviço público, desde que observadas as limitações previstas em lei...",
-        relevancia: 0.92,
-        tribunal: "STF",
-        data: "2023-05-15",
-        numeroProcesso: "RE 654432",
-        relator: "Min. Roberto Barroso",
-        tags: ["direito constitucional", "greve", "serviço público"],
-      },
-      {
-        titulo: "STJ - REsp 987654 - Adicional de insalubridade",
-        ementa:
-          "O adicional de insalubridade deve ser calculado sobre o salário base do empregado, conforme art. 192 da CLT...",
-        relevancia: 0.85,
-        tribunal: "STJ",
-        data: "2023-08-22",
-        numeroProcesso: "REsp 987654/SP",
-        relator: "Min. Maria Isabel Gallotti",
-        tags: ["direito do trabalho", "insalubridade", "CLT"],
-      },
-      {
-        titulo: "TST - RR 555666 - Horas extras",
-        ementa:
-          "Configurada a prestação de horas extras habituais, devem ser consideradas no cálculo das verbas rescisórias...",
-        relevancia: 0.78,
-        tribunal: "TST",
-        data: "2024-02-10",
-        numeroProcesso: "RR 555666-12.2023.5.02.0000",
-        relator: "Min. Augusto César Leite de Carvalho",
-        tags: ["direito do trabalho", "horas extras", "rescisão"],
-      },
-      {
-        titulo: "STF - ADI 5555 - Reforma Trabalhista",
-        ementa: "São constitucionais as alterações promovidas pela Lei 13.467/2017...",
-        relevancia: 0.72,
-        tribunal: "STF",
-        data: "2022-11-05",
-        numeroProcesso: "ADI 5555",
-        relator: "Min. Gilmar Mendes",
-        tags: ["direito do trabalho", "reforma trabalhista", "constitucionalidade"],
-      },
-      {
-        titulo: "TRF3 - AC 123456 - Acidente de trabalho",
-        ementa:
-          "Demonstrada a culpa do empregador no acidente de trabalho, é devida a indenização por danos morais...",
-        relevancia: 0.68,
-        tribunal: "TRF3",
-        data: "2024-01-20",
-        numeroProcesso: "AC 0123456-12.2023.4.03.6100",
-        relator: "Des. Federal Carlos Muta",
-        tags: ["direito do trabalho", "acidente de trabalho", "danos morais"],
-      },
-    ];
-
-    return mockPrecedentes;
-  }
 
   /**
    * Re-ranking: filtra e ordena por relevância

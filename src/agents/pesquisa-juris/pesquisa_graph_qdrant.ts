@@ -18,9 +18,9 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
     super();
 
     // Inicializar servi�o Qdrant
-    const qdrantUrl = import.meta.env.VITE_QDRANT_URL;
-    const qdrantApiKey = import.meta.env.VITE_QDRANT_API_KEY;
-    const qdrantCollection = import.meta.env.VITE_QDRANT_COLLECTION_NAME;
+    const qdrantUrl = process.env.QDRANT_URL;
+    const qdrantApiKey = process.env.QDRANT_API_KEY;
+    const qdrantCollection = process.env.QDRANT_COLLECTION_NAME;
 
     const qdrantConfig = {
       url: typeof qdrantUrl === "string" ? qdrantUrl : "",
@@ -31,7 +31,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
     this.qdrantService = createQdrantService(qdrantConfig);
 
     if (!this.qdrantService) {
-      console.warn("[PesquisaJuris] Qdrant n�o configurado - usando fallback");
+      throw new Error("[PesquisaJuris] Qdrant n�o configurado");
     }
   }
 
@@ -82,11 +82,6 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
             }),
           },
           async (toolSpan) => {
-            if (!this.qdrantService) {
-              toolSpan?.setAttribute("search.fallback", "mock_data");
-              return this.getMockPrecedentes(tema);
-            }
-
             try {
               const results = await this.qdrantService.search(
                 queryEmbedding,
@@ -95,7 +90,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
               );
 
               toolSpan?.setAttribute("search.results_count", results.length);
-              toolSpan?.setAttribute("search.qdrant_url", import.meta.env.VITE_QDRANT_URL);
+              toolSpan?.setAttribute("search.qdrant_url", process.env.QDRANT_URL);
 
               return results.map((r) => {
                 const payload = r.payload as Record<string, unknown>;
@@ -111,8 +106,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
             } catch (error) {
               console.error("[PesquisaJuris] Erro ao buscar no Qdrant:", error);
               toolSpan?.setAttribute("search.error", String(error));
-              toolSpan?.setAttribute("search.fallback", "mock_data");
-              return this.getMockPrecedentes(tema);
+              throw error;
             }
           }
         );
@@ -145,7 +139,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
 
         return this.addAgentMessage(
           current,
-          `Pesquisa jurisprudencial via ${this.qdrantService ? "Qdrant" : "Mock"}: ${precedentesTyped.length} precedentes encontrados`
+          `Pesquisa jurisprudencial via Qdrant: ${precedentesTyped.length} precedentes encontrados`
         );
       }
     );
@@ -173,25 +167,8 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
       return result.embedding;
     } catch (err) {
       console.error("[PesquisaJuris] Falha ao gerar embedding via service:", err);
-      // Fallback: generate a reproducible random-ish vector (not ideal, but safe)
-      return Array.from({ length: geminiEmbeddingService.getDimensions() }, () => Math.random());
+      throw err;
     }
-  }
-
-  /**
-   * Fallback: retornar dados mockados se Qdrant n�o dispon�vel
-   */
-  private getMockPrecedentes(tema: string) {
-    return [
-      {
-        titulo: `[MOCK] STF - ${tema}`,
-        ementa: `Este � um precedente mockado sobre ${tema}`,
-        relevancia: 0.85,
-        tribunal: "STF",
-        data: "2024-01-01",
-        numero: "MOCK-12345",
-      },
-    ];
   }
 }
 

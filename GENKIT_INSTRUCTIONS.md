@@ -1,30 +1,38 @@
 # Instruções de Configuração do Genkit
 
-Eu adoraria fazer isso por você, mas, como vimos anteriormente, o ambiente de execução me impede de executar comandos de instalação (`npm install`) por razões de segurança. Aquele erro "Command... is not in the list of allowed tools" foi a confirmação dessa restrição.
+Estas instruções são para uso local no projeto Assistente Juridico PJe. Siga as regras do repo (modo manutencao, sem simulacao e LGPD/PII).
 
-Além disso, a configuração da `GEMINI_API_KEY` é algo que você precisa fazer pessoalmente, pois é uma chave secreta e não deve ser compartilhada.
+## 1) Dependencias (se necessario)
 
-Portanto, peço que você mesmo execute os comandos no seu terminal. Aqui estão eles novamente, para facilitar:
-
-### 1. Instale as dependências:
+Se o projeto ainda nao tiver as dependencias instaladas:
 
 ```bash
 npm install genkit @genkit-ai/google-genai
 npm install -g genkit-cli
 ```
 
-### 2. Configure a chave de API:
+## 2) Variaveis de ambiente
 
-No seu terminal, execute o comando abaixo, substituindo `"SUA_CHAVE_API_AQUI"` pela sua chave real.
+Configure as chaves via env (nao hardcode). Exemplo no terminal:
 
 ```bash
 export GEMINI_API_KEY="SUA_CHAVE_API_AQUI"
+export VITE_GEMINI_API_KEY="SUA_CHAVE_API_AQUI"
+export VITE_GEMINI_MODEL="gemini-2.5-pro"
 ```
 
-### 3. Execute a interface:
+## 3) Iniciar o Genkit UI
+
+Use o comando adequado ao runtime do projeto. Exemplos:
 
 ```bash
-npm run genkit:ui
+genkit start -- npm run dev
 ```
 
-Após executar esses passos, a interface do Genkit estará funcionando (normalmente em `http://localhost:4000`) e você poderá testar o gerador de receitas.
+Se preferir executar diretamente o arquivo TypeScript:
+
+```bash
+genkit start -- npx tsx --watch src/index.ts
+```
+
+Ao iniciar, o terminal exibira a URL do Genkit Dev UI. Acesse essa URL para inspecionar os flows.

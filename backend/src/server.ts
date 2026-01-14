@@ -30,6 +30,7 @@ import llmStreamRouter from "./routes/llm-stream.js";
 import llmRouter from "./routes/llm.js";
 import minutasRouter from "./routes/minutas.js";
 import observabilityRouter from "./routes/observability.js";
+import qdrantRouter from "./routes/qdrant.js";
 import ragRouter from "./routes/rag.js";
 import sparkRouter from "./routes/spark.js";
 import { iniciarSchedulerDJEN } from "./services/djen-scheduler.js";
@@ -167,6 +168,7 @@ app.use("/api/editor", editorRouter);
 app.use("/api/expedientes", expedientesRouter);
 app.use("/api/lawyers", lawyersRouter);
 app.use("/api/observability", observabilityRouter);
+app.use("/api/qdrant", qdrantRouter);
 
 // Serve static files in production
 const isProduction = process.env.NODE_ENV === "production";

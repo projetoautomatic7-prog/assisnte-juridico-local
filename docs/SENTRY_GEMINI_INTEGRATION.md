@@ -315,7 +315,9 @@ async function testGeminiIntegration() {
   Sentry.getCurrentScope().setSpan(transaction);
 
   try {
-    const response = await callGemini("Say hello", {
+    // Use texto real e sanitizado
+    const documentText = getSanitizedDocumentText();
+    const response = await callGemini(documentText, {
       model: "gemini-2.5-pro",
       temperature: 0.7
     });

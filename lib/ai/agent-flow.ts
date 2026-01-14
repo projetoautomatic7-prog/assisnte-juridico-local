@@ -13,6 +13,7 @@ export const agentFlow = ai.defineFlow(
     inputSchema: z.object({
       agentId: z.string(),
       message: z.string(),
+      history: z.array(z.any()).optional()
     }),
     outputSchema: AgentResponseSchema,
   },
@@ -32,6 +33,7 @@ export const agentFlow = ai.defineFlow(
     const response = await ai.generate({
       model: 'gemini-2.0-flash', // Ou gemini-2.0-pro para o Harvey
       system: persona.systemPrompt, // ✅ SEU PROMPT PERSONALIZADO É MANTIDO AQUI
+      messages: input.history,
       prompt: input.message,
       tools: agentTools,
       config: { temperature: 0.7 },

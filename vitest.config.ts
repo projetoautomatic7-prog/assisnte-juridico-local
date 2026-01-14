@@ -28,7 +28,11 @@ export default defineConfig({
     hookTimeout: 60000, // 1 minuto para hooks
     // Estabilidade com paralelismo controlado: limita memória por fork mantendo performance
     pool: "forks",
-    // Vitest 4+: poolOptions foi movido para nível superior
+    poolOptions: {
+      forks: {
+        isolate: true,
+      },
+    },
     memoryLimit: "2GB", // Limite de memória por fork para evitar ERR_WORKER_OUT_OF_MEMORY
     // Ajustar concorrência baseado em ambiente para estabilidade
     maxConcurrency: process.env.CI ? 1 : 3, // CI: sequencial, Dev: até 3 paralelos
@@ -40,6 +44,7 @@ export default defineConfig({
       "src/**/*.{test,spec}.{ts,tsx}",
       "api/**/*.{test,spec}.{ts,tsx}",
       "tests/integration/**/*.test.ts",
+      "tests/ai/**/*.test.ts",
     ],
     exclude: [
       "**/node_modules/**",

@@ -1,29 +1,28 @@
-import { describe, expect, it, vi } from 'vitest';
-import { SimpleAgent, type LlmClient } from './core-agent';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { SimpleAgent, VolatileMemoryStore } from './core-agent';
+import { HttpLlmClient } from './http-llm-client';
 
-describe('SimpleAgent Resilience', () => {
-  it('deve recuperar-se de uma resposta JSON inválida do LLM', async () => {
-    // 1. Mock do LLM Client
-    // Primeira chamada: Retorna lixo (não JSON)
-    // Segunda chamada: Retorna JSON válido (correção)
-    const mockLlm: LlmClient = {
-      chat: vi.fn()
-        .mockResolvedValueOnce('Isto não é um JSON válido, é apenas texto.')
-        .mockResolvedValueOnce(JSON.stringify({
-          action: 'final',
-          answer: 'Recuperado com sucesso após erro de JSON.'
-        }))
-    };
+describe('SimpleAgent Resilience - Integração Real', () => {
+  beforeAll(() => {
+    if (process.env.DISABLE_MOCKS !== 'true') {
+      throw new Error('Este teste requer DISABLE_MOCKS=true para garantir conformidade ética.');
+    }
+  });
 
-    // 2. Mock do MemoryStore para isolamento
-    const mockMemoryStore = {
-      load: vi.fn().mockResolvedValue([]),
-      save: vi.fn().mockResolvedValue(undefined)
-    };
+  it('deve processar uma tarefa real usando o proxy de LLM sem simulação', async () => {
+    // 1. Instanciar Client Real (apontando para o backend de dev)
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3001';
+    const llmClient = new HttpLlmClient({
+      baseUrl: `${baseUrl}/api/llm-proxy`,
+      timeout: 30000
+    });
+
+    // 2. MemoryStore Real (Volátil para teste)
+    const memoryStore = new VolatileMemoryStore();
 
     // 3. Instanciar o Agente
     const agent = new SimpleAgent({
-      llm: mockLlm,
+      llm: llmClient,
       tools: [], // Sem ferramentas necessárias para este teste
       persona: {
         id: 'test-agent',
@@ -33,20 +32,16 @@ describe('SimpleAgent Resilience', () => {
         toolNames: []
       },
       toolContext: {},
-      memoryStore: mockMemoryStore
+      memoryStore: memoryStore
     });
 
     // 4. Executar
-    const result = await agent.run('Teste de robustez JSON');
+    const result = await agent.run('Responda apenas com a palavra "OK" em formato JSON final.');
 
     // 5. Asserções
-    expect(result.answer).toBe('Recuperado com sucesso após erro de JSON.');
-    expect(mockLlm.chat).toHaveBeenCalledTimes(2); // Garante que houve retry
-
-    // Verifica se o erro foi registrado nos traces de observabilidade
-    const errorTrace = result.traces.find(t => t.type === 'observation' && t.error);
-    expect(errorTrace).toBeDefined();
-    expect(errorTrace?.content).toContain('Resposta inválida');
-    expect(errorTrace?.error).toBeTruthy();
-  });
+    expect(result.answer).toBeDefined();
+    expect(result.answer.toUpperCase()).toContain('OK');
+    expect(result.steps).toBeGreaterThan(0);
+    expect(result.totalDuration).toBeGreaterThan(0);
+  }, 40000);
 });

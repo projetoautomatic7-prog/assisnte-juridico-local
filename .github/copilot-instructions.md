@@ -44,7 +44,7 @@ O foco atual é **estabilidade, correção de bugs e manutenção**. Não sugira
 ### Testes
 *   **Vitest:** Escreva testes unitários para hooks e funções utilitárias.
 *   **Playwright:** Mantenha os testes E2E atualizados ao modificar fluxos de UI.
-*   **Mocking:** Use mocks para chamadas de API externas nos testes.
+*   **Sem simulação:** Não use mocks/stubs/fakes/dummy/synthetic data/test doubles em testes.
 
 ## 📂 Estrutura de Arquivos
 *   `src/components`: Componentes React reutilizáveis.

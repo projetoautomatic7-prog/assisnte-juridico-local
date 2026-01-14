@@ -1,12 +1,69 @@
 import { googleAI } from '@genkit-ai/google-genai';
+import { Redis } from '@upstash/redis';
 import { genkit } from 'genkit';
 import { devLocalStateStore } from 'genkit/dev';
 import { z } from 'zod';
 
+export const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || '',
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+});
+
+const REDIS_TIMEOUT = 5000; // 5 segundos para evitar travamentos por latência ou conexão morta
+
+/**
+ * Memória local volátil para fallback caso o Redis esteja offline.
+ * Nota: Em ambientes serverless, isso persiste apenas enquanto a instância estiver ativa.
+ */
+const volatileFallbackStore = new Map<string, any>();
+
+/**
+ * Implementação de StateStore para Upstash Redis com Fallback.
+ * Essencial para que o fluxo 'askLawyer' (Human-in-the-loop) funcione em produção.
+ */
+const upstashStateStore = {
+  async load(key: string): Promise<any> {
+    let timeoutId: any;
+    try {
+      const state = await Promise.race([
+        redis.get(`genkit:state:${key}`),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Redis Timeout')), REDIS_TIMEOUT);
+        })
+      ]);
+      if (state) return state;
+    } catch (error) {
+      console.error(`[RedisStateStore] Falha no Redis ao carregar (chave: ${key}). Tentando memória local.`, error);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    // Tenta recuperar da memória local da instância caso o Redis falhe ou não encontre o estado
+    return volatileFallbackStore.get(key);
+  },
+  async save(key: string, state: any): Promise<void> {
+    let timeoutId: any;
+    try {
+      // Armazena o estado por 7 dias para dar tempo ao advogado de responder
+      await Promise.race([
+        redis.set(`genkit:state:${key}`, state, { ex: 604800 }),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Redis Timeout')), REDIS_TIMEOUT);
+        })
+      ]);
+    } catch (error) {
+      console.error(`[RedisStateStore] Falha no Redis ao salvar (chave: ${key}). Salvando em memória local.`, error);
+      // Fallback para memória local para evitar perda imediata de estado no turno atual
+      volatileFallbackStore.set(key, state);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 export const ai = genkit({
   plugins: [googleAI()],
   model: 'gemini-2.0-flash',
-  stateStore: devLocalStateStore(), // Habilita persistência local para retomar fluxos pausados
+  stateStore: process.env.NODE_ENV === 'production' ? upstashStateStore : devLocalStateStore(),
 });
 
 /**
@@ -27,7 +84,8 @@ export const searchDjenTool = ai.defineTool(
     }),
   },
   async (input) => {
-    const response = await fetch(`${process.env.APP_BASE_URL}/api/djen/search`, {
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/djen/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),

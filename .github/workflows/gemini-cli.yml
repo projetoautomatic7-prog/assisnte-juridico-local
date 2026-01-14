@@ -10,7 +10,7 @@ on:
       model:
         description: "Modelo Gemini a ser usado"
         required: false
-        default: "gemini-2.5-pro"
+        default: "gemini-3-pro-preview"
         type: string
       debug:
         description: "Ativar logs de depuração do gemini_cli"
@@ -20,7 +20,7 @@ on:
       cli_version:
         description: "Versão do gemini-cli (latest, preview, nightly ou versão específica)"
         required: false
-        default: "latest"
+        default: "preview"
         type: string
 
 concurrency:

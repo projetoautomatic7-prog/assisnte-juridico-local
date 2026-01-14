@@ -89,11 +89,10 @@ export function applySparkClientFixes() {
   const w = globalThis as typeof globalThis & { spark?: { kv?: SparkKV; llm?: SparkLLM } };
 
   try {
-    // Se spark não existir, cria um mock seguro para evitar crash
-    w.spark ??= {} as { kv?: SparkKV; llm?: SparkLLM };
-
-    // Se kv não existir, cria um mock
-    w.spark.kv ??= {} as SparkKV;
+    if (!w.spark || !w.spark.kv) {
+      console.error("Spark não disponível. Inicialize o runtime antes de aplicar o patch.");
+      return;
+    }
 
     const spark = w.spark;
     const original = { ...spark.kv };

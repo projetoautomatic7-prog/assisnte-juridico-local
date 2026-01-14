@@ -10,7 +10,10 @@ import { consultarProcessoPJe, registrarLogAgente } from './tools';
 export const strategyFlow = ai.defineFlow(
   {
     name: 'strategyFlow',
-    inputSchema: z.object({ numeroProcesso: z.string() }),
+    inputSchema: z.object({ 
+      numeroProcesso: z.string(),
+      history: z.array(z.any()).optional()
+    }),
     outputSchema: AgentResponseSchema,
   },
   async (input) => {
@@ -52,6 +55,7 @@ export const strategyFlow = ai.defineFlow(
     // 4. Geração da Recomendação Final usando a Persona do Registro
     const finalStrategy = await ai.generate({
       system: persona.systemPrompt,
+      messages: input.history,
       prompt: `
         Caminho Estratégico Identificado: ${path}
         Contexto Adicional: ${strategicPrompt}
@@ -72,6 +76,11 @@ export const strategyFlow = ai.defineFlow(
 
     return {
       answer: finalStrategy.text,
+      usedTools: ['consultarProcessoPJe'],
+      metadata: {
+        processo: input.numeroProcesso,
+        auditId: 'strategy-' + Date.now()
+      }
     };
   }
 );

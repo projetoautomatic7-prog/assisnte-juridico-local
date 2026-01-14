@@ -177,9 +177,9 @@ jobs:
     with:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
-      model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
+      model: ${{ vars.GEMINI_MODEL || 'gemini-3-pro-preview' }}
       debug: ${{ vars.GEMINI_DEBUG == 'true' }}
-      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
+      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'preview' }}
     secrets: "inherit"
 
   triage:
@@ -195,9 +195,9 @@ jobs:
     with:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
-      model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
+      model: ${{ vars.GEMINI_MODEL || 'gemini-3-pro-preview' }}
       debug: ${{ vars.GEMINI_DEBUG == 'true' }}
-      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
+      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'preview' }}
     secrets: "inherit"
 
   invoke:
@@ -213,9 +213,9 @@ jobs:
     with:
       prompt: "${{ needs.dispatch.outputs.prompt }}"
       additional_context: "${{ needs.dispatch.outputs.additional_context }}"
-      model: ${{ vars.GEMINI_MODEL || 'gemini-2.5-pro' }}
+      model: ${{ vars.GEMINI_MODEL || 'gemini-3-pro-preview' }}
       debug: ${{ vars.GEMINI_DEBUG == 'true' }}
-      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
+      cli_version: ${{ vars.GEMINI_CLI_VERSION || 'preview' }}
     secrets: "inherit"
 
   fallthrough:

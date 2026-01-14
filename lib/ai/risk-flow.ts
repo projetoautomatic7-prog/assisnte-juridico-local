@@ -6,7 +6,10 @@ import { consultarProcessoPJe, registrarLogAgente } from './tools';
 export const riskAnalysisFlow = ai.defineFlow(
   {
     name: 'riskAnalysisFlow',
-    inputSchema: z.object({ numeroProcesso: z.string() }),
+    inputSchema: z.object({ 
+      numeroProcesso: z.string(),
+      history: z.array(z.any()).optional()
+    }),
     outputSchema: AgentResponseSchema,
   },
   async (input) => {
@@ -17,6 +20,7 @@ export const riskAnalysisFlow = ai.defineFlow(
     // 1. Geração Inicial usando o Prompt Personalizado do Registro
     const initialResponse = await ai.generate({
       system: persona.systemPrompt,
+      messages: input.history,
       prompt: `Realize a análise de risco completa para o processo ${input.numeroProcesso}`,
       tools: [consultarProcessoPJe],
     });
@@ -49,6 +53,10 @@ export const riskAnalysisFlow = ai.defineFlow(
 
     await registrarLogAgente.run({ agentId: 'analise-risco', action: 'risk-analysis', details: currentAnalysis });
 
-    return { answer: currentAnalysis };
+    return {
+      answer: currentAnalysis,
+      steps: attempts + 1,
+      usedTools: ['consultarProcessoPJe']
+    };
   }
 );

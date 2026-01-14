@@ -15,6 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["node"],
 
     /* Linting */
     "strict": true,
@@ -28,7 +29,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "api"],
+  "include": ["src", "api", "lib", "backend/src", "attached_assets"],
   "exclude": [
     "node_modules",
     "**/*.test.ts",

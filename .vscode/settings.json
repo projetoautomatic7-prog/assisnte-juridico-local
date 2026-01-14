@@ -1008,5 +1008,10 @@
   "geminicodeassist.project": "sonic-terminal-474321-s1",
   "workbench.experimental.cloudChanges.partialMatches.enabled": true,
   "workbench.experimental.cloudChanges.autoStore": "onShutdown",
-  "debug.toolBarLocation": "commandCenter"
+  "debug.toolBarLocation": "commandCenter",
+  "gemini-cli.debug.logging.enabled": true,
+  "emmet.useInlineCompletions": true,
+  "terminal.integrated.copyOnSelection": true,
+  "editor.emptySelectionClipboard": false,
+  "terminal.integrated.enableImages": true
 }

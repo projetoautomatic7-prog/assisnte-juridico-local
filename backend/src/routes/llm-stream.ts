@@ -15,6 +15,10 @@ router.post("/", async (req, res) => {
 
   const { messages, temperature, max_tokens } = req.body;
 
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: "messages deve ser um array não vazio" });
+  }
+
   const systemMessage = messages.find((m: any) => m.role === "system");
   const userMessages = messages.filter((m: any) => m.role !== "system");
 
@@ -68,59 +72,104 @@ router.post("/", async (req, res) => {
     const decoder = new TextDecoder();
     let buffer = "";
 
+    const extractJsonObject = (input: string): { json: string; endIndex: number } | null => {
+      const startIndex = input.indexOf("{");
+      if (startIndex === -1) return null;
+      let depth = 0;
+      let inString = false;
+      let escaped = false;
+
+      for (let i = startIndex; i < input.length; i += 1) {
+        const char = input[i];
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (char === "\\") {
+            escaped = true;
+          } else if (char === '"') {
+            inString = false;
+          }
+          continue;
+        }
+        if (char === '"') {
+          inString = true;
+        } else if (char === "{") {
+          depth += 1;
+        } else if (char === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            return { json: input.slice(startIndex, i + 1), endIndex: i + 1 };
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const emitContent = (text: string, tokens?: { prompt?: number; completion?: number; total?: number }) => {
+      if (!text) return;
+      res.write(
+        `data: ${JSON.stringify({
+          type: "content",
+          content: text,
+          tokens: tokens
+            ? {
+                prompt: tokens.prompt || 0,
+                completion: tokens.completion || 0,
+                total: tokens.total || 0,
+              }
+            : undefined,
+        })}\n\n`
+      );
+    };
+
+    let pendingTokens: { prompt?: number; completion?: number; total?: number } | undefined;
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
 
-      // Process buffer for complete JSON objects
-      // Gemini stream returns array of objects like [{...}]
-      // But raw stream might be chunked arbitrarily.
-      // Actually, Gemini REST API returns a JSON array, but in chunks.
-      // "The response is a stream of JSON objects." - wait, let's check Gemini REST API docs.
-      // It returns a JSON array `[` ... `]` with objects separated by commas.
+      while (true) {
+        const extracted = extractJsonObject(buffer);
+        if (!extracted) break;
 
-      // Parsing this manually is tricky.
-      // Alternative: Use `generateContent` (non-streaming) and send as one chunk for simplicity/stability first.
-      // Or try to parse the stream.
+        buffer = buffer.slice(extracted.endIndex);
+
+        try {
+          const parsed = JSON.parse(extracted.json);
+          const text =
+            parsed?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") ||
+            "";
+          const usage = parsed?.usageMetadata;
+
+          if (usage) {
+            pendingTokens = {
+              prompt: usage.promptTokenCount,
+              completion: usage.candidatesTokenCount,
+              total: usage.totalTokenCount,
+            };
+          }
+
+          if (text) {
+            emitContent(text);
+          }
+        } catch (parseError) {
+          console.error("[LLM Stream] Failed to parse stream chunk:", parseError);
+        }
+      }
     }
 
-    // FALLBACK: Use non-streaming for stability if parsing stream is complex without SDK
-    // Re-implementing using generateContent (non-streaming) to ensure it works reliably.
-
-    const geminiUrlNonStream = `${GEMINI_API_URL}/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    const responseNonStream = await fetch(geminiUrlNonStream, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(geminiBody),
-    });
-
-    if (!responseNonStream.ok) {
-      const errorText = await responseNonStream.text();
-      console.error(`[Gemini] Error ${responseNonStream.status}: ${errorText}`);
+    if (pendingTokens) {
       res.write(
-        `data: ${JSON.stringify({ type: "error", message: `Gemini error: ${responseNonStream.status}` })}\n\n`
+        `data: ${JSON.stringify({
+          type: "content",
+          content: "",
+          tokens: pendingTokens,
+        })}\n\n`
       );
-      res.end();
-      return;
     }
-
-    const data = await responseNonStream.json();
-    const text = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") || "";
-    const usage = data.usageMetadata;
-
-    res.write(
-      `data: ${JSON.stringify({
-        type: "content",
-        content: text,
-        tokens: {
-          prompt: usage?.promptTokenCount || 0,
-          completion: usage?.candidatesTokenCount || 0,
-          total: usage?.totalTokenCount || 0,
-        },
-      })}\n\n`
-    );
 
     res.write(`data: ${JSON.stringify({ type: "done", provider: "gemini" })}\n\n`);
     res.end();

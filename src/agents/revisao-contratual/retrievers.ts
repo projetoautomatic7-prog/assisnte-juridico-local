@@ -9,8 +9,6 @@ import type { RevisaoContratualInput } from "./validators";
 
 const EMBEDDING_API_URL =
   "https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent";
-const EMBEDDING_DIMENSION = 768;
-
 export interface TemplateContratual {
   titulo: string;
   descricao: string;
@@ -49,11 +47,10 @@ export interface TemplateSearchInput {
 export class TemplateContratualRetriever {
   private readonly collectionName = "contratos_templates";
   private qdrantService: QdrantService | null = null;
-  private useMockData: boolean = true;
 
   constructor() {
-    const qdrantUrl = import.meta.env.VITE_QDRANT_URL || import.meta.env.QDRANT_URL;
-    const qdrantKey = import.meta.env.VITE_QDRANT_API_KEY || import.meta.env.QDRANT_API_KEY;
+    const qdrantUrl = process.env.QDRANT_URL;
+    const qdrantKey = process.env.QDRANT_API_KEY;
 
     if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
       try {
@@ -63,15 +60,12 @@ export class TemplateContratualRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        this.useMockData = false;
         console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
       } catch (error) {
-        console.warn("⚠️ Qdrant connection failed, using mock data:", error);
-        this.useMockData = true;
+        console.error("❌ Qdrant connection failed:", error);
       }
     } else {
-      console.log("ℹ️ Qdrant credentials not found, using mock data");
-      this.useMockData = true;
+      console.error("❌ Qdrant credentials not found");
     }
   }
 
@@ -116,8 +110,7 @@ export class TemplateContratualRetriever {
 
   private async generateEmbeddings(text: string): Promise<number[]> {
     if (!isGeminiConfigured()) {
-      console.warn("⚠️ [Embeddings] Gemini API não configurada, usando mock embeddings");
-      return this.generateMockEmbeddings();
+      throw new Error("Gemini API não configurada para embeddings");
     }
 
     try {
@@ -170,32 +163,23 @@ export class TemplateContratualRetriever {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
-        "❌ [Embeddings] Falha ao gerar embedding real, usando fallback mock:",
+        "❌ [Embeddings] Falha ao gerar embedding real:",
         errorMessage
       );
-      return this.generateMockEmbeddings();
+      throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
-  }
-
-  private generateMockEmbeddings(): number[] {
-    console.log("📦 [Embeddings] Usando mock embeddings (768 dimensões)");
-    return Array.from({ length: EMBEDDING_DIMENSION }, () => Math.random());
   }
 
   private async searchVectorDatabase(
     embeddings: number[],
     input: TemplateSearchInput
   ): Promise<TemplateContratual[]> {
-    if (this.qdrantService && !this.useMockData) {
-      try {
-        const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
-        return this.mapQdrantResultsToTemplates(qdrantResults);
-      } catch (error) {
-        console.warn("⚠️ Qdrant search failed, falling back to mock data:", error);
-      }
+    if (!this.qdrantService) {
+      throw new Error("Qdrant não configurado");
     }
 
-    return this.getMockTemplates();
+    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    return this.mapQdrantResultsToTemplates(qdrantResults);
   }
 
   private mapQdrantResultsToTemplates(results: QdrantSearchResult[]): TemplateContratual[] {
@@ -211,195 +195,6 @@ export class TemplateContratualRetriever {
       fonte: result.payload.fonte as string | undefined,
       tags: (result.payload.tags as string[]) || [],
     }));
-  }
-
-  private getMockTemplates(): TemplateContratual[] {
-    const mockTemplates: TemplateContratual[] = [
-      {
-        titulo: "Template - Contrato de Prestação de Serviços",
-        descricao:
-          "Modelo padrão para contratos de prestação de serviços entre empresas ou pessoa física",
-        relevancia: 0.95,
-        tipoContrato: "prestação de serviços",
-        clausulasPadrao: [
-          {
-            numero: "1",
-            titulo: "Objeto",
-            texto:
-              "O presente contrato tem por objeto a prestação de serviços de [DESCREVER SERVIÇOS]...",
-            obrigatoria: true,
-            comentarios: "Descrever detalhadamente os serviços",
-          },
-          {
-            numero: "2",
-            titulo: "Prazo",
-            texto:
-              "O prazo de vigência do presente contrato é de [XX] meses, iniciando em [DATA]...",
-            obrigatoria: true,
-          },
-          {
-            numero: "3",
-            titulo: "Valor e Forma de Pagamento",
-            texto:
-              "Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor de R$ [VALOR]...",
-            obrigatoria: true,
-          },
-          {
-            numero: "4",
-            titulo: "Rescisão",
-            texto:
-              "O presente contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de 30 dias...",
-            obrigatoria: false,
-          },
-        ],
-        versao: "2.1",
-        ultimaAtualizacao: "2024-06-01",
-        fonte: "OAB/SP - Modelo Recomendado",
-        tags: ["prestação de serviços", "B2B", "modelo padrão"],
-      },
-      {
-        titulo: "Template - Contrato de Locação Residencial",
-        descricao:
-          "Modelo de contrato de locação de imóvel residencial urbano conforme Lei 8.245/91",
-        relevancia: 0.9,
-        tipoContrato: "locação",
-        clausulasPadrao: [
-          {
-            numero: "1",
-            titulo: "Objeto da Locação",
-            texto:
-              "O LOCADOR cede ao LOCATÁRIO, para uso exclusivamente residencial, o imóvel situado em...",
-            obrigatoria: true,
-          },
-          {
-            numero: "2",
-            titulo: "Prazo da Locação",
-            texto:
-              "O prazo da locação é de [XX] meses, com início em [DATA] e término em [DATA]...",
-            obrigatoria: true,
-          },
-          {
-            numero: "3",
-            titulo: "Aluguel",
-            texto: "O aluguel mensal é de R$ [VALOR], a ser pago até o dia [XX] de cada mês...",
-            obrigatoria: true,
-          },
-          {
-            numero: "4",
-            titulo: "Garantia",
-            texto: "Como garantia do presente contrato, o LOCATÁRIO oferece [TIPO DE GARANTIA]...",
-            obrigatoria: true,
-            comentarios: "Escolher entre caução, fiador ou seguro-fiança",
-          },
-        ],
-        versao: "3.0",
-        ultimaAtualizacao: "2024-03-15",
-        fonte: "CRECI/SP",
-        tags: ["locação", "residencial", "Lei do Inquilinato"],
-      },
-      {
-        titulo: "Template - Contrato de Trabalho CLT",
-        descricao: "Modelo de contrato individual de trabalho por prazo indeterminado conforme CLT",
-        relevancia: 0.87,
-        tipoContrato: "trabalho",
-        clausulasPadrao: [
-          {
-            numero: "1",
-            titulo: "Admissão",
-            texto: "O EMPREGADOR admite o EMPREGADO para exercer a função de [CARGO]...",
-            obrigatoria: true,
-          },
-          {
-            numero: "2",
-            titulo: "Jornada de Trabalho",
-            texto: "A jornada de trabalho será de [XX] horas semanais, de segunda a sexta-feira...",
-            obrigatoria: true,
-          },
-          {
-            numero: "3",
-            titulo: "Remuneração",
-            texto:
-              "O salário mensal será de R$ [VALOR], pago até o 5º dia útil do mês subsequente...",
-            obrigatoria: true,
-          },
-          {
-            numero: "4",
-            titulo: "Período de Experiência",
-            texto:
-              "O contrato terá período de experiência de 45 dias, prorrogável por mais 45 dias...",
-            obrigatoria: false,
-          },
-        ],
-        versao: "4.2",
-        ultimaAtualizacao: "2024-01-10",
-        fonte: "MTE - Modelo Oficial",
-        tags: ["trabalho", "CLT", "prazo indeterminado"],
-      },
-      {
-        titulo: "Template - Contrato de Compra e Venda de Imóvel",
-        descricao:
-          "Modelo de contrato para compra e venda de imóvel com cláusulas de financiamento",
-        relevancia: 0.83,
-        tipoContrato: "compra e venda",
-        clausulasPadrao: [
-          {
-            numero: "1",
-            titulo: "Objeto",
-            texto: "O VENDEDOR vende ao COMPRADOR o imóvel descrito na matrícula nº [XX]...",
-            obrigatoria: true,
-          },
-          {
-            numero: "2",
-            titulo: "Preço e Condições de Pagamento",
-            texto: "O preço total do imóvel é de R$ [VALOR], a ser pago da seguinte forma...",
-            obrigatoria: true,
-          },
-          {
-            numero: "3",
-            titulo: "Escritura e Registro",
-            texto: "A escritura pública será lavrada no Cartório de Notas após a quitação...",
-            obrigatoria: true,
-          },
-        ],
-        versao: "2.5",
-        ultimaAtualizacao: "2024-04-20",
-        fonte: "Cartório de Registro de Imóveis",
-        tags: ["compra e venda", "imóvel", "escritura"],
-      },
-      {
-        titulo: "Template - Contrato Social de Sociedade Limitada",
-        descricao: "Modelo de contrato social para constituição de sociedade empresária limitada",
-        relevancia: 0.78,
-        tipoContrato: "sociedade",
-        clausulasPadrao: [
-          {
-            numero: "1",
-            titulo: "Denominação Social",
-            texto: "A sociedade adotará a denominação social [NOME] Ltda...",
-            obrigatoria: true,
-          },
-          {
-            numero: "2",
-            titulo: "Capital Social",
-            texto:
-              "O capital social é de R$ [VALOR], dividido em [XX] quotas de R$ [VALOR] cada...",
-            obrigatoria: true,
-          },
-          {
-            numero: "3",
-            titulo: "Administração",
-            texto: "A sociedade será administrada por [SÓCIO(S)]...",
-            obrigatoria: true,
-          },
-        ],
-        versao: "1.8",
-        ultimaAtualizacao: "2024-02-28",
-        fonte: "Junta Comercial",
-        tags: ["sociedade", "limitada", "contrato social"],
-      },
-    ];
-
-    return mockTemplates;
   }
 
   private reRankResults(templates: TemplateContratual[], threshold: number): TemplateContratual[] {

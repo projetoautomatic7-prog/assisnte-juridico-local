@@ -257,7 +257,7 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    await kv.set('test-key', 'Hello Vercel KV!');
+    await kv.set('test-key', 'Mensagem de exemplo');
     const value = await kv.get('test-key');
     return res.json({ success: true, value });
   } catch (error) {

@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Button } from "./button";
 
@@ -14,11 +14,14 @@ describe("Button", () => {
   });
 
   it("should call onClick when clicked", () => {
-    const handleClick = vi.fn();
+    let clickCount = 0;
+    const handleClick = () => {
+      clickCount += 1;
+    };
     render(<Button onClick={handleClick}>Click me</Button>);
 
     fireEvent.click(screen.getByText("Click me"));
-    expect(handleClick).toHaveBeenCalledTimes(1);
+    expect(clickCount).toBe(1);
   });
 
   it("should be disabled when disabled prop is true", () => {

@@ -21,6 +21,7 @@ async function globalSetup(config: FullConfig) {
       backendProcess = exec(command, {
         env: {
           ...process.env,
+          GENKIT_ENV: "dev", // Garante que o Genkit use modo desenvolvimento nos testes
           NODE_ENV: "development",
         },
       });

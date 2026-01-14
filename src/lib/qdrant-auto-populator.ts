@@ -24,7 +24,7 @@
 import type { Expediente } from "@/types";
 import type { DataJudService } from "./datajud-service";
 import type { GeminiEmbeddingService } from "./gemini-embedding-service";
-import type { QdrantService } from "./qdrant-service";
+import type { QdrantClient } from "./qdrant-service";
 import type { TemaExtracao, TemaExtractorService } from "./tema-extractor";
 
 /**
@@ -168,7 +168,7 @@ export class QdrantAutoPopulator {
   private readonly config: Required<AutoPopulatorConfig>;
 
   constructor(
-    private readonly qdrant: QdrantService,
+    private readonly qdrant: QdrantClient,
     private readonly dataJud: DataJudService,
     private readonly temaExtractor: TemaExtractorService,
     private readonly embeddings: GeminiEmbeddingService,

@@ -3,7 +3,10 @@ import { render, waitFor } from "@testing-library/react";
 
 describe("Editor visibility and style sanity", () => {
   it("should render editor without blur or transparency", async () => {
-    const handleChange = vi.fn();
+    let lastContent = "";
+    const handleChange = (content: string) => {
+      lastContent = content;
+    };
 
     const { container } = render(<TiptapEditorV2 content="<p>Hello</p>" onChange={handleChange} />);
 
@@ -20,5 +23,7 @@ describe("Editor visibility and style sanity", () => {
       expect(editorEl?.style.filter || "none").toBe("none");
       expect(editorEl?.style.opacity || "1").toBe("1");
     });
+
+    expect(typeof lastContent).toBe("string");
   });
 });
