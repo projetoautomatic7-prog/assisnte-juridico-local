@@ -8,7 +8,7 @@ Vou te entregar um **pacote fechado**:
 * 1 função serverless `/api/agents` que orquestra tudo
 
 Isso tudo já está **compatível com a arquitetura que você descreveu**:
-Vite + React na frente, Vercel Functions no backend, Spark LLM via `/api/llm-proxy`, KV/Redis via `/api/kv`.
+Vite + React na frente, Servidor Local (Node.js) no backend, Spark LLM via `/api/llm-proxy`, KV/Redis via `/api/kv`.
 
 ---
 
@@ -157,7 +157,9 @@ Sempre responda ESTRITAMENTE em JSON válido, usando um destes formatos:
 
       let parsed: any;
       try {
-        parsed = JSON.parse(raw);
+        // Limpa blocos de código markdown (```json ... ```) que o LLM costuma enviar
+        const cleanRaw = raw.replace(/```json\n?|\n?```/g, "").trim();
+        parsed = JSON.parse(cleanRaw);
       } catch {
         // força correção
         messages.push({ role: "assistant", content: raw });
@@ -405,7 +407,7 @@ export const consultarProcessoPJe: Tool = {
   description:
     "Consulta dados consolidados de um processo (PJe / DJEN / DataJud) pelo número CNJ.",
   async run(args, ctx: GlobalToolContext) {
-    const url = `${ctx.baseUrl}/api/serviços-legais`;
+    const url = `${ctx.baseUrl}/api/servicos-legais`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -893,3 +895,22 @@ Se você quiser, no próximo passo você pode:
 
 * colar aqui o conteúdo de `API/djen/check.ts`, `API/deadline/calculate.ts` e `API/todoist.ts`,
   e eu ajusto as tools pra ficarem **100% aderentes ao contrato real** dessas rotas — aí seu sistema de agentes entra em modo “zero intervenção humana” de verdade.
+
+---
+
+## 8. ⚠️ IMPORTANTE: Experiência do Usuário (UX) com Agentes
+
+O fluxo de execução de um agente (`agent.run()`) pode demorar de 5 a 40 segundos, dependendo da complexidade da tarefa e da latência do LLM.
+
+**NÃO BLOQUEIE A INTERFACE DO USUÁRIO** esperando a resposta final.
+
+A abordagem correta é **assíncrona**:
+
+1.  **Disparo Imediato:** Ao chamar `/api/agents`, o backend deve iniciar a tarefa do agente em background e retornar imediatamente um `taskId` ou `jobId`.
+    ```json
+    { "status": "processing", "taskId": "some-unique-id" }
+    ```
+2.  **Feedback na UI:** O frontend deve exibir uma mensagem de progresso, como "O Agente Harvey está analisando sua solicitação...".
+3.  **Polling ou WebSockets:** O frontend pode usar o `taskId` para verificar o status da tarefa a cada poucos segundos em um novo endpoint (ex: `/api/agents/status?taskId=...`) ou receber a resposta final via WebSockets.
+
+Esta arquitetura garante que o aplicativo permaneça responsivo e oferece uma experiência de usuário muito superior.

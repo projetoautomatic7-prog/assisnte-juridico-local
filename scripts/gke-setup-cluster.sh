@@ -2,7 +2,7 @@
 set -e
 
 # Configurações (customize aqui)
-PROJECT_ID="${GCP_PROJECT_ID:-terminal-sonico-474321-s1}"
+PROJECT_ID="${GCP_PROJECT_ID:-sonic-terminal-474321-s1}"
 CLUSTER_NAME="${GKE_CLUSTER_NAME:-assistente-cluster}"
 REGION="${GKE_REGION:-us-central1}"
 ZONE="${GKE_ZONE:-us-central1-a}"

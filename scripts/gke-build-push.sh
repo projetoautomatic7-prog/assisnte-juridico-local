@@ -2,7 +2,7 @@
 set -e
 
 # Configurações
-PROJECT_ID="${GCP_PROJECT_ID:-terminal-sonico-474321-s1}"
+PROJECT_ID="${GCP_PROJECT_ID:-sonic-terminal-474321-s1}"
 IMAGE_NAME="assistente-juridico"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 GCR_IMAGE="gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG"

@@ -1569,11 +1569,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const actionParam = req.query.action;
   const action = Array.isArray(actionParam) ? actionParam[0] : actionParam;
 
+  // Em deploy local (Windows 11), a autorização pode ser baseada em API_KEY local ou simplificada
   if (!isAuthorized(req)) {
     return res.status(401).json({
       error: "Unauthorized",
       message:
         "Authentication required. Provide Bearer token, x-api-key header, or access from localhost.",
+      message: "Authentication required.",
     });
   }
 

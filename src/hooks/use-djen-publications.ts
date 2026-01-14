@@ -11,6 +11,11 @@
 import type { DJENPublication } from "@/types/djen-publication";
 import { useCallback, useState } from "react";
 
+// Correção para erro "process is not defined" no Vite
+const VITE_DJEN_ADVOGADO_NOME = import.meta.env.VITE_DJEN_ADVOGADO_NOME || "Advogado Exemplo";
+const VITE_DJEN_ADVOGADO_OAB = import.meta.env.VITE_DJEN_ADVOGADO_OAB || "000000/XX";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
 interface ExpedientesResponse {
   success: boolean;
   expedientes: DJENPublication[];
@@ -33,8 +38,8 @@ interface MonitoredLawyer {
 const DEFAULT_LAWYERS: MonitoredLawyer[] = [
   {
     id: "exemplo-advogado",
-    name: process.env.DJEN_ADVOGADO_NOME || "Advogado Exemplo",
-    oab: process.env.DJEN_ADVOGADO_OAB || "000000/XX",
+    name: VITE_DJEN_ADVOGADO_NOME,
+    oab: VITE_DJEN_ADVOGADO_OAB,
     enabled: true,
   },
 ];
@@ -230,16 +235,20 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
   const [lawyersCount, setLawyersCount] = useState(0);
   const [isGeoBlocked, setIsGeoBlocked] = useState(false);
 
+  // Ref para evitar loops de atualização infinita (Maximum update depth exceeded)
+  const isFetchingRef = useRef(false);
+
   const fetchPublications = useCallback(async () => {
+    if (isFetchingRef.current) return;
+
     try {
+      isFetchingRef.current = true;
       setLoading(true);
       setError(null);
       setIsGeoBlocked(false);
 
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-
       try {
-        const data = await fetchFromBackend(baseUrl, maxItems, filter);
+        const data = await fetchFromBackend(VITE_API_BASE_URL, maxItems, filter);
 
         if (data.success) {
           setPublications(data.expedientes.slice(0, maxItems));
@@ -252,13 +261,13 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
       }
 
       console.log("[DJENWidget] Tentando busca via proxy backend...");
-      const browserResult = await fetchFromBackendProxy(baseUrl, maxItems);
+      const browserResult = await fetchFromBackendProxy(VITE_API_BASE_URL, maxItems);
 
       if (browserResult.isGeoBlocked) {
         setIsGeoBlocked(true);
         setError(
           browserResult.error ||
-            "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
+          "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
         );
         setLawyersCount(browserResult.lawyersConfigured);
         return;
@@ -271,6 +280,7 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
       console.error("[DJENWidget] Fetch error:", err);
       setError("Não foi possível carregar publicações");
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   }, [maxItems, filter]);

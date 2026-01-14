@@ -6,6 +6,8 @@ namespace: default
 resources:
   - deployment.yaml
   - ingress.yaml
+  - pdb.yaml
+  - service-monitor.yaml
 
 commonLabels:
   app: assistente-juridico
@@ -19,11 +21,14 @@ configMapGenerator:
   - name: app-config
     literals:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=3000
 
 secretGenerator:
   - name: assistente-juridico-secrets
     literals:
       - app-env=production
+      - google-client-id=YOUR_GOOGLE_CLIENT_ID
+      - google-api-key=YOUR_GOOGLE_API_KEY
+      - todoist-api-key=YOUR_TODOIST_API_KEY
     options:
       disableNameSuffixHash: true

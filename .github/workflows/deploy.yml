@@ -228,13 +228,13 @@ jobs:
           # Determine deployment type
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "🚀 Deploying preview for PR #${{ github.event.pull_request.number }}"
-            DEPLOY_CMD="vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes"
+            DEPLOY_CMD="vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --regions gru1 --yes"
           elif [[ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || '' }}" == "production" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "🚀 Deploying to production"
-            DEPLOY_CMD="vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes"
+            DEPLOY_CMD="vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --regions gru1 --yes"
           else
             echo "🚀 Deploying to staging"
-            DEPLOY_CMD="vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes"
+            DEPLOY_CMD="vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --regions gru1 --yes"
           fi
 
           # Deploy with retry logic (max 3 attempts)

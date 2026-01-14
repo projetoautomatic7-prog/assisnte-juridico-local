@@ -174,13 +174,7 @@ async function handleGetExpedientes(
 // Helper: Build base URL
 // ===========================
 function buildBaseUrl(req: VercelRequest): string {
-  if (process.env.VERCEL_URL && process.env.VERCEL_URL.trim().length > 0) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  if (process.env.NODE_ENV === "production") {
-    return `https://${req.headers.host}`;
-  }
-  return "http://localhost:3000";
+  return process.env.APP_BASE_URL || `http://${req.headers.host || 'localhost:3001'}`;
 }
 
 // ===========================
@@ -261,9 +255,7 @@ function setCorsHeaders(res: VercelResponse): void {
  */
 async function handlePending(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    const baseUrl = process.env.APP_BASE_URL || "http://localhost:3001";
 
     const response = await fetch(`${baseUrl}/api/djen-sync`, {
       method: "POST",

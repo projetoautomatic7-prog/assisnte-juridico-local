@@ -98,10 +98,12 @@ async function getKv(): Promise<Redis> {
   if (_kvClient) return _kvClient;
 
   if (
-    !process.env.UPSTASH_REDIS_REST_URL ||
-    !process.env.UPSTASH_REDIS_REST_TOKEN
+
+ximos passos
+    !process.env.UPSTASH_REDIS_REST_URL?.trim() ||
+    !process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
   ) {
-    throw new Error("Upstash Redis not configured");
+    throw new Error("Configuração do Upstash Redis ausente. Verifique as variáveis de ambiente UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN.");
   }
 
   _kvClient = new Redis({

@@ -262,12 +262,12 @@ exec -l $SHELL
 
 # Autenticar
 gcloud auth login
-gcloud config set project terminal-sonico-474321-s1
+gcloud config set project sonic-terminal-474321-s1
 
 # Conectar ao cluster
 gcloud container clusters get-credentials autopilot-cluster-1 \
   --region us-central1 \
-  --project terminal-sonico-474321-s1
+  --project sonic-terminal-474321-s1
 
 # Verificar
 kubectl cluster-info

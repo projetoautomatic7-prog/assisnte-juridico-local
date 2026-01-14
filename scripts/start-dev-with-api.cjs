@@ -10,12 +10,14 @@ console.log(`Starting Vite dev server on ${host}:${port} and local API on ${apiP
 const vite = spawn("npx", ["vite", "--host", host, "--port", port], {
   stdio: "inherit",
   cwd: process.cwd(),
+  shell: true,
   env: { ...process.env, NODE_ENV: "development" },
 });
 
 const api = spawn("node", [path.join(__dirname, "dev-api-server.cjs")], {
   stdio: "inherit",
   cwd: process.cwd(),
+  shell: true,
   env: { ...process.env, DEV_API_PORT: apiPort },
 });
 

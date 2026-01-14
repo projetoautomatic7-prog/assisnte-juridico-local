@@ -17,7 +17,7 @@ spec:
       containers:
         - name: assistente-juridico
           image: assistente-juridico-p:latest
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:

@@ -1005,5 +1005,8 @@
   "IDX.agenticWorkspace": true,
   "IDX.aI.showChatInEditorTab": true,
   "IDX.corgiMode": true,
-  "geminicodeassist.project": "promising-experience-h9gfd"
+  "geminicodeassist.project": "sonic-terminal-474321-s1",
+  "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+  "workbench.experimental.cloudChanges.autoStore": "onShutdown",
+  "debug.toolBarLocation": "commandCenter"
 }

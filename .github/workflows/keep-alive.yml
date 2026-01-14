@@ -1,0 +1,27 @@
+name: Keep Vercel Functions Warm
+
+on:
+  schedule:
+    # Roda a cada 15 minutos
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Health Endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping health check endpoint
+        if: env.DEPLOYMENT_URL != ''
+        run: |
+          echo "Pinging URL: ${{ env.DEPLOYMENT_URL }}/api/health"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.DEPLOYMENT_URL }}/api/health")
+          echo "Received status code: $response"
+          if [ "$response" -ne 200 ]; then
+            echo "::warning::Health check failed with status $response"
+          fi
+        env:
+          # Use a URL de produção. Crie um Environment Secret chamado DEPLOYMENT_URL no GitHub.
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
