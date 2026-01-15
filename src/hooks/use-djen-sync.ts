@@ -19,7 +19,8 @@ export function useDJENSync() {
   const executeSync = async (): Promise<SyncResult> => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
     const triggerUrl = import.meta.env.VITE_DJEN_TRIGGER_URL || "";
-    const syncUrl = triggerUrl || (baseUrl ? `${baseUrl}/api/djen-sync` : "/api/djen/trigger-manual");
+    const syncUrl =
+      triggerUrl || (baseUrl ? `${baseUrl}/api/djen-sync` : "/api/djen/trigger-manual");
     let response;
     try {
       response = await fetch(syncUrl, {
