@@ -266,7 +266,6 @@ function App() {
             </div>
           </div>
           <Toaster />
-          
         </div>
       </QueryClientProvider>
     );
@@ -306,7 +305,6 @@ function App() {
           </main>
         </div>
         <Toaster />
-        
       </div>
     </QueryClientProvider>
   );

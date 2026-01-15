@@ -17,10 +17,10 @@ import { beforeAll, describe, expect, test } from "vitest";
 // Configurar API key do Gemini para testes
 beforeAll(() => {
   if (!process.env.GEMINI_API_KEY) {
-    process.env.GEMINI_API_KEY = 'test-key-for-embeddings';
+    process.env.GEMINI_API_KEY = "test-key-for-embeddings";
   }
   if (!process.env.VITE_GEMINI_MODEL) {
-    process.env.VITE_GEMINI_MODEL = 'gemini-2.0-flash';
+    process.env.VITE_GEMINI_MODEL = "gemini-2.0-flash";
   }
 });
 

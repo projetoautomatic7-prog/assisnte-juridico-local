@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GeminiResponse } from '../../lib/gemini-service.js';
-import * as GeminiService from '../../lib/gemini-service.js';
-import { runPesquisaJuris } from './pesquisa_graph.js';
-import { PESQUISA_JURIS_SYSTEM_PROMPT } from './templates.js';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GeminiResponse } from "../../lib/gemini-service.js";
+import * as GeminiService from "../../lib/gemini-service.js";
+import { runPesquisaJuris } from "./pesquisa_graph.js";
+import { PESQUISA_JURIS_SYSTEM_PROMPT } from "./templates.js";
 
 // Mock do Gemini Service
-vi.mock('../../lib/gemini-service', async (importOriginal) => {
+vi.mock("../../lib/gemini-service", async (importOriginal) => {
   const actual = await importOriginal<typeof GeminiService>();
   return {
     ...actual,
@@ -14,31 +14,31 @@ vi.mock('../../lib/gemini-service', async (importOriginal) => {
 });
 
 // Mock do Retriever para não chamar API externa/Banco
-vi.mock('./retrievers', () => ({
+vi.mock("./retrievers", () => ({
   JurisprudenceRetriever: class {
     search() {
       return Promise.resolve({
         precedentes: [
           {
-            tribunal: 'TJSP',
-            ementa: 'Ementa de teste',
-            data: '2023-01-01',
-            titulo: 'Acórdão 123',
+            tribunal: "TJSP",
+            ementa: "Ementa de teste",
+            data: "2023-01-01",
+            titulo: "Acórdão 123",
             relevancia: 0.95,
-            numero: '123456'
-          }
+            numero: "123456",
+          },
         ],
         totalFound: 1,
         avgRelevance: 0.95,
-        executionTimeMs: 50
+        executionTimeMs: 50,
       });
     }
   },
-  formatPrecedentes: () => 'RESUMO DOS PRECEDENTES MOCKADOS',
+  formatPrecedentes: () => "RESUMO DOS PRECEDENTES MOCKADOS",
 }));
 
 // Mock do Sentry/Tracing para evitar erros de alias @/
-vi.mock('../../lib/sentry-gemini-integration-v2', () => ({
+vi.mock("../../lib/sentry-gemini-integration-v2", () => ({
   createInvokeAgentSpan: vi.fn().mockImplementation(async (_config, _context, callback) => {
     return callback({
       setAttribute: vi.fn(),
@@ -47,22 +47,22 @@ vi.mock('../../lib/sentry-gemini-integration-v2', () => ({
   }),
 }));
 
-describe('Pesquisa Juris Agent - System Instruction Validation', () => {
+describe("Pesquisa Juris Agent - System Instruction Validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('deve enviar systemInstruction separadamente para o Gemini', async () => {
+  it("deve enviar systemInstruction separadamente para o Gemini", async () => {
     // 1. Setup do Mock
     const mockResponse: GeminiResponse = {
-      text: 'Análise da pesquisa realizada com sucesso.',
-      metadata: { model: 'gemini-2.5-pro' }
+      text: "Análise da pesquisa realizada com sucesso.",
+      metadata: { model: "gemini-2.5-pro" },
     };
     const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
 
     const input = {
-      tema: 'Dano moral em voo atrasado',
-      tribunal: 'TJSP'
+      tema: "Dano moral em voo atrasado",
+      tribunal: "TJSP",
     };
 
     // 2. Execução

@@ -109,13 +109,17 @@ export class PesquisaJurisAgent extends LangGraphAgent {
 
           span?.setStatus({ code: 1, message: "ok" });
           return this.addAgentMessage(current, result);
-
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Pesquisa Jurisprudencial", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Pesquisa Jurisprudencial",
+              error.field,
+              error.message,
+              error.receivedValue
+            );
           } else {
             logStructuredError("Pesquisa Jurisprudencial", errorType, errorMessage, {
               tema: (state.data?.tema as string) || undefined,
@@ -126,8 +130,8 @@ export class PesquisaJurisAgent extends LangGraphAgent {
           span?.setStatus({ code: 2, message: errorMessage });
 
           const errorMsg = formatErrorMessage(errorType, errorMessage, {
-            tema: (state.data?.tema as string),
-            tribunal: (state.data?.tribunal as string),
+            tema: state.data?.tema as string,
+            tribunal: state.data?.tribunal as string,
             step: current.currentStep,
           });
 

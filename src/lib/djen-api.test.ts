@@ -88,8 +88,10 @@ describe("DJEN API - Classe de Erro", () => {
 
 describe("DJEN API - Integração", () => {
   beforeAll(() => {
-    if (process.env.DISABLE_MOCKS !== 'true') {
-      throw new Error('Falha de Segurança: Este teste de API deve ser executado com DISABLE_MOCKS=true para conformidade ética.');
+    if (process.env.DISABLE_MOCKS !== "true") {
+      throw new Error(
+        "Falha de Segurança: Este teste de API deve ser executado com DISABLE_MOCKS=true para conformidade ética."
+      );
     }
   });
 
@@ -119,18 +121,20 @@ describe("DJEN API - Integração", () => {
       tribunais: ["TJMG"],
       searchTerms: { numeroOAB: "184404/MG" },
       dataInicio: "2024-01-01", // Data retroativa para garantir massa de dados
-      dataFim: "2024-01-10"
+      dataFim: "2024-01-10",
     });
 
     if (resultado.erros.length > 0) {
-      console.warn(`⚠️ Falha em alguns tribunais (possível geobloqueio): ${resultado.erros.map(e => e.tribunal).join(', ')}`);
+      console.warn(
+        `⚠️ Falha em alguns tribunais (possível geobloqueio): ${resultado.erros.map((e) => e.tribunal).join(", ")}`
+      );
     }
 
     expect(resultado.totalConsultado).toBeGreaterThanOrEqual(0);
     // Validação de estrutura real
     if (resultado.resultados.length > 0) {
-      expect(resultado.resultados[0]).toHaveProperty('tribunal');
-      expect(resultado.resultados[0]).toHaveProperty('numero_processo');
+      expect(resultado.resultados[0]).toHaveProperty("tribunal");
+      expect(resultado.resultados[0]).toHaveProperty("numero_processo");
     }
   }, 60000);
 

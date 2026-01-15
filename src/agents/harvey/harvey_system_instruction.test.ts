@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GeminiResponse } from '../../lib/gemini-service.js';
-import * as GeminiService from '../../lib/gemini-service.js';
-import { runHarvey } from './harvey_graph.js';
-import { HARVEY_SYSTEM_PROMPT } from './templates.js';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GeminiResponse } from "../../lib/gemini-service.js";
+import * as GeminiService from "../../lib/gemini-service.js";
+import { runHarvey } from "./harvey_graph.js";
+import { HARVEY_SYSTEM_PROMPT } from "./templates.js";
 
 // Mock do Gemini Service para interceptar a chamada
-vi.mock('../../lib/gemini-service', async (importOriginal) => {
+vi.mock("../../lib/gemini-service", async (importOriginal) => {
   const actual = await importOriginal<typeof GeminiService>();
   return {
     ...actual,
@@ -13,22 +13,22 @@ vi.mock('../../lib/gemini-service', async (importOriginal) => {
   };
 });
 
-describe('Harvey Agent - System Instruction Validation', () => {
+describe("Harvey Agent - System Instruction Validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('deve enviar systemInstruction separadamente para o Gemini', async () => {
+  it("deve enviar systemInstruction separadamente para o Gemini", async () => {
     // 1. Setup do Mock
     const mockResponse: GeminiResponse = {
-      text: 'Análise realizada com sucesso pelo Harvey.',
-      metadata: { model: 'gemini-2.5-pro' }
+      text: "Análise realizada com sucesso pelo Harvey.",
+      metadata: { model: "gemini-2.5-pro" },
     };
     const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
 
     const input = {
-      task: 'Revisar contrato de prestação de serviços',
-      urgency: 'high'
+      task: "Revisar contrato de prestação de serviços",
+      urgency: "high",
     };
 
     // 2. Execução

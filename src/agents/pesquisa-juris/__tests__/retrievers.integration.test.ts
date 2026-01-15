@@ -27,9 +27,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
   });
 
   describe("✅ Busca Real com Qdrant", () => {
-    it("deve buscar jurisprudência sobre direito à greve no STF", 
-       { skip: !hasQdrantConfig, timeout: 30000 }, 
-       async () => {
+    it(
+      "deve buscar jurisprudência sobre direito à greve no STF",
+      { skip: !hasQdrantConfig, timeout: 30000 },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "direito à greve servidores públicos",
           tribunal: "STF",
@@ -64,9 +65,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
       }
     );
 
-    it("deve buscar em todos os tribunais", 
-       { skip: !hasQdrantConfig, timeout: 30000 }, 
-       async () => {
+    it(
+      "deve buscar em todos os tribunais",
+      { skip: !hasQdrantConfig, timeout: 30000 },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "adicional de insalubridade",
           tribunal: "todos",
@@ -91,9 +93,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
       }
     );
 
-    it("deve respeitar filtro de relevância", 
-       { skip: !hasQdrantConfig, timeout: 30000 }, 
-       async () => {
+    it(
+      "deve respeitar filtro de relevância",
+      { skip: !hasQdrantConfig, timeout: 30000 },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "dano moral",
           tribunal: "todos",
@@ -117,9 +120,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
       }
     );
 
-    it("deve ordenar por relevância decrescente", 
-       { skip: !hasQdrantConfig, timeout: 30000 }, 
-       async () => {
+    it(
+      "deve ordenar por relevância decrescente",
+      { skip: !hasQdrantConfig, timeout: 30000 },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "prescrição trabalhista",
           tribunal: "TST",
@@ -142,9 +146,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
   });
 
   describe("✅ Tratamento de Erros", () => {
-    it("deve lançar erro se Qdrant não estiver configurado", 
-       { skip: hasQdrantConfig }, 
-       async () => {
+    it(
+      "deve lançar erro se Qdrant não estiver configurado",
+      { skip: hasQdrantConfig },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "teste sem qdrant",
           tribunal: "todos",
@@ -158,9 +163,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
       }
     );
 
-    it("deve lidar com temas muito específicos (sem resultados)", 
-       { skip: !hasQdrantConfig, timeout: 30000 }, 
-       async () => {
+    it(
+      "deve lidar com temas muito específicos (sem resultados)",
+      { skip: !hasQdrantConfig, timeout: 30000 },
+      async () => {
         const input: PesquisaJurisInput = {
           tema: "xyzabc123 termo inexistente jurídico impossível",
           tribunal: "todos",

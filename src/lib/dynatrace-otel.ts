@@ -86,7 +86,7 @@ if (config.enabled) {
         scheduledDelayMillis: 5000,
         exportTimeoutMillis: 30000,
         maxExportBatchSize: 512,
-      })
+      }),
     ],
   });
 

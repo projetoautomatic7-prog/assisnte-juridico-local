@@ -34,6 +34,6 @@ export function validateHarveyInput(data: Record<string, unknown>): HarveyInput 
   return {
     task,
     urgency,
-    sessionId: data.sessionId as string | undefined
+    sessionId: data.sessionId as string | undefined,
   };
 }

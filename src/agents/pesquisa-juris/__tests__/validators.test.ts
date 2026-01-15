@@ -36,9 +36,9 @@ describe("Pesquisa Jurisprudencial - Validators", () => {
   });
 
   it("deve lançar erro para tribunal inválido", () => {
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", tribunal: "TJSP" })
-    ).toThrow(/Campo 'tribunal'/);
+    expect(() => validatePesquisaInput({ tema: "Teste", tribunal: "TJSP" })).toThrow(
+      /Campo 'tribunal'/
+    );
   });
 
   it("deve validar formato de data", () => {
@@ -51,29 +51,25 @@ describe("Pesquisa Jurisprudencial - Validators", () => {
   });
 
   it("deve lançar erro para data inválida", () => {
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", dataInicio: "01/01/2023" })
-    ).toThrow(/formato YYYY-MM-DD/);
+    expect(() => validatePesquisaInput({ tema: "Teste", dataInicio: "01/01/2023" })).toThrow(
+      /formato YYYY-MM-DD/
+    );
 
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", dataInicio: "2023-13-01" })
-    ).toThrow(/inválida/);
+    expect(() => validatePesquisaInput({ tema: "Teste", dataInicio: "2023-13-01" })).toThrow(
+      /inválida/
+    );
   });
 
   it("deve validar limites numéricos", () => {
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", limit: 0 })
-    ).toThrow(/entre 1 e 50/);
+    expect(() => validatePesquisaInput({ tema: "Teste", limit: 0 })).toThrow(/entre 1 e 50/);
 
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", limit: 100 })
-    ).toThrow(/entre 1 e 50/);
+    expect(() => validatePesquisaInput({ tema: "Teste", limit: 100 })).toThrow(/entre 1 e 50/);
   });
 
   it("deve validar relevanceThreshold", () => {
-    expect(() =>
-      validatePesquisaInput({ tema: "Teste", relevanceThreshold: 1.5 })
-    ).toThrow(/entre 0 e 1/);
+    expect(() => validatePesquisaInput({ tema: "Teste", relevanceThreshold: 1.5 })).toThrow(
+      /entre 0 e 1/
+    );
 
     const result = validatePesquisaInput({ tema: "Teste", relevanceThreshold: 0.5 });
     expect(result.relevanceThreshold).toBe(0.5);

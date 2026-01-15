@@ -358,11 +358,11 @@ textarea {
   transition-duration: var(--tt-transition-duration-default);
 
   &:hover {
-    background-color: --value(--color-*-hover);
+    background-color: --value(--color-* -hover);
   }
 
   &:active {
-    background-color: --value(--color-*-active);
+    background-color: --value(--color-* -active);
     transform: scale(0.95);
   }
 }
@@ -373,11 +373,11 @@ textarea {
   transition-duration: var(--tt-transition-duration-default);
 
   &:hover {
-    border-color: --value(--color-*-hover);
+    border-color: --value(--color-* -hover);
   }
 
   &:active {
-    border-color: --value(--color-*-active);
+    border-color: --value(--color-* -active);
   }
 }
 
@@ -388,11 +388,11 @@ textarea {
   transition-duration: var(--tt-transition-duration-default);
 
   &:hover {
-    outline-color: --value(--color-*-hover) !important;
+    outline-color: --value(--color-* -hover) !important;
   }
 
   &:active {
-    outline-color: --value(--color-*-active) !important;
+    outline-color: --value(--color-* -active) !important;
   }
 }
 

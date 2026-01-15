@@ -37,16 +37,12 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
   }
 
   if (tema.length < 3 || tema.length > 500) {
-    throw new ValidationError(
-      "Campo 'tema' deve ter entre 3 e 500 caracteres",
-      "tema",
-      tema
-    );
+    throw new ValidationError("Campo 'tema' deve ter entre 3 e 500 caracteres", "tema", tema);
   }
 
   // Validar tribunal (opcional)
   const tribunal = (data.tribunal as string) || "todos";
-  if (!TRIBUNAIS_VALIDOS.includes(tribunal as typeof TRIBUNAIS_VALIDOS[number])) {
+  if (!TRIBUNAIS_VALIDOS.includes(tribunal as (typeof TRIBUNAIS_VALIDOS)[number])) {
     throw new ValidationError(
       `Campo 'tribunal' deve ser: ${TRIBUNAIS_VALIDOS.join(", ")}`,
       "tribunal",
@@ -77,18 +73,18 @@ export function validatePesquisaInput(data: Record<string, unknown>): PesquisaJu
   const limit = data.limit as number | undefined;
   if (limit !== undefined) {
     if (typeof limit !== "number" || limit < 1 || limit > 50) {
-      throw new ValidationError(
-        "Campo 'limit' deve ser um número entre 1 e 50",
-        "limit",
-        limit
-      );
+      throw new ValidationError("Campo 'limit' deve ser um número entre 1 e 50", "limit", limit);
     }
   }
 
   // Validar relevanceThreshold (opcional)
   const relevanceThreshold = data.relevanceThreshold as number | undefined;
   if (relevanceThreshold !== undefined) {
-    if (typeof relevanceThreshold !== "number" || relevanceThreshold < 0 || relevanceThreshold > 1) {
+    if (
+      typeof relevanceThreshold !== "number" ||
+      relevanceThreshold < 0 ||
+      relevanceThreshold > 1
+    ) {
       throw new ValidationError(
         "Campo 'relevanceThreshold' deve ser um número entre 0 e 1",
         "relevanceThreshold",

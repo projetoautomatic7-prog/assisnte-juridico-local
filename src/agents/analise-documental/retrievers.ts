@@ -157,10 +157,7 @@ export class DocumentoRetriever {
       return embeddings;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(
-        "❌ [Embeddings] Falha ao gerar embedding real:",
-        errorMessage
-      );
+      console.error("❌ [Embeddings] Falha ao gerar embedding real:", errorMessage);
       throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
@@ -190,7 +187,6 @@ export class DocumentoRetriever {
       tags: (result.payload.tags as string[]) || [],
     }));
   }
-
 
   private reRankResults(documentos: DocumentoJuridico[], threshold: number): DocumentoJuridico[] {
     return documentos

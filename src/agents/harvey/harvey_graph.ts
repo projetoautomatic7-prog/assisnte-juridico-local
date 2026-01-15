@@ -4,11 +4,7 @@ import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import {
-  formatErrorMessage,
-  generateAnalysisPrompt,
-  HARVEY_SYSTEM_PROMPT
-} from "./templates";
+import { formatErrorMessage, generateAnalysisPrompt, HARVEY_SYSTEM_PROMPT } from "./templates";
 import { validateHarveyInput, ValidationError } from "./validators";
 
 export class HarveyAgent extends LangGraphAgent {
@@ -67,7 +63,6 @@ export class HarveyAgent extends LangGraphAgent {
 
           span?.setStatus({ code: 1, message: "ok" });
           return this.addAgentMessage(current, result);
-
         } catch (error) {
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);

@@ -326,11 +326,13 @@ export async function callGemini(
                   parts: [{ text: prompt }],
                 },
               ],
-              ...(finalConfig.systemInstruction ? {
-                systemInstruction: {
-                  parts: [{ text: finalConfig.systemInstruction }]
-                }
-              } : {}),
+              ...(finalConfig.systemInstruction
+                ? {
+                    systemInstruction: {
+                      parts: [{ text: finalConfig.systemInstruction }],
+                    },
+                  }
+                : {}),
               generationConfig: {
                 temperature: finalConfig.temperature,
                 maxOutputTokens: finalConfig.maxOutputTokens,
