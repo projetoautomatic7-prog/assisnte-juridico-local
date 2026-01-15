@@ -15,6 +15,7 @@ const GOOGLE_DOCS_CLIENT_ID = config.google.clientId;
 const GOOGLE_DOCS_API_KEY = config.google.apiKey;
 const SCOPES =
   "https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file";
+const GOOGLE_DOCS_CONFIGURED = !!GOOGLE_DOCS_CLIENT_ID && !!GOOGLE_DOCS_API_KEY;
 
 // Constantes de configuração
 const MAX_DOCS_LENGTH = 1_000_000; // Limite do Google Docs: 1 milhão de caracteres
@@ -133,7 +134,7 @@ class GoogleDocsService {
     lastError: string | null;
   } {
     return {
-      configured: !!GOOGLE_DOCS_CLIENT_ID && !!GOOGLE_DOCS_API_KEY,
+      configured: GOOGLE_DOCS_CONFIGURED,
       initialized: this.gapiInited && this.gisInited,
       authenticated: !!this.accessToken,
       lastError: this.lastError,
@@ -147,6 +148,13 @@ class GoogleDocsService {
       if (this.initPromise) {
         await this.initPromise;
       }
+      return;
+    }
+
+    if (!GOOGLE_DOCS_CONFIGURED) {
+      this.lastError =
+        "Google Docs não configurado (VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY ausentes).";
+      debugError(this.lastError);
       return;
     }
 
@@ -175,14 +183,6 @@ class GoogleDocsService {
       return; // Sai silenciosamente em testes
     }
 
-    // Validação de credenciais
-    if (!GOOGLE_DOCS_CLIENT_ID || !GOOGLE_DOCS_API_KEY) {
-      this.lastError =
-        "Credenciais do Google Docs não configuradas. Configure VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY (ou VITE_GEMINI_API_KEY).";
-      debugError(this.lastError);
-      throw new Error(this.lastError);
-    }
-
     if (this.gapiInited && this.gisInited) {
       debug("Already initialized successfully");
       return;
@@ -202,8 +202,12 @@ class GoogleDocsService {
       await this.initPromise;
       debug("✅ Google Docs initialized successfully");
     } catch (error) {
+      this.lastError = `Falha ao inicializar Google Docs: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
       debugError("❌ Google Docs initialization failed:", error);
-      throw error;
+      // Não propagar erro para evitar quebrar UI; apenas marca o status
+      return;
     } finally {
       this.initPromise = null;
       this.initInProgress = false;
@@ -300,7 +304,10 @@ class GoogleDocsService {
         };
         gisScript.onerror = () => {
           clearTimeout(timeout);
-          reject(new Error("Failed to load Google Identity Services script"));
+          // Não rejeitar, apenas logar aviso para não quebrar a app se estiver offline
+          debugError("Failed to load Google Identity Services script (offline or blocked)");
+          // Resolvemos para permitir que o app continue (funcionalidades GIS falharão graciosamente depois)
+          resolve(); 
         };
         document.head.appendChild(gisScript);
       };
@@ -433,6 +440,13 @@ class GoogleDocsService {
   async authenticate(): Promise<boolean> {
     debug("Starting Docs authentication...");
 
+    if (!GOOGLE_DOCS_CONFIGURED) {
+      this.lastError =
+        "Google Docs não configurado (VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY ausentes).";
+      debugError(this.lastError);
+      return false;
+    }
+
     // CRÍTICO: NÃO fazer await aqui - bloqueia o popup
     // Inicialize ANTES de chamar authenticate() no componente
     if (!this.gapiInited || !this.gisInited) {
@@ -517,6 +531,13 @@ class GoogleDocsService {
   async createDocument(minuta: Minuta): Promise<{ docId: string; url: string } | null> {
     debug("Creating Docs document from minuta...", { titulo: minuta.titulo });
 
+    if (!GOOGLE_DOCS_CONFIGURED) {
+      this.lastError =
+        "Google Docs não configurado (VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY ausentes).";
+      debugError(this.lastError);
+      return null;
+    }
+
     if (!this.accessToken) {
       const authenticated = await this.authenticate();
       if (!authenticated) {
@@ -579,6 +600,13 @@ class GoogleDocsService {
 
   async updateDocumentContent(docId: string, content: string): Promise<boolean> {
     debug("Updating Docs document content...", { docId, length: content.length });
+
+    if (!GOOGLE_DOCS_CONFIGURED) {
+      this.lastError =
+        "Google Docs não configurado (VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY ausentes).";
+      debugError(this.lastError);
+      return false;
+    }
 
     // Validar tamanho do conteúdo
     if (content.length > MAX_DOCS_LENGTH) {
@@ -687,6 +715,13 @@ class GoogleDocsService {
 
   async getDocumentContent(docId: string): Promise<string | null> {
     debug("Fetching Docs document content...", { docId });
+
+    if (!GOOGLE_DOCS_CONFIGURED) {
+      this.lastError =
+        "Google Docs não configurado (VITE_GOOGLE_CLIENT_ID e VITE_GOOGLE_API_KEY ausentes).";
+      debugError(this.lastError);
+      return null;
+    }
 
     if (!this.accessToken) {
       const authenticated = await this.authenticate();

@@ -107,6 +107,11 @@ function setInCache<T>(key: string, value: T): void {
   memoryCache.set(key, { value, timestamp: Date.now() });
 }
 
+function isHtmlResponse(response: Response): boolean {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  return contentType.includes("text/html");
+}
+
 /**
  * Carrega valores do localStorage para as chaves especificadas
  */
@@ -166,9 +171,19 @@ async function batchLoadFromVercelKV(keys: string[]): Promise<Map<string, unknow
     });
 
     if (response.ok) {
-      recordApiSuccess();
-      const data = await response.json();
-      processApiResponse(data, results);
+      if (isHtmlResponse(response)) {
+        recordApiError();
+        return loadFromLocalStorage(batchKeys);
+      }
+
+      try {
+        const data = (await response.json()) as { values?: Record<string, unknown> };
+        recordApiSuccess();
+        processApiResponse(data, results);
+      } catch {
+        recordApiError();
+        return loadFromLocalStorage(batchKeys);
+      }
     } else if (response.status === 429) {
       recordApiError();
       // Rate limit - usar localStorage como fallback silenciosamente
@@ -271,7 +286,11 @@ async function processWriteBatch(): Promise<void> {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      recordApiSuccess();
+      if (isHtmlResponse(response)) {
+        recordApiError();
+      } else {
+        recordApiSuccess();
+      }
     } else if (response.status === 429 || response.status === 413) {
       // 429 = Rate limit, 413 = Payload muito grande
       if (response.status === 413 && import.meta.env.DEV) {

@@ -24,6 +24,27 @@ const MAX_HISTORY_SIZE = 10; // Máximo de backups no histórico
 const MAX_TASKS_IN_BACKUP = 100; // Limitar tarefas para economizar espaço
 const LOCAL_CACHE_KEY = "agent-backup-cache"; // Cache local simplificado
 
+const SERVER_COOLDOWN_MS = 60_000;
+let serverUnavailableUntil = 0;
+
+function isHtmlResponse(response: Response): boolean {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  return contentType.includes("text/html");
+}
+
+function isJsonResponse(response: Response): boolean {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  return contentType.includes("application/json");
+}
+
+function isServerCooldownActive(): boolean {
+  return Date.now() < serverUnavailableUntil;
+}
+
+function tripServerCooldown(): void {
+  serverUnavailableUntil = Date.now() + SERVER_COOLDOWN_MS;
+}
+
 interface BackupData {
   timestamp: number;
   userId: string;
@@ -56,6 +77,8 @@ export function useAgentBackup(options: BackupOptions) {
   const saveToServer = useCallback(
     async (backupData: BackupData): Promise<boolean> => {
       try {
+        if (isServerCooldownActive()) return false;
+
         const serverKey = `${BACKUP_KEY_PREFIX}:${userId}:latest`;
 
         const response = await fetch("/api/kv", {
@@ -69,7 +92,7 @@ export function useAgentBackup(options: BackupOptions) {
           }),
         });
 
-        if (!response.ok) {
+        if (!response.ok || isHtmlResponse(response)) {
           throw new Error(`Server responded with ${response.status}`);
         }
 
@@ -78,9 +101,16 @@ export function useAgentBackup(options: BackupOptions) {
         const historyResponse = await fetch(`/api/kv?key=${encodeURIComponent(historyKey)}`);
         let history: BackupData[] = [];
 
-        if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          history = historyData.value || [];
+        if (historyResponse.ok && isJsonResponse(historyResponse)) {
+          try {
+            const historyData = (await historyResponse.json()) as { value?: BackupData[] };
+            history = historyData.value || [];
+          } catch {
+            // Ignorar erro de parse e assumir histórico vazio
+            console.debug("Falha ao parsear histórico do servidor");
+          }
+        } else if (historyResponse.ok && isHtmlResponse(historyResponse)) {
+          throw new Error("Servidor retornou HTML em vez de JSON");
         }
 
         // Adicionar ao início e limitar tamanho
@@ -89,7 +119,7 @@ export function useAgentBackup(options: BackupOptions) {
           history = history.slice(0, MAX_HISTORY_SIZE);
         }
 
-        await fetch("/api/kv", {
+        const writeHistoryResponse = await fetch("/api/kv", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -98,12 +128,16 @@ export function useAgentBackup(options: BackupOptions) {
             ex: 60 * 60 * 24 * 30,
           }),
         });
+        if (!writeHistoryResponse.ok || isHtmlResponse(writeHistoryResponse)) {
+          throw new Error(`Falha ao salvar histórico: ${writeHistoryResponse.status}`);
+        }
 
         if (import.meta.env.DEV) {
           console.log("✅ Backup salvo no servidor (Upstash KV)");
         }
         return true;
       } catch (error) {
+        tripServerCooldown();
         console.warn("⚠️ Falha ao salvar no servidor:", error);
         return false;
       }
@@ -116,16 +150,26 @@ export function useAgentBackup(options: BackupOptions) {
    */
   const loadFromServer = useCallback(async (): Promise<BackupData | null> => {
     try {
+      if (isServerCooldownActive()) return null;
       const serverKey = `${BACKUP_KEY_PREFIX}:${userId}:latest`;
       const response = await fetch(`/api/kv?key=${encodeURIComponent(serverKey)}`);
 
-      if (!response.ok) {
+      if (!response.ok || !isJsonResponse(response)) {
+        if (response.ok && isHtmlResponse(response)) {
+          tripServerCooldown();
+        }
         return null;
       }
 
-      const data = await response.json();
-      return data.value || null;
+      try {
+        const data = (await response.json()) as { value?: BackupData | null };
+        return data.value || null;
+      } catch {
+        console.debug("Falha ao parsear dados do servidor");
+        return null;
+      }
     } catch (error) {
+      tripServerCooldown();
       console.warn("⚠️ Falha ao carregar do servidor:", error);
       return null;
     }
@@ -373,13 +417,31 @@ export function useAgentBackup(options: BackupOptions) {
    */
   const getBackupHistory = useCallback(async () => {
     try {
+      if (isServerCooldownActive()) {
+        return {
+          success: false,
+          lastBackup: null,
+          backupCount: 0,
+          history: [],
+          storage: "server",
+          error: new Error("Servidor indisponível (cooldown ativo)"),
+        };
+      }
+
       const historyKey = `${BACKUP_KEY_PREFIX}:${userId}:history`;
       const response = await fetch(`/api/kv?key=${encodeURIComponent(historyKey)}`);
 
       let history: BackupData[] = [];
-      if (response.ok) {
-        const data = await response.json();
-        history = data.value || [];
+      if (response.ok && isJsonResponse(response)) {
+        try {
+          const data = (await response.json()) as { value?: BackupData[] };
+          history = data.value || [];
+        } catch {
+          console.debug("Falha ao parsear histórico (getBackupHistory)");
+        }
+      } else if (response.ok && isHtmlResponse(response)) {
+        tripServerCooldown();
+        throw new Error("Servidor retornou HTML em vez de JSON");
       }
 
       return {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { executarManualmente } from "../services/djen-scheduler.js";
+import { buscarPublicacoesDJEN } from "../services/djen-api.js";
 
 const router = Router();
 
@@ -22,27 +23,17 @@ router.get("/publicacoes", async (req, res) => {
     const dataInicioParam = (dataInicio as string) || hoje;
     const dataFimParam = (dataFim as string) || hoje;
 
-    const url = `https://comunicaapi.pje.jus.br/api/v1/comunicacao?meio=D&numeroOab=${numeroOab}&ufOab=${ufOab}&dataDisponibilizacaoInicio=${dataInicioParam}&dataDisponibilizacaoFim=${dataFimParam}`;
-
-    console.log(`[DJEN Proxy] Buscando: ${url}`);
-
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "PJe-DataCollector/1.0",
-      },
+    const publicacoes = await buscarPublicacoesDJEN({
+      numeroOab: String(numeroOab),
+      ufOab: String(ufOab),
+      dataInicio: dataInicioParam,
+      dataFim: dataFimParam,
     });
-
-    if (!response.ok) {
-      throw new Error(`API DJEN retornou ${response.status}`);
-    }
-
-    const data = await response.json();
 
     res.json({
       success: true,
-      publicacoes: data,
-      count: Array.isArray(data) ? data.length : 0,
+      publicacoes,
+      count: publicacoes.length,
     });
   } catch (error) {
     console.error(`[DJEN Proxy] Erro:`, error);

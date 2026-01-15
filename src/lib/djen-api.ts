@@ -193,6 +193,10 @@ function parseResponseData(data: unknown, tribunal: string): DJENPublication[] {
     return data as DJENPublication[];
   }
 
+  if (data && typeof data === "object" && Array.isArray((data as { items?: unknown }).items)) {
+    return (data as { items: DJENPublication[] }).items;
+  }
+
   if (data && typeof data === "object" && Object.keys(data).length === 0) {
     return [];
   }
@@ -354,10 +358,6 @@ async function processTribunalQuery(
       searchTerms
     );
 
-    if (delayBetweenRequests > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delayBetweenRequests));
-    }
-
     return {
       results,
       publicationsCount: publicacoes.length,
@@ -368,6 +368,10 @@ async function processTribunalQuery(
       publicationsCount: 0,
       error: handleTribunalError(error, tribunal),
     };
+  } finally {
+    if (delayBetweenRequests > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayBetweenRequests));
+    }
   }
 }
 

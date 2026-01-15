@@ -2,6 +2,7 @@ import { useKV } from "@/hooks/use-kv";
 import { metricsCollector } from "@/lib/agent-metrics";
 import {
   canResumeAfterHuman,
+  DEFAULT_AGENTS,
   initializeAgents,
   shouldPauseForHuman,
   type Agent,
@@ -85,6 +86,7 @@ function sortTasksByPriority(tasks: Array<AgentTask>): Array<AgentTask> {
 }
 
 const AGENTS_DATA_VERSION = 7;
+const EXPECTED_AGENT_COUNT = initializeAgents().length;
 
 export function useAutonomousAgents() {
   useKV<number>("agents-data-version", AGENTS_DATA_VERSION);
@@ -113,33 +115,29 @@ export function useAutonomousAgents() {
       setAgents(initializeAgents());
       return;
     }
-
-    // Garante que a quantidade de agentes seja sempre a definida em `initializeAgents` (15).
-    // O log `Pasted-er-responded-with-a-status-of-404...` mostra que o sistema entra em loop
-    // com 16 agentes, indicando que a verificação ` < 15` era insuficiente.
-    if (agentsRef.current.length !== 15 && !isInitializingRef.current) {
-      isInitializingRef.current = true;
-      console.log(`[Agents] Quantidade incorreta (${agentsRef.current.length}) → reinicializando`);
-      setAgents(initializeAgents());
-      const timer = setTimeout(() => {
-        isInitializingRef.current = false;
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [setAgents]); // Dependência em length removida
+    // Verificação estrita removida para evitar conflitos de versão entre builds
+  }, [setAgents]);
 
   const fetchServerData = useCallback(async () => {
     try {
       const resLogs = await fetch("/api/agents?action=logs").catch(() => null);
-      if (resLogs?.ok) {
-        const data = await resLogs.json();
-        if (Array.isArray(data.logs)) setServerLogs(data.logs);
+      if (resLogs?.ok && resLogs.headers.get("content-type")?.includes("application/json")) {
+        try {
+          const data = await resLogs.json();
+          if (Array.isArray(data.logs)) setServerLogs(data.logs);
+        } catch (e) {
+          console.debug("[Agents] Failed to parse logs JSON:", e);
+        }
       }
 
       const resMem = await fetch("/api/agents?action=memory").catch(() => null);
       if (resMem?.ok && resMem.headers.get("content-type")?.includes("application/json")) {
-        const data = await resMem.json();
-        if (Array.isArray(data.memory)) setLegalMemory(data.memory);
+        try {
+          const data = await resMem.json();
+          if (Array.isArray(data.memory)) setLegalMemory(data.memory);
+        } catch (e) {
+          console.debug("[Agents] Failed to parse memory JSON:", e);
+        }
       }
     } catch (error) {
       console.debug("[Agents] Sync error:", error);

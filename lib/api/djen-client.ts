@@ -205,6 +205,7 @@ async function consultarComunicacoes(
       method: "GET",
       headers: {
         Accept: "application/json",
+        "User-Agent": "PJe-DataCollector/1.0",
       },
       signal: controller.signal,
     });

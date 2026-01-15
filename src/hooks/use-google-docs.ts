@@ -8,6 +8,7 @@ import { toast } from "sonner";
  * Wrapper do googleDocsService para uso em componentes React
  */
 export function useGoogleDocs() {
+  const isConfigured = googleDocsService.getStatus().configured;
   const [isConnected, setIsConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -16,6 +17,10 @@ export function useGoogleDocs() {
   // Verificar status de autenticação ao montar
   useEffect(() => {
     const checkAuth = async () => {
+      if (!isConfigured) {
+        setIsConnected(false);
+        return;
+      }
       try {
         await googleDocsService.initialize();
         const authenticated = googleDocsService.isAuthenticated();
@@ -26,13 +31,21 @@ export function useGoogleDocs() {
       }
     };
     checkAuth();
-  }, []);
+  }, [isConfigured]);
 
   /**
    * Autenticar com Google Docs
    */
   const authenticate = useCallback(async () => {
     setError(null);
+
+    if (!isConfigured) {
+      const msg = "Google Docs não configurado (.env incompleto)";
+      setError(msg);
+      toast.error(msg);
+      return false;
+    }
+
     try {
       await googleDocsService.initialize();
       const success = await googleDocsService.authenticate();

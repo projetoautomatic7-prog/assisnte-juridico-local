@@ -101,6 +101,8 @@ export default function AgentOrchestrationPanel() {
       isFetchingRef.current = true;
       const response = await fetch("/api/observability?action=circuit-breakers");
       if (!response.ok) return;
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) return;
       const data = await response.json();
       if (data?.summary && data?.breakers) {
         setMetrics(data as OrchestrationMetrics);
@@ -143,6 +145,10 @@ export default function AgentOrchestrationPanel() {
       });
 
       if (response.ok) {
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          throw new Error("Resposta não-JSON do endpoint /api/agents");
+        }
         const data = await response.json();
         const agentName = agents.find((a) => a.id === agentId)?.name || agentId;
         const processingTime = data.processingTime ?? 0;

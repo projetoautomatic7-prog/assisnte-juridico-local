@@ -240,7 +240,7 @@ export async function consultarComunicacoes(
 
     const response = await fetch(url, {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", "User-Agent": "PJe-DataCollector/1.0" },
       signal: controller.signal,
     });
 

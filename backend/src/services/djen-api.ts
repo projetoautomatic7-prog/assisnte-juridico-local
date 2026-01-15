@@ -37,6 +37,8 @@ export async function buscarPublicacoesDJEN(
   url.searchParams.set("meio", "D"); // D=Diário, E=Eletrônico
   url.searchParams.set("dataDisponibilizacaoInicio", params.dataInicio);
   url.searchParams.set("dataDisponibilizacaoFim", params.dataFim);
+  url.searchParams.set("itensPorPagina", "100");
+  url.searchParams.set("pagina", "1");
 
   console.log(`📡 Buscando DJEN: ${url.toString()}`);
 
@@ -59,19 +61,59 @@ export async function buscarPublicacoesDJEN(
       throw new Error(`Erro ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("Resposta não está em formato JSON. Verifique os cabeçalhos da requisição.");
+    }
 
-    // A API retorna um array de objetos com estrutura:
-    // { idExpediente, siglaTribunal, tipoComunicacao, numeroProcesso, ... }
-    const publicacoes: DJENPublicacao[] = (data || []).map((item: any) => ({
-      id: item.idExpediente || `${item.numeroProcesso}-${Date.now()}`,
-      siglaTribunal: item.siglaTribunal || "",
-      tipoComunicacao: item.tipoComunicacao || "",
-      numeroProcesso: item.numeroProcesso || "",
-      texto: item.teor || item.texto || "",
-      dataDisponibilizacao: item.dataDisponibilizacao || new Date().toISOString(),
-      nomeOrgao: item.nomeOrgao || "",
-    }));
+    const data: unknown = await response.json();
+
+    const rawItems: Array<Record<string, unknown>> = Array.isArray(data)
+      ? (data as Array<Record<string, unknown>>)
+      : data && typeof data === "object" && Array.isArray((data as { items?: unknown }).items)
+        ? ((data as { items: Array<Record<string, unknown>> }).items as Array<Record<string, unknown>>)
+        : [];
+
+    const publicacoes: DJENPublicacao[] = rawItems.map((item) => {
+      const id =
+        (typeof item.idExpediente === "string" && item.idExpediente) ||
+        (typeof item.id === "number" ? String(item.id) : typeof item.id === "string" ? item.id : "") ||
+        (typeof item.numeroComunicacao === "number" ? String(item.numeroComunicacao) : "") ||
+        (typeof item.numeroProcesso === "string" && item.numeroProcesso) ||
+        (typeof item.numero_processo === "string" && item.numero_processo) ||
+        `djen-${Date.now()}`;
+
+      return {
+        id,
+        siglaTribunal:
+          (typeof item.siglaTribunal === "string" && item.siglaTribunal) ||
+          (typeof item.sigla_tribunal === "string" && item.sigla_tribunal) ||
+          "",
+        tipoComunicacao:
+          (typeof item.tipoComunicacao === "string" && item.tipoComunicacao) ||
+          (typeof item.tipo_comunicacao === "string" && item.tipo_comunicacao) ||
+          "",
+        numeroProcesso:
+          (typeof item.numeroProcesso === "string" && item.numeroProcesso) ||
+          (typeof item.numero_processo === "string" && item.numero_processo) ||
+          "",
+        texto:
+          (typeof item.teor === "string" && item.teor) ||
+          (typeof item.texto === "string" && item.texto) ||
+          (typeof item.inteiroTeor === "string" && item.inteiroTeor) ||
+          (typeof item.inteiro_teor === "string" && item.inteiro_teor) ||
+          "",
+        dataDisponibilizacao:
+          (typeof item.dataDisponibilizacao === "string" && item.dataDisponibilizacao) ||
+          (typeof item.data_disponibilizacao === "string" && item.data_disponibilizacao) ||
+          (typeof item.datadisponibilizacao === "string" && item.datadisponibilizacao) ||
+          new Date().toISOString(),
+        nomeOrgao:
+          (typeof item.nomeOrgao === "string" && item.nomeOrgao) ||
+          (typeof item.nome_orgao === "string" && item.nome_orgao) ||
+          "",
+      };
+    });
 
     console.log(`✅ DJEN API: ${publicacoes.length} publicações encontradas`);
     return publicacoes;

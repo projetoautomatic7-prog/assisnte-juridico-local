@@ -5,7 +5,7 @@
 const http = require("http");
 const url = require("url");
 const { StringDecoder } = require("string_decoder");
-const PORT = process.env.DEV_API_PORT || 5252;
+const PORT = process.env.DEV_API_PORT || 3001;
 
 // In-memory store
 const store = new Map();
@@ -120,6 +120,21 @@ const server = http.createServer((req, res) => {
       }
 
       return sendJson(400, { error: "Invalid action" });
+    }
+
+    // Agents API Mock
+    if (method === "GET" && pathname === "/api/agents") {
+      const { action } = parsed.query;
+      
+      if (action === "logs") {
+        return sendJson(200, { logs: [] });
+      }
+      
+      if (action === "memory") {
+        return sendJson(200, { memory: [] });
+      }
+      
+      return sendJson(200, { success: true });
     }
 
     if (method === "GET" && pathname === "/api/expedientes") {

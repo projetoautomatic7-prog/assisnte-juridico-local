@@ -19,6 +19,12 @@ async function fetchServerLogs() {
   if (!response.ok) {
     throw new Error("Failed to fetch server logs");
   }
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      "Endpoint /api/agents não está disponível (Firebase Hosting retornou resposta não-JSON)."
+    );
+  }
   const data = await response.json();
   return data.logs as AgentActionLog[];
 }

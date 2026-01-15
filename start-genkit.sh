@@ -1,14 +1,18 @@
 #!/bin/bash
 # Supervisor para manter Genkit + Proxy rodando
 
-export GEMINI_API_KEY=AIzaSyAlqvDyAboF9Qt5b24CstCsReG5Mjm3Xjo
+export GEMINI_API_KEY=AIzaSyAqoXGdqPaWGvkW5mnl4DAiYETg8Ls8mNA
+export GOOGLE_API_KEY=AIzaSyAqoXGdqPaWGvkW5mnl4DAiYETg8Ls8mNA
+export GEMINI_MODEL=gemini-2.0-flash-exp
 
 echo "🚀 Iniciando Genkit + Proxy..."
+echo "✅ API Key configurada: ${GEMINI_API_KEY:0:20}..."
+echo ""
 
 # Limpar processos antigos
-pkill -f "genkit.*genkit-all-flows" 2>/dev/null
-pkill -f "genkit.*genkit-demo" 2>/dev/null
-pkill -f "genkit-proxy" 2>/dev/null
+echo "🧹 Limpando processos antigos..."
+lsof -ti :4000 | xargs kill -9 2>/dev/null
+lsof -ti :5173 | xargs kill -9 2>/dev/null
 sleep 2
 
 # Iniciar Genkit

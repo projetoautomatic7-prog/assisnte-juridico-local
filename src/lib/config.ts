@@ -46,7 +46,7 @@ export const config = {
   },
 
   github: {
-    oauthClientId: getEnvVar("VITE_GITHUB_OAUTH_CLIENT_ID", ""),
+    oauthClientId: getEnvVar("VITE_GITHUB_OAUTH_CLIENT_ID", "", false), // opcional
     oauthClientSecret: getEnvVar("GITHUB_OAUTH_CLIENT_SECRET", "", false), // opcional
   },
 

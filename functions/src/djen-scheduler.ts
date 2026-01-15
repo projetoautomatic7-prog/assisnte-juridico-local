@@ -49,6 +49,8 @@ async function buscarPublicacoesDJEN(
   url.searchParams.set("meio", "D"); // D=Diário
   url.searchParams.set("dataDisponibilizacaoInicio", dataInicio);
   url.searchParams.set("dataDisponibilizacaoFim", dataFim || dataInicio);
+  url.searchParams.set("itensPorPagina", "100");
+  url.searchParams.set("pagina", "1");
 
   logger.info(`[DJEN] Consultando API CNJ: ${url.toString()}`);
 
@@ -70,14 +72,20 @@ async function buscarPublicacoesDJEN(
     throw new Error(`API DJEN retornou ${response.status}`);
   }
 
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("Resposta não está em formato JSON. Verifique os cabeçalhos da requisição.");
+  }
+
   const data = await response.json();
   const items = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
   const publicacoes: DJENPublicacao[] = items.map((item: any) => ({
-    id:
+    id: String(
       item.idExpediente ||
-      item.id ||
-      item.numeroComunicacao ||
-      `${item.numeroProcesso || item.numero_processo || "djen"}-${Date.now()}`,
+        item.id ||
+        item.numeroComunicacao ||
+        `${item.numeroProcesso || item.numero_processo || "djen"}-${Date.now()}`
+    ),
     siglaTribunal: item.siglaTribunal || item.sigla_tribunal || "",
     tipoComunicacao: item.tipoComunicacao || item.tipo_comunicacao || "",
     numeroProcesso: item.numeroProcesso || item.numero_processo || "",
@@ -216,6 +224,7 @@ export const djenTriggerManual = onRequest(
     region: "southamerica-east1",
     maxInstances: 1, // Evitar múltiplas execuções simultâneas
     secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
+    invoker: "public",
   },
   async (req, res) => {
     logger.info("[DJEN Manual] Execução manual solicitada");
@@ -247,6 +256,7 @@ export const djenStatus = onRequest(
     cors: true,
     region: "southamerica-east1",
     secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
+    invoker: "public",
   },
   async (req, res) => {
     const advogadoConfig = resolveAdvogadoConfig();
@@ -271,6 +281,7 @@ export const djenPublicacoes = onRequest(
   {
     cors: true,
     region: "southamerica-east1",
+    invoker: "public",
   },
   async (req, res) => {
     try {

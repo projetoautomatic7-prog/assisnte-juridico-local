@@ -1,6 +1,5 @@
 import AgentMetrics from "@/components/AgentMetrics";
 import { AgentMetricsDashboard } from "@/components/AgentMetricsDashboard";
-import AgentOrchestrationPanel from "@/components/AgentOrchestrationPanel";
 import AgentStatusFloater from "@/components/AgentStatusFloater";
 import { LegalMemoryViewer } from "@/components/LegalMemoryViewer";
 import MrsJustinEModal from "@/components/MrsJustinEModal";
@@ -39,6 +38,8 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+
+const AgentOrchestrationPanel = React.lazy(() => import("@/components/AgentOrchestrationPanel"));
 
 // ===========================
 // Helper Functions (outside component to avoid re-creation)
@@ -698,7 +699,18 @@ export default function AIAgents({ onNavigate }: Readonly<AIAgentsProps>) {
         {/* Orquestração V2 */}
         <TabsContent value="orchestration" className="space-y-4">
           {useV2Architecture ? (
-            <AgentOrchestrationPanel />
+            <React.Suspense
+              fallback={
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Orquestração de Agentes</CardTitle>
+                    <CardDescription>Carregando painel de orquestração…</CardDescription>
+                  </CardHeader>
+                </Card>
+              }
+            >
+              <AgentOrchestrationPanel />
+            </React.Suspense>
           ) : (
             <Card>
               <CardHeader>
