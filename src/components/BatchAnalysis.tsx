@@ -109,7 +109,9 @@ export default function BatchAnalysis() {
       // Verifica se há backend disponível
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
       if (!apiUrl) {
-        toast.error("Backend não configurado. Configure VITE_API_BASE_URL para usar análise em lote.");
+        toast.error(
+          "Backend não configurado. Configure VITE_API_BASE_URL para usar análise em lote."
+        );
         return;
       }
 

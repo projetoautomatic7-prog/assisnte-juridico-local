@@ -75,7 +75,10 @@ export function useAutoMinuta() {
 
     if (newMinutas.length > 0) {
       setMinutas((current) => [...(current || []), ...newMinutas]);
-      localStorage.setItem("processed-petition-tasks", JSON.stringify([...processedTasksRef.current]));
+      localStorage.setItem(
+        "processed-petition-tasks",
+        JSON.stringify([...processedTasksRef.current])
+      );
       setProcessedTasksCount(processedTasksRef.current.size);
     }
   }, [completedTasks?.length, setMinutas]); // Dependência em length para estabilidade

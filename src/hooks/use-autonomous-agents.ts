@@ -13,10 +13,7 @@ import { processTaskWithRealAI, processTaskWithStreamingAI } from "@/lib/real-ag
 import { validateAgentTask } from "@/schemas/agent.schema";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  trackAgentTask,
-  trackError
-} from "@/lib/azure-insights";
+import { trackAgentTask, trackError } from "@/lib/azure-insights";
 
 import { endSpan, startAgentSpan } from "@/lib/tracing";
 
@@ -121,7 +118,9 @@ export function useAutonomousAgents() {
       isInitializingRef.current = true;
       console.log(`[Agents] Quantidade incorreta (${agentsRef.current.length}) → reinicializando`);
       setAgents(initializeAgents());
-      const timer = setTimeout(() => { isInitializingRef.current = false; }, 1000);
+      const timer = setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [setAgents]); // Dependência em length removida
@@ -150,106 +149,178 @@ export function useAutonomousAgents() {
     return () => clearInterval(interval);
   }, [fetchServerData]);
 
-  const logActivity = useCallback((agentId: string, action: string, result: ActivityResult = "success") => {
-    setActivityLog((current) => {
-      const log = { id: crypto.randomUUID(), agentId, timestamp: new Date().toISOString(), action, result };
-      return [log, ...(current || [])].slice(0, 100);
-    });
-  }, [setActivityLog]);
+  const logActivity = useCallback(
+    (agentId: string, action: string, result: ActivityResult = "success") => {
+      setActivityLog((current) => {
+        const log = {
+          id: crypto.randomUUID(),
+          agentId,
+          timestamp: new Date().toISOString(),
+          action,
+          result,
+        };
+        return [log, ...(current || [])].slice(0, 100);
+      });
+    },
+    [setActivityLog]
+  );
 
-  const processNextTask = useCallback(async (agent: Agent) => {
-    if (processingRef.current.has(agent.id) || !agent.enabled || agent.status === "paused") return;
+  const processNextTask = useCallback(
+    async (agent: Agent) => {
+      if (processingRef.current.has(agent.id) || !agent.enabled || agent.status === "paused")
+        return;
 
-    const queue = getQueuedTasksForAgent(taskQueue || [], agent.id);
-    if (queue.length === 0) {
-      if (agent.status !== "idle") {
-        setAgents(current => updateAgentInList(current || [], agent.id, { status: "idle", currentTask: undefined }));
+      const queue = getQueuedTasksForAgent(taskQueue || [], agent.id);
+      if (queue.length === 0) {
+        if (agent.status !== "idle") {
+          setAgents((current) =>
+            updateAgentInList(current || [], agent.id, { status: "idle", currentTask: undefined })
+          );
+        }
+        return;
       }
-      return;
-    }
 
-    const task = queue[0];
-    if (shouldPauseForHuman(agent, task)) {
-      if (agent.status !== "waiting_human") {
-        setAgents(current => updateAgentInList(current || [], agent.id, { status: "waiting_human", currentTask: task }));
+      const task = queue[0];
+      if (shouldPauseForHuman(agent, task)) {
+        if (agent.status !== "waiting_human") {
+          setAgents((current) =>
+            updateAgentInList(current || [], agent.id, {
+              status: "waiting_human",
+              currentTask: task,
+            })
+          );
+        }
+        return;
       }
-      return;
-    }
 
-    processingRef.current.add(agent.id);
-    const startTime = Date.now();
+      processingRef.current.add(agent.id);
+      const startTime = Date.now();
 
-    setTaskQueue(current => updateTaskInQueue(current || [], task.id, { status: "processing", startedAt: new Date().toISOString() }));
-    setAgents(current => updateAgentInList(current || [], agent.id, { status: "processing", currentTask: task }));
+      setTaskQueue((current) =>
+        updateTaskInQueue(current || [], task.id, {
+          status: "processing",
+          startedAt: new Date().toISOString(),
+        })
+      );
+      setAgents((current) =>
+        updateAgentInList(current || [], agent.id, { status: "processing", currentTask: task })
+      );
 
-    const agentSpan = startAgentSpan(agent.id, agent.name, { attributes: { "task.id": task.id } });
+      const agentSpan = startAgentSpan(agent.id, agent.name, {
+        attributes: { "task.id": task.id },
+      });
 
-    try {
-      let result: AgentTaskResult;
-      if (hasHybridVersion(agent.id)) {
-        result = await executeHybridTask(agent.id, task);
-      } else if (useStreaming) {
-        result = await processTaskWithStreamingAI(task, agent, {
-          onChunk: (chunk) => {
-            setStreamingContent(prev => ({ ...prev, [agent.id]: (prev[agent.id] || "") + chunk }));
-          },
-          onComplete: () => {
-            setStreamingContent(prev => { const { [agent.id]: _, ...rest } = prev; return rest; });
-          },
-          onError: (err) => logActivity(agent.id, `Erro: ${err.message}`, "error")
+      try {
+        let result: AgentTaskResult;
+        if (hasHybridVersion(agent.id)) {
+          result = await executeHybridTask(agent.id, task);
+        } else if (useStreaming) {
+          result = await processTaskWithStreamingAI(task, agent, {
+            onChunk: (chunk) => {
+              setStreamingContent((prev) => ({
+                ...prev,
+                [agent.id]: (prev[agent.id] || "") + chunk,
+              }));
+            },
+            onComplete: () => {
+              setStreamingContent((prev) => {
+                const { [agent.id]: _, ...rest } = prev;
+                return rest;
+              });
+            },
+            onError: (err) => logActivity(agent.id, `Erro: ${err.message}`, "error"),
+          });
+        } else {
+          result = await processTaskWithRealAI(task, agent);
+        }
+
+        const duration = Date.now() - startTime;
+        metricsCollector.recordMetric({
+          agentId: agent.id,
+          timestamp: Date.now(),
+          duration,
+          success: true,
+          taskType: task.type,
         });
-      } else {
-        result = await processTaskWithRealAI(task, agent);
+
+        trackAgentTask(agent.id, task.type, "COMPLETED", duration);
+        await endSpan(agentSpan, "ok");
+
+        const completed = {
+          ...task,
+          status: "completed" as const,
+          completedAt: new Date().toISOString(),
+          result,
+        };
+        setTaskQueue((current) => (current || []).filter((t) => t.id !== task.id));
+        setCompletedTasks((current) => [completed, ...(current || [])].slice(0, 500));
+        setAgents((current) =>
+          updateAgentInList(current || [], agent.id, {
+            lastActivity: `Concluído: ${task.type}`,
+            status: "idle",
+          })
+        );
+        logActivity(agent.id, `Concluído: ${task.type}`, "success");
+      } catch (err) {
+        const duration = Date.now() - startTime;
+        metricsCollector.recordMetric({
+          agentId: agent.id,
+          timestamp: Date.now(),
+          duration,
+          success: false,
+          taskType: task.type,
+        });
+        trackAgentTask(agent.id, task.type, "FAILED", duration, String(err));
+        trackError(err instanceof Error ? err : new Error(String(err)), { agentId: agent.id });
+        await endSpan(agentSpan, "error", String(err));
+
+        setTaskQueue((current) =>
+          updateTaskInQueue(current || [], task.id, { status: "failed", error: String(err) })
+        );
+        logActivity(agent.id, `Erro: ${task.type}`, "error");
+      } finally {
+        processingRef.current.delete(agent.id);
       }
-
-      const duration = Date.now() - startTime;
-      metricsCollector.recordMetric({ agentId: agent.id, timestamp: Date.now(), duration, success: true, taskType: task.type });
-
-      trackAgentTask(agent.id, task.type, "COMPLETED", duration);
-      await endSpan(agentSpan, "ok");
-
-      const completed = { ...task, status: "completed" as const, completedAt: new Date().toISOString(), result };
-      setTaskQueue(current => (current || []).filter(t => t.id !== task.id));
-      setCompletedTasks(current => [completed, ...(current || [])].slice(0, 500));
-      setAgents(current => updateAgentInList(current || [], agent.id, { lastActivity: `Concluído: ${task.type}`, status: "idle" }));
-      logActivity(agent.id, `Concluído: ${task.type}`, "success");
-
-    } catch (err) {
-      const duration = Date.now() - startTime;
-      metricsCollector.recordMetric({ agentId: agent.id, timestamp: Date.now(), duration, success: false, taskType: task.type });
-      trackAgentTask(agent.id, task.type, "FAILED", duration, String(err));
-      trackError(err instanceof Error ? err : new Error(String(err)), { agentId: agent.id });
-      await endSpan(agentSpan, "error", String(err));
-
-      setTaskQueue(current => updateTaskInQueue(current || [], task.id, { status: "failed", error: String(err) }));
-      logActivity(agent.id, `Erro: ${task.type}`, "error");
-    } finally {
-      processingRef.current.delete(agent.id);
-    }
-  }, [taskQueue, useStreaming, setAgents, setTaskQueue, setCompletedTasks, logActivity]);
+    },
+    [taskQueue, useStreaming, setAgents, setTaskQueue, setCompletedTasks, logActivity]
+  );
 
   const processRef = useRef(processNextTask);
-  useEffect(() => { processRef.current = processNextTask; }, [processNextTask]);
+  useEffect(() => {
+    processRef.current = processNextTask;
+  }, [processNextTask]);
 
   useEffect(() => {
     const loop = () => {
-      const enabled = (agentsRef.current || []).filter(a => a.enabled && a.status !== "paused" && a.status !== "processing");
-      enabled.forEach(a => processRef.current(a));
+      const enabled = (agentsRef.current || []).filter(
+        (a) => a.enabled && a.status !== "paused" && a.status !== "processing"
+      );
+      enabled.forEach((a) => processRef.current(a));
     };
     const interval = setInterval(loop, 10000); // Aumentado para 10s para estabilidade
     return () => clearInterval(interval);
   }, []);
 
-  const toggleAgent = useCallback((id: string) => {
-    setAgents(current => (current || []).map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
-  }, [setAgents]);
+  const toggleAgent = useCallback(
+    (id: string) => {
+      setAgents((current) =>
+        (current || []).map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a))
+      );
+    },
+    [setAgents]
+  );
 
-  const addTask = useCallback((task: AgentTask) => {
-    const validation = validateAgentTask(task);
-    if (validation.isValid && validation.data) {
-      setTaskQueue(current => sortTasksByPriority([...(current || []), validation.data as unknown as AgentTask]));
-    }
-  }, [setTaskQueue]);
+  const addTask = useCallback(
+    (task: AgentTask) => {
+      const validation = validateAgentTask(task);
+      if (validation.isValid && validation.data) {
+        setTaskQueue((current) =>
+          sortTasksByPriority([...(current || []), validation.data as unknown as AgentTask])
+        );
+      }
+    },
+    [setTaskQueue]
+  );
 
   return {
     agents: agents || [],
@@ -262,7 +333,7 @@ export function useAutonomousAgents() {
     isStreamingEnabled: useStreaming,
     addTask,
     toggleAgent,
-    toggleStreaming: () => setUseStreaming(v => !v),
+    toggleStreaming: () => setUseStreaming((v) => !v),
     refreshServerData: fetchServerData,
     setAgents,
   };

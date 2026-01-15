@@ -110,130 +110,154 @@ export function useDJENProcessRegistration(
   const [autoRegistering, setAutoRegistering] = useState(false);
   const { createOrUpdateFromDjenIntimacao } = useClientesManager();
 
-  const checkProcessExists = useCallback((numeroProcesso: string | undefined): boolean => {
-    if (!numeroProcesso) return false;
-    const currentProcesses = processes || [];
-    return currentProcesses.some(
-      (p) =>
-        p.numeroCNJ === numeroProcesso ||
-        p.numeroCNJ.replaceAll(/\D/g, "") === numeroProcesso.replaceAll(/\D/g, "")
-    );
-  }, [processes]);
-
-  const isAlreadyRegistered = useCallback((pub: DJENPublication): boolean => {
-    return checkProcessExists(pub.numeroProcesso);
-  }, [checkProcessExists]);
-
-  const registerClientFromParties = useCallback((
-    parties: {
-      autor: string;
-      reu: string;
-      advogadoAutor?: string;
-      advogadoReu?: string;
-    },
-    pub: DJENPublication
-  ): void => {
-    if (!parties.autor || parties.autor === "Não identificado") return;
-
-    const location = parseOrgaoLocation(pub.orgao);
-    createOrUpdateFromDjenIntimacao({
-      nomeCliente: parties.autor,
-      cidade: location.cidade,
-      estado: location.estado,
-      processo: pub.numeroProcesso || "",
-    });
-  }, [createOrUpdateFromDjenIntimacao]);
-
-  const processPublicationForRegistration = useCallback(async (
-    pub: DJENPublication,
-    now: string
-  ): Promise<{ process: Process; expediente: Expediente } | null> => {
-    if (!pub.numeroProcesso) return null;
-
-    const parties = await extractPartiesWithFallback(pub.teor);
-    registerClientFromParties(parties, pub);
-
-    const newProcess = createProcessFromPublication(pub, parties, now);
-    const newExpediente = createExpedienteFromPublication(pub, newProcess.id, now);
-
-    return { process: newProcess, expediente: newExpediente };
-  }, [registerClientFromParties]);
-
-  const handleRegisterProcess = useCallback(async (pub: DJENPublication) => {
-    if (!pub.numeroProcesso) {
-      toast.error("Processo sem número CNJ", {
-        description: "Não é possível cadastrar sem número do processo",
-      });
-      return;
-    }
-
-    if (isAlreadyRegistered(pub)) {
-      toast.info("Processo já cadastrado", {
-        description: `O processo ${pub.numeroProcesso} já está no Acervo`,
-      });
-      return;
-    }
-
-    toast.info("Extraindo partes do processo...", {
-      description: "Analisando teor da publicação com IA",
-    });
-
-    const now = new Date().toISOString();
-    const result = await processPublicationForRegistration(pub, now);
-
-    if (!result) return;
-
-    setProcesses((current) => [...(current || []), result.process]);
-    setExpedientes((current) => [...(current || []), result.expediente]);
-
-    const parties = await extractPartiesWithFallback(pub.teor);
-    toast.success("Processo cadastrado!", {
-      description: `${pub.numeroProcesso} adicionado ao Acervo${formatPartiesDescription(parties)}`,
-    });
-  }, [isAlreadyRegistered, processPublicationForRegistration, setProcesses, setExpedientes]);
-
-  const handleAutoRegisterAll = useCallback(async (publications: DJENPublication[]) => {
-    if (autoRegistering) return;
-    setAutoRegistering(true);
-
-    try {
-      const unregisteredPubs = publications.filter(
-        (pub) => pub.numeroProcesso && !isAlreadyRegistered(pub)
+  const checkProcessExists = useCallback(
+    (numeroProcesso: string | undefined): boolean => {
+      if (!numeroProcesso) return false;
+      const currentProcesses = processes || [];
+      return currentProcesses.some(
+        (p) =>
+          p.numeroCNJ === numeroProcesso ||
+          p.numeroCNJ.replaceAll(/\D/g, "") === numeroProcesso.replaceAll(/\D/g, "")
       );
+    },
+    [processes]
+  );
 
-      if (unregisteredPubs.length === 0) {
-        toast.info("Nenhuma publicação nova", {
-          description: "Todas as publicações já estão no Acervo",
+  const isAlreadyRegistered = useCallback(
+    (pub: DJENPublication): boolean => {
+      return checkProcessExists(pub.numeroProcesso);
+    },
+    [checkProcessExists]
+  );
+
+  const registerClientFromParties = useCallback(
+    (
+      parties: {
+        autor: string;
+        reu: string;
+        advogadoAutor?: string;
+        advogadoReu?: string;
+      },
+      pub: DJENPublication
+    ): void => {
+      if (!parties.autor || parties.autor === "Não identificado") return;
+
+      const location = parseOrgaoLocation(pub.orgao);
+      createOrUpdateFromDjenIntimacao({
+        nomeCliente: parties.autor,
+        cidade: location.cidade,
+        estado: location.estado,
+        processo: pub.numeroProcesso || "",
+      });
+    },
+    [createOrUpdateFromDjenIntimacao]
+  );
+
+  const processPublicationForRegistration = useCallback(
+    async (
+      pub: DJENPublication,
+      now: string
+    ): Promise<{ process: Process; expediente: Expediente } | null> => {
+      if (!pub.numeroProcesso) return null;
+
+      const parties = await extractPartiesWithFallback(pub.teor);
+      registerClientFromParties(parties, pub);
+
+      const newProcess = createProcessFromPublication(pub, parties, now);
+      const newExpediente = createExpedienteFromPublication(pub, newProcess.id, now);
+
+      return { process: newProcess, expediente: newExpediente };
+    },
+    [registerClientFromParties]
+  );
+
+  const handleRegisterProcess = useCallback(
+    async (pub: DJENPublication) => {
+      if (!pub.numeroProcesso) {
+        toast.error("Processo sem número CNJ", {
+          description: "Não é possível cadastrar sem número do processo",
         });
         return;
       }
 
-      const now = new Date().toISOString();
-      const newProcesses: Process[] = [];
-      const newExpedientes: Expediente[] = [];
-
-      toast.info(`Processando ${unregisteredPubs.length} publicações...`, {
-        description: "Extraindo partes dos processos com IA",
-      });
-
-      for (const pub of unregisteredPubs) {
-        const result = await processPublicationForRegistration(pub, now);
-        if (result) {
-          newProcesses.push(result.process);
-          newExpedientes.push(result.expediente);
-        }
+      if (isAlreadyRegistered(pub)) {
+        toast.info("Processo já cadastrado", {
+          description: `O processo ${pub.numeroProcesso} já está no Acervo`,
+        });
+        return;
       }
 
-      setProcesses((current) => [...(current || []), ...newProcesses]);
-      setExpedientes((current) => [...(current || []), ...newExpedientes]);
-
-      toast.success(`${newProcesses.length} processo(s) cadastrado(s)!`, {
-        description: "As intimações foram adicionadas ao Acervo e Expedientes",
+      toast.info("Extraindo partes do processo...", {
+        description: "Analisando teor da publicação com IA",
       });
-    } finally {
-      setAutoRegistering(false);
-    }
-  }, [autoRegistering, isAlreadyRegistered, processPublicationForRegistration, setProcesses, setExpedientes]);
+
+      const now = new Date().toISOString();
+      const result = await processPublicationForRegistration(pub, now);
+
+      if (!result) return;
+
+      setProcesses((current) => [...(current || []), result.process]);
+      setExpedientes((current) => [...(current || []), result.expediente]);
+
+      const parties = await extractPartiesWithFallback(pub.teor);
+      toast.success("Processo cadastrado!", {
+        description: `${pub.numeroProcesso} adicionado ao Acervo${formatPartiesDescription(parties)}`,
+      });
+    },
+    [isAlreadyRegistered, processPublicationForRegistration, setProcesses, setExpedientes]
+  );
+
+  const handleAutoRegisterAll = useCallback(
+    async (publications: DJENPublication[]) => {
+      if (autoRegistering) return;
+      setAutoRegistering(true);
+
+      try {
+        const unregisteredPubs = publications.filter(
+          (pub) => pub.numeroProcesso && !isAlreadyRegistered(pub)
+        );
+
+        if (unregisteredPubs.length === 0) {
+          toast.info("Nenhuma publicação nova", {
+            description: "Todas as publicações já estão no Acervo",
+          });
+          return;
+        }
+
+        const now = new Date().toISOString();
+        const newProcesses: Process[] = [];
+        const newExpedientes: Expediente[] = [];
+
+        toast.info(`Processando ${unregisteredPubs.length} publicações...`, {
+          description: "Extraindo partes dos processos com IA",
+        });
+
+        for (const pub of unregisteredPubs) {
+          const result = await processPublicationForRegistration(pub, now);
+          if (result) {
+            newProcesses.push(result.process);
+            newExpedientes.push(result.expediente);
+          }
+        }
+
+        setProcesses((current) => [...(current || []), ...newProcesses]);
+        setExpedientes((current) => [...(current || []), ...newExpedientes]);
+
+        toast.success(`${newProcesses.length} processo(s) cadastrado(s)!`, {
+          description: "As intimações foram adicionadas ao Acervo e Expedientes",
+        });
+      } finally {
+        setAutoRegistering(false);
+      }
+    },
+    [
+      autoRegistering,
+      isAlreadyRegistered,
+      processPublicationForRegistration,
+      setProcesses,
+      setExpedientes,
+    ]
+  );
 
   return {
     autoRegistering,

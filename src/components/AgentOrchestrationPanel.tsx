@@ -84,7 +84,7 @@ export default function AgentOrchestrationPanel() {
   const [execution, setExecution] = useState<AgentExecution | null>(null);
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  
+
   const isFetchingRef = useRef(false);
 
   const agents = [
@@ -127,9 +127,18 @@ export default function AgentOrchestrationPanel() {
             priority: "medium",
             status: "queued",
             createdAt: new Date().toISOString(),
-            data: { message: message || "Execute sua rotina automática", sessionId: `session-${Date.now()}` },
+            data: {
+              message: message || "Execute sua rotina automática",
+              sessionId: `session-${Date.now()}`,
+            },
           },
-          agent: { id: agentId, name: agents.find((a) => a.id === agentId)?.name || agentId, type: "analyzer", status: "active", enabled: true },
+          agent: {
+            id: agentId,
+            name: agents.find((a) => a.id === agentId)?.name || agentId,
+            type: "analyzer",
+            status: "active",
+            enabled: true,
+          },
         }),
       });
 
@@ -143,7 +152,15 @@ export default function AgentOrchestrationPanel() {
           steps: 1,
           usedTools: data.result?.toolsUsed || ["gemini-2.5-pro"],
           answer: data.result?.analysis || data.result?.message || "Sucesso",
-          traces: [{ timestamp: new Date().toISOString(), step: 1, type: "final", content: data.result?.analysis || "OK", duration: processingTime }],
+          traces: [
+            {
+              timestamp: new Date().toISOString(),
+              step: 1,
+              type: "final",
+              content: data.result?.analysis || "OK",
+              duration: processingTime,
+            },
+          ],
           totalDuration: processingTime,
           executionTimeMs: processingTime,
           timestamp: new Date().toISOString(),
@@ -166,19 +183,27 @@ export default function AgentOrchestrationPanel() {
 
   const getStateColor = (state: CircuitBreakerState) => {
     switch (state) {
-      case "CLOSED": return "text-green-600 bg-green-100 dark:bg-green-900/20";
-      case "HALF_OPEN": return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20";
-      case "OPEN": return "text-red-600 bg-red-100 dark:bg-red-900/20";
-      default: return "text-gray-600 bg-gray-100 dark:bg-gray-900/20";
+      case "CLOSED":
+        return "text-green-600 bg-green-100 dark:bg-green-900/20";
+      case "HALF_OPEN":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20";
+      case "OPEN":
+        return "text-red-600 bg-red-100 dark:bg-red-900/20";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900/20";
     }
   };
 
   const getStateIcon = (state: CircuitBreakerState) => {
     switch (state) {
-      case "CLOSED": return <CheckCircle2 className="h-4 w-4" />;
-      case "HALF_OPEN": return <AlertTriangle className="h-4 w-4" />;
-      case "OPEN": return <XCircle className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
+      case "CLOSED":
+        return <CheckCircle2 className="h-4 w-4" />;
+      case "HALF_OPEN":
+        return <AlertTriangle className="h-4 w-4" />;
+      case "OPEN":
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
     }
   };
 
@@ -196,7 +221,9 @@ export default function AgentOrchestrationPanel() {
             <RefreshCw className={`h-4 w-4 ${autoRefresh ? "animate-spin" : ""}`} />
             {autoRefresh ? "Auto" : "Manual"}
           </Button>
-          <Button onClick={fetchMetrics} size="sm">Atualizar</Button>
+          <Button onClick={fetchMetrics} size="sm">
+            Atualizar
+          </Button>
         </div>
       </div>
 
@@ -218,7 +245,11 @@ export default function AgentOrchestrationPanel() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={() => executeAgent(agent.id)} disabled={loading} className="w-full">
+                  <Button
+                    onClick={() => executeAgent(agent.id)}
+                    disabled={loading}
+                    className="w-full"
+                  >
                     {loading && selectedAgent === agent.id ? "Rodando..." : "Executar"}
                   </Button>
                 </CardContent>
@@ -232,19 +263,38 @@ export default function AgentOrchestrationPanel() {
             <Card>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div><p className="text-xs text-muted-foreground">Total</p><p className="text-2xl font-bold">{metrics.summary.total}</p></div>
-                  <div className="text-green-600"><p className="text-xs">OK</p><p className="text-2xl font-bold">{metrics.summary.healthy}</p></div>
-                  <div className="text-yellow-600"><p className="text-xs">Degradado</p><p className="text-2xl font-bold">{metrics.summary.degraded}</p></div>
-                  <div className="text-red-600"><p className="text-xs">Off</p><p className="text-2xl font-bold">{metrics.summary.down}</p></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-2xl font-bold">{metrics.summary.total}</p>
+                  </div>
+                  <div className="text-green-600">
+                    <p className="text-xs">OK</p>
+                    <p className="text-2xl font-bold">{metrics.summary.healthy}</p>
+                  </div>
+                  <div className="text-yellow-600">
+                    <p className="text-xs">Degradado</p>
+                    <p className="text-2xl font-bold">{metrics.summary.degraded}</p>
+                  </div>
+                  <div className="text-red-600">
+                    <p className="text-xs">Off</p>
+                    <p className="text-2xl font-bold">{metrics.summary.down}</p>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   {metrics.breakers.map((breaker) => (
-                    <div key={breaker.name} className="flex items-center justify-between p-3 border rounded-md">
+                    <div
+                      key={breaker.name}
+                      className="flex items-center justify-between p-3 border rounded-md"
+                    >
                       <div className="flex items-center gap-2">
-                        <Badge className={getStateColor(breaker.state)}>{getStateIcon(breaker.state)} {breaker.state}</Badge>
+                        <Badge className={getStateColor(breaker.state)}>
+                          {getStateIcon(breaker.state)} {breaker.state}
+                        </Badge>
                         <span className="text-sm font-medium">{breaker.name}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">F:{breaker.failures} S:{breaker.successes}</span>
+                      <span className="text-xs text-muted-foreground">
+                        F:{breaker.failures} S:{breaker.successes}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -256,20 +306,31 @@ export default function AgentOrchestrationPanel() {
         <TabsContent value="traces" className="space-y-4">
           {execution ? (
             <Card>
-              <CardHeader><CardTitle className="text-sm">{execution.agentName}</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-sm">{execution.agentName}</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-3 bg-muted rounded text-sm whitespace-pre-wrap">{execution.answer}</div>
+                <div className="p-3 bg-muted rounded text-sm whitespace-pre-wrap">
+                  {execution.answer}
+                </div>
                 <div className="space-y-2">
                   {execution.traces.map((trace) => (
-                    <div key={`${trace.timestamp}-${trace.step}`} className="p-2 border-l-2 border-primary bg-muted/30 text-xs">
-                      <Badge variant={getTraceVariant(trace.type)} className="mr-2">{trace.type}</Badge>
+                    <div
+                      key={`${trace.timestamp}-${trace.step}`}
+                      className="p-2 border-l-2 border-primary bg-muted/30 text-xs"
+                    >
+                      <Badge variant={getTraceVariant(trace.type)} className="mr-2">
+                        {trace.type}
+                      </Badge>
                       {trace.content}
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          ) : <div className="text-center py-12 text-muted-foreground">Sem execuções recentes</div>}
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">Sem execuções recentes</div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

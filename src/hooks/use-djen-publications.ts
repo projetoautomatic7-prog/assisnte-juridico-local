@@ -110,25 +110,23 @@ async function fetchPublicationsForLawyer(
     const url = `${baseUrl}/api/djen/publicacoes?numeroOab=${numero}&ufOab=${uf}&dataInicio=${hoje}&dataFim=${hoje}`;
     const response = await fetch(url);
     if (!response.ok) return [];
-    const data = await response.ok ? await response.json() : null;
+    const data = (await response.ok) ? await response.json() : null;
     if (!data?.success || !Array.isArray(data.publicacoes)) return [];
 
-    return (data.publicacoes as Array<Record<string, unknown>>)
-      .slice(0, maxItems)
-      .map((pub) => ({
-        id: (pub.id as string) || crypto.randomUUID(),
-        tribunal: pub.siglaTribunal as string,
-        data: pub.dataDisponibilizacao as string,
-        tipo: (pub.tipoComunicacao as string) || "Intimação",
-        teor: pub.texto as string,
-        numeroProcesso: pub.numeroProcesso as string,
-        orgao: pub.nomeOrgao as string,
-        lawyerName: lawyer.name,
-        matchType: "oab" as const,
-        source: "DJEN-Proxy",
-        createdAt: new Date().toISOString(),
-        notified: false,
-      }));
+    return (data.publicacoes as Array<Record<string, unknown>>).slice(0, maxItems).map((pub) => ({
+      id: (pub.id as string) || crypto.randomUUID(),
+      tribunal: pub.siglaTribunal as string,
+      data: pub.dataDisponibilizacao as string,
+      tipo: (pub.tipoComunicacao as string) || "Intimação",
+      teor: pub.texto as string,
+      numeroProcesso: pub.numeroProcesso as string,
+      orgao: pub.nomeOrgao as string,
+      lawyerName: lawyer.name,
+      matchType: "oab" as const,
+      source: "DJEN-Proxy",
+      createdAt: new Date().toISOString(),
+      notified: false,
+    }));
   } catch {
     return [];
   }

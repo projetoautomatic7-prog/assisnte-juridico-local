@@ -60,7 +60,7 @@ export function useMenuNavigation<T>({
   autoSelectFirstItem = true,
 }: MenuNavigationOptions<T>) {
   const [selectedIndex, setSelectedIndex] = useState<number>(autoSelectFirstItem ? 0 : -1);
-  
+
   // Usar refs para valores que mudam com frequência mas não precisam disparar o efeito
   const itemsRef = useRef(items);
   const selectedIndexRef = useRef(selectedIndex);
