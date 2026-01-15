@@ -1,12 +1,25 @@
 # Configuração Gemini CLI + Genkit MCP
 
-## ⚠️ Problema Resolvido
+## ⚠️ Problema Identificado e Resolvido
 
-Erro: `spawn genkit ENOENT` - Genkit não estava configurado corretamente no MCP.
+**Erro:** `spawn genkit ENOENT` - A CLI do Genkit não estava instalada globalmente.
 
-## ✅ Solução Aplicada
+## ✅ Solução Aplicada (15/01/2026)
 
-Atualizado `mcp-config.json` para usar `npx genkit mcp`.
+1. ✅ **Instalado CLI do Genkit globalmente:**
+   ```bash
+   npm install -g genkit-cli
+   ```
+
+2. ✅ **Verificado instalação:**
+   ```bash
+   genkit --version
+   # Output: 1.27.0
+   ```
+
+3. ✅ **Configurado `mcp-config.json` corretamente:**
+   - Comando: `npx genkit mcp`
+   - Modelo: `gemini-2.5-pro`
 
 ## 📝 Configuração MCP para VS Code
 
@@ -43,7 +56,7 @@ Ctrl+Shift+P (ou Cmd+Shift+P no Mac)
       "command": "npx",
       "args": ["-y", "genkit", "mcp"],
       "env": {
-        "GENKIT_MODEL": "gemini-2.0-flash-exp"
+        "GEMINI_MODEL": "gemini-2.5-pro"
       }
     }
   }
@@ -52,7 +65,7 @@ Ctrl+Shift+P (ou Cmd+Shift+P no Mac)
 
 ## 🎯 Modelos Gemini Disponíveis
 
-Configure no `env.GENKIT_MODEL`:
+Configure no `env.GEMINI_MODEL`:
 
 - `gemini-2.0-flash-exp` - Rápido, experimental (default)
 - `gemini-1.5-flash` - Rápido, estável
@@ -63,12 +76,26 @@ Configure no `env.GENKIT_MODEL`:
 ## 🔧 Testando a Configuração
 
 ```bash
-# Testar Genkit MCP
+# Verificar instalação da CLI
+genkit --version
+# Expected: 1.27.0 ou superior
+
+# Testar comando MCP
+genkit mcp --help
+# Expected: Usage: genkit mcp [options]
+
+# Testar via npx (como no mcp-config.json)
 npx genkit mcp --help
 
 # Testar SonarQube MCP (requer Docker)
 docker run -i --rm mcp/sonarqube --help
 ```
+
+### ✅ Testes Realizados (15/01/2026)
+- [x] CLI instalada globalmente
+- [x] Comando `genkit mcp` funciona
+- [x] Configuração MCP atualizada
+- [x] Documentação sincronizada
 
 ## 📚 Usar no Copilot Chat
 
@@ -103,29 +130,4 @@ npm run genkit:init
 - Use `gemini-1.5-flash` ao invés de `2.0-flash-exp`
 
 ### MCP não carrega
-1. Verifique sintaxe JSON no settings
-2. Recarregue VS Code
-3. Veja logs: `Output` > `GitHub Copilot Chat`
-
-## 📖 Documentação Oficial
-
-- [Genkit MCP](https://firebase.google.com/docs/genkit/mcp)
-- [MCP Protocol](https://modelcontextprotocol.io/)
-- [Copilot Chat](https://docs.github.com/copilot/using-github-copilot/using-github-copilot-chat-in-your-ide)
-
-## 🔐 Variáveis de Ambiente Necessárias
-
-```bash
-# Para SonarQube MCP
-export SONARQUBE_TOKEN="seu-token-aqui"
-
-# Para Genkit (se usar API keys)
-export GOOGLE_API_KEY="sua-api-key"
-export GEMINI_API_KEY="sua-api-key"
-```
-
-Adicione no `.env`:
-```env
-SONARQUBE_TOKEN=squ_***
-GOOGLE_API_KEY=AI***
-```
+1. Verifique 

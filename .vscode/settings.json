@@ -1013,5 +1013,20 @@
   "emmet.useInlineCompletions": true,
   "terminal.integrated.copyOnSelection": true,
   "editor.emptySelectionClipboard": false,
-  "terminal.integrated.enableImages": true
+  "terminal.integrated.enableImages": true,
+  "debug.console.acceptSuggestionOnEnter": "on",
+  "debug.openExplorerOnEnd": true,
+  "debug.showSubSessionsInToolBar": false,
+  "debug.showVariableTypes": true,
+  "eslint.debug": true,
+  "firebase.debug": true,
+  "geminicodeassist.agentDebugMode": true,
+  "svelte.language-server.debug": true,
+  "editor.experimental.asyncTokenizationLogging": true,
+  "editor.experimental.asyncTokenizationVerification": true,
+  "notebook.variablesView": true,
+  "geminicodeassist.verboseLogging": true,
+  "markdown.server.log": "debug",
+  "github-actions.workflows.pinned.refresh.enabled": true,
+  "eslint.useESLintClass": true
 }

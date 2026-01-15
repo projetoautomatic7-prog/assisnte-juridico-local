@@ -139,6 +139,14 @@ export function useAICommands(): UseAICommandsReturn {
       setCanRequest(data.rateLimit.canRequest);
       setWaitTime(data.rateLimit.waitTime);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes("Failed to fetch") && API_BASE_URL.includes("localhost")) {
+        console.warn(
+          `[AI Commands] ⚠️ Falha de conexão com ${API_BASE_URL}.\n` +
+          `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+          `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+        );
+      }
       console.error("[useAICommands] Failed to check status:", err);
     }
   }, []);

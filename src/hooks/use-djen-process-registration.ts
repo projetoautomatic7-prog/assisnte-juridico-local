@@ -7,7 +7,7 @@ import { useClientesManager } from "@/hooks/use-clientes-manager";
 import { extractPartiesWithFallback } from "@/lib/extract-parties-service";
 import type { Expediente, Process, TipoExpediente } from "@/types";
 import type { DJENPublication } from "@/types/djen-publication";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
 // Helper functions moved from component
@@ -110,7 +110,7 @@ export function useDJENProcessRegistration(
   const [autoRegistering, setAutoRegistering] = useState(false);
   const { createOrUpdateFromDjenIntimacao } = useClientesManager();
 
-  const checkProcessExists = (numeroProcesso: string | undefined): boolean => {
+  const checkProcessExists = useCallback((numeroProcesso: string | undefined): boolean => {
     if (!numeroProcesso) return false;
     const currentProcesses = processes || [];
     return currentProcesses.some(
@@ -118,13 +118,13 @@ export function useDJENProcessRegistration(
         p.numeroCNJ === numeroProcesso ||
         p.numeroCNJ.replaceAll(/\D/g, "") === numeroProcesso.replaceAll(/\D/g, "")
     );
-  };
+  }, [processes]);
 
-  const isAlreadyRegistered = (pub: DJENPublication): boolean => {
+  const isAlreadyRegistered = useCallback((pub: DJENPublication): boolean => {
     return checkProcessExists(pub.numeroProcesso);
-  };
+  }, [checkProcessExists]);
 
-  const registerClientFromParties = (
+  const registerClientFromParties = useCallback((
     parties: {
       autor: string;
       reu: string;
@@ -142,9 +142,9 @@ export function useDJENProcessRegistration(
       estado: location.estado,
       processo: pub.numeroProcesso || "",
     });
-  };
+  }, [createOrUpdateFromDjenIntimacao]);
 
-  const processPublicationForRegistration = async (
+  const processPublicationForRegistration = useCallback(async (
     pub: DJENPublication,
     now: string
   ): Promise<{ process: Process; expediente: Expediente } | null> => {
@@ -157,9 +157,9 @@ export function useDJENProcessRegistration(
     const newExpediente = createExpedienteFromPublication(pub, newProcess.id, now);
 
     return { process: newProcess, expediente: newExpediente };
-  };
+  }, [registerClientFromParties]);
 
-  const handleRegisterProcess = async (pub: DJENPublication) => {
+  const handleRegisterProcess = useCallback(async (pub: DJENPublication) => {
     if (!pub.numeroProcesso) {
       toast.error("Processo sem número CNJ", {
         description: "Não é possível cadastrar sem número do processo",
@@ -190,9 +190,9 @@ export function useDJENProcessRegistration(
     toast.success("Processo cadastrado!", {
       description: `${pub.numeroProcesso} adicionado ao Acervo${formatPartiesDescription(parties)}`,
     });
-  };
+  }, [isAlreadyRegistered, processPublicationForRegistration, setProcesses, setExpedientes]);
 
-  const handleAutoRegisterAll = async (publications: DJENPublication[]) => {
+  const handleAutoRegisterAll = useCallback(async (publications: DJENPublication[]) => {
     if (autoRegistering) return;
     setAutoRegistering(true);
 
@@ -233,7 +233,7 @@ export function useDJENProcessRegistration(
     } finally {
       setAutoRegistering(false);
     }
-  };
+  }, [autoRegistering, isAlreadyRegistered, processPublicationForRegistration, setProcesses, setExpedientes]);
 
   return {
     autoRegistering,

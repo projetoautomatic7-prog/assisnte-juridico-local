@@ -106,8 +106,15 @@ export default function BatchAnalysis() {
         });
       }
 
+      // Verifica se há backend disponível
+      const apiUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiUrl) {
+        toast.error("Backend não configurado. Configure VITE_API_BASE_URL para usar análise em lote.");
+        return;
+      }
+
       // Chama a API real do Gemini 2.5 Pro via backend
-      const response = await fetch("/api/ai/batch-expedientes", {
+      const response = await fetch(`${apiUrl}/api/ai/batch-expedientes`, {
         method: "POST",
         body: formData,
         // NÃO definir Content-Type manualmente aqui (browser cuida do boundary)

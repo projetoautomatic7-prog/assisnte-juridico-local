@@ -1,8 +1,3 @@
-// ⚠️ IMPORTANTE: Datadog tracer carregado via -r flag (NODE_OPTIONS) ou import
-// Em produção (Railway/Vercel): via -r ./backend/dist/backend/src/datadog.js
-// Em dev: via import abaixo
-import "./datadog.js";
-
 // 🔍 Dynatrace OneAgent SDK - Monitoramento APM e tracing
 import { initializeDynatrace } from "./dynatrace.js";
 import {
@@ -192,7 +187,7 @@ if (isProduction) {
   app.use(express.static(distPath));
 
   app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api") || req.path === "/health") {
+    if (req.path.startsWith("/api")) {
       return next();
     }
     res.sendFile(path.join(distPath, "index.html"));
@@ -200,11 +195,11 @@ if (isProduction) {
 }
 
 // 404 handler for API routes
-app.use((req, res) => {
+app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
     res.status(404).json({ error: "Not Found" });
-  } else if (!isProduction) {
-    res.status(404).json({ error: "Not Found" });
+  } else {
+    next();
   }
 });
 

@@ -113,6 +113,13 @@ export function useEditorAI() {
           return { success: false, error: "Operação cancelada" };
         }
         const message = error instanceof Error ? error.message : "Erro desconhecido";
+        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+          console.warn(
+            `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
+              `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+          );
+        }
         toast.error(`Erro ao gerar minuta: ${message}`);
         return { success: false, error: message };
       } finally {
@@ -152,6 +159,13 @@ export function useEditorAI() {
           return { success: false, error: "Operação cancelada" };
         }
         const message = error instanceof Error ? error.message : "Erro desconhecido";
+        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+          console.warn(
+            `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
+              `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+          );
+        }
         toast.error(`Erro: ${message}`);
         return { success: false, error: message };
       } finally {
@@ -185,6 +199,13 @@ export function useEditorAI() {
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erro desconhecido";
+        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+          console.warn(
+            `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
+              `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+          );
+        }
         toast.error(`Erro ao analisar DJEN: ${message}`);
         return { success: false, error: message };
       } finally {

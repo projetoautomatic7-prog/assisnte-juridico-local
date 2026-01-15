@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 type Orientation = "horizontal" | "vertical" | "both";
 
@@ -60,46 +60,61 @@ export function useMenuNavigation<T>({
   autoSelectFirstItem = true,
 }: MenuNavigationOptions<T>) {
   const [selectedIndex, setSelectedIndex] = useState<number>(autoSelectFirstItem ? 0 : -1);
+  
+  // Usar refs para valores que mudam com frequência mas não precisam disparar o efeito
+  const itemsRef = useRef(items);
+  const selectedIndexRef = useRef(selectedIndex);
+  const onSelectRef = useRef(onSelect);
+  const onCloseRef = useRef(onClose);
 
-  const getNextIndex = (current: number, delta: 1 | -1): number => {
-    if (!items.length) return -1;
-    if (current === -1) return delta === 1 ? 0 : items.length - 1;
-    return (current + delta + items.length) % items.length;
-  };
+  useEffect(() => {
+    itemsRef.current = items;
+    selectedIndexRef.current = selectedIndex;
+    onSelectRef.current = onSelect;
+    onCloseRef.current = onClose;
+  }, [items, selectedIndex, onSelect, onClose]);
+
+  const getNextIndex = useCallback((current: number, delta: 1 | -1): number => {
+    const currentItems = itemsRef.current;
+    if (!currentItems.length) return -1;
+    if (current === -1) return delta === 1 ? 0 : currentItems.length - 1;
+    return (current + delta + currentItems.length) % currentItems.length;
+  }, []);
 
   useEffect(() => {
     const handleKeyboardNavigation = (event: KeyboardEvent) => {
-      if (!items.length) return false;
+      const currentItems = itemsRef.current;
+      if (!currentItems.length) return;
 
       const move = (delta: 1 | -1) => setSelectedIndex((current) => getNextIndex(current, delta));
 
       switch (event.key) {
         case "ArrowUp": {
-          if (orientation === "horizontal") return false;
+          if (orientation === "horizontal") return;
           event.preventDefault();
           move(-1);
-          return true;
+          break;
         }
 
         case "ArrowDown": {
-          if (orientation === "horizontal") return false;
+          if (orientation === "horizontal") return;
           event.preventDefault();
           move(1);
-          return true;
+          break;
         }
 
         case "ArrowLeft": {
-          if (orientation === "vertical") return false;
+          if (orientation === "vertical") return;
           event.preventDefault();
           move(-1);
-          return true;
+          break;
         }
 
         case "ArrowRight": {
-          if (orientation === "vertical") return false;
+          if (orientation === "vertical") return;
           event.preventDefault();
           move(1);
-          return true;
+          break;
         }
 
         case "Tab": {
@@ -109,38 +124,36 @@ export function useMenuNavigation<T>({
           } else {
             move(1);
           }
-          return true;
+          break;
         }
 
         case "Home": {
           event.preventDefault();
           setSelectedIndex(0);
-          return true;
+          break;
         }
 
         case "End": {
           event.preventDefault();
-          setSelectedIndex(items.length - 1);
-          return true;
+          setSelectedIndex(currentItems.length - 1);
+          break;
         }
 
         case "Enter": {
-          if (event.isComposing) return false;
+          if (event.isComposing) return;
           event.preventDefault();
-          if (selectedIndex !== -1 && items[selectedIndex]) {
-            onSelect?.(items[selectedIndex]);
+          const currentIndex = selectedIndexRef.current;
+          if (currentIndex !== -1 && currentItems[currentIndex]) {
+            onSelectRef.current?.(currentItems[currentIndex]);
           }
-          return true;
+          break;
         }
 
         case "Escape": {
           event.preventDefault();
-          onClose?.();
-          return true;
+          onCloseRef.current?.();
+          break;
         }
-
-        default:
-          return false;
       }
     };
 
@@ -154,14 +167,11 @@ export function useMenuNavigation<T>({
 
     if (targetElement) {
       targetElement.addEventListener("keydown", handleKeyboardNavigation, true);
-
       return () => {
         targetElement?.removeEventListener("keydown", handleKeyboardNavigation, true);
       };
     }
-
-    return undefined;
-  }, [editor, containerRef, items, selectedIndex, onSelect, onClose, orientation]);
+  }, [editor, containerRef, orientation, getNextIndex]); // Dependências reduzidas drasticamente
 
   useEffect(() => {
     if (query) {

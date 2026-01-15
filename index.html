@@ -235,6 +235,12 @@
       content="https://assistente-juridico-github.vercel.app/og-image.png"
     />
 
+    <!-- ✅ CSP Corrigida: Permite Google Identity Services e APIs -->
+    <meta 
+      http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; frame-src https://accounts.google.com https://www.google.com; connect-src 'self' https://*.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:;"
+    />
+
     <!-- CSP moved to vercel.json HTTP headers for better security -->
 
     <!-- ✅ SEO: Structured Data (JSON-LD) para Rich Snippets -->

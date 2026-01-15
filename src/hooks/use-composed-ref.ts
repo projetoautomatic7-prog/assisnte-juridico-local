@@ -14,6 +14,13 @@ const updateRef = <T>(ref: NonNullable<UserRef<T>>, value: T | null) => {
   }
 };
 
+/**
+ * Hook para compor múltiplas refs em uma única.
+ * 
+ * ⚠️ ATENÇÃO: Para evitar o erro "Maximum update depth exceeded", certifique-se de que
+ * as funções passadas como userRef sejam estáveis (useCallback) ou que não disparem
+ * atualizações de estado síncronas durante a fase de renderização.
+ */
 export const useComposedRef = <T extends HTMLElement>(
   libRef: React.RefObject<T | null>,
   userRef: UserRef<T>

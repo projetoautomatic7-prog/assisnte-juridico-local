@@ -332,6 +332,13 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
         }
 
         const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+        if (errorMessage.includes("Failed to fetch") && baseUrl.includes("localhost")) {
+          console.warn(
+            `[AI Streaming] ⚠️ Falha de conexão com ${baseUrl}.\n` +
+              `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+          );
+        }
         setError(errorMessage);
         onError?.(errorMessage);
         throw err;

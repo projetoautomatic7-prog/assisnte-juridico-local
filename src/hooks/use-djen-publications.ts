@@ -9,7 +9,7 @@
  */
 
 import type { DJENPublication } from "@/types/djen-publication";
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 
 // Correção para erro "process is not defined" no Vite
 const VITE_DJEN_ADVOGADO_NOME = import.meta.env.VITE_DJEN_ADVOGADO_NOME || "Advogado Exemplo";
@@ -32,9 +32,6 @@ interface MonitoredLawyer {
   enabled: boolean;
 }
 
-// IMPORTANTE: Estes são dados de EXEMPLO genéricos.
-// NUNCA versione dados reais de clientes/advogados.
-// Configure os dados reais via variáveis de ambiente.
 const DEFAULT_LAWYERS: MonitoredLawyer[] = [
   {
     id: "exemplo-advogado",
@@ -83,10 +80,6 @@ function loadLawyersFromStorage(): MonitoredLawyer[] {
 
 function ensureDefaultLawyersPersisted(): MonitoredLawyer[] {
   localStorage.setItem("monitored-lawyers", JSON.stringify(DEFAULT_LAWYERS));
-  console.log(
-    "[DJEN Proxy] Usando advogados padrão:",
-    DEFAULT_LAWYERS.map((l) => l.name).join(", ")
-  );
   return DEFAULT_LAWYERS;
 }
 
@@ -94,39 +87,14 @@ function normalizeDateISO(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-function buildLawyerQueryParams(lawyer: MonitoredLawyer): { numero: string; uf: string } | null {
-  const { numero, uf } = parseOAB(lawyer.oab);
-  if (!numero) {
-    console.warn(`[DJEN Proxy] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
-    return null;
-  }
-  if (!uf) {
-    console.warn(
-      `[DJEN Proxy] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
-    );
-    return null;
-  }
-  return { numero, uf };
-}
-
-function convertPublication(
-  lawyer: MonitoredLawyer,
-  pub: Record<string, unknown>
-): DJENPublication {
-  return {
-    id: (pub.id as string) || crypto.randomUUID(),
-    tribunal: pub.siglaTribunal as string,
-    data: pub.dataDisponibilizacao as string,
-    tipo: (pub.tipoComunicacao as string) || "Intimação",
-    teor: pub.texto as string,
-    numeroProcesso: pub.numeroProcesso as string,
-    orgao: pub.nomeOrgao as string,
-    lawyerName: lawyer.name,
-    matchType: "oab" as const,
-    source: "DJEN-Proxy",
-    createdAt: new Date().toISOString(),
-    notified: false,
-  };
+function parseOAB(oab: string): { numero?: string; uf?: string } {
+  if (!oab) return {};
+  const normalized = oab.trim().toUpperCase();
+  const matchNumericUF = /(\d+)[\s/-]{1,2}([A-Z]{2})/i.exec(normalized);
+  if (matchNumericUF) return { numero: matchNumericUF[1], uf: matchNumericUF[2] };
+  const matchUFNumeric = /([A-Z]{2})[\s/-]{1,2}(\d+)/i.exec(normalized);
+  if (matchUFNumeric) return { numero: matchUFNumeric[2], uf: matchUFNumeric[1] };
+  return {};
 }
 
 async function fetchPublicationsForLawyer(
@@ -134,91 +102,53 @@ async function fetchPublicationsForLawyer(
   lawyer: MonitoredLawyer,
   maxItems: number
 ): Promise<DJENPublication[]> {
-  const params = buildLawyerQueryParams(lawyer);
-  if (!params) return [];
+  const { numero, uf } = parseOAB(lawyer.oab);
+  if (!numero || !uf) return [];
 
   try {
     const hoje = normalizeDateISO(new Date());
-    const url = `${baseUrl}/api/djen/publicacoes?numeroOab=${params.numero}&ufOab=${params.uf}&dataInicio=${hoje}&dataFim=${hoje}`;
-    console.log(`[DJEN Proxy] Buscando via backend: ${url}`);
-
+    const url = `${baseUrl}/api/djen/publicacoes?numeroOab=${numero}&ufOab=${uf}&dataInicio=${hoje}&dataFim=${hoje}`;
     const response = await fetch(url);
-    if (!response.ok) {
-      console.warn(`[DJEN Proxy] Erro HTTP ${response.status}`);
-      return [];
-    }
-
-    const data = await response.json();
+    if (!response.ok) return [];
+    const data = await response.ok ? await response.json() : null;
     if (!data?.success || !Array.isArray(data.publicacoes)) return [];
 
     return (data.publicacoes as Array<Record<string, unknown>>)
       .slice(0, maxItems)
-      .map((pub) => convertPublication(lawyer, pub));
-  } catch (error) {
-    console.error(`[DJEN Proxy] Erro ao buscar para ${lawyer.name}:`, error);
+      .map((pub) => ({
+        id: (pub.id as string) || crypto.randomUUID(),
+        tribunal: pub.siglaTribunal as string,
+        data: pub.dataDisponibilizacao as string,
+        tipo: (pub.tipoComunicacao as string) || "Intimação",
+        teor: pub.texto as string,
+        numeroProcesso: pub.numeroProcesso as string,
+        orgao: pub.nomeOrgao as string,
+        lawyerName: lawyer.name,
+        matchType: "oab" as const,
+        source: "DJEN-Proxy",
+        createdAt: new Date().toISOString(),
+        notified: false,
+      }));
+  } catch {
     return [];
   }
-}
-
-function parseOAB(oab: string): { numero?: string; uf?: string } {
-  if (!oab) return {};
-
-  const normalized = oab.trim().toUpperCase();
-
-  const matchNumericUF = /(\d+)[\s/-]{1,2}([A-Z]{2})/i.exec(normalized);
-  if (matchNumericUF) {
-    return { numero: matchNumericUF[1], uf: matchNumericUF[2].toUpperCase() };
-  }
-
-  const matchUFNumeric = /([A-Z]{2})[\s/-]{1,2}(\d+)/i.exec(normalized);
-  if (matchUFNumeric) {
-    return { numero: matchUFNumeric[2], uf: matchUFNumeric[1].toUpperCase() };
-  }
-
-  const matchOABPattern = /OAB[\s/-]{1,3}([A-Z]{2})[\s]{1,2}(\d+)/i.exec(normalized);
-  if (matchOABPattern) {
-    return { numero: matchOABPattern[2], uf: matchOABPattern[1].toUpperCase() };
-  }
-
-  const matchNumeric = /^(\d+)$/.exec(normalized);
-  if (matchNumeric) {
-    return { numero: matchNumeric[1] };
-  }
-
-  return {};
 }
 
 async function fetchFromBackendProxy(
   baseUrl: string,
   maxItems: number
-): Promise<{
-  expedientes: DJENPublication[];
-  lawyersConfigured: number;
-  isGeoBlocked?: boolean;
-  error?: string;
-}> {
+): Promise<{ expedientes: DJENPublication[]; lawyersConfigured: number }> {
   let lawyers = await fetchMonitoredLawyers(baseUrl);
   if (lawyers.length === 0) lawyers = loadLawyersFromStorage();
   if (lawyers.length === 0) lawyers = ensureDefaultLawyersPersisted();
 
   const enabledLawyers = lawyers.filter((l) => l.enabled);
-
-  if (enabledLawyers.length === 0) {
-    return {
-      expedientes: [],
-      lawyersConfigured: 0,
-    };
-  }
+  if (enabledLawyers.length === 0) return { expedientes: [], lawyersConfigured: 0 };
 
   const allPublications: DJENPublication[] = [];
-
   for (const lawyer of enabledLawyers) {
     const pubs = await fetchPublicationsForLawyer(baseUrl, lawyer, maxItems);
     if (pubs.length) allPublications.push(...pubs);
-
-    if (enabledLawyers.length > 1) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
   }
 
   return {
@@ -235,7 +165,6 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
   const [lawyersCount, setLawyersCount] = useState(0);
   const [isGeoBlocked, setIsGeoBlocked] = useState(false);
 
-  // Ref para evitar loops de atualização infinita (Maximum update depth exceeded)
   const isFetchingRef = useRef(false);
 
   const fetchPublications = useCallback(async () => {
@@ -249,41 +178,32 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
 
       try {
         const data = await fetchFromBackend(VITE_API_BASE_URL, maxItems, filter);
-
         if (data.success) {
           setPublications(data.expedientes.slice(0, maxItems));
           setLastCheck(data.lastCheck);
           setLawyersCount(data.lawyersConfigured);
           return;
         }
-      } catch (backendError) {
-        console.warn("[DJENWidget] Backend indisponível, tentando browser-direct:", backendError);
+      } catch {
+        // Fallback silently to proxy
       }
 
-      console.log("[DJENWidget] Tentando busca via proxy backend...");
       const browserResult = await fetchFromBackendProxy(VITE_API_BASE_URL, maxItems);
-
-      if (browserResult.isGeoBlocked) {
-        setIsGeoBlocked(true);
-        setError(
-          browserResult.error ||
-            "API DJEN bloqueada geograficamente. Acesso permitido apenas do Brasil."
-        );
-        setLawyersCount(browserResult.lawyersConfigured);
-        return;
-      }
-
       setPublications(browserResult.expedientes);
       setLawyersCount(browserResult.lawyersConfigured);
       setLastCheck(new Date().toISOString());
     } catch (err) {
-      console.error("[DJENWidget] Fetch error:", err);
       setError("Não foi possível carregar publicações");
     } finally {
-      isFetchingRef.current = false;
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [maxItems, filter]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchPublications();
+  }, [fetchPublications]);
 
   return {
     publications,

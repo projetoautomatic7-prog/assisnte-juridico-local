@@ -18,6 +18,28 @@ CREATE TABLE IF NOT EXISTS minutas (
   variaveis OBJECT(DYNAMIC)
 );
 
+CREATE TABLE IF NOT EXISTS expedientes (
+    id TEXT PRIMARY KEY,
+    numero_processo TEXT,
+    tribunal TEXT,
+    tipo TEXT,
+    titulo TEXT,
+    conteudo TEXT,
+    data_disponibilizacao TIMESTAMP WITH TIME ZONE,
+    nome_orgao TEXT,
+    autor TEXT,
+    reu TEXT,
+    advogado_autor TEXT,
+    advogado_reu TEXT,
+    lawyer_name TEXT,
+    lido BOOLEAN DEFAULT FALSE,
+    arquivado BOOLEAN DEFAULT FALSE,
+    analyzed BOOLEAN DEFAULT FALSE,
+    priority TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create index for faster searches
 -- Note: CrateDB indexes columns by default, so explicit CREATE INDEX using Postgres syntax might cause issues or be redundant.
 -- CREATE INDEX IF NOT EXISTS idx_minutas_status ON minutas(status);

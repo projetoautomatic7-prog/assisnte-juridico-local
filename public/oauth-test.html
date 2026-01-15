@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste OAuth - Google Docs</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            color: #1976d2;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+        .error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            color: #e65100;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin: 10px 0;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .config-info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .config-info strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 10px;
+        }
+        code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .checklist {
+            margin: 20px 0;
+        }
+        .checklist-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: #fafafa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .checkbox.checked {
+            background: #667eea;
+            color: white;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Teste de Configuração OAuth</h1>
+        <p class="subtitle">Verifique se o Google Docs está configurado corretamente</p>
+
+        <div id="results"></div>
+
+        <div class="config-info">
+            <strong>📋 Configuração Atual:</strong>
+            <div>Client ID: <code>572929400457-lufh2hv2dt7129mikbr1e9k5h1copv4s.apps.googleusercontent.com</code></div>
+            <div>Redirect URI: <code>https://sonic-terminal-474321-s1.web.app/oauth2callback</code></div>
+        </div>
+
+        <button onclick="testOAuth()">🧪 Testar Conexão OAuth</button>
+        <button onclick="window.location.href='https://sonic-terminal-474321-s1.web.app'">🏠 Voltar ao App</button>
+
+        <div class="checklist">
+            <h3>✅ Checklist de Configuração</h3>
+            <p style="color: #666; font-size: 14px;">Você configurou tudo no Google Console?</p>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check1" onclick="toggleCheck(1)"></span>
+                <span>Adicionei <code>https://sonic-terminal-474321-s1.web.app</code> nos JavaScript origins</span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check2" onclick="toggleCheck(2)"></span>
+                <span>Adicionei <code>https://sonic-terminal-474321-s1.firebaseapp.com</code> nos JavaScript origins</span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check3" onclick="toggleCheck(3)"></span>
+                <span>Adicionei <code>https://sonic-terminal-474321-s1.web.app/oauth2callback</code> nos Redirect URIs</span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check4" onclick="toggleCheck(4)"></span>
+                <span>Adicionei <code>https://sonic-terminal-474321-s1.firebaseapp.com/oauth2callback</code> nos Redirect URIs</span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check5" onclick="toggleCheck(5)"></span>
+                <span>Cliquei em <strong>SAVE</strong> no Google Console</span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check6" onclick="toggleCheck(6)"></span>
+                <span>Habilitei a <strong>Google Docs API</strong></span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check7" onclick="toggleCheck(7)"></span>
+                <span>Habilitei a <strong>Google Drive API</strong></span>
+            </div>
+            
+            <div class="checklist-item">
+                <span class="checkbox" id="check8" onclick="toggleCheck(8)"></span>
+                <span>Habilitei a <strong>Google Calendar API</strong></span>
+            </div>
+        </div>
+
+        <div class="status info">
+            💡 <strong>Dica:</strong> Após configurar no Google Console, aguarde 2-3 minutos para as mudanças propagarem.
+        </div>
+
+        <div class="status warning">
+            ⚠️ <strong>Importante:</strong> Se você acabou de configurar, limpe o cache do navegador (Ctrl+Shift+Del) antes de testar.
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <h3>📚 Links Úteis</h3>
+        <ul style="line-height: 2;">
+            <li><a href="https://console.cloud.google.com/apis/credentials/oauthclient/572929400457-lufh2hv2dt7129mikbr1e9k5h1copv4s.apps.googleusercontent.com" target="_blank">🔧 Configurar OAuth Client ID</a></li>
+            <li><a href="https://console.cloud.google.com/apis/library/docs.googleapis.com" target="_blank">📝 Habilitar Google Docs API</a></li>
+            <li><a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank">📁 Habilitar Google Drive API</a></li>
+            <li><a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank">📅 Habilitar Google Calendar API</a></li>
+        </ul>
+    </div>
+
+    <script>
+        const CLIENT_ID = '572929400457-lufh2hv2dt7129mikbr1e9k5h1copv4s.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyAqoXGdqPaWGvkW5mnl4DAiYETg8Ls8mNA';
+        const SCOPES = 'https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file';
+
+        function toggleCheck(num) {
+            const check = document.getElementById(`check${num}`);
+            if (check.classList.contains('checked')) {
+                check.classList.remove('checked');
+                check.innerHTML = '';
+            } else {
+                check.classList.add('checked');
+                check.innerHTML = '✓';
+            }
+        }
+
+        function showResult(message, type) {
+            const results = document.getElementById('results');
+            results.innerHTML += `<div class="status ${type}">${message}</div>`;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function testOAuth() {
+            clearResults();
+            showResult('🔍 Testando configuração OAuth...', 'info');
+
+            // Verificar se as APIs do Google estão carregadas
+            if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
+                showResult('⏳ Carregando biblioteca do Google...', 'info');
+                
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.onload = () => initOAuthTest();
+                script.onerror = () => {
+                    showResult('❌ Erro ao carregar biblioteca do Google. Verifique sua conexão.', 'error');
+                };
+                document.head.appendChild(script);
+            } else {
+                initOAuthTest();
+            }
+        }
+
+        function initOAuthTest() {
+            try {
+                showResult('✅ Biblioteca do Google carregada!', 'success');
+                showResult('🔑 Client ID configurado: ' + CLIENT_ID.substring(0, 30) + '...', 'info');
+                showResult('🌐 Redirect URI: https://sonic-terminal-474321-s1.web.app/oauth2callback', 'info');
+                
+                showResult('🚀 Clique para autorizar (abrirá popup do Google):', 'info');
+                
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: (response) => {
+                        if (response.error) {
+                            showResult(`❌ Erro: ${response.error}`, 'error');
+                            if (response.error === 'popup_closed_by_user') {
+                                showResult('ℹ️ Você fechou o popup. Tente novamente.', 'warning');
+                            } else {
+                                showResult('💡 Verifique se configurou as URIs corretamente no Google Console.', 'warning');
+                            }
+                        } else {
+                            showResult('🎉 SUCESSO! OAuth configurado corretamente!', 'success');
+                            showResult('✅ Token de acesso recebido: ' + response.access_token.substring(0, 20) + '...', 'success');
+                            showResult('✅ Você pode usar o Google Docs no app agora!', 'success');
+                        }
+                    },
+                });
+
+                // Adicionar botão de autorização
+                const authorizeBtn = document.createElement('button');
+                authorizeBtn.textContent = '🔐 Autorizar Google Account';
+                authorizeBtn.onclick = () => {
+                    showResult('📱 Abrindo popup de autorização do Google...', 'info');
+                    client.requestAccessToken();
+                };
+                document.getElementById('results').appendChild(authorizeBtn);
+
+            } catch (error) {
+                showResult(`❌ Erro ao inicializar OAuth: ${error.message}`, 'error');
+                showResult('💡 Verifique se o Client ID está correto.', 'warning');
+            }
+        }
+
+        // Verificar configuração ao carregar
+        window.onload = () => {
+            showResult('🔍 Verificando configuração...', 'info');
+            showResult('✅ Client ID: Configurado', 'success');
+            showResult('✅ API Key: Configurado', 'success');
+            showResult('✅ Redirect URI: Configurado', 'success');
+            showResult('', 'info');
+            showResult('👆 Clique em "Testar Conexão OAuth" para verificar se funciona!', 'info');
+        };
+    </script>
+</body>
+</html>

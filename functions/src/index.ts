@@ -7,26 +7,54 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { onRequest } from "firebase-functions/v2/https";
+import { AGENTS } from "./lib/ai/agents-registry";
+import { InMemoryMemoryStore, SimpleAgent } from "./lib/ai/core-agent";
+import { HttpLlmClient } from "./lib/ai/http-llm-client";
+import { ALL_TOOLS, GlobalToolContext } from "./lib/ai/tools";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+export const agents = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { agentId, message, sessionId } = req.body;
+
+    if (!agentId) {
+      res.status(400).json({ error: "Campo 'agentId' é obrigatório." });
+      return;
+    }
+
+    const persona = AGENTS[agentId];
+    if (!persona) {
+      res.status(404).json({ error: `Agente '${agentId}' não encontrado.` });
+      return;
+    }
+
+    const llm = new HttpLlmClient({
+      baseUrl: process.env.LLM_PROXY_URL || "https://assistente-juridico-github.vercel.app/api/llm-proxy",
+    });
+
+    const ctx: GlobalToolContext = {
+      baseUrl: process.env.APP_BASE_URL || "https://assistente-juridico-github.vercel.app",
+      evolutionApiUrl: process.env.EVOLUTION_API_URL || "",
+      evolutionApiKey: process.env.EVOLUTION_API_KEY || "",
+    };
+
+    const agent = new SimpleAgent({
+      llm,
+      tools: ALL_TOOLS,
+      persona,
+      toolContext: ctx,
+      sessionId: sessionId || `session-${agentId}`,
+      memoryStore: InMemoryMemoryStore,
+    });
+
+    const result = await agent.run(message || "Execute sua rotina padrão.");
+    res.status(200).json({ ok: true, agentId, ...result });
+  } catch (err: any) {
+    logger.error("Erro no agente:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});

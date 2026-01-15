@@ -1,5 +1,10 @@
-import { AgentMetricsDashboard } from "@/components/AgentMetricsDashboard";
 import AgentMetrics from "@/components/AgentMetrics";
+import { AgentMetricsDashboard } from "@/components/AgentMetricsDashboard";
+import AgentOrchestrationPanel from "@/components/AgentOrchestrationPanel";
+import AgentStatusFloater from "@/components/AgentStatusFloater";
+import { LegalMemoryViewer } from "@/components/LegalMemoryViewer";
+import MrsJustinEModal from "@/components/MrsJustinEModal";
+import { ServerLogsViewer } from "@/components/ServerLogsViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAgentBackup } from "@/hooks/use-agent-backup";
 import { useAutonomousAgents } from "@/hooks/use-autonomous-agents";
 import { useKV } from "@/hooks/use-kv";
+import type { Agent } from "@/lib/agents";
 import { themeConfig } from "@/lib/themes";
+import type { User, ViewType } from "@/types";
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -30,15 +37,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-// HumanAgentCollaboration - disponível para uso futuro
-// import HumanAgentCollaboration from '@/components/HumanAgentCollaboration'
-import AgentOrchestrationPanel from "@/components/AgentOrchestrationPanel";
-import AgentStatusFloater from "@/components/AgentStatusFloater";
-import { LegalMemoryViewer } from "@/components/LegalMemoryViewer";
-import MrsJustinEModal from "@/components/MrsJustinEModal";
-import { ServerLogsViewer } from "@/components/ServerLogsViewer";
-import type { User, ViewType } from "@/types";
+import React, { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 // ===========================
@@ -192,6 +191,97 @@ function renderStreamingPingIndicator(isStreaming: boolean): ReactNode | null {
   );
 }
 
+// ===========================
+// Agent Card Component (Memoized)
+// ===========================
+
+interface AgentCardProps {
+  agent: Agent;
+  isStreaming: boolean;
+  streamPreview: string;
+  onToggle: (id: string) => void;
+}
+
+const AgentCard = React.memo(({ agent, isStreaming, streamPreview, onToggle }: AgentCardProps) => {
+  const IconComponent = agentIcons[agent.id] || Bot;
+  const statusColor = getStatusColor(agent.enabled, isStreaming, agent.status);
+
+  return (
+    <Card className={getCardClassName(agent.enabled, isStreaming)}>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className={getIconContainerClassName(agent.enabled, isStreaming)}>
+              <IconComponent className={`w-6 h-6 ${statusColor}`} />
+              {renderStreamingPingIndicator(isStreaming)}
+            </div>
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                {agent.name}
+                {renderStreamingIndicator(isStreaming)}
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">{agent.description}</CardDescription>
+            </div>
+          </div>
+          <Switch
+            aria-label={`Ativar ou desativar o agente ${agent.name}`}
+            checked={agent.enabled}
+            onCheckedChange={() => onToggle(agent.id)}
+          />
+        </div>
+
+        {/* Streaming Preview */}
+        {renderStreamingPreview(isStreaming, streamPreview)}
+
+        <div className="pt-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Capacidades:</span>
+            <Badge
+              variant={isStreaming || agent.enabled ? "default" : "secondary"}
+              style={isStreaming ? getStreamingStyle() : undefined}
+              className="text-xs"
+            >
+              {getAgentStatusLabel(isStreaming, agent.enabled)}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {agent.capabilities?.slice(0, 4).map((cap) => (
+              <Badge key={cap} variant="outline" className="text-xs">
+                {cap}
+              </Badge>
+            ))}
+            {agent.capabilities && agent.capabilities.length > 4 && (
+              <Badge variant="outline" className="text-xs">
+                +{agent.capabilities.length - 4}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground text-xs">Última atividade:</span>
+          <span
+            className="text-xs"
+            style={isStreaming ? { color: themeConfig.colors.info } : undefined}
+          >
+            {agent.lastActivity}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Status:</span>
+          <Badge
+            variant={isStreaming || agent.enabled ? "default" : "secondary"}
+            style={isStreaming ? getStreamingStyle() : undefined}
+          >
+            {getAgentStatusLabelExtended(isStreaming, agent.enabled)}
+          </Badge>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
 const agentIcons: Record<string, React.ElementType> = {
   "djen-monitor": Database,
   "agent-djen-monitor": Database,
@@ -296,12 +386,22 @@ export default function AIAgents({ onNavigate }: Readonly<AIAgentsProps>) {
   const processingTasks = taskQueue.filter((t) => t.status === "processing").length;
   const humanInterventionTasks = taskQueue.filter((t) => t.status === "human_intervention").length;
 
-  const handleToggleAgent = (agentId: string) => {
-    const agent = agents.find((a) => a.id === agentId);
-    if (!agent) return;
-    toggleAgent(agentId);
-    toast.success(agent.enabled ? `${agent.name} desativado` : `${agent.name} ativado`);
-  };
+  // Ref para manter acesso aos agentes atuais sem causar re-render na função handleToggleAgent
+  const agentsRef = useRef(agents);
+  useEffect(() => {
+    agentsRef.current = agents;
+  }, [agents]);
+
+  const handleToggleAgent = useCallback(
+    (agentId: string) => {
+      const agent = agentsRef.current.find((a) => a.id === agentId);
+      toggleAgent(agentId);
+      if (agent) {
+        toast.success(agent.enabled ? `${agent.name} desativado` : `${agent.name} ativado`);
+      }
+    },
+    [toggleAgent]
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -574,89 +674,15 @@ export default function AIAgents({ onNavigate }: Readonly<AIAgentsProps>) {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {agents.map((agent) => {
-              const IconComponent = agentIcons[agent.id] || Bot;
-              const isStreaming = !!streamingContent[agent.id];
-              const streamPreview = streamingContent[agent.id]?.slice(-100) || "";
-              const statusColor = getStatusColor(agent.enabled, isStreaming, agent.status);
-
-              return (
-                <Card key={agent.id} className={getCardClassName(agent.enabled, isStreaming)}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className={getIconContainerClassName(agent.enabled, isStreaming)}>
-                          <IconComponent className={`w-6 h-6 ${statusColor}`} />
-                          {renderStreamingPingIndicator(isStreaming)}
-                        </div>
-                        <div>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            {agent.name}
-                            {renderStreamingIndicator(isStreaming)}
-                          </CardTitle>
-                          <CardDescription className="text-xs mt-1">
-                            {agent.description}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Switch
-                        aria-label={`Ativar ou desativar o agente ${agent.name}`}
-                        checked={agent.enabled}
-                        onCheckedChange={() => handleToggleAgent(agent.id)}
-                      />
-                    </div>
-
-                    {/* Streaming Preview */}
-                    {renderStreamingPreview(isStreaming, streamPreview)}
-
-                    <div className="pt-2">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>Capacidades:</span>
-                        <Badge
-                          variant={isStreaming || agent.enabled ? "default" : "secondary"}
-                          style={isStreaming ? getStreamingStyle() : undefined}
-                          className="text-xs"
-                        >
-                          {getAgentStatusLabel(isStreaming, agent.enabled)}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {agent.capabilities?.slice(0, 4).map((cap) => (
-                          <Badge key={cap} variant="outline" className="text-xs">
-                            {cap}
-                          </Badge>
-                        ))}
-                        {agent.capabilities && agent.capabilities.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{agent.capabilities.length - 4}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground text-xs">Última atividade:</span>
-                      <span
-                        className="text-xs"
-                        style={isStreaming ? { color: themeConfig.colors.info } : undefined}
-                      >
-                        {agent.lastActivity}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Status:</span>
-                      <Badge
-                        variant={isStreaming || agent.enabled ? "default" : "secondary"}
-                        style={isStreaming ? getStreamingStyle() : undefined}
-                      >
-                        {getAgentStatusLabelExtended(isStreaming, agent.enabled)}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {agents.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                isStreaming={!!streamingContent[agent.id]}
+                streamPreview={streamingContent[agent.id]?.slice(-100) || ""}
+                onToggle={handleToggleAgent}
+              />
+            ))}
           </div>
         </TabsContent>
 

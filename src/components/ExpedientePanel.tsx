@@ -22,7 +22,7 @@ import {
   syncDeadlineToGoogleCalendar,
   type IntimationAnalysisResult,
 } from "@/lib/deadline-calendar-integration";
-import { getEventBadgeStyle, getStatusBadgeStyle, themeConfig } from "@/lib/themes";
+import { getStatusBadgeStyle, themeConfig } from "@/lib/themes";
 import type { Appointment, Expediente } from "@/types";
 import { toast } from "sonner";
 
@@ -357,6 +357,16 @@ export default function ExpedientePanel() {
     setLoading(true);
     try {
       const response = await fetch("/api/expedientes");
+
+      // Validação de resposta para evitar erro de JSON em 404/HTML
+      const contentType = response.headers.get("content-type");
+      if (!response.ok || !contentType?.includes("application/json")) {
+        console.warn(
+          `[ExpedientePanel] API indisponível ou retornando formato inválido (${response.status})`
+        );
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success && data.expedientes?.length > 0) {
@@ -418,16 +428,18 @@ export default function ExpedientePanel() {
 
         if (!localAppointment) return;
 
-        // Verificar se já existe
-        const existingAppt = (appointments || []).find(
-          (apt) =>
-            apt.date === localAppointment.date &&
-            apt.title.includes(exp.numeroProcesso?.substring(0, 15) || "")
-        );
+        setAppointments((current) => {
+          const list = current || [];
+          // Verificar se já existe dentro do setter para evitar dependência direta de 'appointments'
+          const existingAppt = list.find(
+            (apt) =>
+              apt.date === localAppointment.date &&
+              apt.title.includes(exp.numeroProcesso?.substring(0, 15) || "")
+          );
+          if (existingAppt) return list;
+          return [...list, localAppointment];
+        });
 
-        if (existingAppt) return;
-
-        setAppointments((current) => [...(current || []), localAppointment]);
         setDeadlinesCreated((prev) => prev + 1);
         console.log("[ExpedientePanel] Prazo adicionado ao calendário:", localAppointment.title);
 
@@ -440,7 +452,7 @@ export default function ExpedientePanel() {
         console.warn("[ExpedientePanel] Erro ao criar prazo no calendário:", calendarError);
       }
     },
-    [appointments, setAppointments, setDeadlinesCreated]
+    [setAppointments, setDeadlinesCreated]
   );
 
   // Função para analisar um único expediente (retorna o expediente analisado)
@@ -550,7 +562,7 @@ IMPORTANTE:
 
             for (const taskData of agentTasks) {
               // Só cria tarefa se o agente estiver habilitado
-              const agent = agents.find((a) => a.id === taskData.agentId);
+              const agent = agentsRef.current.find((a) => a.id === taskData.agentId);
               if (agent?.enabled) {
                 const task: AgentTask = {
                   id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
@@ -598,49 +610,58 @@ IMPORTANTE:
         }
       );
     },
-    [addTask, agents, createCalendarDeadline]
+    [addTask, createCalendarDeadline]
   );
 
   // Análise automática de todos os expedientes pendentes
-  const runAutoAnalysis = useCallback(async () => {
-    const pending = safeExpedientes.filter(needsAnalysis);
-    if (pending.length === 0) return;
+  const runAutoAnalysis = useCallback(
+    async (pending: Expediente[]) => {
+      if (!pending || pending.length === 0) return;
 
-    setAutoAnalyzing(true);
-    setAnalysisProgress({ current: 0, total: pending.length });
-    setTasksCreated(0);
+      setAutoAnalyzing(true);
+      setAnalysisProgress({ current: 0, total: pending.length });
+      setTasksCreated(0);
+      setDeadlinesCreated(0);
 
-    toast.info(
-      `🤖 Mrs. Justin-e iniciando análise automática de ${pending.length} intimação(ões)...`
-    );
-
-    let analyzed = 0;
-    for (const exp of pending) {
-      try {
-        const result = await analyzeExpediente(exp);
-        setExpedientes((current) => (current || []).map((e) => (e.id === exp.id ? result : e)));
-        analyzed++;
-        setAnalysisProgress({ current: analyzed, total: pending.length });
-
-        // Pequeno delay entre análises para não sobrecarregar a API
-        if (analyzed < pending.length) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      } catch (error) {
-        console.error(`Erro ao analisar expediente ${exp.id}:`, error);
-      }
-    }
-
-    setAutoAnalyzing(false);
-    if (analyzed > 0) {
-      const deadlineMsg =
-        deadlinesCreated > 0 ? ` e criou ${deadlinesCreated} prazo(s) na agenda` : "";
-      toast.success(
-        `✅ Mrs. Justin-e analisou ${analyzed} intimação(ões)${deadlineMsg} e distribuiu tarefas para os agentes!`,
-        { duration: 5000 }
+      toast.info(
+        `🤖 Mrs. Justin-e iniciando análise automática de ${pending.length} intimação(ões)...`
       );
-    }
-  }, [safeExpedientes, setExpedientes, analyzeExpediente, deadlinesCreated]);
+
+      let analyzed = 0;
+      let localDeadlines = 0;
+      for (const exp of pending) {
+        try {
+          const result = await analyzeExpediente(exp);
+          setExpedientes((current) => (current || []).map((e) => (e.id === exp.id ? result : e)));
+          analyzed++;
+          setAnalysisProgress({ current: analyzed, total: pending.length });
+
+          if (result.deadline) {
+            localDeadlines++;
+            setDeadlinesCreated(localDeadlines);
+          }
+
+          // Pequeno delay entre análises para não sobrecarregar a API
+          if (analyzed < pending.length) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(`Erro ao analisar expediente ${exp.id}:`, error);
+        }
+      }
+
+      setAutoAnalyzing(false);
+      if (analyzed > 0) {
+        const deadlineMsg =
+          localDeadlines > 0 ? ` e criou ${localDeadlines} prazo(s) na agenda` : "";
+        toast.success(
+          `✅ Mrs. Justin-e analisou ${analyzed} intimação(ões)${deadlineMsg} e distribuiu tarefas para os agentes!`,
+          { duration: 5000 }
+        );
+      }
+    },
+    [setExpedientes, analyzeExpediente]
+  );
 
   // Dispara análise automática quando expedientes são carregados
   useEffect(() => {
@@ -654,7 +675,7 @@ IMPORTANTE:
       autoAnalysisRanRef.current = true;
       // Delay de 2 segundos para garantir que a UI já carregou
       setTimeout(() => {
-        runAutoAnalysis();
+        runAutoAnalysis(pending);
       }, 2000);
     }
   }, [safeExpedientes, loading, runAutoAnalysis]);

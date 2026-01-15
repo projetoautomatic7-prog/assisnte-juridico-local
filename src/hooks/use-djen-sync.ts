@@ -18,9 +18,22 @@ export function useDJENSync() {
 
   const executeSync = async (): Promise<SyncResult> => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-    const response = await fetch(`${baseUrl}/api/djen-sync`, {
-      method: "POST",
-    });
+    let response;
+    try {
+      response = await fetch(`${baseUrl}/api/djen-sync`, {
+        method: "POST",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("Failed to fetch") && baseUrl.includes("localhost")) {
+        console.warn(
+          `[DJEN Sync] ⚠️ Falha de conexão com ${baseUrl}.\n` +
+            `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
+            `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+        );
+      }
+      throw error;
+    }
 
     // Rate limit
     if (response.status === 429) {

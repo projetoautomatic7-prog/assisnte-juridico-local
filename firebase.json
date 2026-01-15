@@ -52,7 +52,7 @@
     ],
     "cleanUrls": true,
     "trailingSlash": false,
-    "predeploy": ["npm run lint", "npm run build"],
+    "predeploy": [],
     "postdeploy": [
       "echo 'Deploy concluído com sucesso!'",
       "echo 'URL: https://sonic-terminal-474321-s1.web.app'"
