@@ -307,7 +307,7 @@ class GoogleDocsService {
           // Não rejeitar, apenas logar aviso para não quebrar a app se estiver offline
           debugError("Failed to load Google Identity Services script (offline or blocked)");
           // Resolvemos para permitir que o app continue (funcionalidades GIS falharão graciosamente depois)
-          resolve(); 
+          resolve();
         };
         document.head.appendChild(gisScript);
       };
