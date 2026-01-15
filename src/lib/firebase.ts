@@ -8,7 +8,7 @@ const firebaseConfig = {
   storageBucket: "sonic-terminal-474321-s1.firebasestorage.app",
   messagingSenderId: "598169933649",
   appId: "1:598169933649:web:7c158e3df4fd5a76c7e570",
-  measurementId: "G-G9PCMTJ1WZ"
+  measurementId: "G-G9PCMTJ1WZ",
 };
 
 // Initialize Firebase
