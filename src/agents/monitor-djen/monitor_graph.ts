@@ -243,10 +243,7 @@ export class DJENMonitorAgent extends LangGraphAgent {
  * Factory function to create and execute the DJEN monitor agent
  */
 export async function monitorDJEN(data: Record<string, unknown> = {}): Promise<AgentState> {
-  const agent = new DJENMonitorAgent({
-    timeoutMs: 60000, // 1 minute for DJEN API
-    maxRetries: 3,
-  });
+  const agent = new DJENMonitorAgent();
 
   const initialState: AgentState = {
     messages: [],

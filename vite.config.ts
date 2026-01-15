@@ -24,7 +24,7 @@ export default defineConfig({
     // sparkPlugin() as PluginOption, // REMOVIDO: dependia de @github/spark
     VitePWA({
       registerType: "autoUpdate",
-      // ✅ FIX: Usar 'inline' ao invés do padrão para evitar problemas com CSP
+      // ✅ FIX: Usar \'inline\' ao invés do padrão para evitar problemas com CSP
       // O script de registro será injetado diretamente no HTML ao invés de arquivo separado
       injectRegister: "inline",
       // ✅ Remover robots.txt/sitemap.xml do precache - não são necessários offline
@@ -161,11 +161,6 @@ export default defineConfig({
       ],
     },
   },
-  css: {
-    postcss: {
-      parser: "postcss-scss",
-    },
-  },
   build: {
     cssMinify: "lightningcss",
     cssCodeSplit: true,
@@ -176,7 +171,7 @@ export default defineConfig({
     // Target focado em browsers modernos → menos polyfill
     target: "es2020",
     // ❌ DESABILITAR modulePreload para evitar race condition do ProseMirror
-    // O erro "Cannot set properties of undefined (setting 'Activity')"
+    // O erro "Cannot set properties of undefined (setting \'Activity\')"
     // acontece quando editor-vendor é pré-carregado antes do React estar pronto
     modulePreload: {
       polyfill: true,
@@ -198,7 +193,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // ✅ FIX: Desabilita hoisting de imports transitivos para evitar dependências circulares
-      // O erro "Cannot set properties of undefined (setting 'Activity')" acontecia porque
+      // O erro "Cannot set properties of undefined (setting \'Activity\')" acontecia porque
       // o Rollup movia helpers como getDefaultExportFromCjs para chunks errados
       treeshake: {
         // Preserva imports transitivos nos chunks originais
@@ -215,7 +210,7 @@ export default defineConfig({
         manualChunks(id) {
           // React core + Phosphor Icons - crítico, carrega primeiro
           // ✅ FIX: Phosphor Icons incluído aqui para evitar dependência circular
-          // O erro "Cannot set properties of undefined (setting 'Activity')"
+          // O erro "Cannot set properties of undefined (setting \'Activity\')"
           // acontecia porque editor-vendor era importado antes do React estar pronto
           if (
             id.includes("node_modules/react") ||

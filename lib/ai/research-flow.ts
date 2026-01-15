@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { AGENTS } from './agents-registry';
-import { AgentResponseSchema, ai } from './genkit';
+import { AGENTS } from './agents-registry.js';
+import { AgentResponseSchema, ai } from './genkit.js';
 
 /**
  * Tool para busca de jurisprudência.
@@ -52,7 +52,7 @@ export const researchFlow = ai.defineFlow(
 
     return {
       answer: response.text,
-      usedTools: response.toolCalls?.map(tc => tc.name)
+      usedTools: (response as any).toolCalls?.map((tc: any) => tc.name)
     };
   }
 );

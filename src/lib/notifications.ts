@@ -9,7 +9,9 @@
  */
 
 import { Redis } from "@upstash/redis";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+// import type { VercelRequest, VercelResponse } from "@vercel/node";
+type VercelRequest = any;
+type VercelResponse = any;
 import { getEnv } from "./env-helper.js";
 
 /**

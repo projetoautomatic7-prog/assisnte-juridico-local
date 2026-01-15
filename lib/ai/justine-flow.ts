@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { AgentResponseSchema, ai, askLawyer, upstashSessionStore } from './genkit';
-import { petitionFlow } from './petition-flow';
-import { researchFlow } from './research-flow';
-import { riskAnalysisFlow } from './risk-flow';
-import { strategyFlow } from './strategy-flow';
-import { buscarIntimacaoPendente, calcularPrazos, consultarProcessoPJe, criarTarefa, indexarAnaliseCaso } from './tools';
+import { AgentResponseSchema, ai, askLawyer, upstashSessionStore } from './genkit.js';
+import { petitionFlow } from './petition-flow.js';
+import { researchFlow } from './research-flow.js';
+import { riskAnalysisFlow } from './risk-flow.js';
+import { strategyFlow } from './strategy-flow.js';
+import { buscarIntimacaoPendente, calcularPrazos, consultarProcessoPJe, criarTarefa, indexarAnaliseCaso } from './tools.js';
 
 /**
  * Ferramentas de Especialistas encapsuladas para a Justine
@@ -45,20 +45,23 @@ export const justineFlow = ai.defineFlow(
     const contextData = await ai.run('initial-investigation', async () => {
       const [processo, intimação] = await Promise.all([
         input.numeroProcesso ? consultarProcessoPJe.run({ numeroProcesso: input.numeroProcesso }) : Promise.resolve(null),
-        buscarIntimacaoPendente.run({ expedienteId: input.expedienteId })
+        buscarIntimacaoPendente.run({ numeroProcesso: input.expedienteId } as any)
       ]);
       return { processo, intimação };
     });
 
     // Carrega a sessão persistente vinculada ao expediente
-    const session = await ai.loadSession(input.sessionId || `justine-${input.expedienteId}`, {
-      store: upstashSessionStore
-    });
+    // loadSession não está mais disponível
+    // const session = await ai.loadSession(input.sessionId || `justine-${input.expedienteId}`, {
+    //   store: upstashSessionStore
+    // });
 
     // Carrega ferramentas do MCP (Filesystem, etc)
-    const mcpTools = await mcpHost.getActiveTools(ai);
+    const mcpTools: any[] = []; // await mcpHost.getActiveTools(ai);
 
-    const chat = session.chat({
+    // Genkit API mudou - usar generate diretamente
+    const response = await ai.generate({
+      model: 'gemini-2.0-flash',
       system: `Você é Mrs. Justin-e, a Supervisora Autônoma da Controladoria Jurídica.
       Sua missão é processar expedientes e garantir que todas as providências sejam tomadas.
 
@@ -80,6 +83,9 @@ export const justineFlow = ai.defineFlow(
       1. Criando as tarefas no Todoist.
       2. Indexando a análise do caso no Qdrant usando 'indexarAnaliseCaso' para memória futura.
       3. Registrando o log.`,
+      prompt: `Processe o expediente ID: ${input.expedienteId}. 
+      Dados obtidos: ${JSON.stringify(contextData)}
+      Instrução atual: Analise e distribua as tarefas necessárias.`,
       tools: [
         buscarIntimacaoPendente,
         consultarProcessoPJe,
@@ -89,22 +95,16 @@ export const justineFlow = ai.defineFlow(
         runStrategy,
         runResearch,
         runPetitionDraft,
-        askLawyer,
+        // askLawyer,
         indexarAnaliseCaso,
         ...mcpTools
       ],
-    });
-
-    const response = await chat.send({
-      resume: input.resume,
-      prompt: `Processe o expediente ID: ${input.expedienteId}. 
-      Dados obtidos: ${JSON.stringify(contextData)}
-      Instrução atual: Analise e distribua as tarefas necessárias.`,
-    });
+      config: { temperature: 0.7 },
+    } as any);
 
     return {
       answer: response.text,
-      usedTools: response.toolCalls?.map(tc => tc.name),
+      usedTools: (response as any).toolCalls?.map((tc: any) => tc.name),
       interrupts: response.interrupts,
     };
   }

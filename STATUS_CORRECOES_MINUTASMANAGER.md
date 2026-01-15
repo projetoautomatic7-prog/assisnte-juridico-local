@@ -1,12 +1,12 @@
 # 📊 Status das Correções - MinutasManager.tsx
 
-**Data:** 02/01/2026
+**Data:** 15/01/2026
 **Arquivo:** `src/components/MinutasManager.tsx` (1371 linhas)
-**Análise:** Baseada nas 7 correções recomendadas pelo ChatGPT
+**Análise:** Baseada nas correções recomendadas e ajustes de UI
 
 ---
 
-## ✅ CORREÇÕES JÁ APLICADAS (7/7)
+## ✅ CORREÇÕES JÁ APLICADAS (8/8)
 
 ### 1. ✅ Modal overflow conflitante (Problema #1)
 **Status:** **CORRIGIDO**
@@ -214,6 +214,17 @@ const handleSelectChange = (field: string, value: string) => {
 
 ---
 
+### 8. ✅ Modal Transparente e Layout (Problema #8)
+**Status:** **CORRIGIDO**
+**Linhas:** 671
+**Código atual:**
+```tsx
+<DialogContent className="max-w-6xl max-h-[95vh] flex flex-col bg-background border shadow-xl p-0 overflow-hidden">
+```
+**Explicação:** Corrigido bug visual onde o modal ficava transparente. Adicionado `bg-background`, `shadow-xl` e ajustado o layout para evitar problemas de overflow e visualização do fundo.
+
+---
+
 ## 📈 Resumo Executivo
 
 | Problema | Status | Prioridade | Linhas |
@@ -225,18 +236,18 @@ const handleSelectChange = (field: string, value: string) => {
 | 5. Grid não responsivo | ✅ CORRIGIDO | - | 727 |
 | 6. CTA IA pouco explícito | ✅ CORRIGIDO | - | 843 |
 | 7. Feedback IA ativa | ✅ CORRIGIDO | - | após 930 |
+| 8. Modal Transparente | ✅ CORRIGIDO | ALTA | 671 |
 
-**Progresso:** 100% (7 de 7 problemas resolvidos) ✅
+**Progresso:** 100% (8 de 8 problemas resolvidos) ✅
 
 ---
 
 ## 🎯 Próximas Ações Recomendadas
 
-1. **Adicionar badge "✨ Gemini 2.5 Pro"** no CardTitle dos Comandos IA (linha 843)
-2. **Adicionar feedback global de loading** após o Card de Comandos IA (linha 930+)
-3. **Testar fluxo completo** com IA para validar a experiência do usuário
+1. **Testar fluxo completo** com IA para validar a experiência do usuário.
+2. **Verificar responsividade** em telas menores.
 
-**Tempo estimado:** 10-15 minutos para aplicar as 2 correções restantes.
+**Tempo estimado:** Concluído.
 
 ---
 
@@ -248,4 +259,4 @@ const handleSelectChange = (field: string, value: string) => {
 - **Estado:** TanStack Query + useKV (localStorage)
 - **Editor:** CKEditor 5 (ProfessionalEditor) + TipTap (TiptapEditorV2)
 
-**Última atualização:** 02/01/2026 17:35 UTC
+**Última atualização:** 15/01/2026

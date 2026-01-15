@@ -146,9 +146,6 @@ source .env
 
 #### Java não encontrado
 ```bash
-# Verificar Java 21
-#### Java não encontrado
-```bash
 # Verificar Java (mínimo: Java 11)
 java -version
 

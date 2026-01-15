@@ -1,5 +1,24 @@
 {
   "projects": {
-    "default": "sonic-terminal-474321-s1"
-  }
+    "default": "sonic-terminal-474321-s1",
+    "production": "sonic-terminal-474321-s1",
+    "staging": "sonic-terminal-474321-s1",
+    "development": "sonic-terminal-474321-s1"
+  },
+  "targets": {
+    "sonic-terminal-474321-s1": {
+      "hosting": {
+        "production": [
+          "sonic-terminal-474321-s1"
+        ],
+        "staging": [
+          "assistente-juridico-staging"
+        ],
+        "development": [
+          "assistente-juridico-dev"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

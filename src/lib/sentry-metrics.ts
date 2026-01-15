@@ -75,7 +75,7 @@ let beforeSendMetricCallback: BeforeSendMetricCallback | undefined;
  *
  * @example
  * ```typescript
- * import { setBeforeSendMetric } from '@/lib/sentry-metrics';
+ * import { setBeforeSendMetric } from '@/lib/sentry-metrics.js';
  *
  * setBeforeSendMetric((metric, hint) => {
  *   // Filtra métricas específicas
@@ -113,7 +113,7 @@ export function setBeforeSendMetric(callback: BeforeSendMetricCallback | undefin
  *
  * @example
  * ```typescript
- * import { count } from '@/lib/sentry-metrics';
+ * import { count } from '@/lib/sentry-metrics.js';
  *
  * // Registra 5 cliques de botão
  * count('button_click', 5, {
@@ -195,7 +195,7 @@ export function count(
  *
  * @example
  * ```typescript
- * import { distribution } from '@/lib/sentry-metrics';
+ * import { distribution } from '@/lib/sentry-metrics.js';
  *
  * // Registra tempo de carregamento de página
  * distribution('page_load', 15.0, {
@@ -280,7 +280,7 @@ export function distribution(
  *
  * @example
  * ```typescript
- * import { gauge } from '@/lib/sentry-metrics';
+ * import { gauge } from '@/lib/sentry-metrics.js';
  *
  * // Registra uso de memória
  * gauge('memory_usage', 512, {
@@ -356,7 +356,7 @@ export function gauge(
  *
  * @example
  * ```typescript
- * import { measureDuration } from '@/lib/sentry-metrics';
+ * import { measureDuration } from '@/lib/sentry-metrics.js';
  *
  * const result = await measureDuration(
  *   'database_query',
@@ -411,7 +411,7 @@ export async function measureDuration<T>(
  *
  * @example
  * ```tsx
- * import { useMeasureRender } from '@/lib/sentry-metrics';
+ * import { useMeasureRender } from '@/lib/sentry-metrics.js';
  *
  * function MyComponent() {
  *   useMeasureRender('MyComponent');

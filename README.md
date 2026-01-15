@@ -40,7 +40,61 @@ Este guia passo a passo cobre:
 
 # Iniciar desenvolvimento
 npm run dev
+
+# 🔥 Desenvolvimento com Firebase Emulators (NOVO)
+npm run firebase:emulators  # Inicia todos os serviços locais
 ```
+
+---
+
+## 🔥 Firebase Emulators - Desenvolvimento Local
+
+**Novo em Janeiro 2026:** Ambiente de desenvolvimento completo com Firebase!
+
+### 🌐 Serviços Disponíveis
+
+| Serviço | URL Local | Descrição |
+|---------|-----------|-----------|
+| **Emulator UI** | http://127.0.0.1:4000 | Interface visual para todos serviços |
+| **Hosting** | http://127.0.0.1:5000 | App frontend (React + Vite) |
+| **Firestore** | http://127.0.0.1:8080 | Banco de dados NoSQL |
+| **Authentication** | http://127.0.0.1:9099 | Sistema de autenticação |
+| **Functions** | http://127.0.0.1:5001 | Cloud Functions (Node.js 20) |
+| **Storage** | http://127.0.0.1:9199 | Upload de arquivos |
+
+### 🚀 Iniciar Emulators
+
+```bash
+# Iniciar todos os emulators
+npm run firebase:emulators
+
+# Acessar UI visual
+open http://127.0.0.1:4000
+
+# Testar app
+open http://127.0.0.1:5000
+```
+
+### 📚 Documentação Firebase
+
+- 📖 [Configuração Firebase Completa](FIREBASE_CONFIG_README.md)
+- 📖 [Correções dos Emulators](FIREBASE_EMULATOR_FIX.md)
+- 📖 [Regras de Segurança](firestore.rules)
+- 📖 [Índices Firestore](firestore.indexes.json)
+
+### ✅ Coleções Firestore Configuradas
+
+9 coleções protegidas com regras de segurança:
+
+1. **users** - Perfis de usuários (acesso próprio)
+2. **processos** - Processos jurídicos (privados)
+3. **jurisprudencias** - Base de pesquisa (advogados verificados)
+4. **minutas** - Documentos gerados (privados)
+5. **prazos** - Gestão de deadlines (privados)
+6. **agentes_logs** - Auditoria dos agentes (admin)
+7. **djen_publicacoes** - Diário eletrônico (advogados)
+8. **rate_limits** - Controle de uso (sistema)
+9. **feedback** - Melhorias do sistema (usuários)
 
 ---
 

@@ -1,14 +1,13 @@
 import { callGemini } from "@/lib/gemini-service";
 import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
-import { logAgentExecution, logStructuredError, logValidationError } from "../base/agent_logger";
+import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
 import {
   formatErrorMessage,
   generateAnalysisPrompt,
-  generateUrgencyPrompt,
-  HARVEY_SYSTEM_PROMPT,
+  HARVEY_SYSTEM_PROMPT
 } from "./templates";
 import { validateHarveyInput, ValidationError } from "./validators";
 
@@ -19,7 +18,7 @@ export class HarveyAgent extends LangGraphAgent {
         agentName: "Harvey Specter",
         system: "gemini",
         model: "gemini-2.5-pro",
-        temperature: 0.6,
+        temperature: 0.7,
       },
       {
         sessionId: (state.data?.sessionId as string) || `harvey_session_${Date.now()}`,
@@ -30,100 +29,34 @@ export class HarveyAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "harvey:start" });
+        let current = updateState(state, { currentStep: "harvey:validate" });
 
-        // ✅ MELHORIA 1: Validação de inputs
-        let validatedInput;
         try {
-          validatedInput = validateHarveyInput(state.data || {});
-          logAgentExecution("Harvey Specter", "input_validated", {
-            task: validatedInput.task.substring(0, 100),
-            urgency: validatedInput.urgency,
-            hasContext: !!validatedInput.context,
-          });
-        } catch (error) {
-          if (error instanceof ValidationError) {
-            logValidationError("Harvey Specter", error.field, error.message, error.receivedValue);
+          // 1. Validação de inputs
+          const validatedInput = validateHarveyInput(state.data || {});
 
-            const errorMsg = formatErrorMessage("ValidationError", error.message, {
-              task: state.data?.task as string | undefined,
-              step: "input_validation",
-            });
+          span?.setAttribute("harvey.task", validatedInput.task.substring(0, 100));
+          span?.setAttribute("harvey.urgency", validatedInput.urgency || "medium");
 
-            return this.addAgentMessage(
-              updateState(current, {
-                currentStep: "harvey:validation_error",
-                completed: false,
-                error: error.message,
-              }),
-              errorMsg
-            );
-          }
-          throw error;
-        }
+          // 2. Análise (Generation)
+          current = updateState(current, { currentStep: "harvey:analyze" });
 
-        const { task, processNumber, context, urgency } = validatedInput;
+          const userPrompt = generateAnalysisPrompt(validatedInput.task, validatedInput.urgency);
 
-        span?.setAttribute("harvey.task", task.substring(0, 200));
-        span?.setAttribute("harvey.urgency", urgency);
-        if (processNumber) span?.setAttribute("harvey.process_number", processNumber);
-
-        // ✅ MELHORIA 2: Usar templates separados
-        const systemPrompt = HARVEY_SYSTEM_PROMPT;
-        const analysisPrompt =
-          generateAnalysisPrompt(task, context, processNumber) +
-          generateUrgencyPrompt(urgency || "medium");
-
-        // ✅ MELHORIA 3: Error handling estruturado
-        try {
-          logAgentExecution("Harvey Specter", "calling_gemini", {
-            promptLength: analysisPrompt.length,
-          });
-
-          const response = await callGemini(systemPrompt + "\n\n" + analysisPrompt, {
-            temperature: 0.6,
+          const response = await callGemini(userPrompt, {
+            temperature: 0.7,
             maxOutputTokens: 4096,
+            systemInstruction: HARVEY_SYSTEM_PROMPT,
           });
 
           if (response.error) {
-            logStructuredError("Harvey Specter", "GeminiAPIError", response.error, {
-              task: task.substring(0, 100),
-              processNumber,
-            });
-
-            span?.setAttribute("gen_ai.error", response.error);
-            span?.setStatus({ code: 2, message: response.error });
-
-            const errorMsg = formatErrorMessage("GeminiAPIError", response.error, {
-              task,
-              processNumber,
-              step: "gemini_call",
-            });
-
-            return this.addAgentMessage(
-              updateState(current, {
-                currentStep: "harvey:error",
-                data: { ...current.data, error: response.error },
-                completed: false,
-              }),
-              errorMsg
-            );
+            throw new Error(response.error);
           }
 
           const result = response.text;
-          const tokensUsed = response.metadata?.totalTokens || 0;
-
-          logAgentExecution("Harvey Specter", "analysis_completed", {
-            responseLength: result.length,
-            tokensUsed,
-          });
-
-          span?.setAttribute("gen_ai.response.length", result.length);
-          span?.setAttribute("gen_ai.usage.total_tokens", tokensUsed);
-          span?.setStatus({ code: 1, message: "ok" });
 
           current = updateState(current, {
-            currentStep: "harvey:analysis_complete",
+            currentStep: "harvey:complete",
             data: {
               ...current.data,
               summary: result,
@@ -132,34 +65,34 @@ export class HarveyAgent extends LangGraphAgent {
             completed: true,
           });
 
+          span?.setStatus({ code: 1, message: "ok" });
           return this.addAgentMessage(current, result);
+
         } catch (error) {
-          // ✅ MELHORIA 2: Error handling estruturado seguindo padrão Google
           const errorType = error instanceof Error ? error.name : "UnknownError";
           const errorMessage = error instanceof Error ? error.message : String(error);
-          const errorStack = error instanceof Error ? error.stack : undefined;
 
-          logStructuredError("Harvey Specter", errorType, errorMessage, {
-            task: task.substring(0, 100),
-            processNumber,
-            currentStep: current.currentStep,
-            errorStack,
-          });
+          if (error instanceof ValidationError) {
+            logValidationError("Harvey Specter", error.field, error.message, error.receivedValue);
+          } else {
+            logStructuredError("Harvey Specter", errorType, errorMessage, {
+              task: (state.data?.task as string) || undefined,
+              step: current.currentStep,
+            });
+          }
 
-          span?.setAttribute("gen_ai.error", errorMessage);
-          span?.setStatus({ code: 2, message: "error" });
+          span?.setStatus({ code: 2, message: errorMessage });
 
           const errorMsg = formatErrorMessage(errorType, errorMessage, {
-            task,
-            processNumber,
+            task: state.data?.task,
             step: current.currentStep,
           });
 
           return this.addAgentMessage(
             updateState(current, {
               currentStep: "harvey:error",
-              data: { ...current.data, error: errorMessage },
               completed: false,
+              error: errorMessage,
             }),
             errorMsg
           );

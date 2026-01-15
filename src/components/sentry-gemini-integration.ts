@@ -306,7 +306,7 @@ export function withGeminiInstrumentation<TArgs extends unknown[], TReturn>(
  *
  * @example
  * ```ts
- * import { initGeminiIntegration } from '@/lib/sentry-gemini-integration';
+ * import { initGeminiIntegration } from '@/lib/sentry-gemini-integration.js';
  *
  * // Depois de Sentry.init()
  * initGeminiIntegration({

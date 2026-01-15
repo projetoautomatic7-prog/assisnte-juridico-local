@@ -1,22 +1,35 @@
 {
-  "sonarqube": {
-    "command": "docker",
-    "args": [
-      "run",
-      "-i",
-      "--rm",
-      "-e",
-      "SONARQUBE_TOKEN",
-      "-e",
-      "SONARQUBE_ORG",
-      "-e",
-      "TELEMETRY_DISABLED",
-      "mcp/sonarqube"
-    ],
-    "env": {
-      "SONARQUBE_TOKEN": "${env:SONARQUBE_TOKEN}",
-      "SONARQUBE_ORG": "portprojetoautomacao-debug",
-      "TELEMETRY_DISABLED": "true"
+  "mcpServers": {
+    "sonarqube": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "SONARQUBE_TOKEN",
+        "-e",
+        "SONARQUBE_ORG",
+        "-e",
+        "TELEMETRY_DISABLED",
+        "mcp/sonarqube"
+      ],
+      "env": {
+        "SONARQUBE_TOKEN": "${env:SONARQUBE_TOKEN}",
+        "SONARQUBE_ORG": "portprojetoautomacao-debug",
+        "TELEMETRY_DISABLED": "true"
+      }
+    },
+    "genkit": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "genkit",
+        "mcp"
+      ],
+      "env": {
+        "GENKIT_MODEL": "gemini-2.0-flash-exp"
+      }
     }
   }
 }

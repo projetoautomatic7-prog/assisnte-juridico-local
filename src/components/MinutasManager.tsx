@@ -675,7 +675,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
             </DialogTrigger>
 
             {/* ✅ Modal sem overflow-y-auto + scroll só no corpo */}
-            <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col bg-card p-0 overflow-hidden">
+            <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col bg-background border shadow-xl p-0 overflow-hidden">
               <div className="p-6 pb-3">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
@@ -746,7 +746,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                                   }
                                 >
                                   <SelectTrigger id="tipo">
-                                    <SelectValue placeholder="Selecione..." />
+                                    <SelectValue placeholder="Selecione o tipo" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="peticao">Petição</SelectItem>
@@ -771,7 +771,7 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                                   }
                                 >
                                   <SelectTrigger id="status">
-                                    <SelectValue placeholder="Selecione..." />
+                                    <SelectValue placeholder="Selecione o status" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="rascunho">Rascunho</SelectItem>

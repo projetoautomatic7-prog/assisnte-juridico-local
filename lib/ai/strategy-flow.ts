@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { AGENTS } from './agents-registry';
-import { AgentResponseSchema, ai } from './genkit';
-import { consultarProcessoPJe, registrarLogAgente } from './tools';
+import { AGENTS } from './agents-registry.js';
+import { AgentResponseSchema, ai } from './genkit.js';
+import { consultarProcessoPJe, registrarLogAgente } from './tools.js';
 
 /**
  * Fluxo de Estratégia Processual

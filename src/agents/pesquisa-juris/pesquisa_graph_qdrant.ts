@@ -28,10 +28,10 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
       collectionName: typeof qdrantCollection === "string" ? qdrantCollection : "legal_docs",
     };
 
-    this.qdrantService = createQdrantService(qdrantConfig);
+    this.qdrantService = createQdrantService(qdrantConfig)!;
 
     if (!this.qdrantService) {
-      throw new Error("[PesquisaJuris] Qdrant n�o configurado");
+      throw new Error("[PesquisaJuris] Qdrant não configurado");
     }
   }
 

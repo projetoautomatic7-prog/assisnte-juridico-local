@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ========================================
+    // FUNÇÕES AUXILIARES
+    // ========================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // 5MB
+    }
+    
+    function isValidDocument() {
+      return request.resource.contentType.matches('application/pdf') &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB
+    }
+    
+    // ========================================
+    // UPLOADS DE USUÁRIOS
+    // ========================================
+    
+    // Avatar do usuário
+    match /users/{userId}/avatar/{fileName} {
+      allow read: if true; // Avatares são públicos
+      allow write: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+    
+    // Documentos pessoais (privados)
+    match /users/{userId}/documents/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidDocument();
+      allow delete: if isOwner(userId);
+    }
+    
+    // ========================================
+    // DOCUMENTOS JURÍDICOS
+    // ========================================
+    
+    // Petições geradas
+    match /minutas/{userId}/{minutaId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidDocument();
+      allow delete: if isOwner(userId);
+    }
+    
+    // Anexos de processos
+    match /processos/{userId}/{processoId}/anexos/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && 
+                     (isValidDocument() || isValidImage());
+      allow delete: if isOwner(userId);
+    }
+    
+    // ========================================
+    // JURISPRUDÊNCIAS (PÚBLICAS)
+    // ========================================
+    match /jurisprudencias/pdfs/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Apenas via Cloud Functions
+    }
+    
+    // ========================================
+    // BACKUPS
+    // ========================================
+    match /backups/{userId}/{backupId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Apenas via Cloud Functions
+    }
+    
+    // ========================================
+    // BLOQUEIO PADRÃO
+    // ========================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

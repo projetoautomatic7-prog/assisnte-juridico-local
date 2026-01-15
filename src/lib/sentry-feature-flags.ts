@@ -35,7 +35,7 @@ export interface FeatureFlag {
  *
  * @example
  * ```typescript
- * import { addFeatureFlag } from '@/lib/sentry-feature-flags';
+ * import { addFeatureFlag } from '@/lib/sentry-feature-flags.js';
  *
  * // Registra uma avaliação de flag
  * addFeatureFlag('new-dashboard', true);
@@ -68,7 +68,7 @@ export function addFeatureFlag(
  *
  * @example
  * ```typescript
- * import { addFeatureFlags } from '@/lib/sentry-feature-flags';
+ * import { addFeatureFlags } from '@/lib/sentry-feature-flags.js';
  *
  * addFeatureFlags({
  *   'new-dashboard': true,
@@ -88,7 +88,7 @@ export function addFeatureFlags(flags: Record<string, FeatureFlagValue>): void {
  *
  * @example
  * ```typescript
- * import { removeFeatureFlag } from '@/lib/sentry-feature-flags';
+ * import { removeFeatureFlag } from '@/lib/sentry-feature-flags.js';
  *
  * removeFeatureFlag('temporary-flag');
  * ```
@@ -104,7 +104,7 @@ export function removeFeatureFlag(name: string): void {
  *
  * @example
  * ```typescript
- * import { clearFeatureFlags } from '@/lib/sentry-feature-flags';
+ * import { clearFeatureFlags } from '@/lib/sentry-feature-flags.js';
  *
  * clearFeatureFlags();
  * ```
@@ -122,7 +122,7 @@ export function clearFeatureFlags(): void {
  *
  * @example
  * ```tsx
- * import { useFeatureFlag } from '@/lib/sentry-feature-flags';
+ * import { useFeatureFlag } from '@/lib/sentry-feature-flags.js';
  *
  * function MyComponent() {
  *   const isNewDashboard = useFeatureFlag('new-dashboard', true);
@@ -156,7 +156,7 @@ import React from "react";
  *
  * @example
  * ```typescript
- * import { trackLaunchDarklyFlag } from '@/lib/sentry-feature-flags';
+ * import { trackLaunchDarklyFlag } from '@/lib/sentry-feature-flags.js';
  * import { useLDClient } from 'launchdarkly-react-client-sdk';
  *
  * function MyComponent() {
@@ -178,7 +178,7 @@ export function trackLaunchDarklyFlag(name: string, value: FeatureFlagValue): vo
  *
  * @example
  * ```typescript
- * import { trackStatsigGate } from '@/lib/sentry-feature-flags';
+ * import { trackStatsigGate } from '@/lib/sentry-feature-flags.js';
  * import { useGate } from 'statsig-react';
  *
  * function MyComponent() {
@@ -199,7 +199,7 @@ export function trackStatsigGate(name: string, value: boolean): void {
  *
  * @example
  * ```typescript
- * import { trackUnleashFlag } from '@/lib/sentry-feature-flags';
+ * import { trackUnleashFlag } from '@/lib/sentry-feature-flags.js';
  * import { useFlag } from '@unleash/proxy-client-react';
  *
  * function MyComponent() {
@@ -220,7 +220,7 @@ export function trackUnleashFlag(name: string, value: boolean): void {
  *
  * @example
  * ```typescript
- * import { withFeatureFlag } from '@/lib/sentry-feature-flags';
+ * import { withFeatureFlag } from '@/lib/sentry-feature-flags.js';
  *
  * const processWithFlag = withFeatureFlag(
  *   'experimental-processing',

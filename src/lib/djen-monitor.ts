@@ -17,7 +17,7 @@
  *
  * @example
  * ```typescript
- * import { runDJENDailyMonitor, syncDJENForLawyer } from '@/lib/djen-monitor'
+ * import { runDJENDailyMonitor, syncDJENForLawyer } from '@/lib/djen-monitor.js'
  *
  * // Execução diária via cron
  * const result = await runDJENDailyMonitor()

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ai, qdrantRetriever } from './genkit';
-import { indexDocumentFlow } from './rag-flow';
+import { ai, qdrantRetriever } from './genkit.js';
+import { indexDocumentFlow } from './rag-flow.js';
 import { GenkitError } from 'genkit/beta';
 import { logger } from 'genkit/logging';
 
@@ -213,7 +213,6 @@ export const processarPDF = ai.defineTool(
     try {
       // 1. Importar pdf-parse dinamicamente
       logger.debug('[PDF] Carregando biblioteca pdf-parse');
-      const pdfParse = (await import('pdf-parse')).default;
       
       // 2. Baixar ou ler o PDF
       let pdfBuffer: Buffer;
@@ -261,7 +260,9 @@ export const processarPDF = ai.defineTool(
       try {
         logger.debug('[PDF] Iniciando extração de texto');
         const extractStart = Date.now();
-        const pdfData = await pdfParse(pdfBuffer);
+        const pdfParseModule = await import('pdf-parse') as any;
+        const pdfParseFn = pdfParseModule.default || pdfParseModule;
+        const pdfData = await pdfParseFn(pdfBuffer);
         const extractDuration = Date.now() - extractStart;
         
         extractedText = pdfData.text;
@@ -312,16 +313,16 @@ export const processarPDF = ai.defineTool(
       
       const totalDuration = Date.now() - startTime;
       logger.info('[PDF] Processamento de PDF concluído', {
-        success: result.success,
-        chunksIndexed: result.chunksIndexed,
+        success: (result as any).success,
+        chunksIndexed: (result as any).chunksIndexed,
         totalDurationMs: totalDuration,
         numeroProcesso: input.numeroProcesso,
       });
       
       return {
-        success: result.success,
+        success: (result as any).success,
         extractedText: extractedText.substring(0, 500) + '...', // Retorna amostra
-        chunksIndexed: result.chunksIndexed,
+        chunksIndexed: (result as any).chunksIndexed,
       };
       
     } catch (error) {

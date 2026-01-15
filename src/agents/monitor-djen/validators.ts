@@ -1,3 +1,4 @@
+
 /**
  * Validação de inputs para o agente Monitor DJEN
  * Baseado no padrão Google Agent Starter Pack
@@ -41,14 +42,6 @@ const VALID_COURTS = [
  * @param data - Dados recebidos do usuário
  * @returns Inputs validados e normalizados
  * @throws {ValidationError} Se validação falhar
- *
- * @example
- * ```typescript
- * const validated = validateMonitorDJENInput({
- *   lawyerOAB: "MG 184404",
- *   courts: ["STF", "STJ"]
- * });
- * ```
  */
 // Helper: Validar OAB
 function validateLawyerOAB(lawyerOAB: unknown): void {

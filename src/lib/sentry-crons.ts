@@ -88,7 +88,7 @@ export interface CaptureCheckinOptions {
  *
  * @example
  * ```typescript
- * import { captureCheckin, MonitorStatus } from '@/lib/sentry-crons';
+ * import { captureCheckin, MonitorStatus } from '@/lib/sentry-crons.js';
  *
  * // Inicia o job
  * const checkInId = captureCheckin({
@@ -164,7 +164,7 @@ export function captureCheckin(options: CaptureCheckinOptions): string {
  *
  * @example
  * ```typescript
- * import { monitorCron } from '@/lib/sentry-crons';
+ * import { monitorCron } from '@/lib/sentry-crons.js';
  *
  * const syncDJEN = monitorCron(
  *   'djen-sync',
@@ -235,7 +235,7 @@ export function monitorCron<T extends (...args: any[]) => Promise<any>>(
  *
  * @example
  * ```typescript
- * import { withCronMonitor, MonitorStatus } from '@/lib/sentry-crons';
+ * import { withCronMonitor, MonitorStatus } from '@/lib/sentry-crons.js';
  *
  * await withCronMonitor('backup-job', async (reportStatus) => {
  *   try {

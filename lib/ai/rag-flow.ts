@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ai } from './genkit';
+import { ai } from './genkit.js';
 import { chunk } from 'llm-chunk';
 import { Document } from 'genkit/retriever';
 import { GenkitError } from 'genkit/beta';
@@ -77,12 +77,15 @@ export const indexDocumentFlow = ai.defineFlow(
         logger.debug(`[RAG] Processando chunk ${index + 1}/${chunks.length}`, {
           chunkSize: text.length,
         });
-        return Document.fromText(text, { 
-          ...input.metadata,
-          chunkIndex: index,
-          totalChunks: chunks.length,
-          indexedAt: new Date().toISOString() 
-        });
+        return {
+          text,
+          metadata: {
+            ...input.metadata,
+            chunkIndex: index,
+            totalChunks: chunks.length,
+            indexedAt: new Date().toISOString() 
+          }
+        };
       });
 
       // 4. Indexação no Qdrant via API existente
@@ -100,8 +103,8 @@ export const indexDocumentFlow = ai.defineFlow(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              content: doc.text(),
-              metadata: doc.metadata,
+              content: doc.text,
+              metadata: doc.metadata || {},
             }),
           });
 
@@ -109,14 +112,14 @@ export const indexDocumentFlow = ai.defineFlow(
             logger.error('[RAG] Erro HTTP ao indexar chunk', {
               status: response.status,
               statusText: response.statusText,
-              chunkIndex: doc.metadata.chunkIndex,
+              chunkIndex: doc.metadata?.chunkIndex,
             });
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
           indexedCount++;
           logger.debug(`[RAG] Chunk indexado com sucesso`, {
-            chunkIndex: doc.metadata.chunkIndex,
+            chunkIndex: doc.metadata?.chunkIndex,
             progress: `${indexedCount}/${documents.length}`,
           });
         } catch (error) {

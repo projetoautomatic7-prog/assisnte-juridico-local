@@ -3,7 +3,8 @@
 // Baseado em best practices 2024/2025: LangChain, AutoGen, ReAct pattern
 // Motor reutilizável e observável para TODOS os agentes
 
-import type { GlobalToolContext } from "./tools";
+// import type { GlobalToolContext } from "./tools";
+type GlobalToolContext = any;
 
 export type Role = "system" | "user" | "assistant";
 

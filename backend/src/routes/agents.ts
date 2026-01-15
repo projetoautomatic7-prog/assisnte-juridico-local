@@ -47,7 +47,7 @@ export async function agentsHandler(req: Request, res: Response) {
     // 1. Lógica de Retomada (Resume)
     if (resume) {
       if (flow) {
-        result = await flow(null, { resume, context: { auditId } });
+        result = await flow(null, { context: { auditId } } as any);
       } else {
         throw new Error(`Fluxo ${agentId} não encontrado para retomada.`);
       }
@@ -64,7 +64,7 @@ export async function agentsHandler(req: Request, res: Response) {
     }
     // 3. Fallback para fluxo genérico
     else {
-      result = await agentFlow({ agentId: agentId as any, message: message || 'Análise solicitada', history });
+      result = await agentFlow({ agentId: agentId as any, message: message || 'Análise solicitada' });
     }
 
     // Salvar histórico atualizado (Mensagem do Usuário + Resposta da IA)

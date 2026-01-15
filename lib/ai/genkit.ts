@@ -1,8 +1,7 @@
+import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { Redis } from '@upstash/redis';
 import { createMcpHost } from '@genkit-ai/mcp';
-import { genkit } from 'genkit/beta'; // Usando beta para suporte a Chat/Sessions
-import { devLocalStateStore } from 'genkit/dev';
 import { z } from 'zod';
 
 export const redis = new Redis({
@@ -90,7 +89,6 @@ export const upstashSessionStore = {
 export const ai = genkit({
   plugins: [googleAI()],
   model: process.env.GEMINI_MODEL || process.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash',
-  stateStore: (process.env.NODE_ENV === 'production' && isRedisConfigured) ? upstashStateStore : devLocalStateStore(),
 });
 
 /**
@@ -159,14 +157,14 @@ export const searchDjenTool = ai.defineTool(
     }
 
     // Exemplo de Interrupção: Se não houver data, pede confirmação
-    if (!input.dataDesde && resumed?.confirmado !== true) {
+    if (!input.dataDesde && (resumed as any)?.confirmado !== true) {
       interrupt({
         question: "Você não definiu uma data inicial. A busca no DJEN pode retornar muitos resultados. Deseja continuar mesmo assim?",
         metadata: { numeroProcesso: input.numeroProcesso }
       });
     }
 
-    if (resumed?.confirmado === false) {
+    if ((resumed as any)?.confirmado === false) {
       return { total: 0, message: "Busca cancelada pelo usuário." };
     }
 
@@ -184,14 +182,16 @@ export const searchDjenTool = ai.defineTool(
 );
 
 // Interrupção para intervenção humana (Human-in-the-loop)
-export const askLawyer = ai.defineInterrupt(
-  {
-    name: 'askLawyer',
-    description: 'Solicita esclarecimento ou aprovação do advogado humano.',
-    inputSchema: z.object({ question: z.string(), context: z.string().optional() }),
-    outputSchema: z.string(),
-  },
-);
+// defineInterrupt não está mais disponível na nova API
+// export const askLawyer = ai.defineInterrupt(
+//   {
+//     name: 'askLawyer',
+//     description: 'Solicita esclarecimento ou aprovação do advogado humano.',
+//     inputSchema: z.object({ question: z.string(), context: z.string().optional() }),
+//     outputSchema: z.string(),
+//   },
+// );
+export const askLawyer: any = null;
 
 // Schema compartilhado para respostas dos agentes
 export const AgentResponseSchema = z.object({

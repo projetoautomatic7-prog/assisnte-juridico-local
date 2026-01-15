@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Backend API para Assistente Jurídico PJe - Protege chaves Spark",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "dist/backend/src/server.js",
   "scripts": {
     "dev": "tsx watch --tsconfig ../tsconfig.json src/server.ts",
     "db:init": "tsx --tsconfig ../tsconfig.json src/db/init.ts",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
+    "start": "node dist/backend/src/server.js",
     "test": "echo \"Tests not configured yet\" && exit 0"
   },
   "keywords": [

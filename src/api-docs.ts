@@ -101,7 +101,7 @@ export type UseAIStreaming = ReturnType<typeof import("./hooks/use-ai-streaming"
  *
  * @example
  * ```typescript
- * import { consultarDJENForLawyer } from '@/lib/api/djen-client';
+ * import { consultarDJENForLawyer } from '@/lib/api/djen-client.js';
  *
  * const { resultados, erros } = await consultarDJENForLawyer(
  *   ['TJMG', 'TRT3'],
@@ -173,7 +173,7 @@ export type UseAIStreaming = ReturnType<typeof import("./hooks/use-ai-streaming"
  *
  * @example
  * ```typescript
- * import { captureException, setUserContext } from '@/lib/monitoring';
+ * import { captureException, setUserContext } from '@/lib/monitoring.js';
  *
  * // Ap�s login
  * setUserContext({ id: user.id, email: user.email, role: 'advogado' });

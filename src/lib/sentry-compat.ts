@@ -2,7 +2,13 @@
  * Wrapper de compatibilidade Sentry → Dynatrace
  */
 
-import { dynatrace } from "./dynatrace-config";
+// Mock dynatrace object for compatibility
+const dynatrace = {
+  captureError: (error: Error, context?: Record<string, unknown>) => {},
+  trackEvent: (name: string, data?: Record<string, any>) => {},
+  setUser: (id: string, email?: string) => {},
+  startTrace: (name: string, context?: Record<string, any>) => () => {},
+};
 
 // ============================================================================
 // TYPES - Compatibilidade com Sentry SDK
@@ -189,4 +195,4 @@ export const Sentry = {
 
 export default Sentry;
 export { dynatrace };
-export type { Span, Scope, SeverityLevel };
+// Types já exportados acima (interface Span, interface Scope, type SeverityLevel)

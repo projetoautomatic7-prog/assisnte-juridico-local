@@ -6,7 +6,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { traceAgentExecution, traceLLMCall, isDynatraceActive } from '../dynatrace.js';
+import { traceAgentExecution, isDynatraceActive } from '../dynatrace.js';
 
 /**
  * Middleware que adiciona contexto de agentes aos traces
@@ -83,17 +83,18 @@ export function dynatraceLLMMiddleware(req: Request, res: Response, next: NextFu
     totalTokens: req.body?.totalTokens,
   };
 
-  const tracer = traceLLMCall(String(model), provider, metadata);
+  // traceLLMCall não está mais disponível
+  // const tracer = traceLLMCall(String(model), provider, metadata);
 
   // Finalizar trace ao completar
   const originalSend = res.send;
   res.send = function (data) {
-    if (res.statusCode >= 400) {
-      const error = new Error(`LLM API Error ${res.statusCode}`);
-      tracer.error(error);
-    } else {
-      tracer.end();
-    }
+    // if (res.statusCode >= 400) {
+    //   const error = new Error(`LLM API Error ${res.statusCode}`);
+    //   tracer.error(error);
+    // } else {
+    //   tracer.end();
+    // }
 
     return originalSend.call(this, data);
   };

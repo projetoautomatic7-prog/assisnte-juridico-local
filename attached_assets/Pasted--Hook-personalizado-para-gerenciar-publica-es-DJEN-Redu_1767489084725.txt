@@ -90,7 +90,7 @@ function parseOAB(oab: string): { numero?: string; uf?: string } {
   return {};
 }
 
-async function fetchFromBackendProxy(
+async function fetchDirectlyFromBrowser(
   baseUrl: string,
   maxItems: number
 ): Promise<{
@@ -116,7 +116,7 @@ async function fetchFromBackendProxy(
     lawyers = DEFAULT_LAWYERS;
     localStorage.setItem("monitored-lawyers", JSON.stringify(DEFAULT_LAWYERS));
     console.log(
-      "[DJEN Proxy] Usando advogados padrão:",
+      "[DJEN Browser] Usando advogados padrão:",
       DEFAULT_LAWYERS.map((l) => l.name).join(", ")
     );
   }
@@ -136,49 +136,52 @@ async function fetchFromBackendProxy(
     const { numero, uf } = parseOAB(lawyer.oab);
 
     if (!numero) {
-      console.warn(`[DJEN Proxy] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
+      console.warn(`[DJEN Browser] Advogado ${lawyer.name}: OAB inválida - ${lawyer.oab}`);
       continue;
     }
 
     if (!uf) {
       console.warn(
-        `[DJEN Proxy] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
+        `[DJEN Browser] Advogado ${lawyer.name}: UF não especificada na OAB - ${lawyer.oab}`
       );
       continue;
     }
 
     try {
       const hoje = new Date().toISOString().split("T")[0];
-      const url = `${baseUrl}/api/djen/publicacoes?numeroOab=${numero}&ufOab=${uf}&dataInicio=${hoje}&dataFim=${hoje}`;
-      console.log(`[DJEN Proxy] Buscando via backend: ${url}`);
+      // URL direta da API do PJe (ComunicaAPI)
+      const url = `https://comunicaapi.pje.jus.br/api/v1/comunicacao?meio=D&numeroOab=${numero}&ufOab=${uf}&dataDisponibilizacaoInicio=${hoje}&dataDisponibilizacaoFim=${hoje}`;
+      console.log(`[DJEN Browser] Buscando direto: ${url}`);
 
       const response = await fetch(url);
       if (!response.ok) {
-        console.warn(`[DJEN Proxy] Erro HTTP ${response.status}`);
+        console.warn(`[DJEN Browser] Erro HTTP ${response.status}`);
         continue;
       }
 
       const data = await response.json();
+      // A API do PJe retorna um array diretamente ou dentro de items
+      const rawPublications = Array.isArray(data) ? data : (data.items || []);
 
-      if (data.success && Array.isArray(data.publicacoes)) {
-        const converted: DJENPublication[] = data.publicacoes.map((pub: Record<string, unknown>) => ({
-          id: (pub.id as string) || crypto.randomUUID(),
-          tribunal: pub.siglaTribunal as string,
-          data: pub.dataDisponibilizacao as string,
-          tipo: (pub.tipoComunicacao as string) || "Intimação",
-          teor: pub.texto as string,
-          numeroProcesso: pub.numeroProcesso as string,
-          orgao: pub.nomeOrgao as string,
+      if (Array.isArray(rawPublications)) {
+        const converted: DJENPublication[] = rawPublications.map((pub: any) => ({
+          id: (pub.id?.toString()) || crypto.randomUUID(),
+          tribunal: pub.siglaTribunal,
+          data: pub.dataDisponibilizacao,
+          tipo: pub.tipoComunicacao || "Intimação",
+          teor: pub.texto,
+          numeroProcesso: pub.numeroProcesso,
+          orgao: pub.nomeOrgao,
           lawyerName: lawyer.name,
           matchType: "oab" as const,
-          source: "DJEN-Proxy",
+          source: "DJEN-Browser",
           createdAt: new Date().toISOString(),
           notified: false,
         }));
         allPublications.push(...converted);
       }
     } catch (error) {
-      console.error(`[DJEN Proxy] Erro ao buscar para ${lawyer.name}:`, error);
+      console.error(`[DJEN Browser] Erro ao buscar para ${lawyer.name}:`, error);
     }
 
     if (enabledLawyers.length > 1) {
@@ -221,8 +224,8 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
         console.warn("[DJENWidget] Backend indisponível, tentando browser-direct:", backendError);
       }
 
-      console.log("[DJENWidget] Tentando busca via proxy backend...");
-      const browserResult = await fetchFromBackendProxy(baseUrl, maxItems);
+      console.log("[DJENWidget] Tentando busca direta via navegador...");
+      const browserResult = await fetchDirectlyFromBrowser(baseUrl, maxItems);
 
       if (browserResult.isGeoBlocked) {
         setIsGeoBlocked(true);

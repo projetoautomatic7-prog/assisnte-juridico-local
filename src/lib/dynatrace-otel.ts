@@ -9,7 +9,7 @@
  */
 
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
@@ -55,7 +55,7 @@ const config = loadConfig();
 // Resource (Service Identity)
 // ===========================
 
-const resource = new Resource({
+const resource = resourceFromAttributes({
   [SemanticResourceAttributes.SERVICE_NAME]: config.serviceName,
   [SemanticResourceAttributes.SERVICE_VERSION]: config.serviceVersion,
   [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: config.environment,
@@ -80,16 +80,15 @@ if (config.enabled) {
 
   tracerProvider = new NodeTracerProvider({
     resource,
+    spanProcessors: [
+      new BatchSpanProcessor(traceExporter, {
+        maxQueueSize: 1000,
+        scheduledDelayMillis: 5000,
+        exportTimeoutMillis: 30000,
+        maxExportBatchSize: 512,
+      })
+    ],
   });
-
-  tracerProvider.addSpanProcessor(
-    new BatchSpanProcessor(traceExporter, {
-      maxQueueSize: 1000,
-      scheduledDelayMillis: 5000,
-      exportTimeoutMillis: 30000,
-      maxExportBatchSize: 512,
-    })
-  );
 
   tracerProvider.register();
 

@@ -643,7 +643,7 @@ export function getGeminiIntegrationOptions(): GeminiIntegrationOptions {
  * @example
  * ```ts
  * import * as Sentry from '@sentry/react';
- * import { getGeminiIntegrationForSentry } from '@/lib/sentry-gemini-integration-v2';
+ * import { getGeminiIntegrationForSentry } from '@/lib/sentry-gemini-integration-v2.js';
  *
  * Sentry.init({
  *   dsn: "...",

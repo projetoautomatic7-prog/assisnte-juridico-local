@@ -1,33 +1,38 @@
-# Guia de Deploy - Sistema RAG no Firebase
+# Guia de Deploy Firebase - Assistente Jurídico
 
-Este guia explica como implantar o sistema RAG no Firebase Cloud Functions.
+Este guia explica como implantar o frontend no Firebase Hosting.
 
 ## 📋 Pré-requisitos
 
-- [ ] Projeto Firebase criado
-- [ ] Plano Blaze ativado (necessário para Cloud Functions)
-- [ ] Firebase CLI instalada (`npm install -g firebase-tools`)
-- [ ] Autenticação configurada no Firebase
-- [ ] App Check habilitado (recomendado)
+- [x] Projeto Firebase: `sonic-terminal-474321-s1`
+- [x] Firebase CLI instalada (`npm install -g firebase-tools`)
+- [ ] Login no Firebase (`firebase login`)
+- [ ] Build do projeto funcionando (`npm run build`)
 
-## 🚀 Passo a Passo
+## 🚀 Deploy Rápido
 
-### 1. Configurar Projeto Firebase
-
+### Opção 1: Script automatizado
 ```bash
-# Fazer login
-firebase login
+npm run firebase:deploy
+```
 
-# Ir para o diretório do projeto
-cd /home/user/assisnte-juridico-local
+### Opção 2: Deploy preview (teste)
+```bash
+npm run firebase:preview
+```
 
-# Inicializar Firebase (se ainda não foi feito)
-firebase init functions
+### Opção 3: Manual
+```bash
+npm run build
+firebase deploy --only hosting
+```
 
-# Selecionar:
-# - TypeScript
-# - ESLint (opcional)
-# - Instalar dependências
+## 📁 Arquivos Configurados
+
+- ✅ `firebase.json` - Configuração do hosting
+- ✅ `.firebaserc` - Projeto default
+- ✅ `.firebaseignore` - Exclusões do deploy
+- ✅ Scripts npm adicionados
 ```
 
 ### 2. Configurar Segredos (API Keys)

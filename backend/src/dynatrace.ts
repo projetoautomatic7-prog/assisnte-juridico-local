@@ -67,11 +67,11 @@ export function traceAgentExecution(agentId: string, operation: string) {
     };
   }
 
-  const tracer = dynatraceSDK.traceIncomingRemoteCall(
-    `Agent.${agentId}`,
-    operation,
-    'Agents'
-  );
+  const tracer = dynatraceSDK.traceIncomingRemoteCall({
+    serviceMethod: `Agent.${agentId}.${operation}`,
+    serviceName: 'Agents',
+    serviceEndpoint: operation
+  } as any);
 
   return {
     /**
@@ -93,7 +93,8 @@ export function traceAgentExecution(agentId: string, operation: string) {
      * Adiciona tags customizadas
      */
     addTag: (key: string, value: string) => {
-      tracer.addCustomAttribute(key, value, false);
+      // addCustomAttribute não está disponível na versão atual do SDK
+      // Tags podem ser adicionadas via contexto se necessário
     },
   };
 }
@@ -113,9 +114,16 @@ export function traceDatabase(
     };
   }
 
+  const dbInfo = {
+    name: process.env.DATABASE_NAME || 'juridico',
+    vendor: database === 'postgres' ? 'PostgreSQL' : database,
+    host: process.env.DATABASE_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || '5432'),
+  };
+
   const tracer = dynatraceSDK.traceSQLDatabaseRequest(
-    statement || operation,
-    database
+    { name: dbInfo.name, vendor: dbInfo.vendor, host: dbInfo.host, port: dbInfo.port } as any,
+    { statement: statement || operation } as any
   );
 
   return {

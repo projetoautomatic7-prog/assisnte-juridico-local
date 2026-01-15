@@ -1,0 +1,42 @@
+# Node modules
+node_modules/
+
+# Build files
+backend/
+src/
+api/
+
+# Config files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Tests
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts
+coverage/
+test-results/
+playwright-report/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation (optional)
+docs/
+*.md
+!README.md

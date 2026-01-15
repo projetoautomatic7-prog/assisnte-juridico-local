@@ -43,6 +43,8 @@ export interface GeminiConfig {
   maxOutputTokens?: number;
   /** Configuração de retry (opcional) */
   retryConfig?: Partial<RetryConfig>;
+  /** Instruções do sistema (opcional) - Define persona e regras globais */
+  systemInstruction?: string;
 }
 
 /** Parte de uma mensagem (texto simples) */
@@ -324,6 +326,11 @@ export async function callGemini(
                   parts: [{ text: prompt }],
                 },
               ],
+              ...(finalConfig.systemInstruction ? {
+                systemInstruction: {
+                  parts: [{ text: finalConfig.systemInstruction }]
+                }
+              } : {}),
               generationConfig: {
                 temperature: finalConfig.temperature,
                 maxOutputTokens: finalConfig.maxOutputTokens,

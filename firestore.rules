@@ -1,0 +1,185 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // FUNÇÕES AUXILIARES
+    // ========================================
+    
+    // Verifica se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verifica se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Verifica se o usuário tem permissão de admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Verifica se é um advogado verificado
+    function isVerifiedLawyer() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verified == true;
+    }
+    
+    // Validação de tamanho de string
+    function validString(field, minLen, maxLen) {
+      return field is string && 
+             field.size() >= minLen && 
+             field.size() <= maxLen;
+    }
+    
+    // ========================================
+    // COLEÇÃO: users
+    // ========================================
+    match /users/{userId} {
+      // Leitura: apenas o próprio usuário ou admin
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Criação: apenas o próprio usuário na primeira vez
+      allow create: if isOwner(userId) && 
+                      validString(request.resource.data.email, 5, 100) &&
+                      validString(request.resource.data.name, 2, 100);
+      
+      // Atualização: apenas o próprio usuário (campos limitados)
+      allow update: if isOwner(userId) && 
+                      !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['role', 'verified', 'createdAt']);
+      
+      // Exclusão: apenas admin
+      allow delete: if isAdmin();
+    }
+    
+    // ========================================
+    // COLEÇÃO: processos (dados jurídicos)
+    // ========================================
+    match /processos/{processoId} {
+      // Leitura: apenas o dono ou advogados verificados da mesma OAB
+      allow read: if isOwner(resource.data.userId) || isVerifiedLawyer();
+      
+      // Criação: apenas usuários autenticados
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      validString(request.resource.data.numeroProcesso, 5, 50);
+      
+      // Atualização: apenas o dono
+      allow update: if isOwner(resource.data.userId);
+      
+      // Exclusão: apenas o dono ou admin
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // ========================================
+    // COLEÇÃO: jurisprudencias (pesquisa vetorial)
+    // ========================================
+    match /jurisprudencias/{jurisprudenciaId} {
+      // Leitura: apenas advogados verificados
+      allow read: if isVerifiedLawyer();
+      
+      // Escrita: apenas sistema (via Cloud Functions)
+      allow write: if false;
+    }
+    
+    // ========================================
+    // COLEÇÃO: minutas (documentos gerados)
+    // ========================================
+    match /minutas/{minutaId} {
+      // Leitura: apenas o dono
+      allow read: if isOwner(resource.data.userId);
+      
+      // Criação: apenas o próprio usuário
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      validString(request.resource.data.titulo, 3, 200);
+      
+      // Atualização: apenas o dono
+      allow update: if isOwner(resource.data.userId);
+      
+      // Exclusão: apenas o dono
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // ========================================
+    // COLEÇÃO: prazos (gerenciamento de deadlines)
+    // ========================================
+    match /prazos/{prazoId} {
+      // Leitura: apenas o dono
+      allow read: if isOwner(resource.data.userId);
+      
+      // Criação: apenas o próprio usuário
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.dataVencimento is timestamp;
+      
+      // Atualização: apenas o dono
+      allow update: if isOwner(resource.data.userId);
+      
+      // Exclusão: apenas o dono
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // ========================================
+    // COLEÇÃO: agentes_logs (auditoria dos agentes)
+    // ========================================
+    match /agentes_logs/{logId} {
+      // Leitura: apenas admin ou o dono da sessão
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      
+      // Escrita: apenas sistema (via Cloud Functions)
+      allow write: if false;
+    }
+    
+    // ========================================
+    // COLEÇÃO: djen_publicacoes (diário eletrônico)
+    // ========================================
+    match /djen_publicacoes/{publicacaoId} {
+      // Leitura: apenas advogados verificados
+      allow read: if isVerifiedLawyer();
+      
+      // Escrita: apenas sistema (via Cloud Functions)
+      allow write: if false;
+    }
+    
+    // ========================================
+    // COLEÇÃO: rate_limits (controle de uso)
+    // ========================================
+    match /rate_limits/{userId} {
+      // Leitura: apenas o próprio usuário ou admin
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Escrita: apenas sistema (via Cloud Functions)
+      allow write: if false;
+    }
+    
+    // ========================================
+    // COLEÇÃO: feedback (melhorias do sistema)
+    // ========================================
+    match /feedback/{feedbackId} {
+      // Leitura: apenas admin
+      allow read: if isAdmin();
+      
+      // Criação: qualquer usuário autenticado
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      validString(request.resource.data.message, 10, 1000);
+      
+      // Atualização/Exclusão: apenas admin
+      allow update, delete: if isAdmin();
+    }
+    
+    // ========================================
+    // BLOQUEIO PADRÃO
+    // ========================================
+    // Qualquer coleção não listada acima é bloqueada por padrão
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

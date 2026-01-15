@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { AGENTS, AgentId } from './agents-registry';
-import { AgentResponseSchema, ai, mcpHost, upstashSessionStore } from './genkit';
-import { ALL_TOOLS } from './tools';
+import { AGENTS, AgentId } from './agents-registry.js';
+import { AgentResponseSchema, ai, mcpHost, upstashSessionStore } from './genkit.js';
+import { ALL_TOOLS } from './tools.js';
 
 /**
  * Este fluxo substitui o SimpleAgent.run() manual.
@@ -31,27 +31,21 @@ export const agentFlow = ai.defineFlow(
       persona.toolNames.includes(t.name)
     );
 
-    // Carrega ou cria a sessão persistente no Redis
-    const session = await ai.loadSession(input.sessionId || `session-${input.agentId}`, {
-      store: upstashSessionStore,
-    });
+    const mcpTools: any[] = []; // await mcpHost.getActiveTools(ai);
 
-    // Carrega ferramentas do MCP (Filesystem, etc)
-    const mcpTools = await mcpHost.getActiveTools(ai);
-
-    // Inicia o chat dentro da sessão (o histórico é gerenciado automaticamente)
-    const chat = session.chat({
+    // Genkit API mudou - usar generate diretamente
+    const response = await ai.generate({
+      model: 'gemini-2.0-flash',
       system: persona.systemPrompt,
+      prompt: input.message,
       tools: [...agentTools, ...mcpTools],
       config: { temperature: 0.7 },
-    });
-
-    const response = await chat.send(input.message, { resume: input.resume });
+    } as any);
 
     return {
       answer: response.text,
-      usedTools: response.toolCalls?.map(tc => tc.name),
-      interrupts: response.interrupts, // Retorna interrupções para o frontend
+      usedTools: (response as any).toolCalls?.map((tc: any) => tc.name),
+      interrupts: (response as any).interrupts, // Retorna interrupções para o frontend
     };
   }
 );

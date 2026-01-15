@@ -22,7 +22,7 @@
  *
  * @example
  * ```typescript
- * import { aiClient } from '@/lib/ai-providers'
+ * import { aiClient } from '@/lib/ai-providers.js'
  *
  * const result = await aiClient.chat(
  *   [
