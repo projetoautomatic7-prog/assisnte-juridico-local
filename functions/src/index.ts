@@ -21,6 +21,7 @@ export {
   djenScheduler09h,
   djenTriggerManual,
   djenStatus,
+  djenPublicacoes,
 } from "./djen-scheduler";
 
 setGlobalOptions({ maxInstances: 10 });

@@ -15,6 +15,7 @@
 | **Scheduler 09h** | (Cloud Scheduler) | Automático às 09:00 BRT |
 | **Trigger Manual** | `https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/djenTriggerManual` | Execução manual via HTTP |
 | **Status** | `https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/djenStatus` | Verifica configuração |
+| **Publicações (proxy)** | `https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/djenPublicacoes` | Proxy para o frontend |
 
 ---
 
@@ -32,13 +33,15 @@ firebase functions:secrets:set DJEN_OAB_UF
 
 firebase functions:secrets:set DJEN_ADVOGADO_NOME
 # Digite: Thiago Bodevan Veiga
+
+> Nota: As Functions v2 leem esses secrets via `defineSecret`. Variáveis em `.env` local não são usadas no deploy.
 ```
 
 ### **2. Fazer Deploy das Functions**
 
 ```bash
 # Deploy completo (todas as functions DJEN)
-firebase deploy --only functions:djenScheduler01h,functions:djenScheduler09h,functions:djenTriggerManual,functions:djenStatus
+firebase deploy --only functions:djenScheduler01h,functions:djenScheduler09h,functions:djenTriggerManual,functions:djenStatus,functions:djenPublicacoes
 
 # Ou deploy de tudo
 firebase deploy --only functions
@@ -69,6 +72,11 @@ fetch('https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/dj
 })
   .then(r => r.json())
   .then(console.log);
+```
+
+### **Opção 4: Proxy de Publicações**
+```bash
+curl "https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/djenPublicacoes?numeroOab=184404&ufOab=MG"
 ```
 
 ### **Opção 3: Verificar Status**

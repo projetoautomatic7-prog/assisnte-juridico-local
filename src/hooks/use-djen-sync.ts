@@ -18,9 +18,11 @@ export function useDJENSync() {
 
   const executeSync = async (): Promise<SyncResult> => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+    const triggerUrl = import.meta.env.VITE_DJEN_TRIGGER_URL || "";
+    const syncUrl = triggerUrl || (baseUrl ? `${baseUrl}/api/djen-sync` : "/api/djen/trigger-manual");
     let response;
     try {
-      response = await fetch(`${baseUrl}/api/djen-sync`, {
+      response = await fetch(syncUrl, {
         method: "POST",
       });
     } catch (error) {
@@ -58,9 +60,16 @@ export function useDJENSync() {
       };
     }
 
+    if (result.sucesso) {
+      return {
+        success: true,
+        newPublications: result.dados?.processadas || 0,
+      };
+    }
+
     return {
       success: false,
-      message: result.error || result.message || "Erro na sincronização",
+      message: result.error || result.message || result.mensagem || "Erro na sincronização",
     };
   };
 

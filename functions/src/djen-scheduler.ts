@@ -4,15 +4,25 @@
  */
 
 import * as logger from "firebase-functions/logger";
+import { defineSecret } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onRequest } from "firebase-functions/v2/https";
 
-// Configuração do advogado (use Firebase Config ou Secret Manager em produção)
-const ADVOGADO_CONFIG = {
-  numeroOab: process.env.DJEN_OAB_NUMERO || "184404",
-  ufOab: process.env.DJEN_OAB_UF || "MG",
-  nome: process.env.DJEN_ADVOGADO_NOME || "Thiago Bodevan Veiga",
-};
+const DJEN_OAB_NUMERO = defineSecret("DJEN_OAB_NUMERO");
+const DJEN_OAB_UF = defineSecret("DJEN_OAB_UF");
+const DJEN_ADVOGADO_NOME = defineSecret("DJEN_ADVOGADO_NOME");
+
+function resolveAdvogadoConfig() {
+  const numeroOab = DJEN_OAB_NUMERO.value() || process.env.DJEN_OAB_NUMERO || "";
+  const ufOab = DJEN_OAB_UF.value() || process.env.DJEN_OAB_UF || "";
+  const nome = DJEN_ADVOGADO_NOME.value() || process.env.DJEN_ADVOGADO_NOME || "";
+
+  return {
+    numeroOab,
+    ufOab,
+    nome,
+  };
+}
 
 interface DJENPublicacao {
   id: string;
@@ -30,14 +40,15 @@ interface DJENPublicacao {
 async function buscarPublicacoesDJEN(
   numeroOab: string,
   ufOab: string,
-  dataInicio: string
+  dataInicio: string,
+  dataFim?: string
 ): Promise<DJENPublicacao[]> {
   const url = new URL("https://comunicaapi.pje.jus.br/api/v1/comunicacao");
   url.searchParams.set("numeroOab", numeroOab);
   url.searchParams.set("ufOab", ufOab);
   url.searchParams.set("meio", "D"); // D=Diário
   url.searchParams.set("dataDisponibilizacaoInicio", dataInicio);
-  url.searchParams.set("dataDisponibilizacaoFim", dataInicio);
+  url.searchParams.set("dataDisponibilizacaoFim", dataFim || dataInicio);
 
   logger.info(`[DJEN] Consultando API CNJ: ${url.toString()}`);
 
@@ -45,7 +56,7 @@ async function buscarPublicacoesDJEN(
     method: "GET",
     headers: {
       Accept: "application/json",
-      "User-Agent": "Assistente-Juridico-Firebase/1.0",
+      "User-Agent": "PJe-DataCollector/1.0",
     },
   });
 
@@ -60,14 +71,20 @@ async function buscarPublicacoesDJEN(
   }
 
   const data = await response.json();
-  const publicacoes: DJENPublicacao[] = (data.items || []).map((item: any) => ({
-    id: item.id || item.numeroComunicacao || `${Date.now()}`,
-    siglaTribunal: item.siglaTribunal || "",
-    tipoComunicacao: item.tipoComunicacao || "",
-    numeroProcesso: item.numero_processo || item.numeroProcesso || "",
-    texto: item.texto || "",
-    dataDisponibilizacao: item.data_disponibilizacao || item.dataDisponibilizacao || "",
-    nomeOrgao: item.nomeOrgao || "",
+  const items = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
+  const publicacoes: DJENPublicacao[] = items.map((item: any) => ({
+    id:
+      item.idExpediente ||
+      item.id ||
+      item.numeroComunicacao ||
+      `${item.numeroProcesso || item.numero_processo || "djen"}-${Date.now()}`,
+    siglaTribunal: item.siglaTribunal || item.sigla_tribunal || "",
+    tipoComunicacao: item.tipoComunicacao || item.tipo_comunicacao || "",
+    numeroProcesso: item.numeroProcesso || item.numero_processo || "",
+    texto: item.teor || item.texto || item.inteiroTeor || item.inteiro_teor || "",
+    dataDisponibilizacao:
+      item.dataDisponibilizacao || item.data_disponibilizacao || new Date().toISOString(),
+    nomeOrgao: item.nomeOrgao || item.nome_orgao || "",
   }));
 
   logger.info(`[DJEN] ${publicacoes.length} publicações encontradas`);
@@ -85,13 +102,20 @@ async function processarPublicacoes(): Promise<{
 }> {
   const dataHoje = new Date().toISOString().split("T")[0];
   
+  const advogadoConfig = resolveAdvogadoConfig();
+  if (!advogadoConfig.numeroOab || !advogadoConfig.ufOab) {
+    throw new Error("DJEN_OAB_NUMERO e DJEN_OAB_UF precisam estar configurados.");
+  }
+
   logger.info(`[DJEN] Iniciando processamento - ${dataHoje}`);
-  logger.info(`[DJEN] Advogado: ${ADVOGADO_CONFIG.nome} (OAB/${ADVOGADO_CONFIG.ufOab} ${ADVOGADO_CONFIG.numeroOab})`);
+  logger.info(
+    `[DJEN] Advogado: ${advogadoConfig.nome || "Nao informado"} (OAB/${advogadoConfig.ufOab} ${advogadoConfig.numeroOab})`
+  );
 
   try {
     const publicacoes = await buscarPublicacoesDJEN(
-      ADVOGADO_CONFIG.numeroOab,
-      ADVOGADO_CONFIG.ufOab,
+      advogadoConfig.numeroOab,
+      advogadoConfig.ufOab,
       dataHoje
     );
 
@@ -147,6 +171,7 @@ export const djenScheduler01h = onSchedule(
     schedule: "0 1 * * *", // Diariamente às 01:00
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1", // 🌍 Importante: usar região Brasil
+    secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
   },
   async (event) => {
     logger.info("[DJEN Scheduler 01h] Iniciando execução automática");
@@ -165,6 +190,7 @@ export const djenScheduler09h = onSchedule(
     schedule: "0 9 * * *", // Diariamente às 09:00
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
+    secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
   },
   async (event) => {
     logger.info("[DJEN Scheduler 09h] Iniciando execução automática");
@@ -189,6 +215,7 @@ export const djenTriggerManual = onRequest(
     cors: true,
     region: "southamerica-east1",
     maxInstances: 1, // Evitar múltiplas execuções simultâneas
+    secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
   },
   async (req, res) => {
     logger.info("[DJEN Manual] Execução manual solicitada");
@@ -219,17 +246,63 @@ export const djenStatus = onRequest(
   {
     cors: true,
     region: "southamerica-east1",
+    secrets: [DJEN_OAB_NUMERO, DJEN_OAB_UF, DJEN_ADVOGADO_NOME],
   },
   async (req, res) => {
+    const advogadoConfig = resolveAdvogadoConfig();
     res.status(200).json({
       status: "ativo",
       timezone: "America/Sao_Paulo",
       horarios: ["01:00", "09:00"],
       advogadoPadrao: {
-        nome: ADVOGADO_CONFIG.nome,
-        oab: `${ADVOGADO_CONFIG.numeroOab}/${ADVOGADO_CONFIG.ufOab}`,
+        nome: advogadoConfig.nome || "Nao informado",
+        oab: `${advogadoConfig.numeroOab}/${advogadoConfig.ufOab}`,
       },
       region: "southamerica-east1 (Brasil)",
     });
+  }
+);
+
+/**
+ * 🔎 PUBLICACOES (proxy para o frontend)
+ * Acesse: https://southamerica-east1-sonic-terminal-474321-s1.cloudfunctions.net/djenPublicacoes
+ */
+export const djenPublicacoes = onRequest(
+  {
+    cors: true,
+    region: "southamerica-east1",
+  },
+  async (req, res) => {
+    try {
+      const numeroOab = String(req.query.numeroOab || "");
+      const ufOab = String(req.query.ufOab || "");
+      if (!numeroOab || !ufOab) {
+        res.status(400).json({
+          success: false,
+          error: "Parâmetros numeroOab e ufOab são obrigatórios",
+        });
+        return;
+      }
+
+      const hoje = new Date().toISOString().split("T")[0];
+      const dataInicio = String(req.query.dataInicio || hoje);
+      const dataFim = String(req.query.dataFim || dataInicio);
+
+      const publicacoes = await buscarPublicacoesDJEN(numeroOab, ufOab, dataInicio, dataFim);
+
+      res.status(200).json({
+        success: true,
+        publicacoes,
+        count: publicacoes.length,
+      });
+      return;
+    } catch (error: any) {
+      logger.error("[DJEN Publicacoes] Erro:", error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || "Erro ao consultar DJEN",
+      });
+      return;
+    }
   }
 );

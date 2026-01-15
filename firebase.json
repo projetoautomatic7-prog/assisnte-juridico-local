@@ -39,6 +39,18 @@
     ],
     "rewrites": [
       {
+        "source": "/api/djen/publicacoes",
+        "function": "djenPublicacoes"
+      },
+      {
+        "source": "/api/djen/trigger-manual",
+        "function": "djenTriggerManual"
+      },
+      {
+        "source": "/api/djen/status",
+        "function": "djenStatus"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
