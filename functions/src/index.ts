@@ -10,10 +10,10 @@
 import * as logger from "firebase-functions/logger";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onRequest } from "firebase-functions/v2/https";
-import { AGENTS } from "./lib/ai/agents-registry";
-import { InMemoryMemoryStore, SimpleAgent } from "./lib/ai/core-agent";
-import { HttpLlmClient } from "./lib/ai/http-llm-client";
-import { ALL_TOOLS, GlobalToolContext } from "./lib/ai/tools";
+import { AGENTS } from "./agents-registry";
+import { InMemoryMemoryStore, SimpleAgent } from "./core-agent";
+import { HttpLlmClient } from "./http-llm-client";
+import { AGENT_TOOLS, GlobalToolContext } from "./tools";
 
 // DJEN Scheduler - Importar funções
 export {
@@ -53,7 +53,7 @@ export const agents = onRequest({ cors: true }, async (req, res) => {
 
     const agent = new SimpleAgent({
       llm,
-      tools: ALL_TOOLS,
+      tools: AGENT_TOOLS,
       persona,
       toolContext: ctx,
       sessionId: sessionId || `session-${agentId}`,

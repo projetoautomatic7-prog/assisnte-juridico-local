@@ -5,15 +5,17 @@
  * com autenticação, autorização e App Check.
  */
 
-import { onCallGenkit, hasClaim } from 'firebase-functions/https';
-import { defineSecret } from 'firebase-functions/params';
-import { indexDocumentFlow } from '../lib/ai/rag-flow';
-import { processarPDF } from '../lib/ai/tools';
+import { onCallGenkit, hasClaim } from "firebase-functions/v2/https";
+import { defineSecret } from "firebase-functions/params";
+import { indexDocumentFlow } from "./rag-flow.js";
+import { processarPDF } from "./tools.js";
+import { ai, qdrantRetriever } from "./genkit.js";
+import { z } from "zod";
 
 // Definir segredos necessários
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
-const qdrantUrl = defineSecret('QDRANT_URL');
-const qdrantApiKey = defineSecret('QDRANT_API_KEY');
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
+const qdrantUrl = defineSecret("QDRANT_URL");
+const qdrantApiKey = defineSecret("QDRANT_API_KEY");
 
 /**
  * Cloud Function: Indexar Documento
@@ -29,17 +31,17 @@ export const indexDocument = onCallGenkit(
     secrets: [geminiApiKey, qdrantUrl, qdrantApiKey],
     
     // Política de autorização: usuário deve ter email verificado
-    authPolicy: hasClaim('email_verified'),
+    authPolicy: hasClaim("email_verified"),
     
     // Enforce App Check para segurança adicional
     enforceAppCheck: true,
     consumeAppCheckToken: true, // Token único por chamada
     
     // CORS (opcional - ajuste conforme necessário)
-    cors: ['https://seu-dominio.com'],
+    cors: ["https://seu-dominio.com"],
     
     // Limites de recursos
-    memory: '512MB',
+    memory: "512MiB",
     timeoutSeconds: 300, // 5 minutos para documentos grandes
   },
   indexDocumentFlow
@@ -56,11 +58,11 @@ export const indexDocument = onCallGenkit(
 export const processPDF = onCallGenkit(
   {
     secrets: [geminiApiKey, qdrantUrl, qdrantApiKey],
-    authPolicy: hasClaim('email_verified'),
+    authPolicy: hasClaim("email_verified"),
     enforceAppCheck: true,
     consumeAppCheckToken: true,
-    cors: ['https://seu-dominio.com'],
-    memory: '1GB', // PDFs podem ser grandes
+    cors: ["https://seu-dominio.com"],
+    memory: "1GiB", // PDFs podem ser grandes
     timeoutSeconds: 540, // 9 minutos
   },
   processarPDF
@@ -73,18 +75,15 @@ export const processPDF = onCallGenkit(
  * 
  * @auth Requer usuário autenticado
  */
-import { ai, qdrantRetriever } from '../lib/ai/genkit';
-import { z } from 'zod';
-
 const searchQdrantFlow = ai.defineFlow(
   {
-    name: 'searchQdrant',
+    name: "searchQdrant",
     inputSchema: z.object({
       query: z.string().min(1),
       numeroProcesso: z.string().optional(),
       limit: z.number().optional().default(5),
     }),
-    outputSchema: z.array(z.any()),
+    outputSchema: z.array(z.unknown()),
   },
   async (input) => {
     const docs = await ai.retrieve({
@@ -105,10 +104,10 @@ const searchQdrantFlow = ai.defineFlow(
 export const searchQdrant = onCallGenkit(
   {
     secrets: [geminiApiKey, qdrantUrl, qdrantApiKey],
-    authPolicy: hasClaim('email_verified'),
+    authPolicy: hasClaim("email_verified"),
     enforceAppCheck: true,
-    cors: ['https://seu-dominio.com'],
-    memory: '256MB',
+    cors: ["https://seu-dominio.com"],
+    memory: "256MiB",
     timeoutSeconds: 60,
   },
   searchQdrantFlow
