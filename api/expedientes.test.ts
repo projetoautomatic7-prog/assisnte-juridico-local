@@ -28,9 +28,10 @@ describe('api/expedientes', () => {
     // Setup Redis mock
     redisGetMock = vi.fn();
     // Mock implementation of Redis constructor
-    (Redis as unknown as any).mockImplementation(() => ({
-      get: redisGetMock,
-    }));
+    (Redis as unknown as any).mockImplementation(function(this: any) {
+      this.get = redisGetMock;
+      return this;
+    });
 
     // Setup Request/Response mocks
     jsonMock = vi.fn();

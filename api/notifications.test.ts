@@ -20,10 +20,11 @@ describe('api/notifications', () => {
 
     redisGetMock = vi.fn();
     redisSetMock = vi.fn();
-    (Redis as unknown as any).mockImplementation(() => ({
-      get: redisGetMock,
-      set: redisSetMock,
-    }));
+    (Redis as unknown as any).mockImplementation(function(this: any) {
+      this.get = redisGetMock;
+      this.set = redisSetMock;
+      return this;
+    });
 
     jsonMock = vi.fn();
     statusMock = vi.fn().mockReturnValue({ json: jsonMock, end: vi.fn() });

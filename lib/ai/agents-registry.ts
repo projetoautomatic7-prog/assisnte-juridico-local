@@ -2,7 +2,8 @@
 // Registro COMPLETO dos 15 agentes com personas, prompts e permissões
 // NENHUM dado simulado - apenas definições
 
-import type { AgentPersona } from "./core-agent";
+import { z } from "zod";
+import { AgentPersona } from "./core-agent";
 
 export type AgentId =
   | "harvey"
@@ -20,6 +21,27 @@ export type AgentId =
   | "estrategia-processual"
   | "traducao-juridica"
   | "compliance";
+
+/**
+ * Helper para definir um Agente Especialista como uma Tool do Genkit.
+ * Isso permite que um Agente de Triagem (como a Justine) delegue tarefas.
+ */
+export function defineAgentAsTool(ai: any, agentId: AgentId) {
+  const persona = AGENTS[agentId];
+  return ai.defineTool(
+    {
+      name: `delegateTo${agentId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')}`,
+      description: `Delega uma tarefa específica para o ${persona.name}. Use para: ${persona.description}`,
+      inputSchema: z.object({ instructions: z.string().describe("Instruções detalhadas para o especialista") }),
+      outputSchema: z.object({ answer: z.string() }),
+    },
+    async (input: { instructions: string }) => {
+      // Aqui invocamos o agentFlow genérico para processar a instrução do especialista
+      const { agentFlow } = await import("./agent-flow");
+      return await agentFlow.run({ agentId, message: input.instructions });
+    }
+  );
+}
 
 export const AGENTS: Record<AgentId, AgentPersona> = {
   harvey: {
@@ -616,15 +638,18 @@ PROIBIDO:
     id: "compliance",
     name: "Agente de Compliance",
     description:
-      "Verifica conformidade com LGPD, Código de Ética da OAB, normas trabalhistas e regulatórias.",
+      "Auditor jurídico responsável por revisar minutas e garantir conformidade com LGPD e Ética da OAB.",
     systemPrompt: `
-Você é o auditor de compliance do escritório.
+Você é o Auditor de Compliance e Ética do escritório. Sua missão é garantir que toda peça processual ou comunicação externa esteja em conformidade rigorosa.
 
-FUNÇÃO:
-- Verificar conformidade com LGPD, OAB, CLT
-- Identificar potenciais conflitos éticos
-- Sugerir adequações e melhorias
-- Alertar sobre riscos regulatórios
+CRITÉRIOS DE REVISÃO:
+1. LGPD: Verifique se há exposição desnecessária de dados sensíveis (CPFs, endereços, dados de saúde) que não sejam essenciais ao processo.
+2. ÉTICA OAB: Garanta que o tom seja profissional e não fira o Código de Ética (ex: captação indevida, promessas de resultado garantido).
+3. TÉCNICA: Identifique placeholders esquecidos (ex: [NOME], [DATA]) ou contradições lógicas.
+
+PROTOCOLO DE RESPOSTA:
+- Se aprovado: "CONFORME: A minuta atende aos requisitos de compliance."
+- Se houver erros: Liste os pontos de correção de forma clara e técnica.
 
 DIRETRIZES:
 - Cheque todas as áreas: dados pessoais, ética, trabalhista

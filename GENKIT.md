@@ -2,18 +2,6 @@
 
 This document provides rules and examples for building with the Genkit API in Node.js.
 
-## Project-Specific Overrides (Assistente Juridico PJe)
-
-- Maintenance mode: prefer stability, bug fixes, and hardening; no new features unless explicitly requested.
-- No simulation anywhere: do not use stubs/mocks/fakes/dummy/synthetic data/test doubles in production or tests.
-- LGPD/PII: never weaken filters or sanitization; avoid leaking sensitive data to logs or LLMs.
-- Use existing project structure; do not enforce a single-file Genkit layout if the app already uses multiple files.
-- Environment variables only: use `GEMINI_API_KEY` (backend) and `VITE_GEMINI_API_KEY` / `VITE_GEMINI_MODEL` (frontend); do not hardcode models or keys.
-- Language rules: code identifiers in English; UI text and explanatory comments in PT-BR.
-- Existing AI agents: reuse the current agent set and routes (e.g., `/api/agents/*`); do not add new agents unless requested.
-  Known agents: harvey-specter, mrs-justine, monitor-djen, analise-documental, analise-risco, compliance, comunicacao-clientes,
-  estrategia-processual, financeiro, gestao-prazos, organizacao-arquivos, pesquisa-juris, redacao-peticoes, revisao-contratual, traducao-juridica.
-
 ## Important Guidelines:
 
 - ALWAYS refer to documentation when available. Genkit Documentation may be available through the Genkit MCP toolkit or through web search. You may skip documentation check if you don't have access to these tools.
@@ -28,7 +16,7 @@ NOTE: For the sake of brevity, the snippets below use the Google AI plugin, but 
 
 ## Best Practices
 
-1.  **Single File Structure**: Use a single `src/index.ts` file only for new projects. For existing projects, follow the current structure and do not force a single-file layout.
+1.  **Single File Structure**: All Genkit code, including plugin initialization, flows, and helpers, must be placed in a single `src/index.ts` file. This ensures all components are correctly registered with the Genkit runtime.
 
 2.  **Model Naming**: Always specify models using the model helper. Use string identifier if model helper is unavailable.
 
@@ -58,14 +46,14 @@ NOTE: For the sake of brevity, the snippets below use the Google AI plugin, but 
 export const basicInferenceFlow = ai.defineFlow(
   {
     name: 'basicInferenceFlow',
-    inputSchema: z.string().describe('Texto juridico real a ser resumido'),
-    outputSchema: z.string().describe('Resumo do texto juridico'),
+    inputSchema: z.string().describe('Topic for the model to write about'),
+    outputSchema: z.string().describe('The generated text response'),
   },
-  async (caseText) => {
+  async (topic) => {
     const response = await ai.generate({
       model: googleAI.model('gemini-2.5-pro'),
-      prompt: `Resuma o texto juridico real abaixo:\n\n${caseText}`,
-      config: { temperature: 0.2 },
+      prompt: `Write a short, creative paragraph about ${topic}.`,
+      config: { temperature: 0.8 },
     });
     return response.text;
   }
@@ -82,7 +70,7 @@ export const basicInferenceFlow = ai.defineFlow(
 
 ```ts
 const TextToSpeechInputSchema = z.object({
-  text: z.string().describe('Texto real e sanitizado para converter em audio.'),
+  text: z.string().describe('The text to convert to speech.'),
   voiceName: z
     .string()
     .optional()
@@ -177,7 +165,7 @@ export const imageGenerationFlow = ai.defineFlow(
     name: 'imageGenerationFlow',
     inputSchema: z
       .string()
-      .describe('Descricao baseada em conteudo real e anonimizados'),
+      .describe('A detailed description of the image to generate'),
     outputSchema: z.string().optional().describe('The generated image as URI'),
   },
   async (prompt) => {
@@ -210,7 +198,7 @@ export const videoGenerationFlow = ai.defineFlow(
     name: 'videoGenerationFlow',
     inputSchema: z
       .string()
-      .describe('Descricao baseada em conteudo real e autorizado'),
+      .describe('A detailed description for the video scene'),
     outputSchema: z.string().describe('Path to the generated .mp4 video file'),
   },
   async (prompt) => {

@@ -122,7 +122,37 @@ export async function strategicReview(baseContext: GlobalToolContext) {
 
   agentsMap.set('harvey', new SimpleAgent({
     llm: llmClient,
-    tools: ALLSTOOLS,
     tools: ALL_TOOLS,
     persona: harvey,
-    toolContext: baseCont
+    toolContext: baseContext,
+  }));
+  agentsMap.set('gestao-prazos', new SimpleAgent({
+    llm: llmClient,
+    tools: ALL_TOOLS,
+    persona: gestaoPrazos,
+    toolContext: baseContext,
+  }));
+
+  agentsMap.set('monitor-djen', new SimpleAgent({
+    llm: llmClient,
+    tools: ALL_TOOLS,
+    persona: monitorDjen,
+    toolContext: baseContext,
+  }));
+
+  const orchestrator = new AgentOrchestrator(agentsMap, 'sequential');
+
+  const tasks: AgentTask[] = [
+    { id: 'review-deadlines', assignedTo: 'gestao-prazos', input: 'Revisar prazos críticos', priority: 'high' },
+    { id: 'monitor-publications', assignedTo: 'monitor-djen', input: 'Verificar novas publicações', priority: 'high' },
+    { id: 'strategic-analysis', assignedTo: 'harvey', input: 'Análise estratégica geral', priority: 'medium' },
+  ];
+
+  const result = await orchestrator.orchestrate(tasks);
+
+  console.log('\n=== REVISÃO ESTRATÉGICA ===');
+  console.log(`Status: ${result.success ? 'SUCESSO' : 'FALHA'}`);
+  console.log(`Duração total: ${result.totalDuration}ms`);
+
+  return result;
+}

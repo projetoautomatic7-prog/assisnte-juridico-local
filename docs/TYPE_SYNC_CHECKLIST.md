@@ -123,9 +123,9 @@ export interface Minuta {
 
 5. **Testes**:
    ```bash
-   # Atualizar mocks
-   src/__tests__/mocks/process.mock.ts
-   
+   # Atualizar dados reais de teste (sem mocks)
+   # Use ambiente de teste com dados reais e sanitizados
+
    # Rodar testes
    npm run test:run -- src/hooks/use-processes.test.ts
    ```

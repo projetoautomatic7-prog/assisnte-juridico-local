@@ -94,33 +94,6 @@ export function traceAgentExecution(agentId: string, operation: string) {
      */
     addTag: (key: string, value: string) => {
       tracer.addCustomAttribute(key, value, false);
-
-  const url = provider === 'anthropic'
-    ? 'https://api.anthropic.com/v1/messages'
-    : 'https://generativelanguage.googleapis.com/v1beta/models';
-
-  const tracer = dynatraceSDK.traceOutgoingRemoteCall(
-    'POST',
-    url,
-    `LLM.${provider}`,
-    model
-  );
-
-  // Adicionar metadados como custom attributes
-  if (metadata?.agentId) {
-    tracer.addCustomAttribute('agent.id', metadata.agentId, false);
-  }
-  if (metadata?.totalTokens) {
-    tracer.addCustomAttribute('llm.tokens.total', metadata.totalTokens.toString(), false);
-  }
-
-  return {
-    end: () => {
-      tracer.end();
-    },
-    error: (error: Error) => {
-      tracer.error(error);
-      tracer.end();
     },
   };
 }

@@ -224,7 +224,7 @@ npm run test:all
 ## 🎓 Lições Aprendidas
 
 1. **Props Validation**: Sempre validar tipos e defaults
-2. **AI Integration**: Testar mocks de API e error handling
+2. **AI Integration**: Testar integracoes reais e error handling
 3. **Streaming**: Validar chunk accumulation e cleanup
 4. **Accessibility**: ARIA labels são críticas para UX
 5. **Snapshots**: Úteis para regressão visual
@@ -243,21 +243,8 @@ npm run test:all
 
 ## 📝 Notas Importantes
 
-### Mocks Necessários
-```typescript
-// AI Generation
-vi.fn().mockResolvedValue("Texto gerado")
-
-// Streaming
-vi.fn(async (prompt, callbacks) => {
-  callbacks.onChunk("Parte 1");
-  callbacks.onChunk("Parte 2");
-  callbacks.onComplete();
-})
-
-// Variáveis
-{ processo: "123", comarca: "SP" }
-```
+### Sem mocks
+Use integracoes reais em ambiente de teste, com dados sanitizados.
 
 ### Validações Críticas
 1. **onChange**: Deve ser chamado com conteúdo HTML

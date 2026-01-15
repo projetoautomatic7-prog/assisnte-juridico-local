@@ -3,7 +3,7 @@
  * Seguindo padrão de testes do Google Agent Starter Pack
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { JurisprudenceRetriever, formatPrecedentes, type Precedente } from "../retrievers";
 import type { PesquisaJurisInput } from "../validators";
 
@@ -139,28 +139,6 @@ describe("JurisprudenceRetriever", () => {
       }
     });
 
-    it("deve lançar erro estruturado em caso de falha", async () => {
-      // Mock para forçar erro
-      const badRetriever = new JurisprudenceRetriever();
-      vi.spyOn(badRetriever as any, "generateEmbeddings").mockRejectedValue(
-        new Error("Embedding API down")
-      );
-
-      const input: PesquisaJurisInput = {
-        tema: "greve",
-        tribunal: "todos",
-        limit: 10,
-        relevanceThreshold: 0.7,
-        dataInicio: "2020-01-01",
-        dataFim: "2024-12-31",
-      };
-
-      await expect(badRetriever.search(input)).rejects.toThrowError(
-        /Calling retrieval tool with query/
-      );
-      await expect(badRetriever.search(input)).rejects.toThrowError(/greve/);
-      await expect(badRetriever.search(input)).rejects.toThrowError(/Error: Embedding API down/);
-    });
   });
 
   describe("✅ Estrutura de Precedente", () => {

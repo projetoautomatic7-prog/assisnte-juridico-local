@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AGENTS, AgentId } from './agents-registry';
-import { AgentResponseSchema, ai } from './genkit';
+import { AgentResponseSchema, ai, mcpHost, upstashSessionStore } from './genkit';
 import { ALL_TOOLS } from './tools';
 
 /**
@@ -13,7 +13,8 @@ export const agentFlow = ai.defineFlow(
     inputSchema: z.object({
       agentId: z.string(),
       message: z.string(),
-      history: z.array(z.any()).optional()
+      sessionId: z.string().optional(),
+      resume: z.any().optional(), // Suporte para retomar interrupções
     }),
     outputSchema: AgentResponseSchema,
   },
@@ -30,18 +31,27 @@ export const agentFlow = ai.defineFlow(
       persona.toolNames.includes(t.name)
     );
 
-    const response = await ai.generate({
-      model: 'gemini-2.0-flash', // Ou gemini-2.0-pro para o Harvey
-      system: persona.systemPrompt, // ✅ SEU PROMPT PERSONALIZADO É MANTIDO AQUI
-      messages: input.history,
-      prompt: input.message,
-      tools: agentTools,
+    // Carrega ou cria a sessão persistente no Redis
+    const session = await ai.loadSession(input.sessionId || `session-${input.agentId}`, {
+      store: upstashSessionStore,
+    });
+
+    // Carrega ferramentas do MCP (Filesystem, etc)
+    const mcpTools = await mcpHost.getActiveTools(ai);
+
+    // Inicia o chat dentro da sessão (o histórico é gerenciado automaticamente)
+    const chat = session.chat({
+      system: persona.systemPrompt,
+      tools: [...agentTools, ...mcpTools],
       config: { temperature: 0.7 },
     });
+
+    const response = await chat.send(input.message, { resume: input.resume });
 
     return {
       answer: response.text,
       usedTools: response.toolCalls?.map(tc => tc.name),
+      interrupts: response.interrupts, // Retorna interrupções para o frontend
     };
   }
 );

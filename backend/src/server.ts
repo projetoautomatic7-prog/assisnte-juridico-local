@@ -72,7 +72,18 @@ app.use(
 // Middleware - Allow all origins for Replit proxy
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://assistente-juridico-github.vercel.app"
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -215,7 +226,7 @@ app.use(
 
 // Start server - bind to 0.0.0.0 for network accessibility
 app.listen(Number(PORT), "0.0.0.0", async () => {
-  logInfo(`🚀 Backend server running on port ${PORT}`);
+  logInfo(`🚀 Backend server is ready on port ${PORT}`);
   logInfo(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
   logInfo(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
   logInfo(`✅ Health check: http://localhost:${PORT}/health`);

@@ -1,5 +1,5 @@
 import { chromium, FullConfig } from "@playwright/test";
-import { ChildProcess, exec } from "node:child_process";
+import { ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 
 let backendProcess: ChildProcess | null = null;
@@ -14,15 +14,18 @@ async function globalSetup(config: FullConfig) {
     const projectRoot = config.rootDir || process.cwd();
 
     try {
-      // ✅ Usar exec ao invés de spawn
       const backendDir = path.join(projectRoot, "backend");
-      const command = `cd "${backendDir}" && npm run dev`;
 
-      backendProcess = exec(command, {
+      // Usar spawn com detached: true para gerenciar o grupo de processos
+      backendProcess = spawn("npm", ["run", "dev"], {
+        cwd: backendDir,
+        detached: true,
+        shell: true,
         env: {
           ...process.env,
           GENKIT_ENV: "dev", // Garante que o Genkit use modo desenvolvimento nos testes
           NODE_ENV: "development",
+          PATH: process.env.PATH, // Garante que o npm seja encontrado no ambiente do processo filho
         },
       });
 
@@ -41,7 +44,10 @@ async function globalSetup(config: FullConfig) {
       let healthy = false;
       for (let attempt = 1; attempt <= 30; attempt++) {
         try {
-          const response = await fetch("http://localhost:3001/health");
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          const response = await fetch("http://localhost:3001/health", { signal: controller.signal });
+          clearTimeout(timeoutId);
           if (response.ok) {
             healthy = true;
             console.log(`✅ Backend is healthy (attempt ${attempt}/30)`);

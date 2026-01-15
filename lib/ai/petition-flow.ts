@@ -89,9 +89,8 @@ export const petitionFlow = ai.defineFlow(
     await indexarNoQdrant.run({
       content: currentDraft,
       metadata: {
-        type: 'petition-draft',
-        processNumber: input.numeroProcesso,
-        date: new Date().toISOString()
+        tipo: 'petition-draft',
+        numeroProcesso: input.numeroProcesso,
       }
     });
 

@@ -70,14 +70,7 @@ async initialize(): Promise<void> {
 
 **Arquivo:** `src/test/setup.ts`
 
-**Antes (causava conflito):**
-```typescript
-vi.mock("@/lib/google-docs-service", () => ({
-  GoogleDocsService: {
-    getInstance: vi.fn(() => ({ ... })),
-  },
-}));
-```
+**Antes (causava conflito):** havia mock global do `GoogleDocsService`
 
 **Depois (deixa o service se auto-gerenciar):**
 ```typescript

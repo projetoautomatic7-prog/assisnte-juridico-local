@@ -276,7 +276,7 @@ curl https://assistente-juridico-github.vercel.app/api/kv?action=get-logs
 **Solução:**
 1. Verificar se endpoint existe e está funcionando
 2. Verificar credenciais DJEN/DataJud
-3. Implementar mock temporário para testes
+3. Usar ambiente de teste real (sem mocks)
 
 ---
 

@@ -1,6 +1,7 @@
 import { googleAI } from '@genkit-ai/google-genai';
 import { Redis } from '@upstash/redis';
-import { genkit } from 'genkit';
+import { createMcpHost } from '@genkit-ai/mcp';
+import { genkit } from 'genkit/beta'; // Usando beta para suporte a Chat/Sessions
 import { devLocalStateStore } from 'genkit/dev';
 import { z } from 'zod';
 
@@ -8,6 +9,8 @@ export const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
   token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
 });
+
+const isRedisConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
 const REDIS_TIMEOUT = 5000; // 5 segundos para evitar travamentos por latência ou conexão morta
 
@@ -60,10 +63,75 @@ const upstashStateStore = {
   }
 };
 
+/**
+ * Implementação de SessionStore para Upstash Redis.
+ * Gerencia histórico de chat e estado da sessão automaticamente.
+ */
+export const upstashSessionStore = {
+  async get(sessionId: string): Promise<any> {
+    try {
+      const data = await redis.get(`genkit:session:${sessionId}`);
+      return data || undefined;
+    } catch (error) {
+      console.error(`[RedisSessionStore] Erro ao carregar sessão ${sessionId}:`, error);
+      return undefined;
+    }
+  },
+  async save(sessionId: string, sessionData: any): Promise<void> {
+    try {
+      // Expira em 30 dias de inatividade
+      await redis.set(`genkit:session:${sessionId}`, sessionData, { ex: 2592000 });
+    } catch (error) {
+      console.error(`[RedisSessionStore] Erro ao salvar sessão ${sessionId}:`, error);
+    }
+  }
+};
+
 export const ai = genkit({
   plugins: [googleAI()],
-  model: 'gemini-2.0-flash',
-  stateStore: process.env.NODE_ENV === 'production' ? upstashStateStore : devLocalStateStore(),
+  model: process.env.GEMINI_MODEL || process.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash',
+  stateStore: (process.env.NODE_ENV === 'production' && isRedisConfigured) ? upstashStateStore : devLocalStateStore(),
+});
+
+/**
+ * Recuperador Semântico (Retriever) para o Qdrant.
+ * Utiliza busca vetorial para encontrar contextos jurídicos relevantes.
+ */
+export const qdrantRetriever = ai.defineRetriever(
+  {
+    name: 'qdrant/legalRetriever',
+    configSchema: z.object({
+      limit: z.number().optional(),
+      filter: z.any().optional(),
+    }),
+  },
+  async (query, options) => {
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/qdrant/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: query.text,
+        limit: options.limit || 5,
+        filter: options.filter,
+      }),
+    });
+    const result = await response.json();
+    return { documents: result.documents || [] };
+  }
+);
+
+/**
+ * Host MCP para integração de ferramentas externas (Filesystem, etc)
+ */
+export const mcpHost = createMcpHost({
+  name: 'legal-assistant-mcp',
+  mcpServers: {
+    fs: {
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
+    },
+  },
 });
 
 /**
@@ -79,17 +147,38 @@ export const searchDjenTool = ai.defineTool(
       dataDesde: z.string().optional().describe('Data inicial para a busca em formato ISO'),
     }),
     outputSchema: z.object({
-      publicacoes: z.array(z.any()),
+      publicacoes: z.array(z.any()).optional(),
       total: z.number(),
+      message: z.string().optional(),
     }),
   },
-  async (input) => {
+  async (input, { context, interrupt, resumed }) => {
+    // Validação de segurança via contexto (canal lateral)
+    if (process.env.NODE_ENV === 'production' && !context?.auth) {
+      throw new Error('Acesso negado: Ferramenta de busca requer autenticação.');
+    }
+
+    // Exemplo de Interrupção: Se não houver data, pede confirmação
+    if (!input.dataDesde && resumed?.confirmado !== true) {
+      interrupt({
+        question: "Você não definiu uma data inicial. A busca no DJEN pode retornar muitos resultados. Deseja continuar mesmo assim?",
+        metadata: { numeroProcesso: input.numeroProcesso }
+      });
+    }
+
+    if (resumed?.confirmado === false) {
+      return { total: 0, message: "Busca cancelada pelo usuário." };
+    }
+
+    console.log(`[Audit] Busca realizada pelo usuário: ${context?.auth?.uid || 'system'}`);
+
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3001';
     const response = await fetch(`${baseUrl}/api/djen/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
+    if (!response.ok) throw new Error(`Erro na busca DJEN: ${response.statusText}`);
     return response.json();
   }
 );

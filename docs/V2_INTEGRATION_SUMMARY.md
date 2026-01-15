@@ -283,8 +283,8 @@ Traces → Timeline → Insights → Otimização
 ## 💡 Dicas
 
 1. **Teste Incremental:** Implemente um endpoint por vez e teste
-2. **Use Mock Data:** Crie dados fake primeiro para testar a UI
-3. **Console Logs:** Use `console.log()` para debugar execuções
+2. **Use Dados Reais:** Teste com dados reais e sanitizados
+3. **Console Logs:** Use `console.log()` apenas com dados sanitizados
 4. **Network Tab:** Monitore requests no DevTools (F12 → Network)
 5. **GitLab CI/CD:** Acompanhe pipelines em tempo real
 

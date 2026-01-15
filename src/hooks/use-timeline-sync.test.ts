@@ -1,74 +1,68 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { useTimelineSync } from "./use-timeline-sync";
 
-// Mock hoisted - garante que seja aplicado antes de qualquer import no worker
-const { mockKvData, mockSetKv } = vi.hoisted(() => {
-  const data = [
-    {
-      id: "1",
-      processId: "123456", // Sem formatação para facilitar o match
-      numeroProcesso: "123456",
-      source: "djen",
-    },
-    {
-      id: "2",
-      processId: "999.999",
-      numeroProcesso: "999.999",
-      source: "djen",
-    },
-  ];
-  return {
-    mockKvData: data,
-    mockSetKv: vi.fn(),
-  };
-});
-
-// Mock aplicado em nível de módulo antes de imports
-vi.mock("./use-kv", () => ({
-  useKV: () => [mockKvData, mockSetKv],
-}));
+function writeExpedientes(value: unknown) {
+  localStorage.setItem("expedientes", JSON.stringify(value));
+}
 
 describe("useTimelineSync", () => {
-  beforeEach(() => {
-    // Garante que o módulo do hook não venha cacheado de outros testes no mesmo worker,
-    // o que poderia ignorar o vi.mock("./use-kv") e causar flakiness (especialmente em coverage).
-    vi.resetModules();
-  });
+  it("deve filtrar expedientes ignorando formatação", async () => {
+    writeExpedientes([
+      {
+        id: "1",
+        processId: "123456",
+        numeroProcesso: "123.456",
+        source: "djen",
+        description: "Evento A",
+        type: "intimacao",
+        createdAt: new Date().toISOString(),
+        metadata: { vara: "Vara 1", comarca: "Comarca 1", timestamp: Date.now() },
+      },
+      {
+        id: "2",
+        processId: "999.999",
+        numeroProcesso: "999.999",
+        source: "djen",
+        description: "Evento B",
+        type: "intimacao",
+        createdAt: new Date().toISOString(),
+        metadata: { vara: "Vara 2", comarca: "Comarca 2", timestamp: Date.now() },
+      },
+    ]);
 
-  it("deve filtrar expedientes ignorando formatação (replaceAll)", async () => {
-    const { useTimelineSync } = await import("./use-timeline-sync");
-    // Simula um processId buscando por "123456"
     const { result } = renderHook(() =>
       useTimelineSync({ processId: "123456", autoRefresh: false })
     );
 
-    // O hook retorna expedientes filtrados de forma síncrona,
-    // pois o mock está em memória
-    await waitFor(
-      () => {
-        expect(result.current.expedientes).toHaveLength(1);
-      },
-      { timeout: 1000 }
-    );
+    await waitFor(() => {
+      expect(result.current.expedientes).toHaveLength(1);
+    });
 
-    // Deve encontrar o expediente "123456"
     expect(result.current.expedientes[0].id).toBe("1");
-    expect(result.current.expedientes[0].processId).toBe("123456");
   });
 
   it("deve retornar vazio se não houver match", async () => {
-    const { useTimelineSync } = await import("./use-timeline-sync");
+    writeExpedientes([
+      {
+        id: "1",
+        processId: "123456",
+        numeroProcesso: "123.456",
+        source: "djen",
+        description: "Evento A",
+        type: "intimacao",
+        createdAt: new Date().toISOString(),
+        metadata: { vara: "Vara 1", comarca: "Comarca 1", timestamp: Date.now() },
+      },
+    ]);
+
     const { result } = renderHook(() =>
       useTimelineSync({ processId: "000000", autoRefresh: false })
     );
 
-    // O hook retorna de forma síncrona
-    await waitFor(
-      () => {
-        expect(result.current.expedientes).toBeDefined();
-      },
-      { timeout: 1000 }
-    );
+    await waitFor(() => {
+      expect(result.current.expedientes).toBeDefined();
+    });
 
     expect(result.current.events).toHaveLength(0);
     expect(result.current.expedientes).toHaveLength(0);

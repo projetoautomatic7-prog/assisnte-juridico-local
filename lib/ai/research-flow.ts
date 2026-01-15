@@ -38,4 +38,21 @@ export const researchFlow = ai.defineFlow(
     inputSchema: z.object({
       tema: z.string(),
       history: z.array(z.any()).optional()
-    
+    }),
+    outputSchema: AgentResponseSchema,
+  },
+  async (input) => {
+    const persona = AGENTS['pesquisa-juris'];
+    const response = await ai.generate({
+      system: persona.systemPrompt,
+      messages: input.history,
+      prompt: `Realize uma pesquisa jurisprudencial exaustiva sobre: ${input.tema}`,
+      tools: [buscarJurisprudencia],
+    });
+
+    return {
+      answer: response.text,
+      usedTools: response.toolCalls?.map(tc => tc.name)
+    };
+  }
+);

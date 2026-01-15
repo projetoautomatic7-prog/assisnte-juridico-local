@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 /**
  * Testes para google-docs-service.ts
@@ -9,10 +9,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
  */
 
 describe("GoogleDocsService", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("deve existir o módulo google-docs-service", async () => {
     const module = await import("./google-docs-service");
     expect(module).toBeDefined();

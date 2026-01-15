@@ -5,20 +5,20 @@ Status: ? Completo
 
 ## ?? Problemas Corrigidos
 
-### 1. ? Configuração de Ambiente (.env.test)
+### 1. ? Configuracao de Ambiente (.env.test)
 - **Arquivo criado**: `.env.test`
-- **Variáveis mockadas**: RESEND_API_KEY, DSPY_BRIDGE_URL, GOOGLE_API_KEY, etc.
-- **Benefício**: Testes não dependem de variáveis de ambiente reais
+- **Variaveis de teste reais**: RESEND_API_KEY, DSPY_BRIDGE_URL, GOOGLE_API_KEY, etc.
+- **Beneficio**: Testes usam credenciais reais de teste (sem mocks)
 
-### 2. ? DSPy Bridge Mock
+### 2. ? DSPy Bridge (Real)
 - **Arquivo**: `api/dspy-bridge.test.ts`
-- **Correção**: Adicionado mock completo para quando o serviço não está disponível
-- **Lógica**: Usa mock se `DSPY_BRIDGE_ENABLED=false` ou FastAPI não instalado
+- **Correcao**: Ajustado para usar integracao real em ambiente de teste
+- **Logica**: Requer servico ativo ou ambiente de teste configurado
 
-### 3. ? Email Service Mock
+### 3. ? Email Service (Real)
 - **Arquivo**: `api/lib/email-service.test.ts`
-- **Correção**: Mocks completos para todas as funções de email
-- **Benefício**: Não requer Resend API key real para testes
+- **Correcao**: Ajustado para usar Resend real em ambiente de teste
+- **Beneficio**: Validacao real das integracoes
 
 ### 4. ? Timeout Aumentado
 - **Arquivo**: `vitest.config.ts`
@@ -30,10 +30,10 @@ Status: ? Completo
 - **Correção**: Timeout específico de 60s e limite de duração aumentado para 500ms
 - **Benefício**: Teste passa em ambientes mais lentos
 
-### 6. ? Agent Monitoring Mock
+### 6. ? Agent Monitoring (Real)
 - **Arquivo**: `api/tests/agent-monitoring.test.ts`
-- **Correção**: Mocks completos para evitar dependências externas
-- **Benefício**: Testes isolados e previsíveis
+- **Correcao**: Ajustado para usar dependencias reais em ambiente de teste
+- **Beneficio**: Testes com comportamento real
 
 ## ?? Resultado Esperado
 
@@ -53,10 +53,10 @@ Status: ? Completo
 
 1. `.env.test` (novo)
 2. `vitest.config.ts` (timeout + env)
-3. `api/dspy-bridge.test.ts` (mock)
-4. `api/lib/email-service.test.ts` (mock)
+3. `api/dspy-bridge.test.ts` (integracao real)
+4. `api/lib/email-service.test.ts` (integracao real)
 5. `src/services/__tests__/pii-filtering.test.ts` (timeout)
-6. `api/tests/agent-monitoring.test.ts` (mock)
+6. `api/tests/agent-monitoring.test.ts` (integracao real)
 
 ## ?? Como Executar
 
@@ -76,7 +76,7 @@ npm run test:all
 
 ## ?? Notas
 
-- **Mocks**: Todos os serviços externos agora têm mocks
+- **Mocks**: Nao usar mocks; testes com integracoes reais
 - **Variáveis**: `.env.test` usado automaticamente pelo Vitest
 - **Performance**: Timeouts ajustados para CI/CD
 - **Isolamento**: Testes não dependem de serviços externos rodando

@@ -161,17 +161,12 @@ KV_REST_API_URL=https://test-redis.upstash.io
 KV_REST_API_TOKEN=test_token
 ```
 
-### Modo de Teste com Mocks
+### Modo de Teste com Servicos Reais
 
-Por padrão, os testes usam mocks para:
-- ✅ Serviços externos (Google Calendar, Gemini, DataJud)
-- ✅ Banco de dados (Upstash Redis)
-- ✅ Autenticação OAuth
-
-Para testar com serviços reais, configure:
-```bash
-VITEST_USE_REAL_SERVICES=true npm run test:run
-```
+Os testes devem usar servicos reais em ambiente de teste, sem mocks:
+- ✅ Google Calendar, Gemini, DataJud (instancias/credenciais de teste)
+- ✅ Upstash Redis (instancia de teste)
+- ✅ OAuth (credenciais de teste)
 
 ---
 

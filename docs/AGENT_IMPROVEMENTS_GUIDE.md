@@ -160,11 +160,11 @@ npm run build
 
 ## 🗄️ Problema 2: Conectar Qdrant Real
 
-### Por Que Remover Mocks?
+### Por Que Evitar Mocks?
 
-- **Testes realistas**: Mocks não simulam latência de rede, erros de conexão, etc.
+- **Regra do repo**: Não usar mocks/simulacao em produção ou testes
 - **Validação de produção**: Garantir que embedding/search funcionam de verdade
-- **Performance**: Testar queries complexas com dados reais
+- **Performance**: Testar queries com dados reais
 
 ### Pré-Requisitos
 
@@ -208,7 +208,7 @@ chmod +x scripts/setup-qdrant-real.sh
 3. ✅ Cria coleção `jurisprudence` (768 dimensões, Cosine)
 4. ✅ Remove referências a mocks no código
 5. ✅ Roda testes com Qdrant real
-6. ✅ (Opcional) Popula com dados de exemplo
+6. ✅ (Opcional) Popula com dados reais do dominio
 
 #### 3. Verificar Configuração
 
@@ -229,17 +229,7 @@ Se o script automático não pegar tudo:
 
 **Arquivo: `src/lib/qdrant-service.ts`**
 
-❌ **ANTES (com mock):**
-```typescript
-async search(vector: number[], limit: number = 10): Promise<SearchResult[]> {
-  if (process.env.DEBUG_TESTS === "true") {
-    return [
-      { id: "mock-1", score: 0.95, payload: { text: "Mock result" } }
-    ];
-  }
-  // Lógica real...
-}
-```
+❌ **ANTES:** havia retorno simulado em ambiente de teste
 
 ✅ **DEPOIS (sem mock):**
 ```typescript

@@ -235,10 +235,7 @@ Secrets não configurados no repositório
    - `VERCEL_PROJECT_ID`
    - `VERCEL_ORG_ID`
 
-**OU** tornar secrets opcionais em dev:
-```yaml
-VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id' }}
-```
+**OU** usar secrets reais de teste no ambiente de dev (sem valores dummy).
 
 ---
 

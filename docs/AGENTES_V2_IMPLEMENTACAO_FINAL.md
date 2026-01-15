@@ -397,7 +397,7 @@ PJE_API_KEY=...
 
 - [ ] Configurar variáveis de ambiente no Vercel
 - [ ] Testar endpoint `/api/agents-v2` em staging
-- [ ] Testar circuit breakers com falhas simuladas
+- [ ] Testar circuit breakers com falhas reais em ambiente de teste
 - [ ] Validar traces no ambiente de produção
 - [ ] Configurar alertas para circuit breakers OPEN
 - [ ] Migrar tráfego de `/api/agents` para `/api/agents-v2`

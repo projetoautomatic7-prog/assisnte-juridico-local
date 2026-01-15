@@ -209,18 +209,15 @@ Cada agente processa tarefas específicas com IA real:
 1. Acesse a seção de **Agentes Autônomos** no dashboard
 2. Localize o **RealAIControlPanel** (painel de controle)
 3. Clique no switch **"IA Real Ativa"**
-4. Confirme a ativação no diálogo de confirmação
+4. Confirme a ativacao no dialogo de confirmacao
 
 ### Opção 2: Via Código
 
 ```typescript
 import { setRealAgentsMode } from '@/lib/real-agent-client';
 
-// Ativar modo real
+// Ativar modo real (obrigatorio)
 setRealAgentsMode(true);
-
-// Desativar (voltar para simulado)
-setRealAgentsMode(false);
 ```
 
 ### Opção 3: Via localStorage
@@ -458,7 +455,7 @@ curl -X POST https://assistente-jurdico-p.vercel.app/api/agents/process-task \
 - [x] Cálculo real de prazos com feriados
 - [x] Estrutura DJEN pronta para integração
 - [x] 14 tipos de tarefas com prompts especializados
-- [x] Toggle modo real/simulado funcionando
+- [x] Modo real ativo (sem simulacao)
 - [ ] Variáveis de ambiente configuradas na Vercel
 - [ ] Teste de processamento real realizado
 - [ ] Integração com APIs reais dos tribunais

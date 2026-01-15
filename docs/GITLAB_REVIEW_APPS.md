@@ -193,8 +193,8 @@ environment:
 ```typescript
 // src/config/review-data.ts
 export const REVIEW_CONFIG = {
-  // Dados de teste para review
-  mockUsers: [...],
+  // Dados reais de teste para review (sem simulacao)
+  testUsers: [...],
   sampleCases: [...],
   testDocuments: [...]
 };

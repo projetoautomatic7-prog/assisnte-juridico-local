@@ -215,7 +215,7 @@ Estas funcionalidades **NÃO são necessárias** para uso em produção:
 ### Agentes IA Autônomos (Requer Backend)
 - Execução em background 24/7
 - Necessita workers ou backend
-- Interface já criada (apenas simulação por enquanto)
+- Interface já criada; requer backend real
 
 ### DJEN/DataJud (Requer Ativação)
 - Monitoramento de publicações
@@ -264,13 +264,12 @@ npm run dev
 ```
 
 ### 2. Login
-Use qualquer credencial (sistema mock):
-- **Usuário:** qualquer
-- **Senha:** qualquer
+Use credenciais reais do ambiente:
+- **Usuário:** conforme configurado
+- **Senha:** conforme configurado
 
 ### 3. Começar com Dados
-- Sistema oferece gerar dados de exemplo
-- Ou cadastre manualmente seus processos reais
+- Cadastre manualmente seus processos reais
 
 ### 4. Ativar Notificações
 - Clique em "Ativar" quando solicitado

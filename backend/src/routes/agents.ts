@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { ai, redis } from '../../../lib/ai/genkit.js';
 import { agentFlow } from '../../../lib/ai/agent-flow.js';
+import { ai, redis } from '../../../lib/ai/genkit.js';
 import { justineFlow } from '../../../lib/ai/justine-flow.js';
 import { petitionFlow } from '../../../lib/ai/petition-flow.js';
 import { researchFlow } from '../../../lib/ai/research-flow.js';
@@ -26,7 +26,7 @@ const FLOW_REGISTRY: Record<string, ReturnType<typeof ai.defineFlow>> = {
 export async function agentsHandler(req: Request, res: Response) {
   const { agentId, expedienteId, numeroProcesso, message, resume, sessionId: reqSessionId } = req.body;
   const auditId = uuidv4();
-  
+
   if (!agentId && !resume) {
     return res.status(400).json({ error: "Campo 'agentId' é obrigatório." });
   }
@@ -40,7 +40,7 @@ export async function agentsHandler(req: Request, res: Response) {
   try {
     const flow = FLOW_REGISTRY[agentId as string];
     let result;
-    
+
     // Carregar histórico do Redis
     const history = await redis.get<any[]>(historyKey) || [];
 
@@ -57,7 +57,7 @@ export async function agentsHandler(req: Request, res: Response) {
       let input: any = { numeroProcesso, instrucoes: message, history };
 
       // Mapeamento específico por agente
-      if (agentId === 'justine') input = { expedienteId, numeroProcesso };
+      if (agentId === 'justine') input = { expedienteId, numeroProcesso, history };
       else if (agentId === 'pesquisa-juris') input = { tema: message, history };
 
       result = await flow(input, { context: { auditId, startTime: Date.now(), sessionId } });
@@ -74,7 +74,7 @@ export async function agentsHandler(req: Request, res: Response) {
         { role: 'user', content: [{ text: message }] },
         { role: 'model', content: [{ text: result.answer }] }
       ].slice(-20); // Manter apenas as últimas 20 interações para economizar contexto
-      
+
       await redis.set(historyKey, updatedHistory, { ex: 86400 }); // TTL de 24h
     }
 

@@ -26,11 +26,11 @@ O projeto possui **97 testes** distribuídos em 5 categorias principais:
 
 | Categoria | Quantidade | Framework | Config File |
 |-----------|------------|-----------|-------------|
-| **Unitários (Frontend)** | 56 | Vitest + Happy-DOM | `vitest.config.ts` |
+| **Unitários (Frontend)** | 56 | Vitest + Happy-DOM (legado) | `vitest.config.ts` |
 | **API (Backend)** | 14 | Vitest + Node | `vitest.config.node.ts` |
 | **E2E (Playwright)** | 16 | Playwright | `playwright.config.ts` |
 | **Integração** | 5 | Vitest + Node | `vitest.config.node.ts` |
-| **Chrome Extension** | 6 | Vitest + jsdom | `chrome-extension-pje/vitest.config.ts` |
+| **Chrome Extension** | 6 | Vitest + jsdom (legado) | `chrome-extension-pje/vitest.config.ts` |
 
 ---
 
@@ -42,7 +42,7 @@ O projeto possui **97 testes** distribuídos em 5 categorias principais:
 
 ```typescript
 // Principais Configurações:
-- Environment: happy-dom (DOM simulado)
+- Environment: happy-dom (legado; evitar simulacao e migrar para ambiente real)
 - Globals: true (describe, it, expect globais)
 - Setup: src/test/setup.ts
 - Include: src/**/*.{test,spec}.{ts,tsx}
@@ -52,10 +52,9 @@ O projeto possui **97 testes** distribuídos em 5 categorias principais:
 ```
 
 **Recursos:**
-- ✅ Happy-DOM para renderização React
+- ✅ Happy-DOM para renderização React (legado; evitar simulacao)
 - ✅ Testing Library integrado
-- ✅ Mocks de window.matchMedia, IntersectionObserver, ResizeObserver
-- ✅ Mocks de localStorage/sessionStorage
+- ⚠️ Evitar mocks; preferir integracoes reais em ambiente de teste
 - ✅ Cleanup automático após cada teste
 
 ### 2. `vitest.config.node.ts` - Testes de API e Integração
@@ -127,16 +126,9 @@ O projeto possui **97 testes** distribuídos em 5 categorias principais:
 **Recursos:**
 - ✅ @testing-library/jest-dom importado
 - ✅ Cleanup automático após cada teste
-- ✅ Mocks de:
-  - window.matchMedia
-  - IntersectionObserver
-  - ResizeObserver
-  - localStorage
-  - sessionStorage
-  - fetch (se não disponível)
-  - gapi (Google API)
+- ⚠️ Legado: remover mocks e preferir ambiente real para APIs de browser
 - ✅ Supressão de warnings conhecidos do React
-- ✅ Variáveis de ambiente mockadas
+- ⚠️ Evitar variáveis de ambiente mockadas; use credenciais reais de teste
 
 ---
 

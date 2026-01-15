@@ -112,7 +112,7 @@ graph TD
 ### Imediatas (Hoje)
 - [ ] Executar `./scripts/configure-branch-protection.sh`
 - [ ] Verificar configuração: https://github.com/thiagobodevanadv-alt/assistente-jur-dico-principal/settings/branches
-- [ ] Testar com um PR dummy
+- [ ] Testar com um PR real de teste
 
 ### Curto Prazo (Esta Semana)
 - [ ] Configurar ambientes `production` e `preview`

@@ -24,43 +24,29 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     // Clica no menu Minutas usando data-testid da sidebar
     await page.click('[data-testid="nav-minutas"]', { timeout: 10000 });
 
-    // Aguarda carregar a lista de minutas
-    await page.waitForTimeout(500);
+    await page.waitForLoadState("domcontentloaded");
 
-    // Clica em "Nova Minuta" ou botão similar
-    const novaMinutaButton = page
-      .locator(
-        'button:has-text("Nova Minuta"), button:has-text("Criar Minuta"), button:has-text("+ Minuta")'
-      )
-      .first();
-    await novaMinutaButton.click();
+    await page.getByRole('button', { name: /Nova Minuta|Criar Minuta|\+ Minuta/i }).first().click();
 
-    // Aguarda modal/formulário de minuta abrir
-    await page.waitForTimeout(500);
+    // Aguarda o modal estar visível antes de interagir
+    await expect(page.getByRole("heading", { name: /Nova Minuta|Criar Minuta/i })).toBeVisible();
 
     // Preenche título da minuta
-    const tituloInput = page
-      .locator('input[name="titulo"], input[placeholder*="título"], input[placeholder*="Título"]')
-      .first();
+    const tituloInput = page.getByLabel(/Título/i).or(page.getByPlaceholder(/Título/i)).first();
     if (await tituloInput.isVisible()) {
       await tituloInput.fill("Petição de Teste E2E");
     }
 
     // Preenche o editor TiptapEditorV2 (usar seletor mais específico para o conteúdo)
-    const editorLocator = page
-      .locator('.tiptap, [contenteditable="true"]')
-      .first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
 
-    // Digita conteúdo no editor
-    await page.keyboard.type("Este é um teste automatizado do TiptapEditorV2. ");
-    await page.keyboard.type("O editor deve funcionar corretamente com comandos de IA.");
+    await editorLocator.fill("Este é um teste automatizado do TiptapEditorV2. O editor deve funcionar corretamente com comandos de IA.");
 
-    // Verifica se o texto foi digitado
     await expect(editorLocator).toContainText("teste automatizado");
 
-    // Aguarda um pouco para garantir que onChange foi chamado
-    await page.waitForTimeout(300);
+    // Aguarda a sincronização do estado do editor (networkidle garante que o salvamento automático ou validações terminaram)
+    await page.waitForLoadState("networkidle");
 
     // Verifica contador de palavras (se visível)
     const wordCounter = page.locator("text=/\\d+ palavras/i");
@@ -69,10 +55,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     }
 
     // Salva a minuta
-    const salvarButton = page
-      .locator('button:has-text("Salvar"), button:has-text("Criar"), button:has-text("Confirmar")')
-      .first();
-    await salvarButton.click();
+    await page.getByRole('button', { name: /Salvar|Criar|Confirmar/i }).first().click();
 
     // Aguarda feedback de sucesso
     await page.waitForTimeout(500);
@@ -88,23 +71,16 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page
-      .locator(
-        'button:has-text("Nova Minuta"), button:has-text("Criar Minuta"), button:has-text("+ Minuta")'
-      )
-      .first();
-    await novaMinutaButton.click();
+    await page.getByRole('button', { name: /Nova Minuta|Criar Minuta|\+ Minuta/i }).first().click();
     await page.waitForTimeout(500);
 
     // Escreve texto no editor
-    const editorLocator = page
-      .locator('.tiptap, [contenteditable="true"]')
-      .first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Texto curto para expandir");
+    await editorLocator.fill("Texto curto para expandir");
 
     // Abre popover de IA
-    const aiButton = page.locator('button[title="Comandos de IA"]').first();
+    const aiButton = page.getByRole('button', { name: /Comandos de IA/i }).or(page.locator('button[title*="IA"]')).first();
     await aiButton.click();
 
     // Aguarda popover abrir
@@ -117,7 +93,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await expect(page.locator("text=Corrigir")).toBeVisible();
 
     // Clica em "Expandir"
-    await page.click('button:has-text("Expandir")');
+    await page.getByRole('button', { name: /Expandir/i }).click();
 
     // Nota: Em ambiente de teste, a IA pode não responder
     // Mas o comando deve ser disparado sem erros
@@ -136,11 +112,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page
-      .locator(
-        'button:has-text("Nova Minuta"), button:has-text("Criar Minuta"), button:has-text("+ Minuta")'
-      )
-      .first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta|Criar Minuta|\+ Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
@@ -166,11 +138,9 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     }
 
     // Digita variável no editor
-    const editorLocator = page
-      .locator('.tiptap, [contenteditable="true"]')
-      .first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Processo número {{processo}} ");
+    await editorLocator.fill("Processo número {{processo}} ");
 
     // Verifica que o texto foi inserido
     await expect(editorLocator).toContainText("{{processo}}");
@@ -188,30 +158,26 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     const minutasCount = await primeiraMinuta.count();
     if (minutasCount === 0) {
       // Cria minuta de teste
-      const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+      const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
       await novaMinutaButton.click();
       await page.waitForTimeout(500);
 
-      const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+      const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
       await editorLocator.click();
-      await page.keyboard.type("Minuta para edição");
+      await editorLocator.fill("Minuta para edição");
 
-      const salvarButton = page.locator('button:has-text("Salvar")').first();
+      const salvarButton = page.getByRole('button', { name: /Salvar/i }).first();
       await salvarButton.click();
       await page.waitForTimeout(500);
     }
 
     // Clica para editar primeira minuta
-    const editarButton = page
-      .locator('button:has-text("Editar"), button[aria-label*="Editar"]')
-      .first();
+    const editarButton = page.getByRole('button', { name: /Editar/i }).first();
     await editarButton.click();
     await page.waitForTimeout(500);
 
     // Verifica se editor está visível
-    const editorLocator = page
-      .locator('.tiptap, [contenteditable="true"]')
-      .first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await expect(editorLocator).toBeVisible();
 
     // Adiciona mais texto
@@ -220,9 +186,7 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.keyboard.type(" - Texto editado no E2E");
 
     // Salva alterações
-    const salvarButton = page
-      .locator('button:has-text("Salvar"), button:has-text("Atualizar")')
-      .first();
+    const salvarButton = page.getByRole('button', { name: /Salvar|Atualizar/i }).first();
     await salvarButton.click();
 
     // Aguarda feedback
@@ -238,23 +202,21 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page
-      .locator('button:has-text("Nova Minuta"), button:has-text("Criar Minuta")')
-      .first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta|Criar Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
     // Abre popover de IA
-    const aiButton = page.locator('button[title="Comandos de IA"]').first();
+    const aiButton = page.getByRole('button', { name: /Comandos de IA/i }).or(page.locator('button[title*="IA"]')).first();
     await aiButton.click();
     await page.waitForTimeout(300);
 
     // Digita prompt customizado
-    const promptInput = page.locator('input[placeholder*="Ex: Escreva uma petição"]').first();
+    const promptInput = page.getByPlaceholder(/Ex: Escreva uma petição/i).first();
     await promptInput.fill("Escreva uma petição inicial sobre dano moral");
 
     // Clica em gerar
-    const gerarButton = page.locator('button:has-text("Gerar")').first();
+    const gerarButton = page.getByRole('button', { name: /Gerar/i }).first();
     await gerarButton.click();
 
     // Aguarda resposta (pode demorar ou falhar em ambiente de teste)
@@ -271,14 +233,14 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
     // Escreve texto conhecido
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Uma duas três"); // 3 palavras
+    await editorLocator.fill("Uma duas três"); // 3 palavras
 
     // Aguarda atualização
     await page.waitForTimeout(300);
@@ -298,19 +260,17 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
     // Escreve algo
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Texto que será cancelado");
+    await editorLocator.fill("Texto que será cancelado");
 
     // Clica em cancelar
-    const cancelarButton = page
-      .locator('button:has-text("Cancelar"), button:has-text("Fechar")')
-      .first();
+    const cancelarButton = page.getByRole('button', { name: /Cancelar|Fechar/i }).first();
     await cancelarButton.click();
 
     // Aguarda fechar
@@ -327,33 +287,29 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria minuta para excluir
-    const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
-    const tituloInput = page.locator('input[name="titulo"], input[placeholder*="título"]').first();
+    const tituloInput = page.getByLabel(/Título/i).or(page.getByPlaceholder(/Título/i)).first();
     if (await tituloInput.isVisible()) {
       await tituloInput.fill("Minuta para Excluir E2E");
     }
 
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Esta minuta será excluída");
+    await editorLocator.fill("Esta minuta será excluída");
 
-    const salvarButton = page.locator('button:has-text("Salvar")').first();
+    const salvarButton = page.getByRole('button', { name: /Salvar/i }).first();
     await salvarButton.click();
     await page.waitForTimeout(500);
 
     // Busca botão de excluir
-    const excluirButton = page
-      .locator('button:has-text("Excluir"), button[aria-label*="Excluir"]')
-      .first();
+    const excluirButton = page.getByRole('button', { name: /Excluir/i }).first();
     await excluirButton.click();
 
     // Confirma exclusão (se houver dialog)
-    const confirmarButton = page
-      .locator('button:has-text("Confirmar"), button:has-text("Sim")')
-      .first();
+    const confirmarButton = page.getByRole('button', { name: /Confirmar|Sim/i }).first();
     if (await confirmarButton.isVisible()) {
       await confirmarButton.click();
     }
@@ -372,33 +328,33 @@ test.describe("Gestão de Minutas com TiptapEditorV2", () => {
     await page.waitForTimeout(500);
 
     // Cria nova minuta
-    const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
 
     // Aplica formatação no editor
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
 
     // Digita texto
-    await page.keyboard.type("Texto em negrito");
+    await editorLocator.fill("Texto em negrito");
 
     // Seleciona tudo
     await page.keyboard.press("Control+A");
 
     // Aplica negrito (botão B na toolbar)
-    const boldButton = page.locator('button[data-variant*="bold"], button:has-text("B")').first();
+    const boldButton = page.getByRole('button', { name: /Negrito|Bold/i }).or(page.locator('button:has-text("B")')).first();
     if (await boldButton.isVisible()) {
       await boldButton.click();
     }
 
     // Salva
-    const salvarButton = page.locator('button:has-text("Salvar")').first();
+    const salvarButton = page.getByRole('button', { name: /Salvar/i }).first();
     await salvarButton.click();
     await page.waitForTimeout(500);
 
     // Edita novamente para verificar formatação
-    const editarButton = page.locator('button:has-text("Editar")').first();
+    const editarButton = page.getByRole('button', { name: /Editar/i }).first();
     if (await editarButton.isVisible()) {
       await editarButton.click();
       await page.waitForTimeout(500);
@@ -421,53 +377,53 @@ test.describe("Toolbar e Formatação TiptapEditorV2", () => {
     await page.click('[data-testid="nav-minutas"]');
     await page.waitForTimeout(500);
 
-    const novaMinutaButton = page.locator('button:has-text("Nova Minuta")').first();
+    const novaMinutaButton = page.getByRole('button', { name: /Nova Minuta/i }).first();
     await novaMinutaButton.click();
     await page.waitForTimeout(500);
   });
 
   test("deve aplicar formatação de negrito", async ({ page }) => {
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Negrito");
+    await editorLocator.fill("Negrito");
     await page.keyboard.press("Control+A");
 
-    const boldButton = page.locator('button[aria-label*="Bold"], button:has-text("B")').first();
+    const boldButton = page.getByRole('button', { name: /Negrito|Bold/i }).or(page.locator('button:has-text("B")')).first();
     if (await boldButton.isVisible()) {
       await boldButton.click();
-      await expect(page.locator("strong")).toBeVisible();
+      await expect(editorLocator.locator("strong")).toBeVisible();
     }
   });
 
   test("deve aplicar formatação de itálico", async ({ page }) => {
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Itálico");
+    await editorLocator.fill("Itálico");
     await page.keyboard.press("Control+A");
 
-    const italicButton = page.locator('button[aria-label*="Italic"], button:has-text("I")').first();
+    const italicButton = page.getByRole('button', { name: /Itálico|Italic/i }).or(page.locator('button:has-text("I")')).first();
     if (await italicButton.isVisible()) {
       await italicButton.click();
-      await expect(page.locator("em, i")).toBeVisible();
+      await expect(editorLocator.locator("em, i")).toBeVisible();
     }
   });
 
   test("deve inserir lista não ordenada", async ({ page }) => {
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
 
-    const listButton = page.locator('button[aria-label*="List"], button:has-text("Lista")').first();
+    const listButton = page.getByRole('button', { name: /Lista/i }).first();
     if (await listButton.isVisible()) {
       await listButton.click();
-      await page.keyboard.type("Item 1");
-      await expect(page.locator("ul li")).toBeVisible();
+      await page.keyboard.insertText("Item 1");
+      await expect(editorLocator.locator("ul li")).toBeVisible();
     }
   });
 
   test("deve desfazer e refazer ações", async ({ page }) => {
-    const editorLocator = page.locator('[role="presentation"], .tiptap').first();
+    const editorLocator = page.locator('.tiptap[contenteditable="true"]').first();
     await editorLocator.click();
-    await page.keyboard.type("Texto para desfazer");
+    await editorLocator.fill("Texto para desfazer");
 
     // Desfaz
     await page.keyboard.press("Control+Z");

@@ -182,7 +182,7 @@ Para segredos sensíveis, crie ambientes protegidos:
 - Protection rules:
   - ✅ Deployment branches: `*` (todos)
 - Environment secrets:
-  - (pode usar valores dummy ou compartilhar com produção)
+  - usar valores reais de teste (nunca dummy)
 
 ### Passo 3: Configurar Lista de Aprovadores Confiáveis
 
@@ -277,7 +277,7 @@ Use este checklist para verificar se tudo está correto:
 - [ ] Preview deploys funcionam em PRs
 
 ### ✅ Testes de Integração
-- [ ] Criar PR dummy e verificar se CI executa
+- [ ] Criar PR real de teste e verificar se CI executa
 - [ ] Verificar se deploy preview é criado
 - [ ] Testar merge de PR aprovado
 - [ ] Verificar se deploy de produção executa após merge
