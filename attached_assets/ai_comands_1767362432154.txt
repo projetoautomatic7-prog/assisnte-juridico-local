@@ -76,7 +76,8 @@ class AIMinutaCommands:
 
         # O retry já está configurado no self.llm via with_retry()
         async for chunk in self.llm.astream(messages):
-            yield chunk.content
+            if chunk.content:
+                yield chunk.content
 
     async def continuar(self, texto_anterior: str) -> AsyncIterator[str]:
         """Continua escrevendo o texto a partir do ponto atual"""

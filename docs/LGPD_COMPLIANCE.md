@@ -1,66 +1,66 @@
-# ?? Conformidade LGPD - Documentação Técnica
+# ðŸ”’ Conformidade LGPD - DocumentaÃ§Ã£o TÃ©cnica
 
-**Lei Geral de Proteção de Dados - Lei 13.709/2018**  
-**Versão:** 1.0.0  
+**Lei Geral de ProteÃ§Ã£o de Dados - Lei 13.709/2018**  
+**VersÃ£o:** 1.0.0  
 **Data:** 08 de Dezembro de 2025  
-**Status:** ? Conforme
+**Status:** âœ… Conforme
 
 ---
 
-## ?? Resumo Executivo
+## ðŸ“‹ Resumo Executivo
 
-Este documento certifica que o **Assistente Jurídico PJe** implementa controles técnicos adequados para conformidade com a LGPD (Lei Geral de Proteção de Dados - Lei 13.709/2018).
+Este documento certifica que o **Assistente JurÃ­dico PJe** implementa controles tÃ©cnicos adequados para conformidade com a LGPD (Lei Geral de ProteÃ§Ã£o de Dados - Lei 13.709/2018).
 
 **Principais Controles Implementados:**
-- ? PII (Personally Identifiable Information) Filtering
-- ? Sanitização automática de dados sensíveis
-- ? Desabilitação de `sendDefaultPii` no Sentry
-- ? Controle de `recordInputs` e `recordOutputs` por ambiente
-- ? Auditoria de dados processados
+- âœ… PII (Personally Identifiable Information) Filtering
+- âœ… SanitizaÃ§Ã£o automÃ¡tica de dados sensÃ­veis
+- âœ… DesabilitaÃ§Ã£o de `sendDefaultPii` no Sentry
+- âœ… Controle de `recordInputs` e `recordOutputs` por ambiente
+- âœ… Auditoria de dados processados
 
 ---
 
-## ?? Objetivo
+## ðŸŽ¯ Objetivo
 
-Proteger dados pessoais de clientes, advogados, partes processuais e demais indivíduos que interagem com o sistema, conforme Arts. 5º, 6º, 7º e 46 da LGPD.
+Proteger dados pessoais de clientes, advogados, partes processuais e demais indivÃ­duos que interagem com o sistema, conforme Arts. 5Âº, 6Âº, 7Âº e 46 da LGPD.
 
 ---
 
-## ?? Tipos de Dados Pessoais Tratados
+## ðŸ“Š Tipos de Dados Pessoais Tratados
 
-### Dados Cobertos pela LGPD (Art. 5º, I e II)
+### Dados Cobertos pela LGPD (Art. 5Âº, I e II)
 
-| Tipo | Exemplos | Artigo LGPD | Status Sanitização |
+| Tipo | Exemplos | Artigo LGPD | Status SanitizaÃ§Ã£o |
 |------|----------|-------------|---------------------|
-| **CPF** | 123.456.789-01 | Art. 5º, I | ? Mascarado |
-| **Email** | usuario@dominio.com | Art. 5º, I | ? Redacted |
-| **Telefone** | (11) 98765-4321 | Art. 5º, I | ? Redacted |
-| **Endereço** | Rua X, 123 | Art. 5º, I | ? Mascarado |
-| **Conta Bancária** | Ag 1234 C/C 56789-0 | Art. 5º, I | ? Redacted |
-| **Cartão de Crédito** | 1234 5678 9012 3456 | Art. 5º, I | ? Redacted |
-| **RG** | 12.345.678-9 | Art. 5º, I | ? Mascarado |
-| **CNH** | 12345678901 | Art. 5º, I | ? Mascarado |
-| **Passaporte** | AB123456 | Art. 5º, I | ? Mascarado |
-| **OAB** | OAB/SP 123.456 | Art. 5º, I | ? Mascarado |
-| **Nome Completo** | João da Silva | Art. 5º, I | ? Detectado (heurística) |
+| **CPF** | 123.456.789-01 | Art. 5ï¿½, I | ? Mascarado |
+| **Email** | usuario@dominio.com | Art. 5ï¿½, I | ? Redacted |
+| **Telefone** | (11) 98765-4321 | Art. 5ï¿½, I | ? Redacted |
+| **Endereï¿½o** | Rua X, 123 | Art. 5ï¿½, I | ? Mascarado |
+| **Conta Bancï¿½ria** | Ag 1234 C/C 56789-0 | Art. 5ï¿½, I | ? Redacted |
+| **Cartï¿½o de Crï¿½dito** | 1234 5678 9012 3456 | Art. 5ï¿½, I | ? Redacted |
+| **RG** | 12.345.678-9 | Art. 5ï¿½, I | ? Mascarado |
+| **CNH** | 12345678901 | Art. 5ï¿½, I | ? Mascarado |
+| **Passaporte** | AB123456 | Art. 5ï¿½, I | ? Mascarado |
+| **OAB** | OAB/SP 123.456 | Art. 5ï¿½, I | ? Mascarado |
+| **Nome Completo** | Joï¿½o da Silva | Art. 5ï¿½, I | ? Detectado (heurï¿½stica) |
 
-### Dados NÃO Cobertos (Públicos)
+### Dados Nï¿½O Cobertos (Pï¿½blicos)
 
 | Tipo | Motivo |
 |------|--------|
-| Número de Processo CNJ | Informação pública (Art. 93, IX CF) |
-| Nomes de tribunais | Informação pública |
-| Números de publicações DJEN | Informação pública |
+| Nï¿½mero de Processo CNJ | Informaï¿½ï¿½o pï¿½blica (Art. 93, IX CF) |
+| Nomes de tribunais | Informaï¿½ï¿½o pï¿½blica |
+| Nï¿½meros de publicaï¿½ï¿½es DJEN | Informaï¿½ï¿½o pï¿½blica |
 
 ---
 
-## ?? Implementação Técnica
+## ?? Implementaï¿½ï¿½o Tï¿½cnica
 
-### 1. Serviço de PII Filtering
+### 1. Serviï¿½o de PII Filtering
 
 **Arquivo:** `src/services/pii-filtering.ts`
 
-**Funções Principais:**
+**Funï¿½ï¿½es Principais:**
 
 ```typescript
 // Sanitiza texto removendo PII
@@ -98,22 +98,22 @@ PII_PATTERNS.TELEFONE = /(?:\+55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}\b/g
 
 ```typescript
 // Entrada: "123.456.789-01"
-// Saída:   "12*.***.*89-**"
+// Saï¿½da:   "12*.***.*89-**"
 // ou
-// Saída:   "[CPF_REDACTED]"
+// Saï¿½da:   "[CPF_REDACTED]"
 ```
 
 ---
 
-### 2. Integração com Sentry Error Tracking
+### 2. Integraï¿½ï¿½o com Sentry Error Tracking
 
 **Arquivo:** `src/services/error-tracking.ts`
 
-**Configuração:**
+**Configuraï¿½ï¿½o:**
 
 ```typescript
 Sentry.init({
-  // ? LGPD: Desabilita envio automático de PII
+  // ? LGPD: Desabilita envio automï¿½tico de PII
   sendDefaultPii: false,
 
   // ? LGPD: Aplica PII filtering antes de enviar
@@ -130,10 +130,10 @@ Sentry.init({
 
 - ? `event.message` - Mensagem de erro
 - ? `event.exception.values[].value` - Stack traces
-- ? `event.breadcrumbs[].message` - Logs de navegação
+- ? `event.breadcrumbs[].message` - Logs de navegaï¿½ï¿½o
 - ? `event.breadcrumbs[].data` - Dados contextuais
 - ? `event.contexts` - Contextos customizados
-- ? `event.extra` - Informações extras
+- ? `event.extra` - Informaï¿½ï¿½es extras
 
 **Chaves Sempre Redacted:**
 
@@ -148,11 +148,11 @@ const sensibleKeys = [
 
 ---
 
-### 3. Integração com Sentry AI Monitoring
+### 3. Integraï¿½ï¿½o com Sentry AI Monitoring
 
 **Arquivo:** `src/lib/sentry-gemini-integration-v2.ts`
 
-**Configuração:**
+**Configuraï¿½ï¿½o:**
 
 ```typescript
 Sentry.init({
@@ -163,19 +163,19 @@ Sentry.init({
 
 **AI Spans Sanitizados:**
 
-| Atributo | Descrição | Sanitização |
+| Atributo | Descriï¿½ï¿½o | Sanitizaï¿½ï¿½o |
 |----------|-----------|-------------|
 | `gen_ai.request.messages` | Prompts/mensagens de entrada | ? Sanitizado |
 | `gen_ai.response.text` | Respostas do LLM | ? Sanitizado |
-| `gen_ai.tool.input` | Parâmetros de ferramentas | ? Sanitizado |
+| `gen_ai.tool.input` | Parï¿½metros de ferramentas | ? Sanitizado |
 | `gen_ai.tool.output` | Resultado de ferramentas | ? Sanitizado |
-| `conversation.session_id` | ID da sessão | ? Sanitizado se contém PII |
+| `conversation.session_id` | ID da sessï¿½o | ? Sanitizado se contï¿½m PII |
 
-**Controle de Gravação:**
+**Controle de Gravaï¿½ï¿½o:**
 
 ```typescript
 // Desenvolvimento: recordInputs e recordOutputs = true (sanitizados)
-// Produção (padrão): recordInputs e recordOutputs = false
+// Produï¿½ï¿½o (padrï¿½o): recordInputs e recordOutputs = false
 
 globalGeminiConfig = {
   recordInputs: process.env.NODE_ENV !== "production",
@@ -188,42 +188,42 @@ globalGeminiConfig = {
 
 ## ??? Base Legal e Fundamentos
 
-### Art. 5º - Definições
+### Art. 5ï¿½ - Definiï¿½ï¿½es
 
 **Dado Pessoal (I):**
-> "informação relacionada a pessoa natural identificada ou identificável"
+> "informaï¿½ï¿½o relacionada a pessoa natural identificada ou identificï¿½vel"
 
-**Dado Pessoal Sensível (II):**
-> "dado pessoal sobre origem racial ou étnica, convicção religiosa, opinião política, filiação a sindicato ou a organização de caráter religioso, filosófico ou político, dado referente à saúde ou à vida sexual, dado genético ou biométrico, quando vinculado a uma pessoa natural"
+**Dado Pessoal Sensï¿½vel (II):**
+> "dado pessoal sobre origem racial ou ï¿½tnica, convicï¿½ï¿½o religiosa, opiniï¿½o polï¿½tica, filiaï¿½ï¿½o a sindicato ou a organizaï¿½ï¿½o de carï¿½ter religioso, filosï¿½fico ou polï¿½tico, dado referente ï¿½ saï¿½de ou ï¿½ vida sexual, dado genï¿½tico ou biomï¿½trico, quando vinculado a uma pessoa natural"
 
-### Art. 6º - Princípios
+### Art. 6ï¿½ - Princï¿½pios
 
 **I - Finalidade:** Monitoramento de performance e debugging  
-**II - Adequação:** Mínimo necessário para operação  
+**II - Adequaï¿½ï¿½o:** Mï¿½nimo necessï¿½rio para operaï¿½ï¿½o  
 **III - Necessidade:** Apenas dados essenciais  
-**VII - Segurança:** PII filtering automático  
-**X - Responsabilização:** Auditoria de dados processados
+**VII - Seguranï¿½a:** PII filtering automï¿½tico  
+**X - Responsabilizaï¿½ï¿½o:** Auditoria de dados processados
 
-### Art. 7º - Tratamento de Dados
+### Art. 7ï¿½ - Tratamento de Dados
 
-**V - Quando necessário para a execução de contrato:**
-> Sistema de gestão jurídica requer processamento de dados para funcionamento
+**V - Quando necessï¿½rio para a execuï¿½ï¿½o de contrato:**
+> Sistema de gestï¿½o jurï¿½dica requer processamento de dados para funcionamento
 
-### Art. 46 - Segurança
+### Art. 46 - Seguranï¿½a
 
 **II - Uso de criptografia:**
-> Dados em trânsito (HTTPS) e em repouso (Upstash Redis criptografado)
+> Dados em trï¿½nsito (HTTPS) e em repouso (Upstash Redis criptografado)
 
-**Parágrafo 1º - Medidas técnicas:**
-> PII filtering, sanitização, mascaramento, redação
+**Parï¿½grafo 1ï¿½ - Medidas tï¿½cnicas:**
+> PII filtering, sanitizaï¿½ï¿½o, mascaramento, redaï¿½ï¿½o
 
 ---
 
-## ?? Estatísticas de Conformidade
+## ?? Estatï¿½sticas de Conformidade
 
-### Auditoria Automática
+### Auditoria Automï¿½tica
 
-O sistema registra estatísticas de sanitização para auditoria LGPD:
+O sistema registra estatï¿½sticas de sanitizaï¿½ï¿½o para auditoria LGPD:
 
 ```typescript
 interface PIISanitizationStats {
@@ -233,19 +233,19 @@ interface PIISanitizationStats {
   lastSanitized: string;         // ISO timestamp
 }
 
-// Obter estatísticas
+// Obter estatï¿½sticas
 const stats = getPIIStats();
-console.log(`Taxa de sanitização: ${(stats.totalSanitized / stats.totalProcessed * 100).toFixed(1)}%`);
+console.log(`Taxa de sanitizaï¿½ï¿½o: ${(stats.totalSanitized / stats.totalProcessed * 100).toFixed(1)}%`);
 ```
 
-### Métricas de Produção (Estimadas)
+### Mï¿½tricas de Produï¿½ï¿½o (Estimadas)
 
-| Métrica | Valor |
+| Mï¿½trica | Valor |
 |---------|-------|
 | Eventos processados/dia | ~1.000 |
 | Eventos com PII detectado/dia | ~200 (20%) |
-| Taxa de sanitização bem-sucedida | 100% |
-| Falsos positivos | <5% (validação de CPF reduz) |
+| Taxa de sanitizaï¿½ï¿½o bem-sucedida | 100% |
+| Falsos positivos | <5% (validaï¿½ï¿½o de CPF reduz) |
 | Tipos de PII mais comuns | CPF, Email, Telefone |
 
 ---
@@ -254,27 +254,27 @@ console.log(`Taxa de sanitização: ${(stats.totalSanitized / stats.totalProcessed
 
 ### Requisitos da LGPD
 
-- [x] **Art. 6º, I (Finalidade)** - Documentada em Privacy Policy
-- [x] **Art. 6º, II (Adequação)** - Processamento mínimo necessário
-- [x] **Art. 6º, III (Necessidade)** - Apenas dados essenciais
-- [x] **Art. 6º, VII (Segurança)** - PII filtering implementado
-- [x] **Art. 6º, X (Responsabilização)** - Auditoria automática
-- [x] **Art. 46 (Medidas de Segurança)** - Criptografia + Sanitização
-- [x] **Art. 48 (Comunicação de Incidente)** - Procedimento definido
+- [x] **Art. 6ï¿½, I (Finalidade)** - Documentada em Privacy Policy
+- [x] **Art. 6ï¿½, II (Adequaï¿½ï¿½o)** - Processamento mï¿½nimo necessï¿½rio
+- [x] **Art. 6ï¿½, III (Necessidade)** - Apenas dados essenciais
+- [x] **Art. 6ï¿½, VII (Seguranï¿½a)** - PII filtering implementado
+- [x] **Art. 6ï¿½, X (Responsabilizaï¿½ï¿½o)** - Auditoria automï¿½tica
+- [x] **Art. 46 (Medidas de Seguranï¿½a)** - Criptografia + Sanitizaï¿½ï¿½o
+- [x] **Art. 48 (Comunicaï¿½ï¿½o de Incidente)** - Procedimento definido
 - [ ] **Art. 10 (Consentimento)** - Implementar consent banner (futuro)
 - [ ] **Art. 18 (Direitos do Titular)** - Portal de direitos (futuro)
 
-### Requisitos Técnicos
+### Requisitos Tï¿½cnicos
 
-- [x] PII Filtering automático
-- [x] Sanitização de logs/erros
-- [x] Sanitização de AI spans
-- [x] Desabilitação de `sendDefaultPii`
+- [x] PII Filtering automï¿½tico
+- [x] Sanitizaï¿½ï¿½o de logs/erros
+- [x] Sanitizaï¿½ï¿½o de AI spans
+- [x] Desabilitaï¿½ï¿½o de `sendDefaultPii`
 - [x] Mascaramento de inputs em replay
-- [x] Redação de chaves sensíveis
+- [x] Redaï¿½ï¿½o de chaves sensï¿½veis
 - [x] Auditoria de dados processados
-- [x] Validação de CPF (reduz falsos positivos)
-- [x] Configuração por ambiente (dev/prod)
+- [x] Validaï¿½ï¿½o de CPF (reduz falsos positivos)
+- [x] Configuraï¿½ï¿½o por ambiente (dev/prod)
 
 ---
 
@@ -286,7 +286,7 @@ console.log(`Taxa de sanitização: ${(stats.totalSanitized / stats.totalProcessed
 import { sanitizePII, detectPII } from '@/services/pii-filtering';
 
 const testText = `
-  Contato: João Silva
+  Contato: Joï¿½o Silva
   CPF: 123.456.789-01
   Email: joao@example.com
   Tel: (11) 98765-4321
@@ -307,7 +307,7 @@ const sanitized = sanitizePII(testText);
 
 ```bash
 npm run test:pii
-# (criar teste específico no futuro)
+# (criar teste especï¿½fico no futuro)
 ```
 
 ---
@@ -316,12 +316,12 @@ npm run test:pii
 
 **Em caso de vazamento de dados:**
 
-1. **Detecção:** Sentry + monitoring
-2. **Contenção:** Pausar envio de dados
-3. **Investigação:** Verificar logs + estatísticas
-4. **Notificação:** ANPD + titulares (se aplicável)
-5. **Mitigação:** Corrigir falha + atualizar filtros
-6. **Documentação:** Relatório de incidente
+1. **Detecï¿½ï¿½o:** Sentry + monitoring
+2. **Contenï¿½ï¿½o:** Pausar envio de dados
+3. **Investigaï¿½ï¿½o:** Verificar logs + estatï¿½sticas
+4. **Notificaï¿½ï¿½o:** ANPD + titulares (se aplicï¿½vel)
+5. **Mitigaï¿½ï¿½o:** Corrigir falha + atualizar filtros
+6. **Documentaï¿½ï¿½o:** Relatï¿½rio de incidente
 
 **Contato:**
 - **DPO (Data Protection Officer):** [a definir]
@@ -330,7 +330,7 @@ npm run test:pii
 
 ---
 
-## ?? Referências
+## ?? Referï¿½ncias
 
 - **LGPD:** https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
 - **Sentry Data Privacy:** https://docs.sentry.io/product/data-management-settings/scrubbing/
@@ -338,16 +338,16 @@ npm run test:pii
 
 ---
 
-## ?? Histórico de Versões
+## ?? Histï¿½rico de Versï¿½es
 
-| Versão | Data | Mudanças |
+| Versï¿½o | Data | Mudanï¿½as |
 |--------|------|----------|
-| 1.0.0 | 08/12/2025 | Implementação inicial PII Filtering + documentação LGPD |
+| 1.0.0 | 08/12/2025 | Implementaï¿½ï¿½o inicial PII Filtering + documentaï¿½ï¿½o LGPD |
 
 ---
 
 **? Sistema em conformidade com LGPD (Lei 13.709/2018)**
 
-**Responsável Técnico:** Equipe de Desenvolvimento  
-**Última Revisão:** 08/12/2025  
-**Próxima Revisão:** 08/06/2026 (semestral)
+**Responsï¿½vel Tï¿½cnico:** Equipe de Desenvolvimento  
+**ï¿½ltima Revisï¿½o:** 08/12/2025  
+**Prï¿½xima Revisï¿½o:** 08/06/2026 (semestral)

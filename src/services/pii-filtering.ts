@@ -1,16 +1,16 @@
 /**
  * PII (Personally Identifiable Information) Filtering Service
  *
- * Servi�o de sanitiza��o de dados pessoais para conformidade com LGPD
- * (Lei Geral de Prote��o de Dados - Lei 13.709/2018)
+ * Serviço de sanitização de dados pessoais para conformidade com LGPD
+ * (Lei Geral de Proteção de Dados - Lei 13.709/2018)
  *
- * Remove ou mascara dados sens�veis antes de enviar para servi�os de monitoramento
+ * Remove ou mascara dados sensíveis antes de enviar para serviços de monitoramento
  *
  * @see https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
  */
 
 /**
- * Tipos de dados pessoais cobertos pela LGPD (Art. 5�)
+ * Tipos de dados pessoais cobertos pela LGPD (Art. 5º)
  */
 export enum PIIType {
   CPF = "cpf",
@@ -79,7 +79,7 @@ export const DEFAULT_PII_CONFIG: PIIFilterConfig = {
 };
 
 /**
- * Regex patterns para detec��o de dados sens�veis
+ * Regex patterns para detecção de dados sensíveis
  */
 export const PII_PATTERNS: Record<PIIType, RegExp> = {
   // CPF: 123.456.789-09 ou 12345678909
@@ -91,14 +91,14 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   // Telefone: (11) 98765-4321, 11987654321, +55 11 98765-4321, 11 98765-4321
   [PIIType.TELEFONE]: /(?:\+55\s{0,1})?(?:\(?\d{2}\)?\s{0,1})?\d{4,5}[\s-]{0,1}\d{4}\b/g,
 
-  // Endere�o: Rua/Av + nome + n�mero
+  // Endereço: Rua/Av + nome + número
   [PIIType.ENDERECO]:
     /(?:Rua|Avenida|Av\.|R\.|Travessa|Trav\.)\s{1,3}[A-Za-zà-ú\s]{1,100},?\s{0,2}\d+/gi,
 
-  // Conta banc�ria: Ag 1234 C/C 12345-6
+  // Conta bancária: Ag 1234 C/C 12345-6
   [PIIType.CONTA_BANCARIA]: /(?:Ag|Agência|Conta|C\/C)[\s:]{0,3}\d{3,6}-?\d?/gi,
 
-  // Cart�o de cr�dito: 1234 5678 9012 3456
+  // Cartão de crédito: 1234 5678 9012 3456
   [PIIType.CARTAO_CREDITO]: /\b\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}\b/g,
 
   // RG: 12.345.678-9 ou 123456789
@@ -113,7 +113,7 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   // OAB: OAB/SP 123.456
   [PIIType.OAB]: /\bOAB\/[A-Z]{2}\s{0,2}\d{3,6}\.?\d{0,3}\b/gi,
 
-  // Nome completo (heur�stica: Nome Sobrenome com mai�sculas)
+  // Nome completo (heurística: Nome Sobrenome com maiúsculas)
   [PIIType.NOME_COMPLETO]:
     /\b[A-ZÀ-Ü][a-zà-ü]{1,30}\s{1,2}(?:[A-ZÀ-Ü][a-zà-ü]{1,30}[\s]{0,2}){1,5}\b/g,
 };
@@ -243,7 +243,7 @@ export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_
 }
 
 /**
- * Valida se um CPF � v�lido (usado para reduzir falsos positivos)
+ * Valida se um CPF é válido (usado para reduzir falsos positivos)
  */
 export function isValidCPF(cpf: string): boolean {
   const cleaned = cpf.replace(/\D/g, "");
@@ -299,7 +299,7 @@ export function detectPII(text: string): PIIType[] {
 }
 
 /**
- * Estat�sticas de sanitiza��o (para auditoria LGPD)
+ * Estatísticas de sanitização (para auditoria LGPD)
  */
 export interface PIISanitizationStats {
   totalProcessed: number;
@@ -316,7 +316,7 @@ let stats: PIISanitizationStats = {
 };
 
 /**
- * Registra estat�sticas de sanitiza��o
+ * Registra estatísticas de sanitização
  */
 export function recordPIISanitization(types: PIIType[]): void {
   stats.totalProcessed++;
@@ -332,14 +332,14 @@ export function recordPIISanitization(types: PIIType[]): void {
 }
 
 /**
- * Obt�m estat�sticas de sanitiza��o
+ * Obtém estatísticas de sanitização
  */
 export function getPIIStats(): PIISanitizationStats {
   return { ...stats };
 }
 
 /**
- * Reseta estat�sticas (para testes)
+ * Reseta estatísticas (para testes)
  */
 export function resetPIIStats(): void {
   stats = {

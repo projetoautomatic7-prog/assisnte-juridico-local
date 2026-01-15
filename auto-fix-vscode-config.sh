@@ -29,12 +29,16 @@ cp "$SETTINGS_FILE" "$BACKUP_FILE"
 echo "✅ Backup criado: $BACKUP_FILE"
 
 # Verificar se contém a configuração problemática
-if grep -q '"\*\.copilotmd": "vscode\.markdown\.preview\.editor"' "$SETTINGS_FILE"; then
+if grep -q '"\*\.copilotmd"[[:space:]]*:[[:space:]]*"vscode\.markdown\.preview\.editor"' "$SETTINGS_FILE"; then
     echo "❌ Configuração problemática encontrada!"
     echo "🔧 Corrigindo configuração..."
 
-    # Usar sed para substituir a configuração problemática
-    sed -i 's/"\*\.copilotmd": "vscode\.markdown\.preview\.editor"/"*.copilotmd": "default"/g' "$SETTINGS_FILE"
+    # Compatibilidade entre GNU sed (Linux) e BSD sed (macOS)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/"\*\.copilotmd"[[:space:]]*:[[:space:]]*"vscode\.markdown\.preview\.editor"/"*.copilotmd": "default"/g' "$SETTINGS_FILE"
+    else
+        sed -i 's/"\*\.copilotmd"[[:space:]]*:[[:space:]]*"vscode\.markdown\.preview\.editor"/"*.copilotmd": "default"/g' "$SETTINGS_FILE"
+    fi
 
     echo "✅ Configuração corrigida com sucesso!"
 else
@@ -48,7 +52,11 @@ else
         echo "ℹ️ Nenhuma configuração *.copilotmd encontrada."
         echo "   Adicionando configuração padrão..."
         # Adicionar configuração padrão se não existir
-        sed -i 's/^{$/{\n  "*.copilotmd": "default",/g' "$SETTINGS_FILE"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '1s/{/{\n  "*.copilotmd": "default",/' "$SETTINGS_FILE"
+        else
+            sed -i '0,/{/s/{/{\n  "*.copilotmd": "default",/' "$SETTINGS_FILE"
+        fi
     fi
 fi
 

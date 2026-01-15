@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import type { User, ViewType } from "@/types";
 import { useAutoMinuta } from "@/hooks/use-auto-minuta";
@@ -267,7 +266,7 @@ function App() {
             </div>
           </div>
           <Toaster />
-          {isVercel && <SpeedInsights />}
+          
         </div>
       </QueryClientProvider>
     );
@@ -307,7 +306,7 @@ function App() {
           </main>
         </div>
         <Toaster />
-        {isVercel && <SpeedInsights />}
+        
       </div>
     </QueryClientProvider>
   );
