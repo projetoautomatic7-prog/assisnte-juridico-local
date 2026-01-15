@@ -15,6 +15,14 @@ import { InMemoryMemoryStore, SimpleAgent } from "./lib/ai/core-agent";
 import { HttpLlmClient } from "./lib/ai/http-llm-client";
 import { ALL_TOOLS, GlobalToolContext } from "./lib/ai/tools";
 
+// DJEN Scheduler - Importar funções
+export {
+  djenScheduler01h,
+  djenScheduler09h,
+  djenTriggerManual,
+  djenStatus,
+} from "./djen-scheduler";
+
 setGlobalOptions({ maxInstances: 10 });
 
 export const agents = onRequest({ cors: true }, async (req, res) => {

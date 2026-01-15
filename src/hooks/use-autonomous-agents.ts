@@ -114,7 +114,10 @@ export function useAutonomousAgents() {
       return;
     }
 
-    if (agentsRef.current.length < 15 && !isInitializingRef.current) {
+    // Garante que a quantidade de agentes seja sempre a definida em `initializeAgents` (15).
+    // O log `Pasted-er-responded-with-a-status-of-404...` mostra que o sistema entra em loop
+    // com 16 agentes, indicando que a verificação ` < 15` era insuficiente.
+    if (agentsRef.current.length !== 15 && !isInitializingRef.current) {
       isInitializingRef.current = true;
       console.log(`[Agents] Quantidade incorreta (${agentsRef.current.length}) → reinicializando`);
       setAgents(initializeAgents());

@@ -254,10 +254,9 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
 
       // 🔥 SENTRY AI MONITORING V2 - Instrumentação oficial
       const finalSessionId = sessionId || `harvey-${Date.now()}`;
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
 
       try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-
         // Criar span Sentry para rastrear a chamada LLM completa
         const result = await createChatSpan(
           {

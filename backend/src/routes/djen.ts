@@ -29,7 +29,7 @@ router.get("/publicacoes", async (req, res) => {
     const response = await fetch(url, {
       headers: {
         Accept: "application/json",
-        "User-Agent": "PJe-Assistente/1.0",
+        "User-Agent": "PJe-DataCollector/1.0",
       },
     });
 

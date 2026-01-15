@@ -31,7 +31,7 @@ interface BuscarPublicacoesParams {
 export async function buscarPublicacoesDJEN(
   params: BuscarPublicacoesParams
 ): Promise<DJENPublicacao[]> {
-  const url = new URL(`${DJEN_API_URL}/expedientes`);
+  const url = new URL(DJEN_API_URL);
   url.searchParams.set("numeroOab", params.numeroOab);
   url.searchParams.set("ufOab", params.ufOab);
   url.searchParams.set("meio", "D"); // D=Diário, E=Eletrônico
@@ -45,7 +45,7 @@ export async function buscarPublicacoesDJEN(
       method: "GET",
       headers: {
         Accept: "application/json",
-        "User-Agent": "Assistente-Juridico-PJe/1.0",
+        "User-Agent": "PJe-DataCollector/1.0",
       },
     });
 
