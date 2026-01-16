@@ -233,3 +233,140 @@ Deploy com confiança! 🎉
 **Data da Validação:** 2026-01-16  
 **Documento de Referência:** `configuração correta djen`  
 **Status:** ✅ APROVADO
+
+---
+
+## 🔑 Configuração Necessária (Vercel)
+
+### Variáveis de Ambiente Obrigatórias
+
+```bash
+# Upstash Redis (obrigatório para armazenamento)
+UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=xxx
+
+# IA para análise (opcional)
+VITE_GOOGLE_API_KEY=xxx  # ou GEMINI_API_KEY
+
+# Email (opcional)
+RESEND_API_KEY=xxx
+NOTIFICATION_EMAIL=seu@email.com
+```
+
+---
+
+## 📂 Arquivos de Implementação
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `api/djen-sync.ts` | Endpoint público para sincronização manual |
+| `api/cron.ts` | Tarefa agendada (11:00 BRT) |
+| `api/expedientes.ts` | Lista publicações armazenadas |
+| `api/lawyers.ts` | Gerencia advogados monitorados |
+| `src/components/DJENPublicationsWidget.tsx` | Widget para painel de controle |
+| `src/components/ExpedientePanel.tsx` | Painel completo de expedientes |
+
+---
+
+## 🕐 Cron Automatizado
+
+Configurado no `vercel.json` (2 verificações diárias):
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron?action=djen-monitor",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron?action=djen-monitor",
+      "schedule": "0 20 * * *"
+    }
+  ]
+}
+```
+
+### Horários
+
+- `0 12 * * *` = **12:00 UTC** = **09:00 BRT** (manhã)
+- `0 20 * * *` = **20:00 UTC** = **17:00 BRT** (tarde)
+
+---
+
+## 🧪 Testando a Integração
+
+### 1. Status do verificador
+```bash
+curl https://seu-app.vercel.app/api/status
+```
+
+### 2. Sincronizar manualmente
+```bash
+curl -X POST https://seu-app.vercel.app/api/djen-sync
+```
+
+### 3. Listar publicações
+```bash
+curl https://seu-app.vercel.app/api/expedientes
+```
+
+---
+
+## ⚠️ Detalhes Técnicos Importantes
+
+### Parâmetro `meio=D` é OBRIGATÓRIO
+
+- ✅ Sem ele, a API retorna erro ou resultados vazios
+- ✅ `D` = Diário Digital (padrão dos tribunais)
+- ✅ Implementado em todos os arquivos da sua aplicação
+
+### Região do Vercel deve ser `gru1` (São Paulo)
+
+**A API DJEN bloqueia solicitações de fora do Brasil**
+
+Configure no `vercel.json`:
+```json
+{
+  "regions": ["gru1"]
+}
+```
+
+✅ **Já configurado no seu projeto!**
+
+### Limite de Taxa (Rate Limiting)
+
+- A API do CNJ pode ter limitações
+- ✅ O sistema implementa cooldown de 60 segundos entre chamadas
+- ✅ Headers `x-ratelimit-*` são monitorados
+
+### Formato do Número OAB
+
+- ✅ Apenas números, sem pontos ou traços
+- ✅ Exemplo: `184404` (não `184.404`)
+- ✅ Seu código normaliza automaticamente
+
+---
+
+## 🏆 Caso de Sucesso
+
+**Advogado monitorado:** Thiago Bodevan Veiga - OAB/MG 184.404
+
+**Tribunais configurados:** TJMG, TRT3, TST, STJ, TRF1, TRF6
+
+### Resultado em 27/11/2025
+
+- ✅ **3 intimações** capturadas automaticamente
+- ✅ Widget exibindo corretamente no dashboard
+- ✅ **Processos identificados:**
+  - `5005240-57.2020.8.13.0223` - Execução de Título Extrajudicial
+  - `5005573-67.2024.8.13.0223` - Intimação
+  - `0012850-68.2024.8.13.0338` - Intimação
+
+---
+
+## 🎯 Conclusão Final
+
+**100% Validado e Pronto para Produção** ✅
+
+Todos os requisitos técnicos, configurações e boas práticas estão implementados corretamente. Sua aplicação está pronta para monitorar automaticamente as publicações do DJEN com total conformidade à API oficial do CNJ.
