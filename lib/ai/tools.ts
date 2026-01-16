@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ai, qdrantRetriever } from './genkit.js';
 import { indexDocumentFlow } from './rag-flow.js';
-import { GenkitError } from 'genkit/beta';
+import { GenkitError } from 'genkit';
 import { logger } from 'genkit/logging';
 
 const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3001';

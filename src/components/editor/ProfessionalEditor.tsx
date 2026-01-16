@@ -129,6 +129,7 @@ interface ProfessionalEditorProps {
   readonly djenData?: DJENPublication[];
   readonly processData?: ProcessData;
   readonly documentType?: string;
+  readonly onEditorReady?: (editor: ClassicEditor) => void;
 }
 
 // ===========================
@@ -157,6 +158,13 @@ const AI_QUICK_COMMANDS = [
     prompt: "Reescreva o seguinte texto em linguagem jurídica formal:",
   },
 ] as const;
+
+// Orienta o LLM a respeitar o esquema do CKEditor usado no ProfessionalEditor.
+const CKEDITOR_SCHEMA_INSTRUCTIONS = [
+  "Use apenas HTML suportado pelo CKEditor desta página.",
+  "Tags permitidas: <p>, <h1>-<h4>, <strong>/<b>, <em>/<i>, <u>, <s>, <sub>, <sup>, <code>, <blockquote>, <hr>, listas (<ul>, <ol>, <li>, <taskList>, <taskItem>), tabelas (<table>, <thead>, <tbody>, <tr>, <th>, <td>), links (<a href>), destaques (<mark> ou estilos de cor/fundo) e quebras de linha <br>.",
+  "Não gere scripts, iframes, formulários ou nós fora dessa lista; se um elemento não for suportado, devolva texto plano.",
+].join("\n");
 
 // ===========================
 // Helper Functions
@@ -188,6 +196,7 @@ export function ProfessionalEditor({
   djenData = [],
   processData,
   documentType,
+  onEditorReady,
 }: ProfessionalEditorProps) {
   const editorRef = useRef<ClassicEditor | null>(null);
   const lastUserInputRef = useRef<number>(Date.now());
@@ -454,7 +463,7 @@ export function ProfessionalEditor({
       if (!editor) return;
 
       const selectedText = editor.getData();
-      const fullPrompt = `${command.prompt}\n\n${selectedText}`;
+      const fullPrompt = `${CKEDITOR_SCHEMA_INSTRUCTIONS}\n\n${command.prompt}\n\n${selectedText}`;
 
       if (onAIStream) {
         await runAIStreaming(fullPrompt);
@@ -551,7 +560,7 @@ export function ProfessionalEditor({
       try {
         const currentContent = editor.getData();
         const result = await generateMinuta({
-          prompt,
+          prompt: `${CKEDITOR_SCHEMA_INSTRUCTIONS}\n\n${prompt}`,
           context: currentContent,
           djenData,
           processData,
@@ -653,12 +662,14 @@ export function ProfessionalEditor({
     const editor = editorRef.current;
     if (!aiPrompt.trim() || !editor) return;
 
+    const promptWithSchema = `${CKEDITOR_SCHEMA_INSTRUCTIONS}\n\n${aiPrompt}`;
+
     if (onAIStream) {
-      await runAIStreaming(aiPrompt);
+      await runAIStreaming(promptWithSchema);
     } else if (onAIGenerate) {
       setIsAILoading(true);
       try {
-        const result = await onAIGenerate(aiPrompt);
+        const result = await onAIGenerate(promptWithSchema);
         const processed = replaceVariables(result);
 
         const viewFragment = editor.data.processor.toView(processed);
@@ -850,6 +861,10 @@ export function ProfessionalEditor({
           onReady={(editor) => {
             editorRef.current = editor;
             setIsEditorReady(true);
+
+            if (onEditorReady) {
+              onEditorReady(editor);
+            }
 
             const htmlData = editor.getData();
             const tempDiv = document.createElement("div");

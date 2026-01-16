@@ -285,9 +285,8 @@ async function sendRealTimeNotification(notification: {
 async function addTaskToQueue(task: AgentTask): Promise<void> {
   try {
     const kv = await getKv();
-    const queue = ((await kv.get("agent-task-queue")) as AgentTask[]) || [];
-    queue.push(task);
-    await kv.set("agent-task-queue", queue);
+    // Atomic push to queue
+    await kv.rpush("agent-task-queue", task);
   } catch (error) {
     console.error("[KV] Error adding task to queue:", error);
   }

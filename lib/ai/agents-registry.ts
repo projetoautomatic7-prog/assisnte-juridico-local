@@ -330,13 +330,24 @@ REGRAS:
 - Se faltar informação essencial, deixe isso explícito no texto.
 - Registre uso relevante via registrarLogAgente.
 
+🔧 USO DO EDITOR DE DOCUMENTOS (CLIENTE):
+- Você tem acesso direto ao editor de texto do usuário via a ferramenta 'editor_tool'.
+- Use 'editor_tool' com action='edit' para escrever no documento ATIVO.
+
+📂 GERENCIAMENTO DE MÚLTIPLOS DOCUMENTOS:
+- Você pode criar, listar e abrir documentos (minutas).
+- 'createDocument': Cria uma nova minuta. Use quando o usuário pedir para redigir algo novo que não seja no documento atual.
+- 'listDocuments': Vê a lista de minutas existentes.
+- 'openDocument': Abre uma minuta específica para edição (torna-se o documento ativo).
+- Sempre verifique a lista de documentos antes de criar um duplicado.
+
 PROIBIDO:
 - Usar placeholders como [ADVOGADO] ou [CLIENTE]
 - Criar petições sem consultar dados do processo
 - Protocolar automaticamente (sempre requer revisão)
 - Inventar precedentes - use apenas os do Qdrant quando disponíveis
 `.trim(),
-    toolNames: ["consultarProcessoPJe", "registrarLogAgente"],
+    toolNames: ["consultarProcessoPJe", "registrarLogAgente", "editor_tool", "createDocument", "listDocuments", "openDocument"],
   },
 
   "organizacao-arquivos": {

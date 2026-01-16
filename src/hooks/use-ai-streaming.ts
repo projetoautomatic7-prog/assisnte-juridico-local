@@ -27,10 +27,14 @@ interface Message {
 }
 
 interface StreamEvent {
-  type: "content" | "done" | "error";
+  type: "content" | "done" | "error" | "tool_call";
   content?: string;
   provider?: string;
   message?: string;
+  toolCall?: {
+    name: string;
+    input: any;
+  };
   // 🔥 NOVO: Métricas de tokens
   tokens?: {
     prompt?: number;
@@ -52,6 +56,8 @@ interface UseAIStreamingOptions {
   onComplete?: (fullContent: string, provider: string) => void;
   onError?: (error: string) => void;
   onTokens?: (tokens: TokenMetrics) => void; // 🔥 NOVO: Callback para métricas
+  onToolCall?: (toolCall: { name: string; input: any }) => void; // ✅ NOVO: Callback para tool calls
+  enableEditorTool?: boolean; // ✅ Permite tool calls do editor_tool (backend)
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -126,7 +132,8 @@ function processStreamEvent(
   model: string, // 🔥 NOVO
   onChunk?: (chunk: string) => void,
   onComplete?: (fullContent: string, provider: string) => void,
-  onTokens?: (tokens: TokenMetrics) => void // 🔥 NOVO
+  onTokens?: (tokens: TokenMetrics) => void, // 🔥 NOVO
+  onToolCall?: (toolCall: { name: string; input: any }) => void // ✅ NOVO
 ): void {
   if (event.type === "content" && event.content) {
     contentRef.current += event.content;
@@ -146,6 +153,10 @@ function processStreamEvent(
       setTokens(metrics);
       onTokens?.(metrics);
     }
+  } else if (event.type === "tool_call" && event.toolCall) {
+    // ✅ NOVO: Intercepta chamada de ferramenta
+    console.log("[AI Streaming] Tool Call recebida:", event.toolCall);
+    onToolCall?.(event.toolCall);
   } else if (event.type === "done") {
     setProvider(event.provider || null);
     onComplete?.(contentRef.current, event.provider || "unknown");
@@ -167,7 +178,8 @@ async function processStreamResponse(
   model: string, // 🔥 NOVO
   onChunk?: (chunk: string) => void,
   onComplete?: (fullContent: string, provider: string) => void,
-  onTokens?: (tokens: TokenMetrics) => void // 🔥 NOVO
+  onTokens?: (tokens: TokenMetrics) => void, // 🔥 NOVO
+  onToolCall?: (toolCall: { name: string; input: any }) => void // ✅ NOVO
 ): Promise<void> {
   const decoder = new TextDecoder();
   let buffer = "";
@@ -193,7 +205,8 @@ async function processStreamResponse(
         model,
         onChunk,
         onComplete,
-        onTokens
+        onTokens,
+        onToolCall
       );
     }
   }
@@ -215,6 +228,8 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
     onComplete,
     onError,
     onTokens, // 🔥 NOVO
+    onToolCall, // ✅ NOVO
+    enableEditorTool = false,
     model = "gpt-4o-mini",
     temperature = 0.7,
     maxTokens = 2000,
@@ -282,6 +297,7 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
                 messages,
                 temperature,
                 max_tokens: maxTokens,
+                enableEditorTool,
               }),
               signal: abortControllerRef.current!.signal,
             });
@@ -305,7 +321,8 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
               model,
               onChunk,
               onComplete,
-              onTokens
+              onTokens,
+              onToolCall
             );
 
             // 🔥 Adicionar métricas de tokens ao span (se disponível)

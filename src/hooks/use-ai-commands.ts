@@ -33,7 +33,39 @@ interface UseAICommandsReturn {
   checkStatus: () => Promise<void>;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim();
+const isBrowser = typeof window !== "undefined";
+const browserOrigin = isBrowser ? window.location.origin : "";
+
+function buildApiUrl(path: string): string | null {
+  const fallbackBase = "http://localhost:3001";
+
+  const baseFromEnv = (() => {
+    if (!API_BASE_URL) return "";
+    if (API_BASE_URL.startsWith("http")) return API_BASE_URL;
+    if (API_BASE_URL.startsWith("/") && browserOrigin) return `${browserOrigin}${API_BASE_URL}`;
+    return API_BASE_URL;
+  })();
+
+  // Browser (inclui JSDOM): preferir VITE_API_BASE_URL; senão, usar a origin atual (onde o proxy /api costuma existir).
+  if (isBrowser) {
+    const base = baseFromEnv || browserOrigin || fallbackBase;
+    try {
+      return new URL(path, base).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  // Node: precisa de URL absoluta. Usa base configurada ou fallback local.
+  const base = baseFromEnv || fallbackBase;
+
+  try {
+    return new URL(path, base).toString();
+  } catch {
+    return null;
+  }
+}
 
 function parseSSELine(line: string): SSEEvent | null {
   const trimmed = line.trim();
@@ -104,6 +136,7 @@ export function useAICommands(): UseAICommandsReturn {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const rateLimitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warnedMissingBaseRef = useRef(false);
 
   // Automatically reset canRequest after waitTime expires
   useEffect(() => {
@@ -129,8 +162,21 @@ export function useAICommands(): UseAICommandsReturn {
   }, [canRequest, waitTime]);
 
   const checkStatus = useCallback(async (): Promise<void> => {
+    const statusUrl = buildApiUrl("/api/ai/status");
+    if (!statusUrl) {
+      if (!warnedMissingBaseRef.current) {
+        console.warn(
+          "[AI Commands] API base URL ausente ou inválida; pulando verificação de status."
+        );
+        warnedMissingBaseRef.current = true;
+      }
+      setCanRequest(true);
+      setWaitTime(0);
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/status`);
+      const response = await fetch(statusUrl);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -153,6 +199,14 @@ export function useAICommands(): UseAICommandsReturn {
 
   const executeCommand = useCallback(
     async (command: AICommand, texto: string, onChunk: (chunk: string) => void): Promise<void> => {
+      const commandUrl = buildApiUrl(`/api/ai/${command}`);
+      if (!commandUrl) {
+        const message =
+          "Endpoint de IA indisponível: configure VITE_API_BASE_URL ou execute no browser com origem válida.";
+        setError(message);
+        throw new Error(message);
+      }
+
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -162,7 +216,7 @@ export function useAICommands(): UseAICommandsReturn {
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/ai/${command}`, {
+        const response = await fetch(commandUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

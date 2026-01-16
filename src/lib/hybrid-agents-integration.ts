@@ -82,6 +82,10 @@ let successCount = 0;
 // IMPLEMENTATION
 // ============================================================================
 
+import { agentFlow } from "../../lib/ai/agent-flow.js";
+
+// ... existing imports ...
+
 export async function executeHybridTask(
   agentId: string,
   task: unknown,
@@ -89,7 +93,7 @@ export async function executeHybridTask(
 ): Promise<HybridExecutionResult> {
   const startTime = performance.now();
   const finalConfig: HybridExecutionConfig = {
-    enableLangGraph: true,
+    enableLangGraph: true, // Keep enabled but it will fallback or just return mock for now if no impl
     enableTraditional: true,
     coordinationMode: "parallel",
     timeoutMs: 30000,
@@ -99,12 +103,43 @@ export async function executeHybridTask(
   console.log(`[Hybrid] Executing task for ${agentId} with mode: ${finalConfig.coordinationMode}`);
 
   try {
+    // 1. Traditional Flow (Genkit)
+    let traditionalResult: { completed: boolean; data?: unknown } = { completed: false };
+    
+    if (finalConfig.enableTraditional) {
+        try {
+            const taskData = (task as any).data || {};
+            const message = taskData.description || taskData.message || JSON.stringify(taskData);
+            
+            const flowResult = await agentFlow({
+                agentId,
+                message: typeof message === 'string' ? message : JSON.stringify(message),
+                sessionId: (task as any).id,
+            });
+
+            traditionalResult = {
+                completed: true,
+                data: flowResult
+            };
+        } catch (err) {
+            console.error(`[Hybrid] Traditional flow failed for ${agentId}:`, err);
+            // Don't throw here if we want to try LangGraph or just report partial failure
+        }
+    }
+
+    // 2. LangGraph Flow (Mocked for now, or Placeholder)
+    let langGraphResult: { completed: boolean; data?: unknown } | undefined = undefined;
+    if (hasHybridVersion(agentId) && finalConfig.enableLangGraph) {
+         // Placeholder for future LangGraph implementation
+         langGraphResult = { completed: true, data: task }; 
+    }
+
     const result: HybridExecutionResult = {
-      success: true,
-      mode: hasHybridVersion(agentId) ? "langgraph" : "traditional",
+      success: traditionalResult.completed || (langGraphResult?.completed ?? false),
+      mode: hasHybridVersion(agentId) ? "langgraph" : "traditional", // This logic might need adjustment based on what actually ran
       executionTime: performance.now() - startTime,
-      langGraphResult: hasHybridVersion(agentId) ? { completed: true, data: task } : undefined,
-      traditionalResult: { completed: true, data: task },
+      langGraphResult,
+      traditionalResult,
     };
 
     recordExecution(result);

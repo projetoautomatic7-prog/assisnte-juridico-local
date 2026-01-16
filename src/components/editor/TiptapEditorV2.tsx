@@ -1,7 +1,7 @@
 "use client";
 
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // --- Tiptap Core Extensions ---
 import { Highlight } from "@tiptap/extension-highlight";
@@ -65,6 +65,7 @@ import { toast } from "sonner";
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
 import { useWindowSize } from "@/hooks/use-window-size";
+import { getAiToolkit } from "@/lib/tiptap-ai";
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
@@ -96,6 +97,7 @@ interface TiptapEditorV2Props {
     }
   ) => Promise<void>;
   readonly variables?: Record<string, string>;
+  readonly onEditorReady?: (editor: ReturnType<typeof useEditor>) => void;
 }
 
 // ===========================
@@ -407,6 +409,7 @@ export function TiptapEditorV2({
   onAIGenerate,
   onAIStream,
   variables = {},
+  onEditorReady,
 }: TiptapEditorV2Props) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsBreakpoint();
@@ -425,6 +428,11 @@ export function TiptapEditorV2({
   const editor = useEditor({
     immediatelyRender: false,
     onCreate: ({ editor }) => {
+      // Notify parent if callback provided
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
+
       // Ensure editor DOM has no blur/opacity by default.
       try {
         const dom = editor.view.dom as HTMLElement;
@@ -489,6 +497,16 @@ export function TiptapEditorV2({
       setWordCount(countWords(text));
     },
   });
+
+  // Instruções de esquema para evitar que a IA gere HTML não suportado pelo Tiptap.
+  const schemaAwareness = useMemo(() => {
+    if (!editor) return "";
+    try {
+      return getAiToolkit(editor as any).getHtmlSchemaAwareness();
+    } catch {
+      return "";
+    }
+  }, [editor]);
 
   const rect = useCursorVisibility({
     editor,
@@ -579,7 +597,8 @@ export function TiptapEditorV2({
 
   const handleAIGenerate = useCallback(async () => {
     if (!aiPrompt.trim() || !editor) return;
-    const prompt = aiPrompt.trim();
+    const basePrompt = aiPrompt.trim();
+    const prompt = schemaAwareness ? `${schemaAwareness}\n\n${basePrompt}` : basePrompt;
 
     // Streaming
     if (onAIStream) {
@@ -605,7 +624,7 @@ export function TiptapEditorV2({
     } finally {
       setIsAILoading(false);
     }
-  }, [aiPrompt, editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables]);
+  }, [aiPrompt, editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables, schemaAwareness]);
 
   const handleQuickAI = useCallback(
     async (command: (typeof AI_QUICK_COMMANDS)[number]) => {
@@ -619,7 +638,8 @@ export function TiptapEditorV2({
         return;
       }
 
-      const fullPrompt = `${command.prompt}\n\n"${selectedText}"`;
+      const basePrompt = `${command.prompt}\n\n"${selectedText}"`;
+      const fullPrompt = schemaAwareness ? `${schemaAwareness}\n\n${basePrompt}` : basePrompt;
 
       if (onAIStream) {
         await runAIStreaming(fullPrompt);
@@ -646,7 +666,7 @@ export function TiptapEditorV2({
         setIsAILoading(false);
       }
     },
-    [editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables]
+    [editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables, schemaAwareness]
   );
 
   const hasAI = !!(onAIGenerate || onAIStream);

@@ -25,6 +25,7 @@ interface LLMRequest {
   messages?: ChatMessage[];
   temperature?: number;
   max_tokens?: number;
+  enableEditorTool?: boolean;
   [key: string]: unknown;
 }
 
@@ -34,6 +35,10 @@ interface SSEEvent {
   content?: string;
   provider?: string;
   message?: string;
+  toolCall?: {
+    name: string;
+    input: unknown;
+  };
   // 🔥 NOVO: Métricas de tokens
   tokens?: {
     prompt?: number;
@@ -46,7 +51,7 @@ interface SSEEvent {
 interface GeminiStreamChunk {
   candidates?: Array<{
     content?: {
-      parts?: Array<{ text?: string }>;
+      parts?: Array<{ text?: string; functionCall?: { name?: string; args?: unknown } }>;
       role?: string;
     };
     index?: number;
@@ -119,6 +124,42 @@ function transformToGemini(body: LLMRequest): unknown {
 
   const systemMessage = messages.find((m: ChatMessage) => m.role === "system");
 
+  const editorToolDeclarations = body.enableEditorTool
+    ? [
+        {
+          name: "editor_tool",
+          description:
+            "Ferramenta client-side para ler/editar o documento do usuário no editor.",
+          parameters: {
+            type: "object",
+            properties: {
+              action: {
+                type: "string",
+                description: "Ação no editor: read, readSelection ou edit",
+                enum: ["read", "readSelection", "edit"],
+              },
+              content: {
+                type: "string",
+                description:
+                  "HTML a ser inserido/substituído quando action=edit (use HTML simples).",
+              },
+              from: {
+                type: "integer",
+                description:
+                  "Posição inicial (quando aplicável). Se omitido, usa seleção atual.",
+              },
+              to: {
+                type: "integer",
+                description:
+                  "Posição final (quando aplicável). Se omitido, usa seleção atual.",
+              },
+            },
+            required: ["action"],
+          },
+        },
+      ]
+    : [];
+
   return {
     contents,
     systemInstruction: systemMessage ? { parts: [{ text: systemMessage.content }] } : undefined,
@@ -126,6 +167,14 @@ function transformToGemini(body: LLMRequest): unknown {
       temperature: body.temperature || 0.7,
       maxOutputTokens: body.max_tokens || 4096,
     },
+    tools:
+      editorToolDeclarations.length > 0
+        ? [{ functionDeclarations: editorToolDeclarations }]
+        : undefined,
+    toolConfig:
+      editorToolDeclarations.length > 0
+        ? { functionCallingConfig: { mode: "AUTO" } }
+        : undefined,
   };
 }
 
@@ -260,6 +309,28 @@ async function processGeminiStream(
 
     for (const line of lines) {
       const result = processGeminiLine(line);
+      // Também tenta extrair functionCall (tool call)
+      try {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data: ")) {
+          const json: GeminiStreamChunk = JSON.parse(trimmed.slice(6));
+          const parts = json.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            const fc = part.functionCall;
+            if (fc?.name) {
+              sendEvent({
+                type: "tool_call",
+                toolCall: {
+                  name: fc.name,
+                  input: fc.args ?? {},
+                },
+              });
+            }
+          }
+        }
+      } catch {
+        // Ignora falhas de parse do chunk (streaming parcial)
+      }
 
       if (result.text) {
         sendEvent({
@@ -314,6 +385,45 @@ async function streamOpenAI(
     requestedModel.includes("gemini") ? "gpt-4o-mini" : requestedModel,
     body.messages || [],
     async (span) => {
+      const tools = body.enableEditorTool
+        ? [
+            {
+              type: "function",
+              function: {
+                name: "editor_tool",
+                description:
+                  "Ferramenta client-side para ler/editar o documento do usuário no editor.",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    action: {
+                      type: "string",
+                      description: "Ação no editor: read, readSelection ou edit",
+                      enum: ["read", "readSelection", "edit"],
+                    },
+                    content: {
+                      type: "string",
+                      description:
+                        "HTML a ser inserido/substituído quando action=edit (use HTML simples).",
+                    },
+                    from: {
+                      type: "integer",
+                      description:
+                        "Posição inicial (quando aplicável). Se omitido, usa seleção atual.",
+                    },
+                    to: {
+                      type: "integer",
+                      description:
+                        "Posição final (quando aplicável). Se omitido, usa seleção atual.",
+                    },
+                  },
+                  required: ["action"],
+                },
+              },
+            },
+          ]
+        : undefined;
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -324,6 +434,8 @@ async function streamOpenAI(
           ...body,
           model: requestedModel.includes("gemini") ? "gpt-4o-mini" : requestedModel,
           stream: true,
+          tools,
+          tool_choice: tools ? "auto" : undefined,
         }),
       });
 
@@ -335,7 +447,68 @@ async function streamOpenAI(
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
-      await processStream(reader, processOpenAILine, sendEvent);
+      // Processar stream com suporte a tool_calls
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      const toolAcc: Record<
+        string,
+        { name?: string; args: string; emitted: boolean }
+      > = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          if (trimmed === "data: [DONE]") continue;
+
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const choice = json.choices?.[0];
+            const delta = choice?.delta;
+
+            const content = delta?.content;
+            if (content) {
+              sendEvent({ type: "content", content });
+            }
+
+            const toolCalls = delta?.tool_calls;
+            if (Array.isArray(toolCalls)) {
+              for (const tc of toolCalls) {
+                const id = String(tc.id ?? tc.index ?? "unknown");
+                toolAcc[id] = toolAcc[id] || { args: "", emitted: false };
+                if (tc.function?.name) toolAcc[id].name = tc.function.name;
+                if (typeof tc.function?.arguments === "string") {
+                  toolAcc[id].args += tc.function.arguments;
+                }
+
+                const entry = toolAcc[id];
+                if (!entry.emitted && entry.name && entry.args.trim()) {
+                  try {
+                    const parsedArgs = JSON.parse(entry.args);
+                    sendEvent({
+                      type: "tool_call",
+                      toolCall: { name: entry.name, input: parsedArgs },
+                    });
+                    entry.emitted = true;
+                  } catch {
+                    // Ainda não fechou JSON
+                  }
+                }
+              }
+            }
+          } catch {
+            // Ignorar linha inválida
+          }
+        }
+      }
 
       // Adicionar atributos de conclusão
       span?.setAttribute("stream.completed", true);

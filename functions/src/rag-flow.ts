@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ai } from "./genkit.js";
 import { chunk } from "llm-chunk";
-import { GenkitError } from "genkit/beta";
+import { GenkitError } from "genkit";
 import { logger } from "genkit/logging";
 
 /**

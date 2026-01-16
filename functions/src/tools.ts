@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ai, qdrantRetriever } from "./genkit.js";
 import { indexDocumentFlow } from "./rag-flow.js";
-import { GenkitError } from "genkit/beta";
+import { GenkitError } from "genkit";
 import { logger } from "genkit/logging";
 import type { Tool } from "./core-agent";
 import type { ToolAction } from "genkit";

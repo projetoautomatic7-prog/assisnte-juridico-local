@@ -14,6 +14,7 @@ import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
 import { inicializarTabelaExpedientes } from "./db/expedientes.js";
+import agentQueueRouter from "./routes/agent-queue.js";
 import agentsRouter from "./routes/agents.js";
 import aiCommandsRouter from "./routes/ai-commands.js";
 import djenRouter from "./routes/djen.js";
@@ -71,6 +72,8 @@ app.use(
       const allowedOrigins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
         "https://assistente-juridico-github.vercel.app"
       ];
       if (!origin || allowedOrigins.includes(origin)) {
@@ -153,6 +156,7 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/spark", sparkRouter);
 app.use("/api/kv", kvRouter);
+app.use("/api/queue", agentQueueRouter);
 // Rate limiting específico para endpoints de IA (se habilitado)
 if (rateLimitEnabled && !isTestEnv) {
   app.use("/api/llm", aiLimiter, dynatraceLLMMiddleware, llmRouter);

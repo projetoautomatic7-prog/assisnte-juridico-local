@@ -1,0 +1,87 @@
+📢 DJEN - API GRATUITA DO CNJ (DICA IMPORTANTE!)
+💡 Você NÃO precisa pagar "robôs" privados para monitorar suas intimações!
+
+O Conselho Nacional de Justiça (CNJ) disponibiliza uma API pública e gratuita para acesso aos dados do DJEN (Diário de Justiça Eletrônico Nacional).
+
+🔗 Como Acessar Manualmente
+Basta abrir no seu navegador (Chrome, Firefox, etc):
+
+https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab={SEU_NUMERO_OAB}&ufOab={SIGLA_ESTADO}&meio=D
+Exemplo:
+
+https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab=12345&ufOab=SP&meio=D
+📝 Parâmetros
+Parâmetro	Descrição	Exemplo
+numeroOab	Número da sua OAB (apenas números)	12345
+ufOab	Sigla do estado da OAB	SP, PR, MG,RJ
+meio	Tipo de diário ( D= Digital, E= Eletrônico)	D
+💾 Salvando os Resultados
+Acesse um URL no navegador
+O resultado aparecerá no formato JSON
+Clique com botão direito → "Salvar como..." →intimacoes.json
+📚 Documentação Oficial
+Swagger : https://comunicaapi.pje.jus.br/swagger/index.html
+CNJ : https://www.cnj.jus.br/tecnologia-da-informacao-e-comunicacao/djen/
+⚠️ Nota : Esta API é pública e pode ter limitações de limite de taxa. Use com moderação.
+
+✅ DJEN - Implementação Técnica (Funcionando!)
+Status : ✅ OPERACIONAL - Testado com sucesso em 27/11/2025
+
+Este sistema implementa o monitoramento automatizado do DJEN usando a API oficial do CNJ. Abaixo está a documentação técnica completa.
+
+🔧 Arquitetura da Integração
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────────────┐
+│  Frontend React │────▶│  Vercel API      │────▶│  API DJEN (CNJ)             │
+│  (Widget DJEN)  │     │  /api/djen-sync  │     │  comunicaapi.pje.jus.br     │
+└─────────────────┘     └──────────────────┘     └─────────────────────────────┘
+        │                       │                           │
+        │                       ▼                           │
+        │               ┌──────────────────┐                │
+        │               │  Upstash Redis   │◀───────────────┘
+        │               │  (KV Storage)    │   Armazena publicações
+        │               └──────────────────┘
+        │                       │
+        └───────────────────────┘
+              Exibe publicações
+📡 Ponto de extremidade utilizado
+GET https://comunicaapi.pje.jus.br/api/v1/comunicacao
+Parâmetros de consulta obrigatórios:
+
+Parâmetro	Valentia	Descrição
+numeroOab	184404	Número OAB (apenas)
+ufOab	MG	UF da OAB (sigla)
+meio	D	OBRIGATÓRIO - Tipo de diário (D=Digital)
+Exemplo de chamada bem-sucedida:
+
+curl "https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab=184404&ufOab=MG&meio=D"
+📦 Estrutura da Resposta (JSON)
+{
+  "count": 3,
+  "items": [
+    {
+      "id": "123456789",
+      "siglaTribunal": "TJMG",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "1ºJD da Comarca de Divinópolis",
+      "numeroProcesso": "5005240-57.2020.8.13.0223",
+      "dataDisponibilizacao": "2025-11-19T00:00:00",
+      "dataPublicacao": "2025-11-20T00:00:00",
+      "texto": "PODER JUDICIÁRIO DO ESTADO DE MINAS GERAIS...",
+      "destinatarios": [
+        {
+          "nome": "THIAGO BODEVAN VEIGA",
+          "polo": "AUTOR"
+        }
+      ],
+      "advogados": [
+        {
+          "nome": "THIAGO BODEVAN VEIGA",
+          "numeroOAB": "184404",
+          "ufOAB": "MG"
+        }
+      ],
+      "meio": "D",
+      "link": "https://..."
+    }
+  ]
+}

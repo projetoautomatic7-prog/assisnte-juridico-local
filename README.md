@@ -926,7 +926,7 @@ npm install
 
 # Desenvolvimento local
 npm run dev
-# Acesse: http://localhost:5173
+# Acesse: http://localhost:5000
 
 # Verificações de qualidade
 npm run type-check    # TypeScript (0 erros esperados)

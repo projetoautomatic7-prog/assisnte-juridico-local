@@ -1,8 +1,8 @@
 const { spawn } = require("child_process");
 const path = require("path");
 
-const host = process.env.HOST || "127.0.0.1";
-const port = process.env.PORT || "5173";
+const host = process.env.HOST || "0.0.0.0";
+const port = process.env.PORT || "5000";
 const apiPort = process.env.DEV_API_PORT || "3001";
 
 console.log(`Starting Vite dev server on ${host}:${port} and local API on ${apiPort}...`);

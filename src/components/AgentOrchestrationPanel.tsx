@@ -7,31 +7,43 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  Clock,
-  Cpu,
-  GitBranch,
-  PlayCircle,
-  RefreshCw,
-  Users,
-  XCircle,
-  Zap,
-} from "lucide-react";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Activity, AlertTriangle, BarChart3, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getActiveEditorToolkit } from "@/lib/active-editor-toolkit";
 
 // Helper: mapeia tipo de trace para variant do Badge (S3358)
 function getTraceVariant(type: string): "default" | "secondary" | "outline" {
   if (type === "final") return "default";
   if (type === "action") return "secondary";
   return "outline";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function extractToolCalls(payload: unknown): Array<{ name: string; input: unknown }> {
+  if (!isRecord(payload)) return [];
+
+  const candidates: unknown[] = [];
+  const direct = payload.toolCall ?? payload.tool_call;
+  if (direct) candidates.push(direct);
+
+  const list = payload.toolCalls ?? payload.tool_calls;
+  if (Array.isArray(list)) candidates.push(...list);
+
+  const parsed: Array<{ name: string; input: unknown }> = [];
+  for (const c of candidates) {
+    if (!isRecord(c)) continue;
+    const name = c.name;
+    if (typeof name !== "string" || name.trim().length === 0) continue;
+    parsed.push({ name, input: c.input ?? {} });
+  }
+
+  return parsed;
 }
 
 interface CircuitBreakerStatus {
@@ -100,9 +112,17 @@ export default function AgentOrchestrationPanel() {
     try {
       isFetchingRef.current = true;
       const response = await fetch("/api/observability?action=circuit-breakers");
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.error(
+          `[AgentOrchestrationPanel] Falha ao buscar métricas: HTTP ${response.status} ${response.statusText}`
+        );
+        return;
+      }
       const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("application/json")) return;
+      if (!contentType.includes("application/json")) {
+        console.error("[AgentOrchestrationPanel] Resposta não-JSON em /api/observability");
+        return;
+      }
       const data = await response.json();
       if (data?.summary && data?.breakers) {
         setMetrics(data as OrchestrationMetrics);
@@ -150,6 +170,34 @@ export default function AgentOrchestrationPanel() {
           throw new Error("Resposta não-JSON do endpoint /api/agents");
         }
         const data = await response.json();
+
+        const toolCalls = extractToolCalls(data?.result);
+        const editorToolCalls = toolCalls.filter((tc) => tc.name === "editor_tool");
+        if (editorToolCalls.length > 0) {
+          const toolkit = getActiveEditorToolkit();
+          if (!toolkit) {
+            toast.warning("Agente solicitou edição, mas nenhum editor está ativo no momento.");
+          } else {
+            try {
+              toolkit.setActiveSelection?.({ from: 0, to: 0 });
+              for (const call of editorToolCalls) {
+                const input = isRecord(call.input) ? call.input : {};
+                const action = typeof input.action === "string" ? input.action : "edit";
+                const result = await toolkit.executeTool({ toolName: action, input });
+                if (result.hasError) {
+                  toast.error(`Falha ao aplicar alteração no editor: ${result.output}`);
+                }
+              }
+              toast.success("Alterações do agente aplicadas no editor.");
+            } catch (error) {
+              console.error("[AgentOrchestrationPanel] Falha ao aplicar tool-calls no editor:", error);
+              toast.error("Falha ao aplicar alterações do agente no editor.");
+            } finally {
+              toolkit.setActiveSelection?.(null);
+            }
+          }
+        }
+
         const agentName = agents.find((a) => a.id === agentId)?.name || agentId;
         const processingTime = data.processingTime ?? 0;
         setExecution({
@@ -174,7 +222,8 @@ export default function AgentOrchestrationPanel() {
         toast.success(`${agentName} executado!`);
       }
     } catch (error) {
-      toast.error("Erro ao executar agente");
+      console.error("[AgentOrchestrationPanel] Erro ao executar agente:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao executar agente");
     } finally {
       setLoading(false);
     }

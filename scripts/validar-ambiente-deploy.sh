@@ -4,6 +4,9 @@
 
 set -e
 
+# Porta padrão do Vite dev server (conforme vite.config.ts)
+VITE_PORT="${VITE_PORT:-5000}"
+
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -52,16 +55,30 @@ check_node() {
     info "Verificando Node.js..."
     if ! command -v node &> /dev/null; then
         error "Node.js não está instalado!"
-        warning "Instale Node.js v20+ em: https://nodejs.org"
+        warning "Instale Node.js v20.19+ ou v22.12+ em: https://nodejs.org"
         return 1
     fi
 
-    NODE_VERSION=$(node -v | cut -d 'v' -f 2 | cut -d '.' -f 1)
-    if [ "$NODE_VERSION" -lt 20 ]; then
-        error "Node.js v$NODE_VERSION detectado. Requer v20+"
+    NODE_VERSION_FULL="$(node -v | cut -d 'v' -f 2)"
+    NODE_MAJOR="$(echo "$NODE_VERSION_FULL" | cut -d '.' -f 1)"
+    NODE_MINOR="$(echo "$NODE_VERSION_FULL" | cut -d '.' -f 2)"
+
+    if [ "${NODE_MAJOR:-0}" -lt 20 ]; then
+        error "Node.js v$NODE_VERSION_FULL detectado. Requer v20.19+ ou v22.12+"
         return 1
     fi
-    success "Node.js $(node -v) OK"
+
+    if [ "$NODE_MAJOR" -eq 20 ] && [ "${NODE_MINOR:-0}" -lt 19 ]; then
+        error "Node.js v$NODE_VERSION_FULL detectado. Requer v20.19+ ou v22.12+"
+        return 1
+    fi
+
+    if [ "$NODE_MAJOR" -eq 22 ] && [ "${NODE_MINOR:-0}" -lt 12 ]; then
+        error "Node.js v$NODE_VERSION_FULL detectado. Requer v22.12+"
+        return 1
+    fi
+
+    success "Node.js v$NODE_VERSION_FULL OK"
     return 0
 }
 
@@ -282,8 +299,8 @@ test_local_server() {
     sleep 10
 
     # Testar endpoint
-    if curl -s http://localhost:5173 > /dev/null; then
-        success "Servidor local respondendo em http://localhost:5173"
+    if curl -s "http://localhost:${VITE_PORT}" > /dev/null; then
+        success "Servidor local respondendo em http://localhost:${VITE_PORT}"
         kill $server_pid 2> /dev/null || true
         return 0
     else
@@ -334,7 +351,7 @@ print_summary() {
         echo ""
         info "Próximos passos:"
         echo "  1. Execute: npm run dev"
-        echo "  2. Acesse: http://localhost:5173"
+        echo "  2. Acesse: http://localhost:${VITE_PORT}"
         echo "  3. Login: adm / adm123"
         echo ""
         info "Para deploy em produção:"

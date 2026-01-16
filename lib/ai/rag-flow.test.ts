@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { indexDocumentFlow } from './rag-flow';
-import { GenkitError } from 'genkit/beta';
+import { GenkitError } from 'genkit';
 
 describe('RAG Flow - Ingestão de Documentos', () => {
   it('deve fragmentar documento longo em chunks', async () => {

@@ -1,8 +1,9 @@
 const { spawn } = require("child_process");
 const http = require("http");
 
-const host = process.env.HOST || "127.0.0.1";
-const port = process.env.PORT || "5173";
+const host = process.env.HOST || "0.0.0.0";
+const port = process.env.PORT || "5000";
+const healthHost = host === "0.0.0.0" ? "127.0.0.1" : host;
 
 console.log(`Starting Vite dev server on ${host}:${port}...`);
 
@@ -20,7 +21,7 @@ serverProcess.on("error", (err) => {
 // Wait for server to be ready
 function checkServer() {
   return new Promise((resolve, reject) => {
-    const req = http.get(`http://${host}:${port}`, (res) => {
+    const req = http.get(`http://${healthHost}:${port}`, (res) => {
       if (res.statusCode === 200) {
         resolve();
       } else {

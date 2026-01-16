@@ -35,7 +35,6 @@ import {
   type DocumentTemplate,
 } from "@/lib/document-templates";
 
-import { callGemini, isGeminiConfigured } from "@/lib/gemini-service";
 import { googleDocsService } from "@/lib/google-docs-service";
 import { themeConfig } from "@/lib/themes";
 
@@ -77,6 +76,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { toast } from "sonner";
 
 import { ProfessionalEditor } from "@/components/editor/ProfessionalEditor";
+import { getCkEditorAiToolkit, type AiToolkit } from "@/lib/ckeditor-ai";
+import { clearActiveEditorToolkit, setActiveEditorToolkit } from "@/lib/active-editor-toolkit";
 
 type ViewMode = "grid" | "list";
 
@@ -117,14 +118,107 @@ export default function MinutasManager() {
     onComplete?: () => void;
     onError?: (error: string) => void;
   }>({});
+  
+  // Toolkit de IA para o editor
+  const aiToolkitRef = useRef<AiToolkit | null>(null);
+  useEffect(() => {
+    return () => {
+      if (aiToolkitRef.current) clearActiveEditorToolkit(aiToolkitRef.current);
+    };
+  }, []);
 
   const { streamChat } = useAIStreaming({
+    enableEditorTool: true,
     onChunk: (chunk) => streamCallbacksRef.current.onChunk?.(chunk),
     onComplete: () => streamCallbacksRef.current.onComplete?.(),
     onError: (err) => {
       console.error("[MinutasManager] Erro no streaming:", err);
       toast.error("Erro no streaming de IA");
       streamCallbacksRef.current.onError?.(err);
+    },
+    onToolCall: async (toolCall) => {
+      console.log("[MinutasManager] Tool Call recebida:", toolCall.name, toolCall.input);
+
+      // --- Ferramentas de Editor (Documento Ativo) ---
+      if (toolCall.name === "editor_tool") {
+        if (aiToolkitRef.current) {
+          try {
+            const result = await aiToolkitRef.current.executeTool({
+              toolName: toolCall.input.action || "edit",
+              input: toolCall.input,
+            });
+            if (result.hasError) {
+              toast.error(`Erro ao editar: ${result.output}`);
+            } else {
+              toast.success("Editor atualizado pela IA");
+            }
+          } catch (e) {
+            console.error("Falha no editor:", e);
+          }
+        } else {
+          toast.warning("Editor não está ativo no momento.");
+        }
+      }
+
+      // --- Ferramentas Multi-Documento ---
+      else if (toolCall.name === "createDocument") {
+        const { title, content, type } = toolCall.input;
+        try {
+          const novaMinuta = createMinuta({
+            titulo: title || "Nova Minuta sem Título",
+            conteudo: content || "<p></p>",
+            tipo: type || "peticao",
+            status: "rascunho",
+            autor: "Agente IA",
+            criadoPorAgente: true
+          });
+          setMinutas(current => [...(current || []), novaMinuta]);
+          
+          // Abrir automaticamente a nova minuta
+          setEditingMinuta(novaMinuta);
+          setFormData({
+            titulo: novaMinuta.titulo,
+            processId: "",
+            tipo: novaMinuta.tipo,
+            conteudo: novaMinuta.conteudo,
+            status: novaMinuta.status
+          });
+          setIsDialogOpen(true);
+          
+          toast.success(`Minuta "${novaMinuta.titulo}" criada pela IA!`);
+        } catch (e) {
+          toast.error("Erro ao criar documento via IA");
+        }
+      }
+
+      else if (toolCall.name === "listDocuments") {
+        // Como o fluxo é unidirecional (server -> client), não podemos "retornar" a lista pro agente imediatamente 
+        // na mesma stream http response sem um mecanismo de feedback loop complexo.
+        // Porém, podemos exibir pro usuário ou (se implementarmos tool outputs) enviar de volta.
+        // Por enquanto, apenas notificamos que a IA tentou listar.
+        toast.info(`IA solicitou lista de documentos (${(minutas || []).length} encontrados).`);
+        console.log("Documentos disponíveis:", minutas?.map(m => ({ id: m.id, titulo: m.titulo })));
+      }
+
+      else if (toolCall.name === "openDocument") {
+        const { id, title } = toolCall.input;
+        const target = (minutas || []).find(m => m.id === id || m.titulo.toLowerCase().includes(title?.toLowerCase()));
+        
+        if (target) {
+          setEditingMinuta(target);
+          setFormData({
+            titulo: target.titulo,
+            processId: target.processId || "",
+            tipo: target.tipo,
+            conteudo: target.conteudo,
+            status: target.status
+          });
+          setIsDialogOpen(true);
+          toast.success(`Abrindo minuta: ${target.titulo}`);
+        } else {
+          toast.warning(`Documento não encontrado: ${title || id}`);
+        }
+      }
     },
   });
 
@@ -504,17 +598,48 @@ export default function MinutasManager() {
   };
 
   const handleAIGenerate = async (prompt: string): Promise<string> => {
-    if (!isGeminiConfigured()) throw new Error("Gemini não está configurado");
+    // Preservar a seleção atual antes que a IA comece (Selection Awareness)
+    if (aiToolkitRef.current) {
+      // Passamos um objeto dummy apenas para sinalizar "congele a seleção atual"
+      aiToolkitRef.current.setActiveSelection({ from: 0, to: 0 });
+    }
+
+    // Obter schema awareness se disponível
+    const schemaInstructions = aiToolkitRef.current 
+      ? aiToolkitRef.current.getHtmlSchemaAwareness() 
+      : "";
 
     const fullPrompt = `Você é um assistente jurídico especializado em redação de documentos legais brasileiros.
 Sua função é ajudar na criação, edição e melhoria de petições, contratos, pareceres e outros documentos jurídicos.
 Sempre use linguagem formal e técnica apropriada. Cite legislação e jurisprudência quando relevante.
-Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>, <li>, <blockquote>).
+
+${schemaInstructions}
 
 ${prompt}`;
 
-    const response = await callGemini(fullPrompt);
-    return response.text;
+    try {
+      const response = await fetch("/api/llm/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: fullPrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || "Erro ao gerar texto com IA");
+      }
+
+      const data = await response.json();
+      return data.message.content;
+    } catch (error) {
+      console.error("Erro ao chamar IA:", error);
+      throw error;
+    } finally {
+      // Limpar seleção preservada
+      if (aiToolkitRef.current) {
+        aiToolkitRef.current.setActiveSelection(null);
+      }
+    }
   };
 
   const handleAIStream = useCallback(
@@ -533,18 +658,29 @@ ${prompt}`;
       };
 
       try {
+        // Preservar seleção para o streaming (Selection Awareness)
+        aiToolkitRef.current?.setActiveSelection({ from: 0, to: 0 });
+
+        const schemaInstructions = aiToolkitRef.current 
+          ? aiToolkitRef.current.getHtmlSchemaAwareness() 
+          : "Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>, <li>, <blockquote>).";
+
         await streamChat([
           {
             role: "system",
             content: `Você é um assistente jurídico especializado em redação de documentos legais brasileiros.
 Sua função é ajudar na criação, edição e melhoria de petições, contratos, pareceres e outros documentos jurídicos.
 Sempre use linguagem formal e técnica apropriada. Cite legislação e jurisprudência quando relevante.
-Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>, <li>, <blockquote>).`,
+
+${schemaInstructions}`,
           },
           { role: "user", content: prompt },
         ]);
       } catch (err) {
-        callbacks.onError(err instanceof Error ? err : new Error("Erro no streaming"));
+        console.error("[MinutasManager] streamChat falhou:", err);
+      } finally {
+        // Limpar seleção preservada (evita a IA editar uma seleção antiga em chamadas futuras)
+        aiToolkitRef.current?.setActiveSelection(null);
       }
     },
     [streamChat]
@@ -826,6 +962,15 @@ Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>
                                 onChange={(content) =>
                                   setFormData((p) => ({ ...p, conteudo: content }))
                                 }
+                                onEditorReady={(editor) => {
+                                  // Inicializa o toolkit de IA para CKEditor
+                                  const toolkit = getCkEditorAiToolkit(editor);
+                                  aiToolkitRef.current = toolkit;
+                                  setActiveEditorToolkit(toolkit);
+                                  
+                                  // TODO: Enviar schemaAwareness para o system prompt do agente
+                                  console.log("Schema Awareness:", toolkit.getHtmlSchemaAwareness());
+                                }}
                                 onAIGenerate={handleAIGenerate}
                                 onAIStream={handleAIStream}
                                 variables={variableValues}
