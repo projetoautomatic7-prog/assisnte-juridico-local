@@ -12,9 +12,16 @@ import type { DJENPublication } from "@/types/djen-publication";
 import { useCallback, useRef, useState, useEffect } from "react";
 
 // Correção para erro "process is not defined" no Vite
-const VITE_DJEN_ADVOGADO_NOME = import.meta.env.VITE_DJEN_ADVOGADO_NOME || "Advogado Exemplo";
-const VITE_DJEN_ADVOGADO_OAB = import.meta.env.VITE_DJEN_ADVOGADO_OAB || "000000/XX";
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const VITE_DJEN_ADVOGADO_NOME =
+  typeof import.meta.env.VITE_DJEN_ADVOGADO_NOME === "string"
+    ? import.meta.env.VITE_DJEN_ADVOGADO_NOME
+    : "Advogado Exemplo";
+const VITE_DJEN_ADVOGADO_OAB =
+  typeof import.meta.env.VITE_DJEN_ADVOGADO_OAB === "string"
+    ? import.meta.env.VITE_DJEN_ADVOGADO_OAB
+    : "000000/XX";
+const VITE_API_BASE_URL =
+  typeof import.meta.env.VITE_API_BASE_URL === "string" ? import.meta.env.VITE_API_BASE_URL : "";
 
 interface ExpedientesResponse {
   success: boolean;

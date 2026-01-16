@@ -96,7 +96,7 @@ GET  /api/llm/models       - Lista modelos disponíveis
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
-VITE_GEMINI_API_KEY=sua_chave_gemini
+GEMINI_API_KEY=sua_chave_gemini
 UPSTASH_REDIS_REST_URL=sua_url_upstash
 UPSTASH_REDIS_REST_TOKEN=seu_token_upstash
 ```
@@ -141,3 +141,117 @@ backend/
 ## 📄 Licença
 
 MIT - veja o arquivo LICENSE para detalhes.
+
+---
+
+# 🚀 Deploy para Google Cloud Run (24h Ativo)
+
+## 📋 Estrutura de Deploy
+
+- O `Dockerfile` está na **raiz do repositório** e já prepara frontend + backend.
+- O deploy recomendado usa `gcloud run deploy --source .` executado na raiz.
+
+## 🏗️ Deploy Rápido
+
+### Deploy Manual
+
+```bash
+cd ..
+
+gcloud run deploy assistente-juridico-backend \
+  --source . \
+  --region southamerica-east1 \
+  --allow-unauthenticated \
+  --min-instances 1 \
+  --memory 512Mi \
+  --cpu 1 \
+  --timeout 300 \
+  --project sonic-terminal-474321-s1
+```
+
+**`--min-instances 1`** garante que o servidor fique **sempre ligado** (24h/7d).
+
+## 🔧 Configurar Variáveis de Ambiente no Cloud Run
+
+```bash
+gcloud run services update assistente-juridico-backend \
+  --set-env-vars GEMINI_API_KEY=SUA_CHAVE_AQUI \
+  --set-env-vars DATABASE_URL=postgresql://... \
+  --set-env-vars FRONTEND_URL=https://sonic-terminal-474321-s1.web.app \
+  --set-env-vars DJEN_SCHEDULER_ENABLED=true \
+  --region southamerica-east1
+```
+
+## 🌐 Integrar com Firebase Hosting
+
+Depois do deploy, atualize o `firebase.json` na raiz do projeto:
+
+```json
+{
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+        "serviceId": "assistente-juridico-backend",
+        "region": "southamerica-east1"
+      }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
+```
+
+Deploy do hosting:
+
+```bash
+firebase deploy --only hosting
+```
+
+## ✅ Testar o Backend
+
+```bash
+# Obter URL do serviço
+SERVICE_URL=$(gcloud run services describe assistente-juridico-backend \
+  --region southamerica-east1 \
+  --format="value(status.url)")
+
+# Health check
+curl $SERVICE_URL/health
+
+# LLM status
+curl $SERVICE_URL/api/llm/models
+```
+
+## 💰 Estimativa de Custos
+
+- **Min instances = 1**: ~$10-15/mês
+- **Memory 512Mi, CPU 1**: Adequado para Express + PostgreSQL
+- **Sempre disponível**: Sem cold start
+
+## 🔍 Monitoramento
+
+```bash
+# Logs em tempo real
+gcloud run services logs tail assistente-juridico-backend --region southamerica-east1
+
+# Métricas no console
+open https://console.cloud.google.com/run/detail/southamerica-east1/assistente-juridico-backend/metrics
+```
+
+## 🆘 Troubleshooting
+
+### "PORT not defined"
+✅ **Resolvido**: Código atualizado para usar `process.env.PORT || 8080`
+
+### Cold start ainda ocorre
+Verifique se min-instances está ativo:
+```bash
+gcloud run services describe assistente-juridico-backend --region southamerica-east1
+```
+
+Procure por: `autoscaling.knative.dev/minScale: "1"`

@@ -1,10 +1,25 @@
 import { z } from 'zod';
 import { ai, qdrantRetriever } from './genkit.js';
 import { indexDocumentFlow } from './rag-flow.js';
-import { GenkitError } from 'genkit';
+import { GenkitError } from '@genkit-ai/core';
 import { logger } from 'genkit/logging';
+import type { Tool } from './core-agent';
+import type { ToolAction } from 'genkit';
+export type { GlobalToolContext } from './core-agent';
 
 const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3001';
+
+const toAgentTool = (tool: ToolAction<z.ZodTypeAny, z.ZodTypeAny>): Tool => {
+  const rawName = tool.__action?.name || tool.name || 'tool';
+  const name = rawName.includes('/') ? rawName.slice(rawName.lastIndexOf('/') + 1) : rawName;
+  const description = tool.__action?.description || '';
+
+  return {
+    name,
+    description,
+    run: async (args, ctx) => tool(args as Record<string, unknown>, { context: ctx }),
+  };
+};
 
 export const buscarIntimacaoPendente = ai.defineTool(
   {
@@ -389,3 +404,5 @@ export const ALL_TOOLS = [
   indexarAnaliseCaso,
   processarPDF,
 ];
+
+export const AGENT_TOOLS: Tool[] = ALL_TOOLS.map(toAgentTool);

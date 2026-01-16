@@ -82,7 +82,34 @@ let successCount = 0;
 // IMPLEMENTATION
 // ============================================================================
 
-import { agentFlow } from "../../lib/ai/agent-flow.js";
+const AGENTS_API =
+  typeof import.meta.env.VITE_AGENTS_API_URL === "string"
+    ? import.meta.env.VITE_AGENTS_API_URL
+    : "/api/agents";
+
+async function runTraditionalFlow(agentId: string, task: unknown): Promise<unknown> {
+  const taskData = (task as { data?: Record<string, unknown>; id?: string })?.data || {};
+  const message =
+    (taskData.description as string) ||
+    (taskData.message as string) ||
+    JSON.stringify(taskData);
+
+  const response = await fetch(AGENTS_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      agentId,
+      message: typeof message === "string" ? message : JSON.stringify(message),
+      sessionId: (task as { id?: string })?.id,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
 
 // ... existing imports ...
 
@@ -107,24 +134,17 @@ export async function executeHybridTask(
     let traditionalResult: { completed: boolean; data?: unknown } = { completed: false };
     
     if (finalConfig.enableTraditional) {
-        try {
-            const taskData = (task as any).data || {};
-            const message = taskData.description || taskData.message || JSON.stringify(taskData);
-            
-            const flowResult = await agentFlow({
-                agentId,
-                message: typeof message === 'string' ? message : JSON.stringify(message),
-                sessionId: (task as any).id,
-            });
+      try {
+        const flowResult = await runTraditionalFlow(agentId, task);
 
-            traditionalResult = {
-                completed: true,
-                data: flowResult
-            };
-        } catch (err) {
-            console.error(`[Hybrid] Traditional flow failed for ${agentId}:`, err);
-            // Don't throw here if we want to try LangGraph or just report partial failure
-        }
+        traditionalResult = {
+          completed: true,
+          data: flowResult,
+        };
+      } catch (err) {
+        console.error(`[Hybrid] Traditional flow failed for ${agentId}:`, err);
+        // Não lança aqui para permitir fallback/execução paralela
+      }
     }
 
     // 2. LangGraph Flow (Mocked for now, or Placeholder)

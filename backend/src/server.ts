@@ -54,6 +54,7 @@ dotenv.config({ path: envPath });
 dotenv.config(); // Fallback to default .env if needed
 
 const app = express();
+// Cloud Run injeta PORT automaticamente (8080 padrão)
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
 
 // Security headers
@@ -69,18 +70,36 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5000",
-        "http://127.0.0.1:5000",
-        "https://assistente-juridico-github.vercel.app"
-      ];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+      if (!origin) return callback(null, true);
+
+      try {
+        const { hostname, host, protocol } = new URL(origin);
+        if (protocol !== "http:" && protocol !== "https:") {
+          return callback(new Error("Not allowed by CORS"));
+        }
+
+        const allowedHosts = new Set([
+          "localhost:5173",
+          "127.0.0.1:5173",
+          "localhost:5000",
+          "127.0.0.1:5000",
+          "assistente-juridico-github.vercel.app",
+          "sonic-terminal-474321-s1.web.app",
+          "sonic-terminal-474321-s1.firebaseapp.com",
+        ]);
+
+        // Firebase Hosting preview channels: sonic-terminal-474321-s1--<channel>.web.app
+        const isFirebasePreviewChannel =
+          hostname.startsWith("sonic-terminal-474321-s1--") && hostname.endsWith(".web.app");
+
+        if (allowedHosts.has(host) || isFirebasePreviewChannel) {
+          return callback(null, true);
+        }
+      } catch {
+        // fallthrough: bloqueia
       }
+
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

@@ -300,18 +300,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const kv = await getKv();
-
     if (isSyncRequest(req)) {
       return handleSync(req, res);
     }
 
-    if (req.method === "GET") {
-      return handleGetExpedientes(req, res, kv);
-    }
-
     if (req.method === "GET" && req.query.action === "pending") {
       return handlePending(req, res);
+    }
+
+    const kv = await getKv();
+
+    if (req.method === "GET") {
+      return handleGetExpedientes(req, res, kv);
     }
 
     return res.status(405).json({ error: "Method not allowed" });

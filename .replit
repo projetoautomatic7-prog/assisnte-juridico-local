@@ -5,7 +5,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["systemdUkify", "lsof", "file", "tree", "glib", "nss", "nspr", "atk", "cups", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "xorg.libX11", "xorg.libXext", "pango", "cairo", "expat", "alsa-lib", "at-spi2-atk", "at-spi2-core", "gtk3", "dbus", "mesa", "libxkbcommon", "libdrm"]
+packages = ["systemdUkify", "lsof", "file", "tree", "glib", "nss", "nspr", "atk", "cups", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "xorg.libX11", "xorg.libXext", "pango", "cairo", "expat", "alsa-lib", "at-spi2-atk", "at-spi2-core", "gtk3", "dbus", "mesa", "libxkbcommon", "libdrm", "playwright-driver"]
 
 [workflows]
 runButton = "Project"

@@ -312,10 +312,9 @@ function detectExpedienteType(movimento: string): Expediente["type"] {
 const logger = new SafeLogger("PjeSync");
 
 async function triggerJustineAgent(expediente: Expediente): Promise<void> {
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:5173";
-  const baseUrl = process.env.APP_BASE_URL || "http://localhost:3001";
+  const baseUrl =
+    process.env.APP_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
   const url = `${baseUrl}/api/agents`;
 
   try {

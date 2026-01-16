@@ -1,4 +1,3 @@
-import { useKV } from "@/hooks/use-kv";
 import { metricsCollector } from "@/lib/agent-metrics";
 import {
   canResumeAfterHuman,
@@ -88,13 +87,26 @@ function sortTasksByPriority(tasks: Array<AgentTask>): Array<AgentTask> {
 const AGENTS_DATA_VERSION = 7;
 const EXPECTED_AGENT_COUNT = initializeAgents().length;
 
-export function useAutonomousAgents() {
-  useKV<number>("agents-data-version", AGENTS_DATA_VERSION);
+const AGENTS_API =
+  import.meta.env.VITE_AGENTS_API_URL || "/api/agents";
 
-  const [agents, setAgents] = useKV<Array<Agent>>("autonomous-agents", initializeAgents());
-  const [taskQueue, setTaskQueue] = useKV<Array<AgentTask>>("agent-task-queue", []);
-  const [completedTasks, setCompletedTasks] = useKV<Array<AgentTask>>("completed-agent-tasks", []);
-  const [activityLog, setActivityLog] = useKV<Array<ActivityLogEntry>>("agent-activity-log", []);
+async function fetchAgentsData() {
+  const res = await fetch(`${AGENTS_API}?action=list`).catch(() => null);
+  if (!res?.ok) return null;
+  const json = await res.json().catch(() => null);
+  if (!json?.ok) return null;
+  return {
+    queued: Array.isArray(json.queued) ? (json.queued as AgentTask[]) : [],
+    completed: Array.isArray(json.completed) ? (json.completed as AgentTask[]) : [],
+    agents: Array.isArray(json.agents) ? (json.agents as Agent[]) : [],
+  };
+}
+
+export function useAutonomousAgents() {
+  const [agents, setAgents] = useState<Array<Agent>>(initializeAgents());
+  const [taskQueue, setTaskQueue] = useState<Array<AgentTask>>([]);
+  const [completedTasks, setCompletedTasks] = useState<Array<AgentTask>>([]);
+  const [activityLog, setActivityLog] = useState<Array<ActivityLogEntry>>([]);
 
   const [serverLogs, setServerLogs] = useState<Array<AgentActionLog>>([]);
   const [legalMemory, setLegalMemory] = useState<Array<MemoryItem>>([]);
@@ -109,14 +121,22 @@ export function useAutonomousAgents() {
     agentsRef.current = agents;
   }, [agents]);
 
-  // Prevenir loop infinito na inicialização
+  // Sincroniza com backend (agents + queue)
+  const syncWithBackend = useCallback(async () => {
+    const data = await fetchAgentsData();
+    if (!data) return;
+
+    if (data.agents.length > 0) setAgents(data.agents);
+    if (data.queued.length > 0) setTaskQueue(data.queued);
+    if (data.completed.length > 0) setCompletedTasks(data.completed);
+  }, []);
+
   useEffect(() => {
-    if (!agentsRef.current || agentsRef.current.length === 0) {
-      setAgents(initializeAgents());
-      return;
-    }
-    // Verificação estrita removida para evitar conflitos de versão entre builds
-  }, [setAgents]);
+    // Primeira carga
+    void syncWithBackend();
+    const interval = setInterval(syncWithBackend, 60_000);
+    return () => clearInterval(interval);
+  }, [syncWithBackend]);
 
   const fetchServerData = useCallback(async () => {
     try {
@@ -150,21 +170,18 @@ export function useAutonomousAgents() {
     return () => clearInterval(interval);
   }, [fetchServerData]);
 
-  const logActivity = useCallback(
-    (agentId: string, action: string, result: ActivityResult = "success") => {
-      setActivityLog((current) => {
-        const log = {
-          id: crypto.randomUUID(),
-          agentId,
-          timestamp: new Date().toISOString(),
-          action,
-          result,
-        };
-        return [log, ...(current || [])].slice(0, 100);
-      });
-    },
-    [setActivityLog]
-  );
+  const logActivity = useCallback((agentId: string, action: string, result: ActivityResult = "success") => {
+    setActivityLog((current) => {
+      const log = {
+        id: crypto.randomUUID(),
+        agentId,
+        timestamp: new Date().toISOString(),
+        action,
+        result,
+      };
+      return [log, ...(current || [])].slice(0, 100);
+    });
+  }, []);
 
   const processNextTask = useCallback(
     async (agent: Agent) => {

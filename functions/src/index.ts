@@ -24,9 +24,15 @@ export {
   djenPublicacoes,
 } from "./djen-scheduler";
 
+// Agents (Firestore-backed queue)
+export { agents } from "./agents";
+
+// API Backend Completo (todas as rotas /api/**)
+export { api } from "./api";
+
 setGlobalOptions({ maxInstances: 10 });
 
-export const agents = onRequest({ cors: true }, async (req, res) => {
+export const agentsLegacy = onRequest({ cors: true }, async (req, res) => {
   try {
     const { agentId, message, sessionId } = req.body;
 

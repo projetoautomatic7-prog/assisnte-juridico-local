@@ -42,12 +42,13 @@ export const consultaPublica = ai.defineFlow(
     outputSchema: z.string(),
   },
   async (input, { context }) => {
+    const auth = context?.auth;
     // Verificar apenas se está autenticado
-    if (!context.auth) {
+    if (!auth) {
       throw new UserFacingError('UNAUTHENTICATED', 'Você precisa estar logado para fazer consultas');
     }
 
-    console.log(`✅ Usuário autenticado: ${context.auth.uid || 'unknown'}`);
+    console.log(`✅ Usuário autenticado: ${auth.uid || 'unknown'}`);
 
     const response = await ai.generate({
       model: googleAI.model('gemini-2.0-flash-exp'),
@@ -80,13 +81,14 @@ export const minhasIntimacoes = ai.defineFlow(
     ),
   },
   async (input, { context }) => {
+    const auth = context?.auth;
     // 1. Verificar autenticação
-    if (!context.auth) {
+    if (!auth) {
       throw new UserFacingError('UNAUTHENTICATED', 'Autenticação necessária');
     }
 
     // 2. Verificar se userId corresponde ao usuário autenticado
-    if (input.userId !== context.auth.uid) {
+    if (input.userId !== auth.uid) {
       throw new UserFacingError(
         'PERMISSION_DENIED',
         'Você só pode acessar suas próprias intimações'
@@ -133,14 +135,15 @@ export const relatorioGeral = ai.defineFlow(
     }),
   },
   async (input, { context }) => {
+    const auth = context?.auth;
     // 1. Verificar autenticação
-    if (!context.auth) {
+    if (!auth) {
       throw new UserFacingError('UNAUTHENTICATED', 'Autenticação necessária');
     }
 
     // 2. Verificar se é admin
     // Firebase Auth coloca claims customizados em auth.token
-    const isAdmin = context.auth.token?.['admin'] === true;
+    const isAdmin = auth.token?.['admin'] === true;
 
     if (!isAdmin) {
       throw new UserFacingError(
@@ -149,7 +152,7 @@ export const relatorioGeral = ai.defineFlow(
       );
     }
 
-    console.log(`✅ Acesso admin autorizado para: ${context.auth.uid}`);
+    console.log(`✅ Acesso admin autorizado para: ${auth.uid}`);
 
     // 3. Gerar relatório (mock)
     return {
@@ -208,7 +211,8 @@ export const consultarProcesso = ai.defineFlow(
     }),
   },
   async (input, { context }) => {
-    if (!context.auth) {
+    const auth = context?.auth;
+    if (!auth) {
       throw new UserFacingError('UNAUTHENTICATED', 'Login necessário');
     }
 

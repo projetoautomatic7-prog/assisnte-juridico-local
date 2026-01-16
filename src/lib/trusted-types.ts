@@ -9,6 +9,11 @@
  * @see https://web.dev/trusted-types/
  */
 
+// Tipos de fallback para ambientes sem Trusted Types nativo
+type TrustedHTML = string;
+type TrustedScript = string;
+type TrustedScriptURL = string;
+
 // Tipo genérico para policy com todas as opções
 type FullTrustedTypePolicy = {
   readonly name: string;
@@ -16,6 +21,18 @@ type FullTrustedTypePolicy = {
   createScript(input: string, ...args: unknown[]): TrustedScript;
   createScriptURL(input: string, ...args: unknown[]): TrustedScriptURL;
 };
+
+declare global {
+  interface Window {
+    trustedTypes?: {
+      createPolicy: (
+        policyName: string,
+        rules: Partial<FullTrustedTypePolicy>
+      ) => FullTrustedTypePolicy;
+      isHTML?: (value: unknown) => value is TrustedHTML;
+    };
+  }
+}
 
 // Estado - usando tipo union para aceitar políticas parciais
 let defaultPolicy: FullTrustedTypePolicy | null = null;
@@ -337,7 +354,7 @@ export function isTrustedHTML(value: unknown): value is TrustedHTML {
   if (!isTrustedTypesSupported()) {
     return typeof value === "string";
   }
-  return globalThis.window.trustedTypes!.isHTML(value);
+  return globalThis.window.trustedTypes?.isHTML?.(value) ?? false;
 }
 
 /**

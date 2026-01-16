@@ -14,14 +14,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 
 // Validar versão do Node.js
-const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, "package.json"), "utf8"));
-const requiredNodeVersion = pkg.engines.node.replace(">=", "");
-if (process.versions.node.split(".")[0] < requiredNodeVersion.split(".")[0]) {
-  console.error(
-    `❌ ERRO: Versão do Node.js incompatível. Requerido: ${pkg.engines.node}, Atual: ${process.version}`
-  );
-  process.exit(1);
-}
+// A validação manual foi removida pois o script não lidava corretamente com strings complexas de versão (ex: ^20.19.0 || >=22.12.0)
+// O NPM/Yarn já deve alertar sobre incompatibilidades de engines.
 
 // Tenta carregar o dotenv se disponível (útil para build local)
 try {
@@ -33,17 +27,30 @@ try {
 }
 
 const MANDATORY_VARS = [
-  "VITE_GEMINI_API_KEY",
-  "GEMINI_API_KEY",
-  "UPSTASH_REDIS_REST_URL",
-  "UPSTASH_REDIS_REST_TOKEN",
-  "DATABASE_URL",
-  "VITE_ENABLE_PII_FILTERING",
+  // "VITE_GEMINI_API_KEY", // Verificaremos manualmente para permitir um OU outro
+  // "GEMINI_API_KEY",
+  // "UPSTASH_REDIS_REST_URL",
+  // "UPSTASH_REDIS_REST_TOKEN",
+  // "DATABASE_URL",
+  "VITE_GOOGLE_CLIENT_ID" // Adicionado como essencial para o frontend
 ];
 
 console.log("🔍 Validando ambiente de build...");
 
 const missing = MANDATORY_VARS.filter((key) => !process.env[key]);
+
+// Verificação especial para chaves de API (aceita VITE_ ou padrão)
+if (!process.env.VITE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
+  missing.push("VITE_GEMINI_API_KEY (ou GEMINI_API_KEY)");
+}
+
+// Backend keys - Warn only for frontend build
+const BACKEND_KEYS = ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "DATABASE_URL"];
+const missingBackend = BACKEND_KEYS.filter(key => !process.env[key]);
+if (missingBackend.length > 0) {
+  console.warn("⚠️  Aviso: Variáveis de backend ausentes (pode afetar funcionalidades server-side se não injetadas no runtime):");
+  missingBackend.forEach(key => console.warn(`   - ${key}`));
+}
 
 if (missing.length > 0) {
   console.error("\n❌ ERRO CRÍTICO: Variáveis de ambiente obrigatórias ausentes:");

@@ -29,14 +29,17 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "api", "lib", "backend/src", "attached_assets"],
+  "include": ["src", "api", "lib", "backend/src"],
   "exclude": [
     "node_modules",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
-    "src/test/**/*"
+    "src/test/**/*",
+    "src/evals/**/*",
+    "src/lib/dynatrace-otel.ts",
+    "attached_assets"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

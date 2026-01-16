@@ -247,16 +247,16 @@ export async function calculateCompleteness(actual: unknown, expected: unknown):
     const actualValue = actualObj[field];
 
     // Campo está presente se:
-    // 1. Existe e não é null/undefined
-    // 2. Ou é array vazio (mas existe)
-    // 3. Ou é string vazia (mas existe)
-    if (actualValue !== null && actualValue !== undefined) {
-      presentFields++;
-    } else if (Array.isArray(actualValue) && actualValue.length === 0) {
+    // 1. É array (inclusive vazio)
+    // 2. É string (inclusive vazia)
+    // 3. Existe e não é null/undefined
+    if (Array.isArray(actualValue)) {
       // Array vazio conta como presente (mas pode afetar accuracy)
       presentFields++;
-    } else if (typeof actualValue === "string" && actualValue === "") {
+    } else if (typeof actualValue === "string") {
       // String vazia conta como presente (mas pode afetar accuracy)
+      presentFields++;
+    } else if (actualValue !== null && actualValue !== undefined) {
       presentFields++;
     }
   }

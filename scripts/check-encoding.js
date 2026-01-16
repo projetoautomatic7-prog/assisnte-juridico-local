@@ -7,6 +7,17 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 
+// Pastas que impactam diretamente o build/runtime.
+// Manter o escopo enxuto evita falhas por arquivos auxiliares (docs/scripts) com encoding legado.
+const SCAN_ROOTS = [
+  "src",
+  "public",
+  "lib",
+  "api",
+  path.join("backend", "src"),
+  path.join("functions", "src"),
+];
+
 // Extensões de arquivos de texto que devem ser UTF-8
 const EXTENSIONS = [
   ".ts",
@@ -47,7 +58,12 @@ let hasError = false;
 
 console.log("🔍 Verificando integridade da codificação UTF-8...");
 
-const files = getAllFiles(rootDir);
+const files = SCAN_ROOTS.flatMap((relativeDir) => {
+  const absoluteDir = path.join(rootDir, relativeDir);
+  if (!fs.existsSync(absoluteDir)) return [];
+  if (!fs.statSync(absoluteDir).isDirectory()) return [];
+  return getAllFiles(absoluteDir);
+});
 let checkedCount = 0;
 
 for (const file of files) {

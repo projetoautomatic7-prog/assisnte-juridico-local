@@ -39,20 +39,11 @@
     ],
     "rewrites": [
       {
-        "source": "/api/djen/publicacoes",
-        "function": "djenPublicacoes"
-      },
-      {
-        "source": "/api/djen/trigger-manual",
-        "function": "djenTriggerManual"
-      },
-      {
-        "source": "/api/djen-sync",
-        "function": "djenTriggerManual"
-      },
-      {
-        "source": "/api/djen/status",
-        "function": "djenStatus"
+        "source": "/api/**",
+        "run": {
+          "serviceId": "assistente-juridico-backend",
+          "region": "southamerica-east1"
+        }
       },
       {
         "source": "**",
@@ -83,9 +74,7 @@
       "source": "functions",
       "codebase": "default",
       "runtime": "nodejs20",
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
       "ignore": [
         "node_modules",
         ".git",

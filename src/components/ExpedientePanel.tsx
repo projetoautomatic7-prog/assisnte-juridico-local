@@ -562,7 +562,7 @@ IMPORTANTE:
 
             for (const taskData of agentTasks) {
               // Só cria tarefa se o agente estiver habilitado
-              const agent = agentsRef.current.find((a) => a.id === taskData.agentId);
+              const agent = agents.find((a) => a.id === taskData.agentId);
               if (agent?.enabled) {
                 const task: AgentTask = {
                   id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,

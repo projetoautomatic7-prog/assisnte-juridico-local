@@ -79,7 +79,7 @@ const viewTypes = {
   QUERIES: "queries",
   DATAJUD: "datajud",
   KNOWLEDGE: "knowledge",
-};
+} as const satisfies Record<string, ViewType>;
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -93,8 +93,8 @@ function App() {
     const applyHashView = () => {
       if (globalThis === undefined) return;
       const hash = globalThis.location.hash.replace(/^#/, "").trim();
-      if (hash) {
-        setCurrentView(hash as ViewType);
+      if (hash && isViewType(hash)) {
+        setCurrentView(hash);
       }
     };
     applyHashView();
@@ -111,8 +111,17 @@ function App() {
     setCurrentView(viewTypes.DASHBOARD);
   };
 
+  const isViewType = (value: string): value is ViewType => {
+    return (Object.values(viewTypes) as string[]).includes(value);
+  };
+
   const handleNavigate = (view: string) => {
-    setCurrentView(view as ViewType);
+    if (isViewType(view)) {
+      setCurrentView(view);
+      return;
+    }
+    console.warn(`[App] View desconhecida: ${view}, mantendo dashboard`);
+    setCurrentView(viewTypes.DASHBOARD);
   };
 
   const renderContent = () => {

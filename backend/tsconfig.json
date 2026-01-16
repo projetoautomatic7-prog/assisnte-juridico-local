@@ -20,6 +20,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "../src/agents/**/*", "../src/lib/**/*"],
-  "exclude": ["node_modules", "dist", "../src/**/*.tsx", "../src/**/*.test.ts", "../src/**/*.test.tsx"]
+  "include": ["src/**/*", "../lib/ai/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../lib/ai/**/*.test.ts",
+    "../lib/ai/**/*.test.tsx",
+    "../lib/ai/**/*.spec.ts"
+  ]
 }

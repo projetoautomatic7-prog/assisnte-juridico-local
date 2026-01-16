@@ -3,9 +3,9 @@
 
 import { SimpleAgent, VolatileMemoryStore } from './core-agent';
 import { HttpLlmClient } from './http-llm-client';
-import { AGENTS, type AgentId } from './agents-registry';
-import { AgentOrchestrator, OrchestrationPatterns } from './agent-orchestrator';
-import { ALL_TOOLS } from './tools';
+import { AGENTS } from './agents-registry';
+import { AgentOrchestrator, OrchestrationPatterns, type AgentTask } from './agent-orchestrator';
+import { AGENT_TOOLS } from './tools';
 import type { GlobalToolContext } from './tools';
 
 /**
@@ -23,7 +23,7 @@ export async function intimacaoWorkflow(baseContext: GlobalToolContext) {
 
   agentsMap.set('justine', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: justine,
     toolContext: baseContext,
     memoryStore: new VolatileMemoryStore()
@@ -31,7 +31,7 @@ export async function intimacaoWorkflow(baseContext: GlobalToolContext) {
 
   agentsMap.set('gestao-prazos', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: gestaoPrazos,
     toolContext: baseContext,
     memoryStore: new VolatileMemoryStore()
@@ -74,7 +74,7 @@ export async function caseAnalysisParallel(caseId: string, baseContext: GlobalTo
 
   agentsMap.set('analise-risco', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: riskAgent,
     toolContext: baseContext,
     memoryStore: new VolatileMemoryStore()
@@ -82,7 +82,7 @@ export async function caseAnalysisParallel(caseId: string, baseContext: GlobalTo
 
   agentsMap.set('pesquisa-juris', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: researchAgent,
     toolContext: baseContext,
     memoryStore: new VolatileMemoryStore()
@@ -90,7 +90,7 @@ export async function caseAnalysisParallel(caseId: string, baseContext: GlobalTo
 
   agentsMap.set('financeiro', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: financialAgent,
     toolContext: baseContext,
     memoryStore: new VolatileMemoryStore()
@@ -122,20 +122,20 @@ export async function strategicReview(baseContext: GlobalToolContext) {
 
   agentsMap.set('harvey', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: harvey,
     toolContext: baseContext,
   }));
   agentsMap.set('gestao-prazos', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: gestaoPrazos,
     toolContext: baseContext,
   }));
 
   agentsMap.set('monitor-djen', new SimpleAgent({
     llm: llmClient,
-    tools: ALL_TOOLS,
+    tools: AGENT_TOOLS,
     persona: monitorDjen,
     toolContext: baseContext,
   }));

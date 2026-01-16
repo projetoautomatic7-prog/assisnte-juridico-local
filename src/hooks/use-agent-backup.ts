@@ -74,8 +74,11 @@ export function useAgentBackup(options: BackupOptions) {
   /**
    * Salva backup no servidor (Upstash KV) - Storage primário
    */
+  const kvApiEnabled = Boolean(import.meta.env.VITE_KV_API_URL);
+
   const saveToServer = useCallback(
     async (backupData: BackupData): Promise<boolean> => {
+      if (!kvApiEnabled) return false;
       try {
         if (isServerCooldownActive()) return false;
 
@@ -142,13 +145,14 @@ export function useAgentBackup(options: BackupOptions) {
         return false;
       }
     },
-    [userId]
+    [userId, kvApiEnabled]
   );
 
   /**
    * Carrega backup do servidor (Upstash KV)
    */
   const loadFromServer = useCallback(async (): Promise<BackupData | null> => {
+    if (!kvApiEnabled) return null;
     try {
       if (isServerCooldownActive()) return null;
       const serverKey = `${BACKUP_KEY_PREFIX}:${userId}:latest`;

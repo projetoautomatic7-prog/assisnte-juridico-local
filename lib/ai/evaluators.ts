@@ -9,6 +9,8 @@ export const petitionEvaluator = ai.defineEvaluator(
   {
     name: 'petitionEvaluator',
     displayName: 'Validador de Pedidos Obrigatórios',
+    definition:
+      'Avalia se uma petição jurídica contém todos os elementos obrigatórios (citação, procedência, provas, valor da causa, custas/honorários).',
   },
   async (input, output) => {
     const result = await ai.generate({
@@ -41,9 +43,14 @@ export const petitionEvaluator = ai.defineEvaluator(
       },
     });
 
+    const score = result.output?.score ?? 0;
     return {
-      score: result.output?.score ?? 0,
-      details: { reasoning: result.output?.reasoning ?? 'Erro na análise' },
+      testCaseId: input.testCaseId ?? 'petition-evaluator',
+      evaluation: {
+        status: score >= 0.6 ? 'PASS' : 'FAIL',
+        score,
+        details: { reasoning: result.output?.reasoning ?? 'Erro na análise' },
+      },
     };
   }
 );

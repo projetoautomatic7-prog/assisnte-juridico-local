@@ -1,0 +1,48 @@
+# ============================================
+# Dockerfile Cloud Run - Backend APENAS
+# ============================================
+FROM node:22-alpine AS builder
+
+WORKDIR /app/backend
+
+# Copiar package files do backend
+COPY backend/package*.json ./
+
+# Instalar dependências
+RUN npm ci --legacy-peer-deps
+
+# Copiar código fonte do backend E dependências da raiz
+COPY backend/src ./src
+COPY lib ./lib
+COPY backend/tsconfig.cloudrun.json ./tsconfig.json
+
+# Build TypeScript
+RUN npm run build
+
+# ============================================
+# Stage de produção
+# ============================================
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copiar build compilado
+COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/package*.json ./
+
+# Instalar apenas dependências de produção
+RUN npm ci --omit=dev --legacy-peer-deps
+
+# Cloud Run injeta PORT automaticamente
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# Expor porta
+EXPOSE 8080
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8080/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"
+
+# Iniciar servidor (SEM datadog - removido conforme solicitado)
+CMD ["node", "dist/backend/src/server.js"]

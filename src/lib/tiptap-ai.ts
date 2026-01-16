@@ -91,11 +91,11 @@ class AiToolkitImpl implements AiToolkit {
     const nodeNames: string[] = [];
     const markNames: string[] = [];
 
-    schema.spec.nodes.forEach((_spec, name) => {
-      nodeNames.push(name);
+    schema.spec.nodes.forEach((nodeName) => {
+      nodeNames.push(nodeName);
     });
-    schema.spec.marks.forEach((_spec, name) => {
-      markNames.push(name);
+    schema.spec.marks.forEach((markName) => {
+      markNames.push(markName);
     });
 
     const tagHints: Record<string, string> = {

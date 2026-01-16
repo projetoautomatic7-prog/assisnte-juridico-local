@@ -1,3 +1,9 @@
+# ============================================
+# Dockerfile Cloud Run - Backend (monorepo)
+# - Compila `backend/` e inclui `lib/ai` (usado pelas rotas /api/agents)
+# - Não builda o frontend (frontend é servido via Firebase Hosting)
+# ============================================
+
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -6,37 +12,39 @@ WORKDIR /app
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 
-# Instalar dependências (root + backend) para build
+# Dependências (root + backend) necessárias para compilar TypeScript
 RUN npm ci --legacy-peer-deps
 RUN cd backend && npm ci --legacy-peer-deps
 
-# Copiar código fonte
-COPY . .
+# Copiar apenas o necessário para o build do backend
+COPY tsconfig.paths.json ./tsconfig.paths.json
+COPY backend ./backend
+COPY lib/ai ./lib/ai
 
-# Build do frontend
-RUN npm run build
-
-# Build do backend
+# Build do backend (gera /app/backend/dist/** incluindo /app/backend/dist/lib/ai)
 RUN cd backend && npm run build
 
-# Stage de produção: Node (API + servir SPA)
+# ============================================
+# Stage de produção
+# ============================================
 FROM node:22-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copiar build do frontend e backend
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/backend/dist ./backend/dist
+# Dependências runtime:
+# - root: deps usadas pelos flows (Genkit etc.)
+# - backend: deps específicas do servidor Express
+COPY package*.json ./
+RUN npm ci --omit=dev --legacy-peer-deps
 
-# Instalar apenas dependências de produção do backend
-COPY --from=builder /app/backend/package*.json ./backend/
+COPY backend/package*.json ./backend/
 RUN cd backend && npm ci --omit=dev --legacy-peer-deps
 
-# Railway define PORT; o servidor lê PORT/BACKEND_PORT
-EXPOSE 3001
+# Código compilado do backend (inclui lib/ai compilado dentro de backend/dist)
+COPY --from=builder /app/backend/dist ./backend/dist
 
-# Iniciar servidor backend (também serve o frontend estático em produção)
-# IMPORTANTE: NODE_OPTIONS para carregar datadog tracer ANTES do app
-# Atualizado para usar Railpack config se disponível
-CMD ["node", "-r", "./backend/dist/backend/src/datadog.js", "backend/dist/backend/src/server.js"]
+# Cloud Run injeta PORT; o servidor lê PORT/BACKEND_PORT
+EXPOSE 8080
+
+CMD ["node", "backend/dist/backend/src/server.js"]

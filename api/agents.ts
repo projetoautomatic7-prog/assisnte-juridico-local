@@ -1575,7 +1575,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error: "Unauthorized",
       message:
         "Authentication required. Provide Bearer token, x-api-key header, or access from localhost.",
-      message: "Authentication required.",
     });
   }
 

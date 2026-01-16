@@ -1,4 +1,4 @@
-# Build e Deploy Local - Assistente Jurídico v1.4.0
+# Build e Deploy Local - Assistente Jurï¿½dico v1.4.0
 # Execute este arquivo com: .\build-and-preview.ps1
 
 param(
@@ -13,10 +13,10 @@ Write-Host " BUILD E DEPLOY LOCAL - v1.4.0" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Diretório do projeto
+# Diretï¿½rio do projeto
 $projectRoot = $PSScriptRoot
 
-# Procurar npm no repositório
+# Procurar npm no repositï¿½rio
 $npmPaths = @(
     "$projectRoot\node_modules\.bin\npm.cmd",
     "$projectRoot\node_modules\.bin\npm",
@@ -43,59 +43,69 @@ foreach ($path in $npmPaths) {
 }
 
 if (-not $npmCmd) {
-    Write-Host "[ERRO] npm não encontrado!" -ForegroundColor Red
+    Write-Host "[ERRO] npm nï¿½o encontrado!" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Opções:" -ForegroundColor Yellow
+    Write-Host "Opï¿½ï¿½es:" -ForegroundColor Yellow
     Write-Host "1. Instale Node.js 22.x de: https://nodejs.org/" -ForegroundColor Yellow
     Write-Host "2. Ou execute 'npm install' uma vez para ter npm local" -ForegroundColor Yellow
     Write-Host ""
     exit 1
 }
 
-# Exibir versões
+# Exibir versï¿½es
 Write-Host ""
-Write-Host "[INFO] Versões:" -ForegroundColor Cyan
+Write-Host "[INFO] Versï¿½es:" -ForegroundColor Cyan
 try {
     $nodeVersion = node --version
     Write-Host "  Node.js: $nodeVersion" -ForegroundColor White
 } catch {
-    Write-Host "  Node.js: Não encontrado (mas npm está disponível)" -ForegroundColor Yellow
+    Write-Host "  Node.js: Nï¿½o encontrado (mas npm estï¿½ disponï¿½vel)" -ForegroundColor Yellow
 }
 
 $npmVersion = & $npmCmd --version
 Write-Host "  npm: $npmVersion" -ForegroundColor White
 Write-Host ""
 
-# PASSO 1: INSTALAR DEPENDÊNCIAS
+# Verificar se arquivo .env existe
+if (-not (Test-Path "$projectRoot\.env")) {
+    Write-Host "[ERRO] Arquivo .env no encontrado!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Por favor, crie o arquivo .env na raiz do projeto." -ForegroundColor Yellow
+    Write-Host "Voc precisa configurar VITE_GOOGLE_CLIENT_ID e VITE_GEMINI_API_KEY." -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
+}
+
+# PASSO 1: INSTALAR DEPENDï¿½NCIAS
 if (-not $SkipInstall) {
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host " PASSO 1: INSTALAR DEPENDÊNCIAS" -ForegroundColor Cyan
+    Write-Host " PASSO 1: INSTALAR DEPENDï¿½NCIAS" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 
-    Write-Host "[INFO] Instalando dependências..." -ForegroundColor Yellow
+    Write-Host "[INFO] Instalando dependï¿½ncias..." -ForegroundColor Yellow
     & $npmCmd install
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERRO] Falha ao instalar dependências!" -ForegroundColor Red
+        Write-Host "[ERRO] Falha ao instalar dependï¿½ncias!" -ForegroundColor Red
         exit 1
     }
     
     Write-Host ""
-    Write-Host "[OK] Dependências instaladas com sucesso!" -ForegroundColor Green
+    Write-Host "[OK] Dependï¿½ncias instaladas com sucesso!" -ForegroundColor Green
     Write-Host ""
 } else {
-    Write-Host "[INFO] Pulando instalação de dependências (--SkipInstall)" -ForegroundColor Yellow
+    Write-Host "[INFO] Pulando instalaï¿½ï¿½o de dependï¿½ncias (--SkipInstall)" -ForegroundColor Yellow
     Write-Host ""
 }
 
-# PASSO 2: BUILD DE PRODUÇÃO
+# PASSO 2: BUILD DE PRODUï¿½ï¿½O
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " PASSO 2: BUILD DE PRODUÇÃO" -ForegroundColor Cyan
+Write-Host " PASSO 2: BUILD DE PRODUï¿½ï¿½O" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "[INFO] Executando build de produção..." -ForegroundColor Yellow
+Write-Host "[INFO] Executando build de produï¿½ï¿½o..." -ForegroundColor Yellow
 & $npmCmd run build
 
 if ($LASTEXITCODE -ne 0) {
@@ -106,8 +116,16 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+Write-Host "[INFO] Compilando Backend..." -ForegroundColor Yellow
+& $npmCmd run build:backend
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERRO] Build do backend falhou!" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
-Write-Host "[OK] Build concluído com sucesso!" -ForegroundColor Green
+Write-Host "[OK] Build concluï¿½do com sucesso!" -ForegroundColor Green
 Write-Host ""
 
 # Verificar tamanho do bundle
@@ -128,7 +146,7 @@ if (-not $SkipTests) {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 
-    Write-Host "[INFO] Executando testes unitários..." -ForegroundColor Yellow
+    Write-Host "[INFO] Executando testes unitï¿½rios..." -ForegroundColor Yellow
     & $npmCmd run test:run
     
     if ($LASTEXITCODE -ne 0) {
@@ -139,7 +157,7 @@ if (-not $SkipTests) {
         $continuar = Read-Host "Deseja continuar mesmo assim? (S/N)"
         if ($continuar -ne "S" -and $continuar -ne "s") {
             Write-Host ""
-            Write-Host "Build interrompido pelo usuário." -ForegroundColor Yellow
+            Write-Host "Build interrompido pelo usuï¿½rio." -ForegroundColor Yellow
             exit 1
         }
     } else {
@@ -159,12 +177,14 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "[INFO] Iniciando servidor de preview local..." -ForegroundColor Yellow
-Write-Host "[INFO] O servidor será aberto em: " -NoNewline -ForegroundColor Cyan
+Write-Host "[INFO] O servidor serï¿½ aberto em: " -NoNewline -ForegroundColor Cyan
 Write-Host "http://localhost:4173" -ForegroundColor White
+Write-Host "[INFO] Iniciando Backend em nova janela..." -ForegroundColor Yellow
+Start-Process $npmCmd -ArgumentList "run", "start:production"
 Write-Host "[INFO] Pressione Ctrl+C para parar o servidor" -ForegroundColor Yellow
 Write-Host ""
 
-# Tentar abrir o navegador após 2 segundos
+# Tentar abrir o navegador apï¿½s 2 segundos
 $job = Start-Job -ScriptBlock {
     Start-Sleep -Seconds 2
     Start-Process "http://localhost:4173"
@@ -179,11 +199,11 @@ Remove-Job $job -ErrorAction SilentlyContinue
 # Se chegou aqui, o preview foi parado
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " BUILD E DEPLOY LOCAL - CONCLUÍDO" -ForegroundColor Cyan
+Write-Host " BUILD E DEPLOY LOCAL - CONCLUï¿½DO" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "?? Estatísticas do build:" -ForegroundColor Cyan
+Write-Host "?? Estatï¿½sticas do build:" -ForegroundColor Cyan
 Write-Host "  - Arquivos compilados: dist/" -ForegroundColor White
 Write-Host "  - Bundle principal: dist/assets/index-[hash].js" -ForegroundColor White
 if (Test-Path "$projectRoot\dist\assets") {
@@ -192,10 +212,10 @@ if (Test-Path "$projectRoot\dist\assets") {
 }
 Write-Host ""
 
-Write-Host "?? Próximos passos:" -ForegroundColor Cyan
-Write-Host "  1. Se os testes passaram, você pode fazer deploy para Vercel" -ForegroundColor White
+Write-Host "?? Prï¿½ximos passos:" -ForegroundColor Cyan
+Write-Host "  1. Se os testes passaram, vocï¿½ pode fazer deploy para Vercel" -ForegroundColor White
 Write-Host "  2. Configure VITE_ENABLE_PII_FILTERING=true no Vercel" -ForegroundColor White
 Write-Host "  3. Execute: vercel --prod" -ForegroundColor White
 Write-Host ""
 
-Write-Host "? Processo concluído com sucesso!" -ForegroundColor Green
+Write-Host "? Processo concluï¿½do com sucesso!" -ForegroundColor Green

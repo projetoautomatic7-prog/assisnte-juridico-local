@@ -1,13 +1,13 @@
 @echo off
-REM Build e Deploy Local - Assistente Jurídico v1.4.0
-REM Execute este arquivo no diretório do projeto
+REM Build e Deploy Local - Assistente Jurï¿½dico v1.4.0
+REM Execute este arquivo no diretï¿½rio do projeto
 
 echo ========================================
 echo  BUILD E DEPLOY LOCAL - v1.4.0
 echo ========================================
 echo.
 
-REM Verificar se Node.js está instalado
+REM Verificar se Node.js estï¿½ instalado
 where node >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo [ERRO] Node.js nao encontrado!
@@ -19,12 +19,12 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Exibir versão do Node
+REM Exibir versï¿½o do Node
 echo [INFO] Versao do Node.js:
 node --version
 echo.
 
-REM Verificar se npm está instalado
+REM Verificar se npm estï¿½ instalado
 where npm >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo [ERRO] npm nao encontrado!
@@ -36,10 +36,21 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Exibir versão do npm
+REM Exibir versï¿½o do npm
 echo [INFO] Versao do npm:
 npm --version
 echo.
+
+REM Verificar se arquivo .env existe
+if not exist .env (
+    echo [ERRO] Arquivo .env nao encontrado!
+    echo.
+    echo Por favor, crie o arquivo .env na raiz do projeto.
+    echo Voce precisa configurar VITE_GOOGLE_CLIENT_ID e VITE_GEMINI_API_KEY.
+    echo.
+    pause
+    exit /b 1
+)
 
 echo ========================================
 echo  PASSO 1: INSTALAR DEPENDENCIAS
@@ -67,6 +78,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo [ERRO] Falha no build!
     echo.
     echo Verifique os erros acima e corrija antes de continuar.
+    pause
+    exit /b 1
+)
+
+echo [INFO] Compilando Backend...
+call npm run build:backend
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERRO] Falha no build do backend!
     pause
     exit /b 1
 )
@@ -105,6 +124,8 @@ echo.
 
 echo [INFO] Iniciando servidor de preview local...
 echo [INFO] O servidor sera aberto em http://localhost:4173
+echo [INFO] Iniciando Backend em nova janela...
+start "Backend Server" npm run start:production
 echo [INFO] Pressione Ctrl+C para parar o servidor
 echo.
 

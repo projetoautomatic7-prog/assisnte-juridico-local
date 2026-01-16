@@ -10,7 +10,7 @@
 
 import * as Sentry from "@sentry/node";
 import { Redis } from "@upstash/redis";
-import type { VercelRequest, VercelResponse } from "@vercel node";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
 
 // Rate limiting para evitar abuso
@@ -289,7 +289,7 @@ async function processLawyerPublications(
   const { numero, uf } = parseOAB(lawyer.oab);
 
   if (!numero) {
-    console.warn(`[DJEN-Sync] OAB inválida para ${lawyer.name}: ${lawyer.oab}`);
+    console.warn(`[DJEN-Sync] OAB inválida para ${lawyer.name}`);
     return { total: 0, newCount: 0 };
   }
 
@@ -315,6 +315,7 @@ async function processLawyerPublications(
     }
 
     const newPublication = createPublication(item, lawyer);
+    existingHashes.add(hash);
     existingPubs.unshift(newPublication);
     newCount++;
   }

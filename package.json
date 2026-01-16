@@ -56,7 +56,9 @@
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage:rules",
     "firebase:deploy:functions": "firebase deploy --only functions",
     "firebase:deploy:staging": "./firebase-deploy.sh --env staging",
-    "firebase:deploy:dev": "./firebase-deploy.sh --env development --skip-tests"
+    "firebase:deploy:dev": "./firebase-deploy.sh --env development --skip-tests",
+    "test:prod": "playwright test tests/e2e/prod-smoke-test.spec.ts",
+    "verify:deploy": "node scripts/verify-deploy.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -195,6 +197,7 @@
     "@types/three": "^0.172.0",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
+    "@vercel/node": "^5.5.22",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",

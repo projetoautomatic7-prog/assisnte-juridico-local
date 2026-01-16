@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAIStreaming } from "@/hooks/use-ai-streaming";
 import { useKV } from "@/hooks/use-kv";
+import { useAutonomousAgents } from "@/hooks/use-autonomous-agents";
 import { cn } from "@/lib/utils";
 import type { FinancialEntry, Process, ViewType } from "@/types";
 import {
@@ -64,7 +65,7 @@ interface AgentTask {
   agentId: string;
   type: string;
   priority: "high" | "medium" | "low";
-  status: "pending" | "in_progress" | "completed" | "failed";
+  status: "queued" | "processing" | "completed" | "failed";
   description: string;
   createdAt: string;
 }
@@ -373,8 +374,7 @@ export default function HarveySpecterChat({
   // Dados do KV storage
   const [processes] = useKV<Process[]>("processes", []);
   const [financialRecords] = useKV<FinancialEntry[]>("financialEntries", []);
-  const [taskQueue] = useKV<AgentTask[]>("agent-task-queue", []);
-  const [_completedTasks] = useKV<AgentTask[]>("completed-agent-tasks", []);
+  const { taskQueue, completedTasks: _completedTasks } = useAutonomousAgents();
 
   // Hook de streaming
   const {
@@ -470,8 +470,8 @@ export default function HarveySpecterChat({
     const margem = receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
 
     // Tarefas
-    const pendingTasks = taskQueue?.filter((t) => t.status === "pending").length || 0;
-    const inProgressTasks = taskQueue?.filter((t) => t.status === "in_progress").length || 0;
+    const pendingTasks = taskQueue?.filter((t) => t.status === "queued").length || 0;
+    const inProgressTasks = taskQueue?.filter((t) => t.status === "processing").length || 0;
 
     return {
       totalProcesses,

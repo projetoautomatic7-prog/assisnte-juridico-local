@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAIStreaming } from "@/hooks/use-ai-streaming";
 import { useExpedientes } from "@/hooks/use-expedientes";
 import { useKV } from "@/hooks/use-kv";
+import { useAutonomousAgents } from "@/hooks/use-autonomous-agents";
 import { cn } from "@/lib/utils";
 import type { Expediente, FinancialEntry, Process } from "@/types";
 import {
@@ -130,8 +131,7 @@ export default function HarveySpecter() {
   // Buscar dados REAIS do KV storage (usando as MESMAS chaves dos outros componentes)
   const [processes] = useKV<Process[]>("processes", []);
   const [financialRecords] = useKV<FinancialEntry[]>("financialEntries", []); // CORRIGIDO: era 'financial-records'
-  const [taskQueue] = useKV<AgentTask[]>("agent-task-queue", []); // CORRIGIDO: era 'tasks'
-  const [completedTasks] = useKV<AgentTask[]>("completed-agent-tasks", []);
+  const { taskQueue, completedTasks } = useAutonomousAgents();
   const { expedientes } = useExpedientes(); // ✅ Expedientes/intimações reais do sistema
 
   // Calcular estatísticas REAIS
@@ -191,8 +191,8 @@ export default function HarveySpecter() {
     const margem = receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
 
     // Tarefas dos Agentes - CORRIGIDO: usar taskQueue e completedTasks
-    const pendingTasks = taskQueue?.filter((t) => t.status === "pending").length || 0;
-    const inProgressTasks = taskQueue?.filter((t) => t.status === "in_progress").length || 0;
+    const pendingTasks = taskQueue?.filter((t) => t.status === "queued").length || 0;
+    const inProgressTasks = taskQueue?.filter((t) => t.status === "processing").length || 0;
     const totalCompletedTasks = completedTasks?.length || 0;
 
     // Expedientes/Intimações - NOVO

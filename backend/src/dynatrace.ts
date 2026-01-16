@@ -12,6 +12,9 @@
 
 import * as dynatrace from '@dynatrace/oneagent-sdk';
 
+// SDKState é um const enum; com isolatedModules precisamos evitar acesso direto
+const SDKState = (dynatrace as any).SDKState as { ACTIVE?: unknown } | undefined;
+
 // Verificar se Dynatrace está habilitado
 const isDynatraceEnabled =
   process.env.NODE_ENV === 'production' ||
@@ -32,7 +35,7 @@ export function initializeDynatrace() {
     dynatraceSDK = dynatrace.createInstance();
 
     // Validar se OneAgent está instalado
-    if (dynatraceSDK.getCurrentState() === dynatrace.SDKState.ACTIVE) {
+    if (dynatraceSDK.getCurrentState() === SDKState?.ACTIVE) {
       console.log('[Dynatrace] OneAgent SDK inicializado com sucesso');
       console.log('[Dynatrace] Estado:', dynatraceSDK.getCurrentState());
     } else {
@@ -148,7 +151,7 @@ export function getDynatraceSDK() {
  * Verifica se Dynatrace está ativo
  */
 export function isDynatraceActive(): boolean {
-  return dynatraceSDK?.getCurrentState() === dynatrace.SDKState.ACTIVE;
+  return dynatraceSDK?.getCurrentState() === SDKState?.ACTIVE;
 }
 
 export default dynatraceSDK;
