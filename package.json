@@ -198,7 +198,7 @@
     "@types/three": "^0.172.0",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
-    "@vercel/node": "^5.5.22",
+    "@vercel/node": "^5.5.23",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
