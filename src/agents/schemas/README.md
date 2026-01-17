@@ -203,7 +203,11 @@ import { HarveyOutputSchema, validateAgentOutput } from "@/agents/schemas";
 import { parseStructuredOutput } from "@/agents/schemas/helpers";
 
 // Após receber resposta do LLM
-const result = parseStructuredOutput(HarveyOutputSchema, response.text, "Harvey Specter");
+const result = parseStructuredOutput(
+  HarveyOutputSchema,
+  response.text,
+  "Harvey Specter",
+);
 
 if (result.success) {
   // Output estruturado validado
@@ -219,13 +223,20 @@ if (result.success) {
 
 ```typescript
 export class MyAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // ... validação de input ...
 
     const response = await callGemini(prompt, options);
 
     // ✅ Tentar parsear como structured output
-    const parsed = parseStructuredOutput(MyAgentOutputSchema, response.text, "MyAgent");
+    const parsed = parseStructuredOutput(
+      MyAgentOutputSchema,
+      response.text,
+      "MyAgent",
+    );
 
     if (parsed.success && parsed.data) {
       // Formatar output estruturado
@@ -236,7 +247,7 @@ export class MyAgent extends LangGraphAgent {
           completed: true,
           data: { ...state.data, structuredOutput: parsed.data },
         }),
-        formatted
+        formatted,
       );
     } else {
       // Fallback: usar raw text
@@ -245,7 +256,7 @@ export class MyAgent extends LangGraphAgent {
           completed: true,
           data: { ...state.data, rawOutput: parsed.rawText },
         }),
-        parsed.rawText
+        parsed.rawText,
       );
     }
   }

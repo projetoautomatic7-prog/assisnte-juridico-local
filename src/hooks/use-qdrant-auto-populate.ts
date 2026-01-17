@@ -29,7 +29,9 @@ export interface UseQdrantAutoPopulateOptions {
   retryDelay?: number;
 }
 
-export function useQdrantAutoPopulate(options: UseQdrantAutoPopulateOptions = {}) {
+export function useQdrantAutoPopulate(
+  options: UseQdrantAutoPopulateOptions = {},
+) {
   const [state, setState] = useState<UseQdrantAutoPopulateState>({
     status: "idle",
     result: null,
@@ -39,7 +41,12 @@ export function useQdrantAutoPopulate(options: UseQdrantAutoPopulateOptions = {}
 
   const populate = async (expediente: Expediente) => {
     try {
-      setState((prev) => ({ ...prev, status: "processing", isProcessing: true, error: null }));
+      setState((prev) => ({
+        ...prev,
+        status: "processing",
+        isProcessing: true,
+        error: null,
+      }));
 
       // Inicializa serviços
       const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
@@ -49,10 +56,16 @@ export function useQdrantAutoPopulate(options: UseQdrantAutoPopulateOptions = {}
       const embeddings = new GeminiEmbeddingService();
 
       // Cria populator
-      const populator = new QdrantAutoPopulator(qdrant, dataJud, temaExtractor, embeddings, {
-        enablePrecedentSearch: options.enablePrecedents ?? true,
-        minConfidence: options.minConfidence ?? 0.7,
-      });
+      const populator = new QdrantAutoPopulator(
+        qdrant,
+        dataJud,
+        temaExtractor,
+        embeddings,
+        {
+          enablePrecedentSearch: options.enablePrecedents ?? true,
+          minConfidence: options.minConfidence ?? 0.7,
+        },
+      );
 
       // Popula
       const result = await populator.populateFromIntimacao(expediente);
@@ -75,7 +88,8 @@ export function useQdrantAutoPopulate(options: UseQdrantAutoPopulateOptions = {}
 
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
       setState({
         status: "error",
         result: null,

@@ -1,13 +1,23 @@
-import { createExecuteToolSpan, createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createExecuteToolSpan,
+  createInvokeAgentSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { formatAnalysisResult, formatErrorMessage, formatFallbackMessage } from "./templates";
+import {
+  formatAnalysisResult,
+  formatErrorMessage,
+  formatFallbackMessage,
+} from "./templates";
 import { validateAnaliseDocumentalInput, ValidationError } from "./validators";
 
 export class AnaliseDocumentalAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Análise Documental
     return createInvokeAgentSpan(
       {
@@ -17,7 +27,9 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
         temperature: 0.3,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `analise_doc_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `analise_doc_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -26,15 +38,27 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
       },
       async (span) => {
         try {
-          let current = updateState(state, { currentStep: "analise-documental:validate" });
+          let current = updateState(state, {
+            currentStep: "analise-documental:validate",
+          });
 
           // Step 0: Validate inputs
-          const validatedInput = validateAnaliseDocumentalInput(state.data || {});
+          const validatedInput = validateAnaliseDocumentalInput(
+            state.data || {},
+          );
 
-          span?.setAttribute("analise.tipo_documento", validatedInput.tipoDocumento);
-          span?.setAttribute("analise.texto_length", validatedInput.documentoTexto.length);
+          span?.setAttribute(
+            "analise.tipo_documento",
+            validatedInput.tipoDocumento,
+          );
+          span?.setAttribute(
+            "analise.texto_length",
+            validatedInput.documentoTexto.length,
+          );
 
-          current = updateState(current, { currentStep: "analise-documental:extract" });
+          current = updateState(current, {
+            currentStep: "analise-documental:extract",
+          });
 
           // Executar análise com tool (entity extraction)
           const entitiesExtracted = await createExecuteToolSpan(
@@ -62,19 +86,25 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
                 processos: ["1234567-89.2024.5.02.0999"],
               };
 
-              toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(entities));
+              toolSpan?.setAttribute(
+                "gen_ai.tool.output",
+                JSON.stringify(entities),
+              );
               return entities;
-            }
+            },
           );
 
-          span?.setAttribute("analise.entities_found", Object.keys(entitiesExtracted).length);
+          span?.setAttribute(
+            "analise.entities_found",
+            Object.keys(entitiesExtracted).length,
+          );
           span?.setAttribute(
             "analise.entities_detail",
             JSON.stringify({
               partes: entitiesExtracted.partes.length,
               datas: entitiesExtracted.datas.length,
               valores: entitiesExtracted.valores.length,
-            })
+            }),
           );
 
           current = updateState(current, {
@@ -92,20 +122,22 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
           const resultMessage = formatAnalysisResult(
             validatedInput.tipoDocumento,
             entitiesExtracted,
-            validatedInput.documentoTexto.length
+            validatedInput.documentoTexto.length,
           );
 
           return this.addAgentMessage(current, resultMessage);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
             logValidationError(
               "Análise Documental",
               error.field,
               error.message,
-              error.receivedValue
+              error.receivedValue,
             );
           } else {
             logStructuredError("Análise Documental", errorType, errorMessage, {
@@ -120,19 +152,20 @@ export class AnaliseDocumentalAgent extends LangGraphAgent {
           const fallbackMessage =
             error instanceof ValidationError
               ? formatErrorMessage(errorType, errorMessage, {
-                  tipoDocumento: (state.data?.tipoDocumento as string) || undefined,
+                  tipoDocumento:
+                    (state.data?.tipoDocumento as string) || undefined,
                 })
               : formatFallbackMessage();
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 }
 
 export async function runAnaliseDocumental(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new AnaliseDocumentalAgent();
   const initialState: AgentState = {

@@ -5,7 +5,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -14,10 +20,26 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { usePJeDocumentSync, usePJeDocumentWidget } from "@/hooks/use-pje-document-sync";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  usePJeDocumentSync,
+  usePJeDocumentWidget,
+} from "@/hooks/use-pje-document-sync";
 import { DocumentoPJe } from "@/types";
-import { AlertCircle, CheckCircle2, Download, FileText, Loader2, X, Zap } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Download,
+  FileText,
+  Loader2,
+  X,
+  Zap,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function PJeDocumentWidget() {
@@ -31,14 +53,25 @@ export function PJeDocumentWidget() {
     fecharPainel,
   } = usePJeDocumentWidget();
 
-  if (!extensaoAtivaNoTab || (documentosNovos === 0 && documentosProcessados === 0)) {
+  if (
+    !extensaoAtivaNoTab ||
+    (documentosNovos === 0 && documentosProcessados === 0)
+  ) {
     return null;
   }
 
   return (
-    <Sheet open={visivel} onOpenChange={(open) => (open ? abrirPainel() : fecharPainel())}>
+    <Sheet
+      open={visivel}
+      onOpenChange={(open) => (open ? abrirPainel() : fecharPainel())}
+    >
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="relative gap-2" onClick={abrirPainel}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="relative gap-2"
+          onClick={abrirPainel}
+        >
           <FileText className="h-4 w-4" />
           <span>PJe Sync</span>
           {documentosNovos > 0 && (
@@ -55,7 +88,9 @@ export function PJeDocumentWidget() {
       <SheetContent className="w-[400px] sm:w-[540px] flex flex-col h-full">
         <SheetHeader>
           <SheetTitle>📄 Documentos PJe Capturados</SheetTitle>
-          <SheetDescription>Sincronização em tempo real da extensão Chrome</SheetDescription>
+          <SheetDescription>
+            Sincronização em tempo real da extensão Chrome
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-4">
@@ -80,8 +115,12 @@ export function PJeDocumentWidget() {
  * Lista de documentos pendentes e processados
  */
 function PJeDocumentList() {
-  const { documentosPendentes, documentosProcessados, salvarDocumento, descartarDocumento } =
-    usePJeDocumentSync();
+  const {
+    documentosPendentes,
+    documentosProcessados,
+    salvarDocumento,
+    descartarDocumento,
+  } = usePJeDocumentSync();
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
 
   const toggleExpandir = (id: string) => {
@@ -135,8 +174,12 @@ function PJeDocumentList() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-green-900">{doc.tipo.toUpperCase()}</p>
-                    <p className="text-green-700">{doc.metadados?.numeroProcesso || "N/A"}</p>
+                    <p className="font-medium text-green-900">
+                      {doc.tipo.toUpperCase()}
+                    </p>
+                    <p className="text-green-700">
+                      {doc.metadados?.numeroProcesso || "N/A"}
+                    </p>
                   </div>
                   <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                 </div>
@@ -147,19 +190,20 @@ function PJeDocumentList() {
       )}
 
       {/* Vazio */}
-      {documentosPendentes.length === 0 && documentosProcessados.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
-          <div className="bg-muted p-4 rounded-full">
-            <FileText className="h-8 w-8 text-muted-foreground" />
+      {documentosPendentes.length === 0 &&
+        documentosProcessados.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+            <div className="bg-muted p-4 rounded-full">
+              <FileText className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-medium">Nenhum documento capturado</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Navegue pelo PJe para capturar documentos automaticamente.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium">Nenhum documento capturado</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Navegue pelo PJe para capturar documentos automaticamente.
-            </p>
-          </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
@@ -209,7 +253,11 @@ function PJeDocumentCard({
         onClick={onToggleExpandir}
         role="button"
         tabIndex={0}
-        aria-label={expandido ? "Recolher detalhes do documento" : "Expandir detalhes do documento"}
+        aria-label={
+          expandido
+            ? "Recolher detalhes do documento"
+            : "Expandir detalhes do documento"
+        }
         aria-expanded={expandido}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -225,7 +273,8 @@ function PJeDocumentCard({
               <span>{documento.tipo.toUpperCase()}</span>
             </CardTitle>
             <CardDescription className="mt-1">
-              {documento.metadados?.numeroProcesso || "Processo não identificado"}
+              {documento.metadados?.numeroProcesso ||
+                "Processo não identificado"}
             </CardDescription>
           </div>
           <span className="text-xs text-muted-foreground">
@@ -290,7 +339,10 @@ function PJeDocumentCard({
               aria-busy={salvando}
             >
               {salvando ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="h-4 w-4 mr-1 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Download className="h-4 w-4 mr-1" aria-hidden="true" />
               )}
@@ -329,7 +381,9 @@ export function PJeStatusBadge() {
           >
             <div
               className={`h-2 w-2 rounded-full shadow-sm transition-colors ${
-                extensaoAtivaNoTab ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                extensaoAtivaNoTab
+                  ? "bg-green-500 animate-pulse"
+                  : "bg-gray-400"
               }`}
             />
             {statusLabel}
@@ -337,7 +391,9 @@ export function PJeStatusBadge() {
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs">
           <p className="font-medium mb-1">
-            {extensaoAtivaNoTab ? "Conexão Estabelecida" : "Extensão não detectada"}
+            {extensaoAtivaNoTab
+              ? "Conexão Estabelecida"
+              : "Extensão não detectada"}
           </p>
           <p className="text-xs text-muted-foreground">
             {extensaoAtivaNoTab

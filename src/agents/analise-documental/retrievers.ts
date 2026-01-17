@@ -4,7 +4,10 @@
  */
 
 import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
-import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
+import {
+  QdrantService,
+  type SearchResult as QdrantSearchResult,
+} from "@/lib/qdrant-service";
 import type { AnaliseDocumentalInput } from "./validators";
 
 const EMBEDDING_API_URL =
@@ -44,7 +47,12 @@ export class DocumentoRetriever {
     const qdrantUrl = process.env.QDRANT_URL;
     const qdrantKey = process.env.QDRANT_API_KEY;
 
-    if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
+    if (
+      qdrantUrl &&
+      qdrantKey &&
+      typeof qdrantUrl === "string" &&
+      typeof qdrantKey === "string"
+    ) {
       try {
         this.qdrantService = new QdrantService({
           url: qdrantUrl,
@@ -52,7 +60,10 @@ export class DocumentoRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
+        console.log("✅ Qdrant connected:", {
+          url: qdrantUrl,
+          collection: this.collectionName,
+        });
       } catch (error) {
         console.error("❌ Qdrant connection failed:", error);
       }
@@ -67,10 +78,13 @@ export class DocumentoRetriever {
     try {
       const embeddings = await this.generateEmbeddings(input.texto);
       const rawResults = await this.searchVectorDatabase(embeddings, input);
-      const rankedDocumentos = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
+      const rankedDocumentos = this.reRankResults(
+        rawResults,
+        input.relevanceThreshold || 0.7,
+      );
       const filteredDocumentos = this.filterByTipo(
         rankedDocumentos,
-        input.tipoDocumento || "todos"
+        input.tipoDocumento || "todos",
       );
       const finalDocumentos = filteredDocumentos.slice(0, input.limit || 10);
 
@@ -84,17 +98,20 @@ export class DocumentoRetriever {
         executionTimeMs,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorType = error instanceof Error ? error.name : "UnknownError";
 
       throw new Error(
         `Calling retrieval tool with query:\n\n${input.texto}\n\n` +
-          `raised the following error:\n\n${errorType}: ${errorMessage}`
+          `raised the following error:\n\n${errorType}: ${errorMessage}`,
       );
     }
   }
 
-  async searchFromAnalise(input: AnaliseDocumentalInput): Promise<SearchResult> {
+  async searchFromAnalise(
+    input: AnaliseDocumentalInput,
+  ): Promise<SearchResult> {
     return this.search({
       texto: input.documentoTexto.substring(0, 1000),
       tipoDocumento: input.tipoDocumento,
@@ -117,18 +134,21 @@ export class DocumentoRetriever {
         model: "text-embedding-004",
       });
 
-      const response = await fetch(`${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "models/text-embedding-004",
-          content: {
-            parts: [{ text }],
+      const response = await fetch(
+        `${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: {
+              parts: [{ text }],
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -137,7 +157,9 @@ export class DocumentoRetriever {
           statusText: response.statusText,
           body: errorBody,
         });
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -156,31 +178,42 @@ export class DocumentoRetriever {
 
       return embeddings;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real:", errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real:",
+        errorMessage,
+      );
       throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
 
   private async searchVectorDatabase(
     embeddings: number[],
-    input: DocumentSearchInput
+    input: DocumentSearchInput,
   ): Promise<DocumentoJuridico[]> {
     if (!this.qdrantService) {
       throw new Error("Qdrant não configurado");
     }
 
-    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    const qdrantResults = await this.qdrantService.search(
+      embeddings,
+      input.limit || 10,
+    );
     return this.mapQdrantResultsToDocumentos(qdrantResults);
   }
 
-  private mapQdrantResultsToDocumentos(results: QdrantSearchResult[]): DocumentoJuridico[] {
+  private mapQdrantResultsToDocumentos(
+    results: QdrantSearchResult[],
+  ): DocumentoJuridico[] {
     return results.map((result) => ({
       titulo: (result.payload.titulo as string) || "Sem título",
       conteudo: (result.payload.conteudo as string) || "Sem conteúdo",
       relevancia: result.score,
       tipoDocumento: (result.payload.tipoDocumento as string) || "genérico",
-      data: (result.payload.data as string) || new Date().toISOString().split("T")[0],
+      data:
+        (result.payload.data as string) ||
+        new Date().toISOString().split("T")[0],
       numeroProcesso: result.payload.numeroProcesso as string | undefined,
       partes: (result.payload.partes as string[]) || [],
       clausulasChave: (result.payload.clausulasChave as string[]) || [],
@@ -188,13 +221,19 @@ export class DocumentoRetriever {
     }));
   }
 
-  private reRankResults(documentos: DocumentoJuridico[], threshold: number): DocumentoJuridico[] {
+  private reRankResults(
+    documentos: DocumentoJuridico[],
+    threshold: number,
+  ): DocumentoJuridico[] {
     return documentos
       .filter((d) => d.relevancia >= threshold)
       .sort((a, b) => b.relevancia - a.relevancia);
   }
 
-  private filterByTipo(documentos: DocumentoJuridico[], tipo: string): DocumentoJuridico[] {
+  private filterByTipo(
+    documentos: DocumentoJuridico[],
+    tipo: string,
+  ): DocumentoJuridico[] {
     if (tipo === "todos" || tipo === "genérico") {
       return documentos;
     }

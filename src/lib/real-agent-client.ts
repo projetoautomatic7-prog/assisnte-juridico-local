@@ -56,7 +56,7 @@ function parseSSELine(line: string): StreamingChunk | null {
 function processStreamingChunk(
   chunk: StreamingChunk,
   currentContent: string,
-  callbacks?: StreamingCallbacks
+  callbacks?: StreamingCallbacks,
 ): { content: string; shouldThrow?: Error } {
   if (chunk.type === "content" && chunk.content) {
     callbacks?.onChunk?.(chunk.content);
@@ -81,7 +81,7 @@ function processStreamingChunk(
 function processSSEBuffer(
   lines: string[],
   currentContent: string,
-  callbacks?: StreamingCallbacks
+  callbacks?: StreamingCallbacks,
 ): string {
   let content = currentContent;
 
@@ -105,7 +105,7 @@ function processSSEBuffer(
  */
 async function readStreamContent(
   reader: ReadableStreamDefaultReader<Uint8Array>,
-  callbacks?: StreamingCallbacks
+  callbacks?: StreamingCallbacks,
 ): Promise<string> {
   const decoder = new TextDecoder();
   let fullContent = "";
@@ -147,7 +147,7 @@ function createStreamingSuccessResult(content: string): AgentTaskResult {
 export async function processTaskWithStreamingAI(
   task: AgentTask,
   agent: Agent,
-  callbacks?: StreamingCallbacks
+  callbacks?: StreamingCallbacks,
 ): Promise<AgentTaskResult> {
   // 🔍 Sentry AI Monitoring - Instrumentação
   const agentSpan = startAgentInvokeSpan(agent, {
@@ -214,7 +214,9 @@ export async function processTaskWithStreamingAI(
     chatSpan?.setStatus({ code: 2, message: errorMessage });
     agentSpan?.setStatus({ code: 2, message: errorMessage });
 
-    callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
+    callbacks?.onError?.(
+      error instanceof Error ? error : new Error(String(error)),
+    );
     throw error;
   } finally {
     // 🔍 Finalizar spans
@@ -322,7 +324,7 @@ function buildTaskPrompt(task: AgentTask): string {
  */
 export async function processTaskWithRealAI(
   task: AgentTask,
-  agent: Agent
+  agent: Agent,
 ): Promise<AgentTaskResult> {
   // Criar spans Sentry para monitoramento de AI Agents
   const agentSpan = startAgentInvokeSpan(agent, {
@@ -415,7 +417,9 @@ export async function processTaskWithRealAI(
 /**
  * Busca tarefas pendentes do backend
  */
-export async function fetchPendingTasks(agentId?: string): Promise<AgentTask[]> {
+export async function fetchPendingTasks(
+  agentId?: string,
+): Promise<AgentTask[]> {
   try {
     const url = agentId
       ? `/api/agents/tasks?agentId=${encodeURIComponent(agentId)}&status=queued`
@@ -424,7 +428,9 @@ export async function fetchPendingTasks(agentId?: string): Promise<AgentTask[]> 
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch tasks: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = (await response.json()) as FetchTasksAPIResponse;
@@ -450,7 +456,9 @@ export async function queueTask(task: AgentTask): Promise<void> {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to queue task: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to queue task: ${response.status} ${response.statusText}`,
+      );
     }
   } catch (error) {
     console.error("[Real Agent Client] Error queueing task:", error);
@@ -472,7 +480,9 @@ export async function monitorDJEN(tribunais: string[]): Promise<unknown> {
     });
 
     if (!response.ok) {
-      throw new Error(`DJEN API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `DJEN API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     return await response.json();
@@ -488,7 +498,7 @@ export async function monitorDJEN(tribunais: string[]): Promise<unknown> {
 export async function calculateRealDeadline(
   startDate: Date,
   businessDays: number,
-  tribunalCode?: string
+  tribunalCode?: string,
 ): Promise<unknown> {
   try {
     const response = await fetch("/api/deadline/calculate", {
@@ -504,7 +514,9 @@ export async function calculateRealDeadline(
     });
 
     if (!response.ok) {
-      throw new Error(`Deadline API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Deadline API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     return await response.json();
@@ -528,7 +540,7 @@ export function isRealAgentsEnabled(): boolean {
  */
 export function setRealAgentsMode(_enabled: boolean): void {
   console.warn(
-    "[DEPRECATED] setRealAgentsMode: Modo simulado foi removido. Agentes sempre usam IA real."
+    "[DEPRECATED] setRealAgentsMode: Modo simulado foi removido. Agentes sempre usam IA real.",
   );
   // Função mantida apenas para compatibilidade - não faz nada
 }

@@ -20,11 +20,9 @@ async function main() {
   // Parse args
   const args = process.argv.slice(2);
   const limit = args.find((a) => a.startsWith("--limit="))?.split("=")[1];
-  const difficulty = args.find((a) => a.startsWith("--difficulty="))?.split("=")[1] as
-    | "easy"
-    | "medium"
-    | "hard"
-    | undefined;
+  const difficulty = args
+    .find((a) => a.startsWith("--difficulty="))
+    ?.split("=")[1] as "easy" | "medium" | "hard" | undefined;
 
   const options = {
     limit: limit ? parseInt(limit, 10) : undefined,
@@ -40,7 +38,7 @@ async function main() {
         const result = await runHarvey(input);
         return result;
       },
-      options
+      options,
     );
 
     // Enviar métricas para Dynatrace
@@ -56,12 +54,14 @@ async function main() {
     // Verificar se passou
     if (report.pass_rate < 0.9) {
       console.error(
-        `\n❌ Harvey eval FAILED: pass rate ${(report.pass_rate * 100).toFixed(1)}% < 90%`
+        `\n❌ Harvey eval FAILED: pass rate ${(report.pass_rate * 100).toFixed(1)}% < 90%`,
       );
       process.exit(1);
     }
 
-    console.log(`\n✅ Harvey eval PASSED: ${report.passed_cases}/${report.total_cases} cases`);
+    console.log(
+      `\n✅ Harvey eval PASSED: ${report.passed_cases}/${report.total_cases} cases`,
+    );
     process.exit(0);
   } catch (error) {
     console.error("\n❌ Harvey eval ERROR:", error);

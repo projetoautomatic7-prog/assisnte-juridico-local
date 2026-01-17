@@ -158,7 +158,7 @@ export class DatajudAPIError extends Error {
     public statusCode?: number,
     public tribunal?: string,
     public numeroProcesso?: string,
-    public originalError?: unknown
+    public originalError?: unknown,
   ) {
     super(message);
     this.name = "DatajudAPIError";
@@ -225,7 +225,10 @@ export function determinarAliasTribunal(tribunalInput: string): string | null {
 
   // Procura pelo código do tribunal ou parte do nome
   for (const [, info] of Object.entries(TRIBUNAIS_DATAJUD)) {
-    if (info.codigo === tribunalInput || info.nome.toLowerCase().includes(tribunalLower)) {
+    if (
+      info.codigo === tribunalInput ||
+      info.nome.toLowerCase().includes(tribunalLower)
+    ) {
       return info.alias;
     }
   }
@@ -238,14 +241,14 @@ export function determinarAliasTribunal(tribunalInput: string): string | null {
 function validateDatajudParams(
   numeroProcesso: string,
   tribunal: string,
-  configApiKey?: string
+  configApiKey?: string,
 ): { apiKey: string; tribunalAlias: string } {
   if (!validarNumeroCNJ(numeroProcesso)) {
     throw new DatajudAPIError(
       "Número de processo CNJ inválido. Use o formato: NNNNNNN-DD.AAAA.J.TR.OOOO",
       400,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
@@ -255,7 +258,7 @@ function validateDatajudParams(
       "API Key do DataJud não configurada. Configure VITE_DATAJUD_API_KEY no arquivo .env",
       401,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
@@ -265,7 +268,7 @@ function validateDatajudParams(
       `Tribunal não suportado ou não reconhecido: ${tribunal}`,
       400,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
@@ -275,14 +278,14 @@ function validateDatajudParams(
 function handleDatajudResponseError(
   response: Response,
   tribunal: string,
-  numeroProcesso: string
+  numeroProcesso: string,
 ): never {
   if (response.status === 401 || response.status === 403) {
     throw new DatajudAPIError(
       "API Key inválida ou sem permissão. Verifique suas credenciais no site do DataJud",
       response.status,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
@@ -291,7 +294,7 @@ function handleDatajudResponseError(
       "Processo não encontrado no tribunal especificado",
       response.status,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
@@ -299,7 +302,7 @@ function handleDatajudResponseError(
     `Erro HTTP ${response.status}: ${response.statusText}`,
     response.status,
     tribunal,
-    numeroProcesso
+    numeroProcesso,
   );
 }
 
@@ -307,7 +310,7 @@ function handleDatajudCatchError(
   error: unknown,
   timeout: number,
   tribunal: string,
-  numeroProcesso: string
+  numeroProcesso: string,
 ): never {
   if (error instanceof DatajudAPIError) {
     throw error;
@@ -318,12 +321,18 @@ function handleDatajudCatchError(
       `Timeout após ${timeout}ms aguardando resposta do DataJud`,
       408,
       tribunal,
-      numeroProcesso
+      numeroProcesso,
     );
   }
 
   if (error instanceof Error) {
-    throw new DatajudAPIError(`Erro de rede: ${error.message}`, 0, tribunal, numeroProcesso, error);
+    throw new DatajudAPIError(
+      `Erro de rede: ${error.message}`,
+      0,
+      tribunal,
+      numeroProcesso,
+      error,
+    );
   }
 
   throw new DatajudAPIError(
@@ -331,7 +340,7 @@ function handleDatajudCatchError(
     0,
     tribunal,
     numeroProcesso,
-    error
+    error,
   );
 }
 
@@ -353,7 +362,7 @@ function sortMovimentosByDate(processo: DatajudProcesso): void {
  */
 export async function consultarProcessoDatajud(
   params: DatajudQueryParams,
-  config?: DatajudConfig
+  config?: DatajudConfig,
 ): Promise<DatajudProcesso> {
   const { numeroProcesso, tribunal } = params;
   const {
@@ -362,7 +371,11 @@ export async function consultarProcessoDatajud(
     timeout = DEFAULT_TIMEOUT,
   } = config || {};
 
-  const { apiKey, tribunalAlias } = validateDatajudParams(numeroProcesso, tribunal, configApiKey);
+  const { apiKey, tribunalAlias } = validateDatajudParams(
+    numeroProcesso,
+    tribunal,
+    configApiKey,
+  );
 
   const numeroProcessoLimpo = numeroProcesso.replaceAll(/[^\d]/g, "");
   const url = `${baseUrl}/${tribunalAlias}/_search`;
@@ -396,7 +409,12 @@ export async function consultarProcessoDatajud(
     const data = await response.json();
 
     if (!data.hits?.hits?.length) {
-      throw new DatajudAPIError("Processo não encontrado", 404, tribunal, numeroProcesso);
+      throw new DatajudAPIError(
+        "Processo não encontrado",
+        404,
+        tribunal,
+        numeroProcesso,
+      );
     }
 
     const processo = data.hits.hits[0]._source as DatajudProcesso;
@@ -430,7 +448,7 @@ export interface DatajudDailyScanParams {
  */
 export async function consultarAtualizacoesRecentesDatajud(
   params: DatajudDailyScanParams,
-  config?: DatajudConfig
+  config?: DatajudConfig,
 ): Promise<DatajudProcesso[]> {
   const { tribunal, dias = 1, maxResultados = 100 } = params;
 
@@ -445,7 +463,7 @@ export async function consultarAtualizacoesRecentesDatajud(
     throw new DatajudAPIError(
       "API Key do DataJud não configurada. Configure VITE_DATAJUD_API_KEY no arquivo .env",
       401,
-      tribunal
+      tribunal,
     );
   }
 
@@ -454,7 +472,7 @@ export async function consultarAtualizacoesRecentesDatajud(
     throw new DatajudAPIError(
       `Tribunal não suportado ou não reconhecido: ${tribunal}`,
       400,
-      tribunal
+      tribunal,
     );
   }
 
@@ -507,14 +525,14 @@ export async function consultarAtualizacoesRecentesDatajud(
         throw new DatajudAPIError(
           "API Key inválida ou sem permissão. Verifique suas credenciais no site do DataJud",
           response.status,
-          tribunal
+          tribunal,
         );
       }
 
       throw new DatajudAPIError(
         `Erro HTTP ${response.status}: ${response.statusText}`,
         response.status,
-        tribunal
+        tribunal,
       );
     }
 
@@ -525,19 +543,21 @@ export async function consultarAtualizacoesRecentesDatajud(
       return [];
     }
 
-    const processos: DatajudProcesso[] = data.hits.hits.map((hit: { _source: DatajudProcesso }) => {
-      const proc = hit._source;
+    const processos: DatajudProcesso[] = data.hits.hits.map(
+      (hit: { _source: DatajudProcesso }) => {
+        const proc = hit._source;
 
-      if (proc.movimentos && Array.isArray(proc.movimentos)) {
-        proc.movimentos.sort((a, b) => {
-          const dateA = new Date(a.dataHora).getTime();
-          const dateB = new Date(b.dataHora).getTime();
-          return dateB - dateA;
-        });
-      }
+        if (proc.movimentos && Array.isArray(proc.movimentos)) {
+          proc.movimentos.sort((a, b) => {
+            const dateA = new Date(a.dataHora).getTime();
+            const dateB = new Date(b.dataHora).getTime();
+            return dateB - dateA;
+          });
+        }
 
-      return proc;
-    });
+        return proc;
+      },
+    );
 
     return processos;
   } catch (error) {
@@ -552,7 +572,7 @@ export async function consultarAtualizacoesRecentesDatajud(
         throw new DatajudAPIError(
           `Timeout após ${timeout}ms aguardando resposta do DataJud (varredura diária)`,
           408,
-          tribunal
+          tribunal,
         );
       }
 
@@ -561,7 +581,7 @@ export async function consultarAtualizacoesRecentesDatajud(
         0,
         tribunal,
         undefined,
-        error
+        error,
       );
     }
 
@@ -570,7 +590,7 @@ export async function consultarAtualizacoesRecentesDatajud(
       0,
       tribunal,
       undefined,
-      error
+      error,
     );
   }
 }
@@ -604,7 +624,7 @@ export function formatarNumeroCNJ(numero: string): string {
   if (digitos.length === 20) {
     return `${digitos.slice(0, 7)}-${digitos.slice(7, 9)}.${digitos.slice(
       9,
-      13
+      13,
     )}.${digitos.slice(13, 14)}.${digitos.slice(14, 16)}.${digitos.slice(16, 20)}`;
   }
 

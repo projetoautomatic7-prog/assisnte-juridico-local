@@ -105,7 +105,8 @@ class ToolAuditStorage {
         total_calls: audits.length,
         successful_calls: successful.length,
         failed_calls: audits.length - successful.length,
-        avg_duration_ms: durations.reduce((a, b) => a + b, 0) / durations.length,
+        avg_duration_ms:
+          durations.reduce((a, b) => a + b, 0) / durations.length,
         max_duration_ms: Math.max(...durations),
         min_duration_ms: Math.min(...durations),
         success_rate: successful.length / audits.length,
@@ -193,7 +194,7 @@ export async function auditToolCall(audit: ToolCallAudit): Promise<void> {
  */
 export async function getToolCallStats(
   agentId?: string,
-  days: number = 7
+  days: number = 7,
 ): Promise<ToolCallStats[]> {
   return storage.getStats(agentId, days);
 }
@@ -251,7 +252,7 @@ export async function executeToolWithAudit<TInput, TOutput>(
   options?: {
     validateInput?: boolean;
     validateOutput?: boolean;
-  }
+  },
 ): Promise<TOutput> {
   const startTime = Date.now();
   const timestamp = Date.now();
@@ -311,17 +312,23 @@ async function detectAnomalies(audit: ToolCallAudit): Promise<void> {
   const durations = recentCalls.map((a) => a.duration_ms);
   const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
   const stdDev = Math.sqrt(
-    durations.map((d) => Math.pow(d - avg, 2)).reduce((a, b) => a + b, 0) / durations.length
+    durations.map((d) => Math.pow(d - avg, 2)).reduce((a, b) => a + b, 0) /
+      durations.length,
   );
 
   // Detectar outliers (> 3 desvios padrão)
   if (audit.duration_ms > avg + 3 * stdDev) {
-    logStructuredError(audit.agent_id, "ToolAnomalyDetected", "Tool call muito lento", {
-      tool: audit.tool_name,
-      duration_ms: audit.duration_ms,
-      avg_duration_ms: avg,
-      threshold_ms: avg + 3 * stdDev,
-    });
+    logStructuredError(
+      audit.agent_id,
+      "ToolAnomalyDetected",
+      "Tool call muito lento",
+      {
+        tool: audit.tool_name,
+        duration_ms: audit.duration_ms,
+        avg_duration_ms: avg,
+        threshold_ms: avg + 3 * stdDev,
+      },
+    );
   }
 
   // Detectar taxa de erro alta
@@ -338,7 +345,7 @@ async function detectAnomalies(audit: ToolCallAudit): Promise<void> {
         tool: audit.tool_name,
         failure_rate: failureRate,
         recent_calls: recentCalls.length,
-      }
+      },
     );
   }
 }

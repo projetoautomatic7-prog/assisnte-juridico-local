@@ -6,7 +6,7 @@ export function formatRiskResult(
   tipo: string,
   nivel: string,
   probabilidade: number,
-  impacto: string
+  impacto: string,
 ): string {
   return `
 ⚠️ **Análise de Risco Concluída**
@@ -20,7 +20,10 @@ ${probabilidade >= 70 ? "✅ **Perspectiva favorável**" : "⚠️ **Avaliar est
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro na análise de risco: ${errorMessage}`;
 }
 

@@ -117,7 +117,7 @@ export class LegalMemory {
     content: string,
     type: LegalContextType,
     metadata: Record<string, unknown> = {},
-    tags: string[] = []
+    tags: string[] = [],
   ): Promise<LegalContextItem> {
     const item: LegalContextItem = {
       id: crypto.randomUUID(),
@@ -141,7 +141,8 @@ export class LegalMemory {
     if (redis) {
       try {
         // Buscar memória existente
-        const existingMemory = await redis.get<LegalContextItem[]>("legal-memory");
+        const existingMemory =
+          await redis.get<LegalContextItem[]>("legal-memory");
         const memory = existingMemory ?? [];
 
         // Adicionar novo item
@@ -152,7 +153,9 @@ export class LegalMemory {
       }
     }
 
-    console.log(`[LegalMemory] Contexto adicionado: ${validatedItem.id} (${type})`);
+    console.log(
+      `[LegalMemory] Contexto adicionado: ${validatedItem.id} (${type})`,
+    );
     return validatedItem;
   }
 
@@ -160,7 +163,9 @@ export class LegalMemory {
    * Busca contexto relevante baseado em uma query
    * (Simulação de busca semântica por enquanto)
    */
-  public async search(options: LegalMemorySearchOptions): Promise<LegalContextItem[]> {
+  public async search(
+    options: LegalMemorySearchOptions,
+  ): Promise<LegalContextItem[]> {
     // Se cache estiver vazio, tenta carregar do KV
     if (this.memoryCache.size === 0) {
       await this.loadFromKV();
@@ -197,7 +202,7 @@ export class LegalMemory {
    */
   public async update(
     id: string,
-    updates: Partial<Omit<LegalContextItem, "id" | "createdAt">>
+    updates: Partial<Omit<LegalContextItem, "id" | "createdAt">>,
   ): Promise<LegalContextItem | null> {
     const item = this.memoryCache.get(id);
     if (!item) return null;

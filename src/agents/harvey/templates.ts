@@ -26,7 +26,11 @@ Analise a situação acima e forneça uma estratégia jurídica vencedora.
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string, context: any): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+  context: any,
+): string {
   return `⚠️ **Erro na análise estratégica** (${errorType}): ${errorMessage}`;
 }
 

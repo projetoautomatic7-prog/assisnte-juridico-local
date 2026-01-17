@@ -35,7 +35,8 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
     };
 
     globalThis.window.addEventListener("keydown", handleKeyDown);
-    return () => globalThis.window.removeEventListener("keydown", handleKeyDown);
+    return () =>
+      globalThis.window.removeEventListener("keydown", handleKeyDown);
   }, [shortcuts]);
 }
 

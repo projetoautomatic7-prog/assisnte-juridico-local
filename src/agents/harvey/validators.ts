@@ -12,14 +12,16 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
   }
 }
 
-export function validateHarveyInput(data: Record<string, unknown>): HarveyInput {
+export function validateHarveyInput(
+  data: Record<string, unknown>,
+): HarveyInput {
   const task = data.task as string | undefined;
   if (!task) {
     throw new ValidationError("Campo 'task' é obrigatório", "task", task);

@@ -40,7 +40,10 @@ export interface HeadingDropdownMenuProps
  *
  * For custom dropdown implementations, use the `useHeadingDropdownMenu` hook instead.
  */
-export const HeadingDropdownMenu = forwardRef<HTMLButtonElement, HeadingDropdownMenuProps>(
+export const HeadingDropdownMenu = forwardRef<
+  HTMLButtonElement,
+  HeadingDropdownMenuProps
+>(
   (
     {
       editor: providedEditor,
@@ -50,7 +53,7 @@ export const HeadingDropdownMenu = forwardRef<HTMLButtonElement, HeadingDropdown
       onOpenChange,
       ...buttonProps
     },
-    ref
+    ref,
   ) => {
     const { editor } = useTiptapEditor(providedEditor);
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -66,7 +69,7 @@ export const HeadingDropdownMenu = forwardRef<HTMLButtonElement, HeadingDropdown
         setIsOpen(open);
         onOpenChange?.(open);
       },
-      [canToggle, editor, onOpenChange]
+      [canToggle, editor, onOpenChange],
     );
 
     if (!isVisible) {
@@ -114,7 +117,7 @@ export const HeadingDropdownMenu = forwardRef<HTMLButtonElement, HeadingDropdown
         </DropdownMenuContent>
       </DropdownMenu>
     );
-  }
+  },
 );
 
 HeadingDropdownMenu.displayName = "HeadingDropdownMenu";

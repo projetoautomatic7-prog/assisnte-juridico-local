@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { expedientesToProcessEvents, minutasToProcessEvents } from "./process-timeline-utils";
+import {
+  expedientesToProcessEvents,
+  minutasToProcessEvents,
+} from "./process-timeline-utils";
 import type { Expediente, Minuta } from "@/types";
 
 describe("process-timeline-utils", () => {

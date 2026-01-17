@@ -19,7 +19,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
@@ -36,14 +36,14 @@ const TIPOS_CONTRATO_VALIDOS = [
 ] as const;
 
 export function validateRevisaoContratualInput(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): RevisaoContratualInput {
   const contratoTexto = data.contratoTexto as string | undefined;
   if (!contratoTexto) {
     throw new ValidationError(
       "Campo 'contratoTexto' é obrigatório",
       "contratoTexto",
-      contratoTexto
+      contratoTexto,
     );
   }
 
@@ -51,7 +51,7 @@ export function validateRevisaoContratualInput(
     throw new ValidationError(
       "Campo 'contratoTexto' deve ser uma string",
       "contratoTexto",
-      contratoTexto
+      contratoTexto,
     );
   }
 
@@ -59,16 +59,20 @@ export function validateRevisaoContratualInput(
     throw new ValidationError(
       "Campo 'contratoTexto' deve ter entre 100 e 50.000 caracteres",
       "contratoTexto",
-      contratoTexto.length
+      contratoTexto.length,
     );
   }
 
   const tipoContrato = (data.tipoContrato as string) || "prestação de serviços";
-  if (!TIPOS_CONTRATO_VALIDOS.includes(tipoContrato as (typeof TIPOS_CONTRATO_VALIDOS)[number])) {
+  if (
+    !TIPOS_CONTRATO_VALIDOS.includes(
+      tipoContrato as (typeof TIPOS_CONTRATO_VALIDOS)[number],
+    )
+  ) {
     throw new ValidationError(
       `Campo 'tipoContrato' deve ser: ${TIPOS_CONTRATO_VALIDOS.join(", ")}`,
       "tipoContrato",
-      tipoContrato
+      tipoContrato,
     );
   }
 

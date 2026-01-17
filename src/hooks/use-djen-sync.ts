@@ -26,19 +26,24 @@ export function useDJENSync() {
         ? import.meta.env.VITE_DJEN_TRIGGER_URL
         : "";
     const syncUrl =
-      triggerUrl || (baseUrl ? `${baseUrl}/api/djen-sync` : "/api/djen/trigger-manual");
+      triggerUrl ||
+      (baseUrl ? `${baseUrl}/api/djen-sync` : "/api/djen/trigger-manual");
     let response;
     try {
       response = await fetch(syncUrl, {
         method: "POST",
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("Failed to fetch") && baseUrl.includes("localhost")) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        errorMessage.includes("Failed to fetch") &&
+        baseUrl.includes("localhost")
+      ) {
         console.warn(
           `[DJEN Sync] ⚠️ Falha de conexão com ${baseUrl}.\n` +
             `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-            `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+            `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
         );
       }
       throw error;
@@ -76,7 +81,11 @@ export function useDJENSync() {
 
     return {
       success: false,
-      message: result.error || result.message || result.mensagem || "Erro na sincronização",
+      message:
+        result.error ||
+        result.message ||
+        result.mensagem ||
+        "Erro na sincronização",
     };
   };
 

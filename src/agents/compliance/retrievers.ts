@@ -4,7 +4,10 @@
  */
 
 import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
-import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
+import {
+  QdrantService,
+  type SearchResult as QdrantSearchResult,
+} from "@/lib/qdrant-service";
 import type { ComplianceInput } from "./validators";
 
 const EMBEDDING_API_URL =
@@ -13,7 +16,13 @@ export interface NormaRegulamento {
   titulo: string;
   ementa: string;
   relevancia: number;
-  tipo: "lei" | "decreto" | "portaria" | "resolução" | "instrução normativa" | "súmula";
+  tipo:
+    | "lei"
+    | "decreto"
+    | "portaria"
+    | "resolução"
+    | "instrução normativa"
+    | "súmula";
   numero: string;
   dataPublicacao: string;
   orgaoEmissor: string;
@@ -52,7 +61,12 @@ export class NormaRegulamentoRetriever {
     const qdrantUrl = process.env.QDRANT_URL;
     const qdrantKey = process.env.QDRANT_API_KEY;
 
-    if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
+    if (
+      qdrantUrl &&
+      qdrantKey &&
+      typeof qdrantUrl === "string" &&
+      typeof qdrantKey === "string"
+    ) {
       try {
         this.qdrantService = new QdrantService({
           url: qdrantUrl,
@@ -60,7 +74,10 @@ export class NormaRegulamentoRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
+        console.log("✅ Qdrant connected:", {
+          url: qdrantUrl,
+          collection: this.collectionName,
+        });
       } catch (error) {
         console.error("❌ Qdrant connection failed:", error);
       }
@@ -75,10 +92,13 @@ export class NormaRegulamentoRetriever {
     try {
       const embeddings = await this.generateEmbeddings(input.texto);
       const rawResults = await this.searchVectorDatabase(embeddings, input);
-      const rankedNormas = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
+      const rankedNormas = this.reRankResults(
+        rawResults,
+        input.relevanceThreshold || 0.7,
+      );
       const filteredNormas = this.filterByTipoVerificacao(
         rankedNormas,
-        input.tipoVerificacao || "todos"
+        input.tipoVerificacao || "todos",
       );
       const finalNormas = filteredNormas.slice(0, input.limit || 10);
 
@@ -92,12 +112,13 @@ export class NormaRegulamentoRetriever {
         executionTimeMs,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorType = error instanceof Error ? error.name : "UnknownError";
 
       throw new Error(
         `Calling retrieval tool with query:\n\n${input.texto}\n\n` +
-          `raised the following error:\n\n${errorType}: ${errorMessage}`
+          `raised the following error:\n\n${errorType}: ${errorMessage}`,
       );
     }
   }
@@ -125,18 +146,21 @@ export class NormaRegulamentoRetriever {
         model: "text-embedding-004",
       });
 
-      const response = await fetch(`${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "models/text-embedding-004",
-          content: {
-            parts: [{ text }],
+      const response = await fetch(
+        `${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: {
+              parts: [{ text }],
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -145,7 +169,9 @@ export class NormaRegulamentoRetriever {
           statusText: response.statusText,
           body: errorBody,
         });
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -164,25 +190,34 @@ export class NormaRegulamentoRetriever {
 
       return embeddings;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real:", errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real:",
+        errorMessage,
+      );
       throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
 
   private async searchVectorDatabase(
     embeddings: number[],
-    input: NormaSearchInput
+    input: NormaSearchInput,
   ): Promise<NormaRegulamento[]> {
     if (!this.qdrantService) {
       throw new Error("Qdrant não configurado");
     }
 
-    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    const qdrantResults = await this.qdrantService.search(
+      embeddings,
+      input.limit || 10,
+    );
     return this.mapQdrantResultsToNormas(qdrantResults);
   }
 
-  private mapQdrantResultsToNormas(results: QdrantSearchResult[]): NormaRegulamento[] {
+  private mapQdrantResultsToNormas(
+    results: QdrantSearchResult[],
+  ): NormaRegulamento[] {
     return results.map((result) => ({
       titulo: (result.payload.titulo as string) || "Sem título",
       ementa: (result.payload.ementa as string) || "Sem ementa",
@@ -190,7 +225,8 @@ export class NormaRegulamentoRetriever {
       tipo: (result.payload.tipo as NormaRegulamento["tipo"]) || "lei",
       numero: (result.payload.numero as string) || "S/N",
       dataPublicacao:
-        (result.payload.dataPublicacao as string) || new Date().toISOString().split("T")[0],
+        (result.payload.dataPublicacao as string) ||
+        new Date().toISOString().split("T")[0],
       orgaoEmissor: (result.payload.orgaoEmissor as string) || "Desconhecido",
       artigos: (result.payload.artigos as ArtigoNorma[]) || [],
       vigente: result.payload.vigente !== false,
@@ -198,7 +234,10 @@ export class NormaRegulamentoRetriever {
     }));
   }
 
-  private reRankResults(normas: NormaRegulamento[], threshold: number): NormaRegulamento[] {
+  private reRankResults(
+    normas: NormaRegulamento[],
+    threshold: number,
+  ): NormaRegulamento[] {
     return normas
       .filter((n) => n.relevancia >= threshold)
       .sort((a, b) => b.relevancia - a.relevancia);
@@ -206,7 +245,7 @@ export class NormaRegulamentoRetriever {
 
   private filterByTipoVerificacao(
     normas: NormaRegulamento[],
-    tipoVerificacao: string
+    tipoVerificacao: string,
   ): NormaRegulamento[] {
     if (tipoVerificacao === "todos") {
       return normas;
@@ -226,7 +265,9 @@ export class NormaRegulamentoRetriever {
       return normas;
     }
 
-    return normas.filter((n) => n.tags?.some((tag) => relevantTags.includes(tag.toLowerCase())));
+    return normas.filter((n) =>
+      n.tags?.some((tag) => relevantTags.includes(tag.toLowerCase())),
+    );
   }
 
   private calculateAverageRelevance(normas: NormaRegulamento[]): number {

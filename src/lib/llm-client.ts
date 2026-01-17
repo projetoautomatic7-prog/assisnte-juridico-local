@@ -33,7 +33,7 @@ export interface StreamCallbacks {
 export async function llm(
   prompt: string,
   model: string = "gemini-2.5-pro",
-  jsonMode: boolean = false
+  jsonMode: boolean = false,
 ): Promise<string> {
   const messages: LLMMessage[] = [{ role: "user", content: prompt }];
 
@@ -59,7 +59,10 @@ export async function llm(
 /**
  * Generate text using Gemini
  */
-export async function generateText(prompt: string, options: LLMOptions = {}): Promise<string> {
+export async function generateText(
+  prompt: string,
+  options: LLMOptions = {},
+): Promise<string> {
   const messages: LLMMessage[] = [{ role: "user", content: prompt }];
 
   return callLLMProxy(messages, options);
@@ -70,7 +73,7 @@ export async function generateText(prompt: string, options: LLMOptions = {}): Pr
  */
 export async function generateJSON<T = unknown>(
   prompt: string,
-  options: LLMOptions = {}
+  options: LLMOptions = {},
 ): Promise<T> {
   const systemPrompt =
     "Você é um assistente que sempre responde com JSON válido. Nunca inclua explicações fora da estrutura JSON.";
@@ -91,9 +94,12 @@ export async function generateJSON<T = unknown>(
     const openBracketIdx = response.indexOf("[");
     const startIdx = Math.min(
       openBraceIdx >= 0 ? openBraceIdx : Infinity,
-      openBracketIdx >= 0 ? openBracketIdx : Infinity
+      openBracketIdx >= 0 ? openBracketIdx : Infinity,
     );
-    const endIdx = Math.max(response.lastIndexOf("}"), response.lastIndexOf("]"));
+    const endIdx = Math.max(
+      response.lastIndexOf("}"),
+      response.lastIndexOf("]"),
+    );
 
     if (startIdx !== Infinity && endIdx !== -1 && endIdx >= startIdx) {
       const jsonStr = response.substring(startIdx, endIdx + 1);
@@ -112,7 +118,7 @@ export async function generateJSON<T = unknown>(
  */
 export async function* streamText(
   prompt: string,
-  options: LLMOptions = {}
+  options: LLMOptions = {},
 ): AsyncGenerator<string, void, unknown> {
   const messages: LLMMessage[] = [{ role: "user", content: prompt }];
 
@@ -143,7 +149,7 @@ export async function* streamText(
 export async function streamTextWithCallbacks(
   prompt: string,
   callbacks: StreamCallbacks,
-  options: LLMOptions = {}
+  options: LLMOptions = {},
 ): Promise<string> {
   let fullContent = "";
 
@@ -155,7 +161,9 @@ export async function streamTextWithCallbacks(
     callbacks.onComplete?.(fullContent);
     return fullContent;
   } catch (error) {
-    callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
+    callbacks.onError?.(
+      error instanceof Error ? error : new Error(String(error)),
+    );
     throw error;
   }
 }
@@ -163,7 +171,10 @@ export async function streamTextWithCallbacks(
 /**
  * Chat with Gemini using message history
  */
-export async function chat(messages: LLMMessage[], options: LLMOptions = {}): Promise<string> {
+export async function chat(
+  messages: LLMMessage[],
+  options: LLMOptions = {},
+): Promise<string> {
   return callLLMProxy(messages, options);
 }
 
@@ -172,7 +183,7 @@ export async function chat(messages: LLMMessage[], options: LLMOptions = {}): Pr
  */
 export async function* chatStream(
   messages: LLMMessage[],
-  options: LLMOptions = {}
+  options: LLMOptions = {},
 ): AsyncGenerator<string, void, unknown> {
   const response = await fetch(LLM_STREAM_URL, {
     method: "POST",
@@ -198,7 +209,10 @@ export async function* chatStream(
 /**
  * Internal function to call the LLM proxy (non-streaming)
  */
-async function callLLMProxy(messages: LLMMessage[], options: LLMOptions = {}): Promise<string> {
+async function callLLMProxy(
+  messages: LLMMessage[],
+  options: LLMOptions = {},
+): Promise<string> {
   try {
     const response = await fetch(LLM_PROXY_URL, {
       method: "POST",
@@ -259,7 +273,9 @@ function processSSEJson(json: {
   error?: string;
 }): string | null {
   if (json.type === "error") {
-    throw new Error(json.message || json.error || "Erro desconhecido no streaming");
+    throw new Error(
+      json.message || json.error || "Erro desconhecido no streaming",
+    );
   }
   if (json.type === "content" && json.content) {
     return json.content;
@@ -294,7 +310,7 @@ function parseSSELine(line: string): string | null {
  * Refactored to reduce cognitive complexity (S3776)
  */
 async function* processSSEResponse(
-  reader: ReadableStreamDefaultReader<Uint8Array>
+  reader: ReadableStreamDefaultReader<Uint8Array>,
 ): AsyncGenerator<string, void, unknown> {
   const decoder = new TextDecoder();
   let buffer = "";

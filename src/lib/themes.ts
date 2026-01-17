@@ -96,7 +96,8 @@ export function getEventColor(tipo?: string): string {
  * @deprecated Use getEventBadgeStyle() para consistência com themeConfig.colors
  */
 export function getEventBadgeClass(tipo?: string): string {
-  const baseClass = "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
+  const baseClass =
+    "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
 
   switch (tipo) {
     case "certidao":
@@ -138,7 +139,8 @@ export function getEventBadgeStyle(tipo?: string): React.CSSProperties {
  * @deprecated Use getStatusBadgeStyle() para consistência com themeConfig.colors
  */
 export function getStatusBadgeClass(status: string): string {
-  const baseClass = "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
+  const baseClass =
+    "inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border";
 
   switch (status) {
     case "ativo":

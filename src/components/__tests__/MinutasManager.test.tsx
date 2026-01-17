@@ -12,7 +12,9 @@ function renderWithProviders(ui: React.ReactElement) {
     },
   });
 
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
 }
 
 function seedLocalStorage(minutas: Minuta[], processes: Process[]) {
@@ -85,7 +87,9 @@ describe("MinutasManager - renderização básica", () => {
   it("deve exibir preview de conteúdo no grid", () => {
     renderWithProviders(<MinutasManager />);
 
-    const previewElement = screen.getByText(/Esta é uma petição inicial de teste/);
+    const previewElement = screen.getByText(
+      /Esta é uma petição inicial de teste/,
+    );
     expect(previewElement).toBeInTheDocument();
   });
 

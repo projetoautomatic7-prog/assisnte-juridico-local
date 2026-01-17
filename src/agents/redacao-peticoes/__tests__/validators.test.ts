@@ -20,33 +20,37 @@ describe("validateRedacaoPeticoesInput", () => {
 
     it("deve rejeitar detalhes ausente", () => {
       expect(() => validateRedacaoPeticoesInput({})).toThrow(ValidationError);
-      expect(() => validateRedacaoPeticoesInput({})).toThrow(/Campo 'detalhes' é obrigatório/);
+      expect(() => validateRedacaoPeticoesInput({})).toThrow(
+        /Campo 'detalhes' é obrigatório/,
+      );
     });
 
     it("deve rejeitar detalhes não-string", () => {
-      expect(() => validateRedacaoPeticoesInput({ detalhes: 123 })).toThrow(ValidationError);
       expect(() => validateRedacaoPeticoesInput({ detalhes: 123 })).toThrow(
-        "Campo 'detalhes' deve ser uma string"
+        ValidationError,
+      );
+      expect(() => validateRedacaoPeticoesInput({ detalhes: 123 })).toThrow(
+        "Campo 'detalhes' deve ser uma string",
       );
     });
 
     it("deve rejeitar detalhes muito curto (< 20 caracteres)", () => {
-      expect(() => validateRedacaoPeticoesInput({ detalhes: "curto demais" })).toThrow(
-        ValidationError
-      );
-      expect(() => validateRedacaoPeticoesInput({ detalhes: "curto demais" })).toThrow(
-        /deve ter entre 20 e 10.000 caracteres/
-      );
+      expect(() =>
+        validateRedacaoPeticoesInput({ detalhes: "curto demais" }),
+      ).toThrow(ValidationError);
+      expect(() =>
+        validateRedacaoPeticoesInput({ detalhes: "curto demais" }),
+      ).toThrow(/deve ter entre 20 e 10.000 caracteres/);
     });
 
     it("deve rejeitar detalhes muito longo (> 10000 caracteres)", () => {
       const longDetalhes = "a".repeat(10001);
-      expect(() => validateRedacaoPeticoesInput({ detalhes: longDetalhes })).toThrow(
-        ValidationError
-      );
-      expect(() => validateRedacaoPeticoesInput({ detalhes: longDetalhes })).toThrow(
-        /deve ter entre 20 e 10.000 caracteres/
-      );
+      expect(() =>
+        validateRedacaoPeticoesInput({ detalhes: longDetalhes }),
+      ).toThrow(ValidationError);
+      expect(() =>
+        validateRedacaoPeticoesInput({ detalhes: longDetalhes }),
+      ).toThrow(/deve ter entre 20 e 10.000 caracteres/);
     });
 
     it("deve aceitar detalhes com 20 caracteres exatos", () => {
@@ -123,13 +127,13 @@ describe("validateRedacaoPeticoesInput", () => {
         validateRedacaoPeticoesInput({
           detalhes: validDetalhes,
           tipo: "recurso especial",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateRedacaoPeticoesInput({
           detalhes: validDetalhes,
           tipo: "invalid",
-        })
+        }),
       ).toThrow(/Campo 'tipo' deve ser/);
     });
   });
@@ -249,19 +253,23 @@ describe("validateRedacaoPeticoesInput", () => {
     it("deve retornar todos os campos validados", () => {
       const input = {
         tipo: "contestação" as const,
-        detalhes: "Elaborar contestação para defesa em ação trabalhista movida por ex-funcionário",
+        detalhes:
+          "Elaborar contestação para defesa em ação trabalhista movida por ex-funcionário",
         partes: {
           autor: "José da Silva",
           reu: "Empresa ABC Ltda",
         },
-        pedidos: ["Improcedência total dos pedidos", "Condenação em litigância de má-fé"],
+        pedidos: [
+          "Improcedência total dos pedidos",
+          "Condenação em litigância de má-fé",
+        ],
       };
 
       const result = validateRedacaoPeticoesInput(input);
 
       expect(result.tipo).toBe("contestação");
       expect(result.detalhes).toBe(
-        "Elaborar contestação para defesa em ação trabalhista movida por ex-funcionário"
+        "Elaborar contestação para defesa em ação trabalhista movida por ex-funcionário",
       );
       expect(result.partes?.autor).toBe("José da Silva");
       expect(result.partes?.reu).toBe("Empresa ABC Ltda");

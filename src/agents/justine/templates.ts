@@ -56,7 +56,7 @@ export function formatErrorMessage(
   context: {
     task?: string;
     step?: string;
-  }
+  },
 ): string {
   return `
 ⚠️ **Erro ao analisar intimações**

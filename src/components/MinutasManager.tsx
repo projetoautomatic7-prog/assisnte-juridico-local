@@ -1,7 +1,13 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -72,12 +82,22 @@ import {
   Zap,
 } from "lucide-react";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { toast } from "sonner";
 
 import { ProfessionalEditor } from "@/components/editor/ProfessionalEditor";
 import { getCkEditorAiToolkit, type AiToolkit } from "@/lib/ckeditor-ai";
-import { clearActiveEditorToolkit, setActiveEditorToolkit } from "@/lib/active-editor-toolkit";
+import {
+  clearActiveEditorToolkit,
+  setActiveEditorToolkit,
+} from "@/lib/active-editor-toolkit";
 
 type ViewMode = "grid" | "list";
 
@@ -88,26 +108,34 @@ type ViewMode = "grid" | "list";
  */
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const GOOGLE_API_KEY =
-  import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+  import.meta.env.VITE_GOOGLE_API_KEY ||
+  import.meta.env.VITE_GEMINI_API_KEY ||
+  "";
 const isGoogleConfigured = !!GOOGLE_CLIENT_ID && !!GOOGLE_API_KEY;
 
 export default function MinutasManager() {
   const [minutas, setMinutas] = useKV<Minuta[]>("minutas", []);
   const [processes] = useKV<Process[]>("processes", []);
-  const { exportToGoogleDocs, importFromGoogleDocs, openDocument } = useGoogleDocs();
+  const { exportToGoogleDocs, importFromGoogleDocs, openDocument } =
+    useGoogleDocs();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMinuta, setEditingMinuta] = useState<Minuta | null>(null);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<"editor" | "templates" | "variaveis">("editor");
+  const [activeTab, setActiveTab] = useState<
+    "editor" | "templates" | "variaveis"
+  >("editor");
 
   // ✅ SEPARAR buscas (bug de UX importante)
   const [minutaSearch, setMinutaSearch] = useState("");
   const [templateSearch, setTemplateSearch] = useState("");
 
-  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
-  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<DocumentTemplate | null>(null);
+  const [variableValues, setVariableValues] = useState<Record<string, string>>(
+    {},
+  );
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -137,7 +165,11 @@ export default function MinutasManager() {
       streamCallbacksRef.current.onError?.(err);
     },
     onToolCall: async (toolCall) => {
-      console.log("[MinutasManager] Tool Call recebida:", toolCall.name, toolCall.input);
+      console.log(
+        "[MinutasManager] Tool Call recebida:",
+        toolCall.name,
+        toolCall.input,
+      );
 
       // --- Ferramentas de Editor (Documento Ativo) ---
       if (toolCall.name === "editor_tool") {
@@ -194,15 +226,19 @@ export default function MinutasManager() {
         // na mesma stream http response sem um mecanismo de feedback loop complexo.
         // Porém, podemos exibir pro usuário ou (se implementarmos tool outputs) enviar de volta.
         // Por enquanto, apenas notificamos que a IA tentou listar.
-        toast.info(`IA solicitou lista de documentos (${(minutas || []).length} encontrados).`);
+        toast.info(
+          `IA solicitou lista de documentos (${(minutas || []).length} encontrados).`,
+        );
         console.log(
           "Documentos disponíveis:",
-          minutas?.map((m) => ({ id: m.id, titulo: m.titulo }))
+          minutas?.map((m) => ({ id: m.id, titulo: m.titulo })),
         );
       } else if (toolCall.name === "openDocument") {
         const { id, title } = toolCall.input;
         const target = (minutas || []).find(
-          (m) => m.id === id || m.titulo.toLowerCase().includes(title?.toLowerCase())
+          (m) =>
+            m.id === id ||
+            m.titulo.toLowerCase().includes(title?.toLowerCase()),
         );
 
         if (target) {
@@ -257,7 +293,7 @@ export default function MinutasManager() {
   const handleAICommand = useCallback(
     async (
       command: "continuar" | "expandir" | "revisar" | "formalizar",
-      mode: "append" | "replace"
+      mode: "append" | "replace",
     ) => {
       if (!formData.conteudo.trim()) {
         toast.error("Adicione algum conteúdo antes de usar os comandos de IA");
@@ -282,7 +318,10 @@ export default function MinutasManager() {
           streamedContent += chunk;
 
           if (mode === "append") {
-            setFormData((prev) => ({ ...prev, conteudo: prev.conteudo + chunk }));
+            setFormData((prev) => ({
+              ...prev,
+              conteudo: prev.conteudo + chunk,
+            }));
           } else {
             setFormData((prev) => ({ ...prev, conteudo: streamedContent }));
           }
@@ -295,7 +334,15 @@ export default function MinutasManager() {
         setActiveAICommand(null);
       }
     },
-    [formData.conteudo, canAIRequest, aiWaitTime, continuar, expandir, revisar, formalizar]
+    [
+      formData.conteudo,
+      canAIRequest,
+      aiWaitTime,
+      continuar,
+      expandir,
+      revisar,
+      formalizar,
+    ],
   );
 
   useEffect(() => {
@@ -317,7 +364,9 @@ export default function MinutasManager() {
 
   useEffect(() => {
     if (formData.processId) {
-      const processo = (processes || []).find((p) => p.id === formData.processId);
+      const processo = (processes || []).find(
+        (p) => p.id === formData.processId,
+      );
       if (processo) {
         setVariableValues((prev) => ({
           ...prev,
@@ -360,13 +409,17 @@ export default function MinutasManager() {
         toast.success("Google Docs inicializado!", { id: toastId });
       } catch (initError) {
         const errorMsg =
-          initError instanceof Error ? initError.message : "Erro ao inicializar Google Docs";
+          initError instanceof Error
+            ? initError.message
+            : "Erro ao inicializar Google Docs";
         let userMessage = errorMsg;
 
         if (errorMsg.includes("Timeout")) {
-          userMessage = "Timeout ao carregar Google Docs. Verifique sua conexão e tente novamente.";
+          userMessage =
+            "Timeout ao carregar Google Docs. Verifique sua conexão e tente novamente.";
         } else if (errorMsg.includes("Failed to load")) {
-          userMessage = "Não foi possível carregar scripts do Google. Verifique sua conexão.";
+          userMessage =
+            "Não foi possível carregar scripts do Google. Verifique sua conexão.";
         } else if (errorMsg.toLowerCase().includes("api key")) {
           userMessage = "Credenciais do Google inválidas. Contate o suporte.";
         }
@@ -381,10 +434,14 @@ export default function MinutasManager() {
         setIsAuthenticated(true);
         toast.success("Autenticado com Google Docs!");
       } else {
-        toast.error(googleDocsService.getLastError() || "Falha na autenticação - verifique popups");
+        toast.error(
+          googleDocsService.getLastError() ||
+            "Falha na autenticação - verifique popups",
+        );
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Erro desconhecido";
+      const errorMsg =
+        error instanceof Error ? error.message : "Erro desconhecido";
       toast.error(`Erro ao autenticar: ${errorMsg}`);
       console.error("[MinutasManager] Auth error:", error);
     }
@@ -414,7 +471,8 @@ export default function MinutasManager() {
       setIsDialogOpen(false);
       toast.success("Minuta criada com sucesso!");
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Erro ao criar minuta";
+      const errorMsg =
+        error instanceof Error ? error.message : "Erro ao criar minuta";
       toast.error(errorMsg);
     }
   };
@@ -450,18 +508,18 @@ export default function MinutasManager() {
       });
 
       setMinutas((current = []) =>
-        current.map((m) => (m.id === editingMinuta.id ? minutaAtualizada : m))
+        current.map((m) => (m.id === editingMinuta.id ? minutaAtualizada : m)),
       );
 
       if (minutaAtualizada.googleDocsId) {
         const syncSuccess = await googleDocsService.updateDocumentContent(
           minutaAtualizada.googleDocsId,
-          minutaAtualizada.conteudo
+          minutaAtualizada.conteudo,
         );
         toast[syncSuccess ? "success" : "warning"](
           syncSuccess
             ? "Minuta atualizada e sincronizada com Google Docs"
-            : "Minuta atualizada, mas falha ao sincronizar com Google Docs"
+            : "Minuta atualizada, mas falha ao sincronizar com Google Docs",
         );
       } else {
         toast.success("Minuta atualizada com sucesso!");
@@ -471,7 +529,8 @@ export default function MinutasManager() {
       setIsDialogOpen(false);
       setEditingMinuta(null);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Erro ao atualizar minuta";
+      const errorMsg =
+        error instanceof Error ? error.message : "Erro ao atualizar minuta";
       toast.error(errorMsg);
     }
   };
@@ -502,8 +561,8 @@ export default function MinutasManager() {
               status: "finalizada" as Minuta["status"],
               atualizadoEm: new Date().toISOString(),
             }
-          : m
-      )
+          : m,
+      ),
     );
     toast.success("Minuta aprovada e finalizada!");
   };
@@ -523,7 +582,8 @@ export default function MinutasManager() {
     toast.success("Minuta duplicada com sucesso!");
   };
 
-  const handleExportPDF = (_minuta: Minuta) => toast.info("Exportação para PDF em desenvolvimento");
+  const handleExportPDF = (_minuta: Minuta) =>
+    toast.info("Exportação para PDF em desenvolvimento");
   const handleExportDOCX = (_minuta: Minuta) =>
     toast.info("Exportação para DOCX em desenvolvimento");
 
@@ -549,8 +609,8 @@ export default function MinutasManager() {
                     googleDocsUrl: result.url,
                     ultimaSincronizacao: new Date().toISOString(),
                   }
-                : m
-            )
+                : m,
+            ),
           );
           openDocument(result.url);
           toast.success("Documento criado e aberto no Google Docs!");
@@ -566,7 +626,11 @@ export default function MinutasManager() {
 
     setIsSyncing(minuta.id);
     try {
-      const success = await importFromGoogleDocs(minuta.id, minutas || [], setMinutas);
+      const success = await importFromGoogleDocs(
+        minuta.id,
+        minutas || [],
+        setMinutas,
+      );
       if (success) toast.success("Alterações importadas do Google Docs!");
     } catch {
       toast.error("Erro ao importar do Google Docs");
@@ -585,7 +649,9 @@ export default function MinutasManager() {
     }));
 
     const initialValues: Record<string, string> = {};
-    template.variaveis.forEach((v) => (initialValues[v] = variableValues[v] || ""));
+    template.variaveis.forEach(
+      (v) => (initialValues[v] = variableValues[v] || ""),
+    );
     setVariableValues(initialValues);
 
     setActiveTab("editor");
@@ -627,7 +693,9 @@ ${prompt}`;
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || "Erro ao gerar texto com IA");
+        throw new Error(
+          errorData.error || errorData.message || "Erro ao gerar texto com IA",
+        );
       }
 
       const data = await response.json();
@@ -650,7 +718,7 @@ ${prompt}`;
         onChunk: (chunk: string) => void;
         onComplete: () => void;
         onError: (error: Error) => void;
-      }
+      },
     ) => {
       streamCallbacksRef.current = {
         onChunk: callbacks.onChunk,
@@ -684,7 +752,7 @@ ${schemaInstructions}`,
         aiToolkitRef.current?.setActiveSelection(null);
       }
     },
-    [streamChat]
+    [streamChat],
   );
 
   // ✅ estilos tipados sem React namespace
@@ -745,13 +813,16 @@ ${schemaInstructions}`,
   }, [minutas, minutaSearch, filterStatus, filterTipo]);
 
   const minutasPendentes = useMemo(
-    () => (minutas || []).filter((m) => m.status === "pendente-revisao" || m.criadoPorAgente),
-    [minutas]
+    () =>
+      (minutas || []).filter(
+        (m) => m.status === "pendente-revisao" || m.criadoPorAgente,
+      ),
+    [minutas],
   );
 
   const unfilledVariables = useMemo(
     () => extractUnfilledVariables(formData.conteudo),
-    [formData.conteudo]
+    [formData.conteudo],
   );
 
   return (
@@ -791,7 +862,10 @@ ${schemaInstructions}`,
               );
             }
             return (
-              <Badge style={getTintStyle(themeConfig.colors.sucesso)} className="px-4 py-2">
+              <Badge
+                style={getTintStyle(themeConfig.colors.sucesso)}
+                className="px-4 py-2"
+              >
                 <FileText className="mr-2" />
                 Google Conectado
               </Badge>
@@ -829,8 +903,8 @@ ${schemaInstructions}`,
                     )}
                   </DialogTitle>
                   <DialogDescriptionUI>
-                    Use o editor rico para criar sua minuta. Use a IA para gerar conteúdo com Gemini
-                    2.5 Pro.
+                    Use o editor rico para criar sua minuta. Use a IA para gerar
+                    conteúdo com Gemini 2.5 Pro.
                   </DialogDescriptionUI>
                 </DialogHeader>
               </div>
@@ -855,9 +929,12 @@ ${schemaInstructions}`,
                         {/* Metadados */}
                         <Card className="border-muted">
                           <CardHeader className="py-4">
-                            <CardTitle className="text-sm">Dados da minuta</CardTitle>
+                            <CardTitle className="text-sm">
+                              Dados da minuta
+                            </CardTitle>
                             <CardDescription className="text-xs">
-                              Defina título, tipo, status e vinculação (opcional)
+                              Defina título, tipo, status e vinculação
+                              (opcional)
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-4">
@@ -868,7 +945,10 @@ ${schemaInstructions}`,
                                   id="titulo"
                                   value={formData.titulo}
                                   onChange={(e) =>
-                                    setFormData((p) => ({ ...p, titulo: e.target.value }))
+                                    setFormData((p) => ({
+                                      ...p,
+                                      titulo: e.target.value,
+                                    }))
                                   }
                                   placeholder="Ex: Petição Inicial - Ação de Cobrança"
                                 />
@@ -879,18 +959,31 @@ ${schemaInstructions}`,
                                 <Select
                                   value={formData.tipo}
                                   onValueChange={(value) =>
-                                    setFormData((p) => ({ ...p, tipo: value as Minuta["tipo"] }))
+                                    setFormData((p) => ({
+                                      ...p,
+                                      tipo: value as Minuta["tipo"],
+                                    }))
                                   }
                                 >
                                   <SelectTrigger id="tipo">
                                     <SelectValue placeholder="Selecione o tipo" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="peticao">Petição</SelectItem>
-                                    <SelectItem value="contrato">Contrato</SelectItem>
-                                    <SelectItem value="parecer">Parecer</SelectItem>
-                                    <SelectItem value="recurso">Recurso</SelectItem>
-                                    <SelectItem value="procuracao">Procuração</SelectItem>
+                                    <SelectItem value="peticao">
+                                      Petição
+                                    </SelectItem>
+                                    <SelectItem value="contrato">
+                                      Contrato
+                                    </SelectItem>
+                                    <SelectItem value="parecer">
+                                      Parecer
+                                    </SelectItem>
+                                    <SelectItem value="recurso">
+                                      Recurso
+                                    </SelectItem>
+                                    <SelectItem value="procuracao">
+                                      Procuração
+                                    </SelectItem>
                                     <SelectItem value="outro">Outro</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -911,17 +1004,27 @@ ${schemaInstructions}`,
                                     <SelectValue placeholder="Selecione o status" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="rascunho">Rascunho</SelectItem>
-                                    <SelectItem value="em-revisao">Em Revisão</SelectItem>
-                                    <SelectItem value="finalizada">Finalizada</SelectItem>
-                                    <SelectItem value="arquivada">Arquivada</SelectItem>
+                                    <SelectItem value="rascunho">
+                                      Rascunho
+                                    </SelectItem>
+                                    <SelectItem value="em-revisao">
+                                      Em Revisão
+                                    </SelectItem>
+                                    <SelectItem value="finalizada">
+                                      Finalizada
+                                    </SelectItem>
+                                    <SelectItem value="arquivada">
+                                      Arquivada
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
                             </div>
 
                             <div>
-                              <Label htmlFor="processo">Vincular a Processo (opcional)</Label>
+                              <Label htmlFor="processo">
+                                Vincular a Processo (opcional)
+                              </Label>
                               <Select
                                 value={formData.processId || "_none"}
                                 onValueChange={(value) =>
@@ -952,7 +1055,8 @@ ${schemaInstructions}`,
                           <CardHeader className="py-4">
                             <CardTitle className="text-sm">Conteúdo</CardTitle>
                             <CardDescription className="text-xs">
-                              Escreva ou gere com IA e depois refine com comandos
+                              Escreva ou gere com IA e depois refine com
+                              comandos
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -961,7 +1065,10 @@ ${schemaInstructions}`,
                                 key={editingMinuta?.id || "new-minuta"}
                                 content={formData.conteudo}
                                 onChange={(content) =>
-                                  setFormData((p) => ({ ...p, conteudo: content }))
+                                  setFormData((p) => ({
+                                    ...p,
+                                    conteudo: content,
+                                  }))
                                 }
                                 onEditorReady={(editor) => {
                                   // Inicializa o toolkit de IA para CKEditor
@@ -972,7 +1079,7 @@ ${schemaInstructions}`,
                                   // TODO: Enviar schemaAwareness para o system prompt do agente
                                   console.log(
                                     "Schema Awareness:",
-                                    toolkit.getHtmlSchemaAwareness()
+                                    toolkit.getHtmlSchemaAwareness(),
                                   );
                                 }}
                                 onAIGenerate={handleAIGenerate}
@@ -1018,7 +1125,8 @@ ${schemaInstructions}`,
                               )}
                             </CardTitle>
                             <CardDescription className="text-xs">
-                              Use os comandos abaixo para processar o texto com IA
+                              Use os comandos abaixo para processar o texto com
+                              IA
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="py-2 px-4">
@@ -1026,8 +1134,13 @@ ${schemaInstructions}`,
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAICommand("continuar", "append")}
-                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                onClick={() =>
+                                  handleAICommand("continuar", "append")
+                                }
+                                disabled={
+                                  isAICommandLoading ||
+                                  !formData.conteudo.trim()
+                                }
                                 className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                               >
                                 {activeAICommand === "continuar" ? (
@@ -1044,8 +1157,13 @@ ${schemaInstructions}`,
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAICommand("expandir", "replace")}
-                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                onClick={() =>
+                                  handleAICommand("expandir", "replace")
+                                }
+                                disabled={
+                                  isAICommandLoading ||
+                                  !formData.conteudo.trim()
+                                }
                                 className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                               >
                                 {activeAICommand === "expandir" ? (
@@ -1062,8 +1180,13 @@ ${schemaInstructions}`,
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAICommand("revisar", "replace")}
-                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                onClick={() =>
+                                  handleAICommand("revisar", "replace")
+                                }
+                                disabled={
+                                  isAICommandLoading ||
+                                  !formData.conteudo.trim()
+                                }
                                 className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                               >
                                 {activeAICommand === "revisar" ? (
@@ -1080,8 +1203,13 @@ ${schemaInstructions}`,
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAICommand("formalizar", "replace")}
-                                disabled={isAICommandLoading || !formData.conteudo.trim()}
+                                onClick={() =>
+                                  handleAICommand("formalizar", "replace")
+                                }
+                                disabled={
+                                  isAICommandLoading ||
+                                  !formData.conteudo.trim()
+                                }
                                 className="flex flex-col items-center gap-1 h-auto py-3 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                               >
                                 {activeAICommand === "formalizar" ? (
@@ -1102,9 +1230,12 @@ ${schemaInstructions}`,
                           <div className="flex items-center justify-center gap-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
                             <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
                             <span className="text-sm font-medium text-purple-600">
-                              {activeAICommand === "continuar" && "Continuando escrita com IA..."}
-                              {activeAICommand === "expandir" && "Expandindo texto com IA..."}
-                              {activeAICommand === "revisar" && "Revisando gramática com IA..."}
+                              {activeAICommand === "continuar" &&
+                                "Continuando escrita com IA..."}
+                              {activeAICommand === "expandir" &&
+                                "Expandindo texto com IA..."}
+                              {activeAICommand === "revisar" &&
+                                "Revisando gramática com IA..."}
                               {activeAICommand === "formalizar" &&
                                 "Formalizando linguagem com IA..."}
                             </span>
@@ -1112,13 +1243,20 @@ ${schemaInstructions}`,
                         )}
 
                         {unfilledVariables.length > 0 && (
-                          <Alert style={getTintStyle(themeConfig.colors.alerta)}>
+                          <Alert
+                            style={getTintStyle(themeConfig.colors.alerta)}
+                          >
                             <AlertTriangle
                               className="h-4 w-4"
                               style={{ color: themeConfig.colors.alerta }}
                             />
-                            <AlertDescription style={{ color: themeConfig.colors.alerta }}>
-                              <strong>{unfilledVariables.length} variáveis não preenchidas:</strong>{" "}
+                            <AlertDescription
+                              style={{ color: themeConfig.colors.alerta }}
+                            >
+                              <strong>
+                                {unfilledVariables.length} variáveis não
+                                preenchidas:
+                              </strong>{" "}
                               {unfilledVariables.slice(0, 5).join(", ")}
                               {unfilledVariables.length > 5 &&
                                 ` e mais ${unfilledVariables.length - 5}`}
@@ -1144,7 +1282,9 @@ ${schemaInstructions}`,
                               placeholder="Buscar templates..."
                               className="pl-9"
                               value={templateSearch}
-                              onChange={(e) => setTemplateSearch(e.target.value)}
+                              onChange={(e) =>
+                                setTemplateSearch(e.target.value)
+                              }
                             />
                           </div>
 
@@ -1179,10 +1319,16 @@ ${schemaInstructions}`,
                                   </CardHeader>
                                   <CardContent className="p-4 pt-0">
                                     <div className="flex gap-2 flex-wrap">
-                                      <Badge variant="outline" className="text-xs">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
                                         {template.categoria}
                                       </Badge>
-                                      <Badge variant="secondary" className="text-xs">
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
                                         {template.variaveis.length} variáveis
                                       </Badge>
                                     </div>
@@ -1196,13 +1342,18 @@ ${schemaInstructions}`,
                       <TabsContent value="variaveis" className="mt-0">
                         <div className="space-y-4">
                           <p className="text-sm text-muted-foreground">
-                            Preencha as variáveis para substituir automaticamente no documento. Use
-                            o formato{" "}
-                            <code className="bg-muted px-1 rounded">{"{{variavel}}"}</code>.
+                            Preencha as variáveis para substituir
+                            automaticamente no documento. Use o formato{" "}
+                            <code className="bg-muted px-1 rounded">
+                              {"{{variavel}}"}
+                            </code>
+                            .
                           </p>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {(selectedTemplate?.variaveis || unfilledVariables).map((variable) => (
+                            {(
+                              selectedTemplate?.variaveis || unfilledVariables
+                            ).map((variable) => (
                               <div key={variable}>
                                 <Label className="text-xs">{variable}</Label>
                                 <Input
@@ -1219,7 +1370,10 @@ ${schemaInstructions}`,
                             ))}
                           </div>
 
-                          <Button onClick={handleFillVariables} className="w-full">
+                          <Button
+                            onClick={handleFillVariables}
+                            className="w-full"
+                          >
                             <Sparkles className="mr-2" />
                             Aplicar Variáveis no Documento
                           </Button>
@@ -1240,7 +1394,11 @@ ${schemaInstructions}`,
                 >
                   Cancelar
                 </Button>
-                <Button onClick={editingMinuta ? handleUpdateMinuta : handleCreateMinuta}>
+                <Button
+                  onClick={
+                    editingMinuta ? handleUpdateMinuta : handleCreateMinuta
+                  }
+                >
                   {editingMinuta ? "Atualizar" : "Criar"} Minuta
                 </Button>
               </div>
@@ -1254,8 +1412,10 @@ ${schemaInstructions}`,
         <Alert className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20">
           <Bot className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800 dark:text-orange-200">
-            <strong>{minutasPendentes.length} minuta(s) pendente(s) de revisão</strong> criada(s)
-            pelos agentes IA.
+            <strong>
+              {minutasPendentes.length} minuta(s) pendente(s) de revisão
+            </strong>{" "}
+            criada(s) pelos agentes IA.
             <div className="flex gap-2 mt-2 flex-wrap">
               {minutasPendentes.slice(0, 3).map((m) => (
                 <Button
@@ -1365,7 +1525,9 @@ ${schemaInstructions}`,
           data-testid="minutas-container"
         >
           {filteredMinutas.map((minuta) => {
-            const processo = (processes || []).find((p) => p.id === minuta.processId);
+            const processo = (processes || []).find(
+              (p) => p.id === minuta.processId,
+            );
 
             return (
               <Card
@@ -1390,7 +1552,9 @@ ${schemaInstructions}`,
                         <Badge style={getStatusStyle(minuta.status)}>
                           {getStatusLabel(minuta.status)}
                         </Badge>
-                        <Badge variant="outline">{getTipoLabel(minuta.tipo)}</Badge>
+                        <Badge variant="outline">
+                          {getTipoLabel(minuta.tipo)}
+                        </Badge>
                         {processo && (
                           <Badge variant="secondary" className="text-xs">
                             {processo.numeroCNJ}
@@ -1423,7 +1587,9 @@ ${schemaInstructions}`,
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Date(minuta.atualizadoEm).toLocaleDateString("pt-BR")}
+                        {new Date(minuta.atualizadoEm).toLocaleDateString(
+                          "pt-BR",
+                        )}
                       </span>
                       {minuta.ultimaSincronizacao && (
                         <span className="flex items-center gap-1">
@@ -1434,7 +1600,11 @@ ${schemaInstructions}`,
                     </div>
 
                     <div className="flex gap-2 flex-wrap">
-                      <Button size="sm" variant="outline" onClick={() => handleEditMinuta(minuta)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditMinuta(minuta)}
+                      >
                         <Pencil className="mr-2 h-4 w-4" />
                         Editar
                       </Button>
@@ -1498,7 +1668,10 @@ ${schemaInstructions}`,
                               className="justify-start"
                             >
                               <FileText className="mr-2 h-4 w-4" />
-                              {minuta.googleDocsUrl ? "Abrir no" : "Criar no"} Google Docs
+                              {minuta.googleDocsUrl
+                                ? "Abrir no"
+                                : "Criar no"}{" "}
+                              Google Docs
                             </Button>
                           </div>
                         </PopoverContent>
@@ -1515,7 +1688,9 @@ ${schemaInstructions}`,
                           <RefreshCw
                             className={`mr-2 h-4 w-4 ${isSyncing === minuta.id ? "animate-spin" : ""}`}
                           />
-                          {isSyncing === minuta.id ? "Importando..." : "Importar"}
+                          {isSyncing === minuta.id
+                            ? "Importando..."
+                            : "Importar"}
                         </Button>
                       )}
 

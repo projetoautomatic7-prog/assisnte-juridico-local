@@ -9,7 +9,10 @@ interface UseScrollingOptions {
   fallbackToDocument?: boolean;
 }
 
-export function useScrolling(target?: ScrollTarget, options: UseScrollingOptions = {}): boolean {
+export function useScrolling(
+  target?: ScrollTarget,
+  options: UseScrollingOptions = {},
+): boolean {
   const { debounce = 150, fallbackToDocument = true } = options;
   const [isScrolling, setIsScrolling] = useState(false);
 
@@ -22,15 +25,23 @@ export function useScrolling(target?: ScrollTarget, options: UseScrollingOptions
 
     // Mobile: fallback to document when using window
     const eventTarget: EventTargetWithScroll =
-      fallbackToDocument && element === window && typeof document !== "undefined"
+      fallbackToDocument &&
+      element === window &&
+      typeof document !== "undefined"
         ? document
         : element;
 
-    const on = (el: EventTargetWithScroll, event: string, handler: EventListener) =>
-      el.addEventListener(event, handler, true);
+    const on = (
+      el: EventTargetWithScroll,
+      event: string,
+      handler: EventListener,
+    ) => el.addEventListener(event, handler, true);
 
-    const off = (el: EventTargetWithScroll, event: string, handler: EventListener) =>
-      el.removeEventListener(event, handler);
+    const off = (
+      el: EventTargetWithScroll,
+      event: string,
+      handler: EventListener,
+    ) => el.removeEventListener(event, handler);
 
     let timeout: ReturnType<typeof setTimeout>;
     const supportsScrollEnd = element === window && "onscrollend" in window;

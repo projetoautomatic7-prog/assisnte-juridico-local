@@ -130,12 +130,13 @@ const PRIORITY_ORDER = ["low", "normal", "high", "urgent"] as const;
  * Formata campos de metadata para exibição
  */
 function formatMetadataFields(
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
 ): Array<{ name: string; value: string; inline?: boolean }> {
   return Object.entries(metadata)
     .filter(([, v]) => v !== undefined)
     .map(([k, v]) => ({
-      name: k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
+      name:
+        k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
       value: String(v),
       inline: true,
     }));
@@ -145,19 +146,23 @@ function formatMetadataFields(
  * Formata campos de metadata para formato "title/value"
  */
 function formatMetadataFieldsAlt(
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
 ): Array<{ title: string; value: string; short?: boolean }> {
   return Object.entries(metadata)
     .filter(([, v]) => v !== undefined)
     .map(([k, v]) => ({
-      title: k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
+      title:
+        k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
       value: String(v),
       short: true,
     }));
 }
 
 // Envia webhook para Slack
-async function sendSlackWebhook(webhookUrl: string, notification: Notification): Promise<boolean> {
+async function sendSlackWebhook(
+  webhookUrl: string,
+  notification: Notification,
+): Promise<boolean> {
   try {
     const payload = {
       blocks: [
@@ -203,7 +208,7 @@ async function sendSlackWebhook(webhookUrl: string, notification: Notification):
 // Envia webhook para Discord
 async function sendDiscordWebhook(
   webhookUrl: string,
-  notification: Notification
+  notification: Notification,
 ): Promise<boolean> {
   try {
     const payload = {
@@ -213,7 +218,9 @@ async function sendDiscordWebhook(
           description: notification.message,
           color: PRIORITY_COLOR_INT[notification.priority],
           timestamp: new Date().toISOString(),
-          fields: notification.metadata ? formatMetadataFields(notification.metadata) : [],
+          fields: notification.metadata
+            ? formatMetadataFields(notification.metadata)
+            : [],
           footer: {
             text: "Assistente Jurídico PJe",
           },
@@ -235,7 +242,10 @@ async function sendDiscordWebhook(
 }
 
 // Envia webhook para Microsoft Teams
-async function sendTeamsWebhook(webhookUrl: string, notification: Notification): Promise<boolean> {
+async function sendTeamsWebhook(
+  webhookUrl: string,
+  notification: Notification,
+): Promise<boolean> {
   try {
     const payload = {
       "@type": "MessageCard",
@@ -251,7 +261,9 @@ async function sendTeamsWebhook(webhookUrl: string, notification: Notification):
             ? Object.entries(notification.metadata)
                 .filter(([, v]) => v !== undefined)
                 .map(([k, v]) => ({
-                  name: k.charAt(0).toUpperCase() + k.slice(1).replaceAll(/([A-Z])/g, " $1"),
+                  name:
+                    k.charAt(0).toUpperCase() +
+                    k.slice(1).replaceAll(/([A-Z])/g, " $1"),
                   value: String(v),
                 }))
             : [],
@@ -276,7 +288,7 @@ async function sendTeamsWebhook(webhookUrl: string, notification: Notification):
 async function sendGenericWebhook(
   webhookUrl: string,
   notification: Notification,
-  secret?: string
+  secret?: string,
 ): Promise<boolean> {
   try {
     const headers: Record<string, string> = {
@@ -291,12 +303,12 @@ async function sendGenericWebhook(
         encoder.encode(secret),
         { name: "HMAC", hash: "SHA-256" },
         false,
-        ["sign"]
+        ["sign"],
       );
       const signature = await crypto.subtle.sign(
         "HMAC",
         key,
-        encoder.encode(JSON.stringify(notification))
+        encoder.encode(JSON.stringify(notification)),
       );
       headers["X-Signature"] = Array.from(new Uint8Array(signature))
         .map((b) => b.toString(16).padStart(2, "0"))
@@ -323,7 +335,7 @@ async function sendGenericWebhook(
 // Envia email via Resend API (se configurado)
 async function sendEmail(
   notification: Notification,
-  settings: NotificationSettings
+  settings: NotificationSettings,
 ): Promise<boolean> {
   const resendApiKey = getEnv("RESEND_API_KEY");
 
@@ -387,7 +399,10 @@ function buildEmailHtml(notification: Notification): string {
 /**
  * Envia para um webhook específico baseado no tipo
  */
-async function sendToWebhook(webhook: WebhookConfig, notification: Notification): Promise<boolean> {
+async function sendToWebhook(
+  webhook: WebhookConfig,
+  notification: Notification,
+): Promise<boolean> {
   switch (webhook.type) {
     case "slack":
       return sendSlackWebhook(webhook.url, notification);
@@ -403,20 +418,31 @@ async function sendToWebhook(webhook: WebhookConfig, notification: Notification)
 /**
  * Verifica se notificação deve ser enviada baseado na prioridade
  */
-function shouldSendNotification(notificationPriority: string, minPriority: string): boolean {
+function shouldSendNotification(
+  notificationPriority: string,
+  minPriority: string,
+): boolean {
   const notifPriorityIndex = PRIORITY_ORDER.indexOf(
-    notificationPriority as (typeof PRIORITY_ORDER)[number]
+    notificationPriority as (typeof PRIORITY_ORDER)[number],
   );
-  const minPriorityIndex = PRIORITY_ORDER.indexOf(minPriority as (typeof PRIORITY_ORDER)[number]);
+  const minPriorityIndex = PRIORITY_ORDER.indexOf(
+    minPriority as (typeof PRIORITY_ORDER)[number],
+  );
   return notifPriorityIndex >= minPriorityIndex;
 }
 
 /**
  * Handler GET /api/notifications - Lista notificações
  */
-async function handleListNotifications(kv: Redis, res: VercelResponse): Promise<void> {
-  const queue = (await kv.get<Notification[]>(KV_KEYS.NOTIFICATION_QUEUE)) || [];
-  const settings = await kv.get<NotificationSettings>(KV_KEYS.NOTIFICATION_SETTINGS);
+async function handleListNotifications(
+  kv: Redis,
+  res: VercelResponse,
+): Promise<void> {
+  const queue =
+    (await kv.get<Notification[]>(KV_KEYS.NOTIFICATION_QUEUE)) || [];
+  const settings = await kv.get<NotificationSettings>(
+    KV_KEYS.NOTIFICATION_SETTINGS,
+  );
   const webhooks = (await kv.get<WebhookConfig[]>(KV_KEYS.WEBHOOKS)) || [];
 
   res.status(200).json({
@@ -439,7 +465,7 @@ async function handleListNotifications(kv: Redis, res: VercelResponse): Promise<
 async function handleSendNotification(
   kv: Redis,
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   const { type, title, message, priority, recipientEmail, metadata } = req.body;
 
@@ -462,7 +488,9 @@ async function handleSendNotification(
     createdAt: new Date().toISOString(),
   };
 
-  const settings = (await kv.get<NotificationSettings>(KV_KEYS.NOTIFICATION_SETTINGS)) || {
+  const settings = (await kv.get<NotificationSettings>(
+    KV_KEYS.NOTIFICATION_SETTINGS,
+  )) || {
     emailEnabled: false,
     webhookEnabled: true,
     minPriority: "normal",
@@ -480,10 +508,12 @@ async function handleSendNotification(
   const results = await sendNotificationToChannels(notification, settings, kv);
 
   notification.status = results.some((r) => r.success) ? "sent" : "failed";
-  notification.sentAt = notification.status === "sent" ? new Date().toISOString() : undefined;
+  notification.sentAt =
+    notification.status === "sent" ? new Date().toISOString() : undefined;
   notification.attempts = 1;
 
-  const queue = (await kv.get<Notification[]>(KV_KEYS.NOTIFICATION_QUEUE)) || [];
+  const queue =
+    (await kv.get<Notification[]>(KV_KEYS.NOTIFICATION_QUEUE)) || [];
   queue.unshift(notification);
   await kv.set(KV_KEYS.NOTIFICATION_QUEUE, queue.slice(0, 500));
 
@@ -496,7 +526,7 @@ async function handleSendNotification(
 async function sendNotificationToChannels(
   notification: Notification,
   settings: NotificationSettings,
-  kv: Redis
+  kv: Redis,
 ): Promise<SendResult[]> {
   const results: SendResult[] = [];
   const webhooks = (await kv.get<WebhookConfig[]>(KV_KEYS.WEBHOOKS)) || [];
@@ -530,7 +560,7 @@ async function sendNotificationToChannels(
 async function handleCreateWebhook(
   kv: Redis,
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   const { name, url, type, events, secret } = req.body;
 
@@ -566,7 +596,7 @@ async function handleCreateWebhook(
 async function handleDeleteWebhook(
   kv: Redis,
   webhookId: string,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   const webhooks = (await kv.get<WebhookConfig[]>(KV_KEYS.WEBHOOKS)) || [];
   const filtered = webhooks.filter((w) => w.id !== webhookId);
@@ -586,11 +616,12 @@ async function handleDeleteWebhook(
 async function handleUpdateSettings(
   kv: Redis,
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   const settings = req.body as Partial<NotificationSettings>;
 
-  const current = (await kv.get<NotificationSettings>(KV_KEYS.NOTIFICATION_SETTINGS)) || {};
+  const current =
+    (await kv.get<NotificationSettings>(KV_KEYS.NOTIFICATION_SETTINGS)) || {};
   const updated = { ...current, ...settings };
 
   await kv.set(KV_KEYS.NOTIFICATION_SETTINGS, updated);
@@ -604,7 +635,7 @@ async function handleUpdateSettings(
 async function handleTestNotification(
   kv: Redis,
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   const { webhookId } = req.body;
 
@@ -638,7 +669,9 @@ async function handleTestNotification(
 
   res.status(200).json({
     success,
-    message: success ? "Test notification sent successfully" : "Failed to send test notification",
+    message: success
+      ? "Test notification sent successfully"
+      : "Failed to send test notification",
     webhook: { name: webhook.name, type: webhook.type },
   });
 }
@@ -648,7 +681,7 @@ async function handleTestNotification(
 type RouteHandler = (
   kv: Redis,
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) => Promise<VercelResponse | void>;
 
 interface RouteConfig {
@@ -706,7 +739,10 @@ function matchRoute(method: string, path: string): RouteConfig | undefined {
 
 function setupCorsHeaders(res: VercelResponse): void {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 

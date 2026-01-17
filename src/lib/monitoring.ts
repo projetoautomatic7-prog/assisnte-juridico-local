@@ -15,7 +15,9 @@ const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
 export function initMonitoring() {
   // Sentry só ativa se DSN estiver configurado
   if (!SENTRY_DSN) {
-    console.log("[Monitoring] Sentry desabilitado - VITE_SENTRY_DSN não configurado");
+    console.log(
+      "[Monitoring] Sentry desabilitado - VITE_SENTRY_DSN não configurado",
+    );
     return;
   }
 
@@ -60,12 +62,16 @@ export function initMonitoring() {
 
   console.log(
     "[Monitoring] Sentry inicializado",
-    IS_PRODUCTION ? "em produção" : "em desenvolvimento"
+    IS_PRODUCTION ? "em produção" : "em desenvolvimento",
   );
 }
 
 // Adicionar contexto do usuário (após login)
-export function setUserContext(user: { id: string; email?: string; role?: string }) {
+export function setUserContext(user: {
+  id: string;
+  email?: string;
+  role?: string;
+}) {
   Sentry.setUser({
     id: user.id,
     email: user.email,
@@ -97,7 +103,7 @@ export function captureException(error: Error, context?: Record<string, any>) {
 export function captureMessage(
   message: string,
   level: Sentry.SeverityLevel = "info",
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ) {
   if (!SENTRY_DSN) {
     console.log(`[Dev ${level}]`, message, context);

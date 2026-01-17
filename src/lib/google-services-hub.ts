@@ -174,7 +174,7 @@ export class GoogleServicesHub {
     const instance = this.ensureAutoPilot();
     if (!instance) {
       console.warn(
-        "[GoogleServicesHub] Auto-Pilot não configurado. Chame configureAutoPilot() antes de iniciar."
+        "[GoogleServicesHub] Auto-Pilot não configurado. Chame configureAutoPilot() antes de iniciar.",
       );
       return;
     }
@@ -219,7 +219,11 @@ export class GoogleServicesHub {
    */
   isStackReadyForAutoPilot(): boolean {
     const status = this.getStatus();
-    return status.calendar.configured && status.docs.configured && status.gemini.configured;
+    return (
+      status.calendar.configured &&
+      status.docs.configured &&
+      status.gemini.configured
+    );
   }
 
   /**

@@ -24,7 +24,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +72,9 @@ export default function MultiSourcePublications() {
     endDate: getTodayISO(),
   });
 
-  const [selectedSources, setSelectedSources] = useState<PublicationSource[]>([]);
+  const [selectedSources, setSelectedSources] = useState<PublicationSource[]>(
+    [],
+  );
   const [loading, setLoading] = useState(false);
   const [publications, setPublications] = useState<UnifiedPublication[]>([]);
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null);
@@ -86,7 +94,7 @@ export default function MultiSourcePublications() {
 
     if (!hasAnyFilter) {
       toast.error(
-        "Forneça pelo menos um critério de busca (advogado, OAB, processo, parte ou palavra-chave)."
+        "Forneça pelo menos um critério de busca (advogado, OAB, processo, parte ou palavra-chave).",
       );
       return;
     }
@@ -150,10 +158,11 @@ export default function MultiSourcePublications() {
       toast.success(
         `${result.totalFound ?? sorted.length} publicações encontradas em ${
           Array.isArray(result.sources) ? result.sources.length : 0
-        } fontes`
+        } fontes`,
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Erro ao buscar publicações";
+      const message =
+        error instanceof Error ? error.message : "Erro ao buscar publicações";
       toast.error(message);
       console.error("Search error:", error);
       setSearchStats(null);
@@ -165,7 +174,9 @@ export default function MultiSourcePublications() {
 
   const handleSourceToggle = (source: PublicationSource) => {
     setSelectedSources((prev) =>
-      prev.includes(source) ? prev.filter((s) => s !== source) : [...prev, source]
+      prev.includes(source)
+        ? prev.filter((s) => s !== source)
+        : [...prev, source],
     );
   };
 
@@ -204,9 +215,12 @@ export default function MultiSourcePublications() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Publicações Multi-Fonte</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Publicações Multi-Fonte
+        </h1>
         <p className="text-muted-foreground mt-1">
-          Busca unificada em DJEN, DataJud, PJe, Diários Oficiais e outras fontes integradas.
+          Busca unificada em DJEN, DataJud, PJe, Diários Oficiais e outras
+          fontes integradas.
         </p>
       </div>
 
@@ -218,20 +232,23 @@ export default function MultiSourcePublications() {
             Fontes de Dados Disponíveis
           </CardTitle>
           <CardDescription>
-            Selecione as fontes que deseja consultar (ou deixe em branco para buscar em todas as
-            fontes habilitadas).
+            Selecione as fontes que deseja consultar (ou deixe em branco para
+            buscar em todas as fontes habilitadas).
           </CardDescription>
         </CardHeader>
         <CardContent>
           {enabledSources.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhuma fonte de dados está habilitada no momento. Verifique a configuração do módulo{" "}
-              <code>multi-source-publications</code>.
+              Nenhuma fonte de dados está habilitada no momento. Verifique a
+              configuração do módulo <code>multi-source-publications</code>.
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {enabledSources.map((source) => (
-                <div key={source} className="flex items-start space-x-3 p-3 border rounded-lg">
+                <div
+                  key={source}
+                  className="flex items-start space-x-3 p-3 border rounded-lg"
+                >
                   <Checkbox
                     id={source}
                     checked={selectedSources.includes(source)}
@@ -263,7 +280,8 @@ export default function MultiSourcePublications() {
         <CardHeader>
           <CardTitle>Critérios de Busca</CardTitle>
           <CardDescription>
-            Forneça pelo menos um critério (advogado, OAB, processo, parte ou palavra-chave).
+            Forneça pelo menos um critério (advogado, OAB, processo, parte ou
+            palavra-chave).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -333,7 +351,9 @@ export default function MultiSourcePublications() {
 
             {/* Palavras-chave */}
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="keywords">Palavras-chave (separadas por vírgula)</Label>
+              <Label htmlFor="keywords">
+                Palavras-chave (separadas por vírgula)
+              </Label>
               <Input
                 id="keywords"
                 placeholder="Ex: intimação, sentença, recurso"
@@ -407,59 +427,81 @@ export default function MultiSourcePublications() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div className="text-2xl font-bold">{searchStats.totalFound}</div>
-                <div className="text-sm text-muted-foreground">Publicações Encontradas</div>
-              </div>
-              <div>
                 <div className="text-2xl font-bold">
-                  {Array.isArray(searchStats.sources) ? searchStats.sources.length : 0}
+                  {searchStats.totalFound}
                 </div>
-                <div className="text-sm text-muted-foreground">Fontes Consultadas</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {Array.isArray(searchStats.sources)
-                    ? searchStats.sources.filter((s) => s.status === "success").length
-                    : 0}
+                <div className="text-sm text-muted-foreground">
+                  Publicações Encontradas
                 </div>
-                <div className="text-sm text-muted-foreground">Fontes com Sucesso</div>
               </div>
               <div>
                 <div className="text-2xl font-bold">
                   {Array.isArray(searchStats.sources)
-                    ? searchStats.sources.filter((s) => s.status === "error").length
+                    ? searchStats.sources.length
                     : 0}
                 </div>
-                <div className="text-sm text-muted-foreground">Fontes com Erro</div>
+                <div className="text-sm text-muted-foreground">
+                  Fontes Consultadas
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {Array.isArray(searchStats.sources)
+                    ? searchStats.sources.filter((s) => s.status === "success")
+                        .length
+                    : 0}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Fontes com Sucesso
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {Array.isArray(searchStats.sources)
+                    ? searchStats.sources.filter((s) => s.status === "error")
+                        .length
+                    : 0}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Fontes com Erro
+                </div>
               </div>
             </div>
 
-            {Array.isArray(searchStats.sources) && searchStats.sources.length > 0 && (
-              <>
-                <Separator className="my-4" />
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Detalhes por Fonte:</h4>
-                  {searchStats.sources.map((source) => (
-                    <div key={source.source} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        {source.status === "success" ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <TriangleAlert className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className="capitalize">
-                          {String(source.source).replaceAll("_", " ")}
-                        </span>
+            {Array.isArray(searchStats.sources) &&
+              searchStats.sources.length > 0 && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Detalhes por Fonte:</h4>
+                    {searchStats.sources.map((source) => (
+                      <div
+                        key={source.source}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          {source.status === "success" ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <TriangleAlert className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className="capitalize">
+                            {String(source.source).replaceAll("_", " ")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted-foreground">
+                            {source.count} resultado(s)
+                          </span>
+                          <span className="text-muted-foreground">
+                            {source.duration}ms
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground">{source.count} resultado(s)</span>
-                        <span className="text-muted-foreground">{source.duration}ms</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                    ))}
+                  </div>
+                </>
+              )}
           </CardContent>
         </Card>
       )}
@@ -472,7 +514,8 @@ export default function MultiSourcePublications() {
               <div>
                 <CardTitle>Resultados ({publications.length})</CardTitle>
                 <CardDescription>
-                  Publicações encontradas, ordenadas por data da mais recente para a mais antiga.
+                  Publicações encontradas, ordenadas por data da mais recente
+                  para a mais antiga.
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={handleExportResults}>
@@ -496,9 +539,13 @@ export default function MultiSourcePublications() {
                           {pub.source.replaceAll("_", " ")}
                         </Badge>
                         {pub.publicationType && (
-                          <Badge variant="secondary">{pub.publicationType}</Badge>
+                          <Badge variant="secondary">
+                            {pub.publicationType}
+                          </Badge>
                         )}
-                        {pub.matchType && <Badge>{pub.matchType.replaceAll("_", " ")}</Badge>}
+                        {pub.matchType && (
+                          <Badge>{pub.matchType.replaceAll("_", " ")}</Badge>
+                        )}
                       </CardDescription>
                     </div>
                     <Button
@@ -516,14 +563,18 @@ export default function MultiSourcePublications() {
                       <span className="text-muted-foreground">Data:</span>
                       <div className="font-medium">
                         {pub.publicationDate
-                          ? new Date(pub.publicationDate).toLocaleDateString("pt-BR")
+                          ? new Date(pub.publicationDate).toLocaleDateString(
+                              "pt-BR",
+                            )
                           : "N/A"}
                       </div>
                     </div>
                     {pub.processNumber && (
                       <div>
                         <span className="text-muted-foreground">Processo:</span>
-                        <div className="font-medium font-mono text-xs">{pub.processNumber}</div>
+                        <div className="font-medium font-mono text-xs">
+                          {pub.processNumber}
+                        </div>
                       </div>
                     )}
                     {pub.tribunal && (
@@ -543,7 +594,9 @@ export default function MultiSourcePublications() {
                   <Separator />
 
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Conteúdo:</div>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      Conteúdo:
+                    </div>
                     <div className="text-sm bg-muted p-3 rounded max-h-40 overflow-y-auto whitespace-pre-wrap">
                       {pub.content}
                     </div>
@@ -577,8 +630,9 @@ export default function MultiSourcePublications() {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Nenhuma publicação encontrada com os critérios fornecidos. Ajuste filtros (nome, OAB,
-            processo, parte ou palavras-chave) ou amplie o período de datas.
+            Nenhuma publicação encontrada com os critérios fornecidos. Ajuste
+            filtros (nome, OAB, processo, parte ou palavras-chave) ou amplie o
+            período de datas.
           </AlertDescription>
         </Alert>
       )}

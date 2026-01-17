@@ -13,7 +13,10 @@ import {
 import { logStructuredError, logValidationError } from "../base/agent_logger";
 
 export class JustineAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     return createInvokeAgentSpan(
       {
         agentName: "Mrs. Justine",
@@ -22,7 +25,8 @@ export class JustineAgent extends LangGraphAgent {
         temperature: 0.3,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `justine_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `justine_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -36,11 +40,17 @@ export class JustineAgent extends LangGraphAgent {
           // Step 0: Validate inputs
           const validatedInput = validateJustineInput(state.data || {});
 
-          span?.setAttribute("justine.task", validatedInput.task.substring(0, 100));
-          span?.setAttribute("justine.priority", validatedInput.priority || "medium");
+          span?.setAttribute(
+            "justine.task",
+            validatedInput.task.substring(0, 100),
+          );
+          span?.setAttribute(
+            "justine.priority",
+            validatedInput.priority || "medium",
+          );
           span?.setAttribute(
             "justine.publications_count",
-            validatedInput.publications?.length || 0
+            validatedInput.publications?.length || 0,
           );
 
           // Step 1: Generate analysis prompt
@@ -68,14 +78,17 @@ export class JustineAgent extends LangGraphAgent {
 
             return this.addAgentMessage(
               current,
-              `Erro ao processar análise de intimações: ${response.error}`
+              `Erro ao processar análise de intimações: ${response.error}`,
             );
           }
 
           const result = response.text;
 
           span?.setAttribute("gen_ai.response.length", result.length);
-          span?.setAttribute("gen_ai.usage.total_tokens", response.metadata?.totalTokens || 0);
+          span?.setAttribute(
+            "gen_ai.usage.total_tokens",
+            response.metadata?.totalTokens || 0,
+          );
           span?.setStatus({ code: 1, message: "ok" });
 
           current = updateState(current, {
@@ -91,14 +104,22 @@ export class JustineAgent extends LangGraphAgent {
 
           return this.addAgentMessage(current, result);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Mrs. Justine", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Mrs. Justine",
+              error.field,
+              error.message,
+              error.receivedValue,
+            );
           } else {
             logStructuredError("Mrs. Justine", errorType, errorMessage, {
-              task: (state.data?.task as string)?.substring(0, 100) || undefined,
+              task:
+                (state.data?.task as string)?.substring(0, 100) || undefined,
               step: state.currentStep,
             });
           }
@@ -112,16 +133,20 @@ export class JustineAgent extends LangGraphAgent {
                   task: (state.data?.task as string) || undefined,
                   step: state.currentStep,
                 })
-              : formatFallbackMessage((state.data?.task as string) || undefined);
+              : formatFallbackMessage(
+                  (state.data?.task as string) || undefined,
+                );
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 }
 
-export async function runJustine(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runJustine(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new JustineAgent();
   const initialState: AgentState = {
     messages: [],

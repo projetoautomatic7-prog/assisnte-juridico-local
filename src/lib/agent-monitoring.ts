@@ -19,12 +19,16 @@ import { getEnv } from "./env-helper.js";
 
 type CaptureErrorFn = (error: Error, context?: Record<string, unknown>) => void;
 type CaptureMessageFn = (message: string, level?: string) => void;
-type TrackMetricFn = (name: string, value?: number, tags?: Record<string, string>) => void;
+type TrackMetricFn = (
+  name: string,
+  value?: number,
+  tags?: Record<string, string>,
+) => void;
 type WithSpanFn = <T>(
   name: string,
   op: string,
   callback: () => Promise<T>,
-  attributes?: Record<string, string | number>
+  attributes?: Record<string, string | number>,
 ) => Promise<T>;
 
 interface SentryFunctions {
@@ -48,14 +52,18 @@ const stubFunctions: SentryFunctions = {
   captureMessage: (message: string, level: string = "info") => {
     console.log(`[AgentMonitor] [${level}] ${message}`);
   },
-  trackMetric: (_name: string, _value: number = 1, _tags?: Record<string, string>) => {
+  trackMetric: (
+    _name: string,
+    _value: number = 1,
+    _tags?: Record<string, string>,
+  ) => {
     // No-op em serverless - métricas são opcionais
   },
   withSpan: async <T>(
     _name: string,
     _op: string,
     callback: () => Promise<T>,
-    _attributes?: Record<string, string | number>
+    _attributes?: Record<string, string | number>,
   ): Promise<T> => {
     return callback();
   },
@@ -134,7 +142,7 @@ export class AgentMonitor {
     action: string,
     details?: Record<string, unknown>,
     success: boolean = true,
-    durationMs?: number
+    durationMs?: number,
   ) {
     const log: AgentActionLog = {
       agentId,
@@ -146,7 +154,10 @@ export class AgentMonitor {
     };
 
     // Log no console (dev)
-    console.log(`[AgentMonitor] ${agentId} -> ${action} (${success ? "OK" : "FAIL"})`, log);
+    console.log(
+      `[AgentMonitor] ${agentId} -> ${action} (${success ? "OK" : "FAIL"})`,
+      log,
+    );
 
     // Enviar métrica para Sentry (apenas no browser)
     const sentry = await getSentryFunctions();
@@ -164,7 +175,10 @@ export class AgentMonitor {
     }
 
     if (!success) {
-      sentry.captureMessage(`Agent Action Failed: ${agentId} - ${action}`, "warning");
+      sentry.captureMessage(
+        `Agent Action Failed: ${agentId} - ${action}`,
+        "warning",
+      );
     }
 
     // Persistir no Redis (apenas se estiver disponível)
@@ -191,9 +205,10 @@ export class AgentMonitor {
     taskId: string,
     agentId: string,
     taskType: string,
-    executionFn: () => Promise<T>
+    executionFn: () => Promise<T>,
   ): Promise<T> {
-    const startTime = performance === undefined ? Date.now() : performance.now();
+    const startTime =
+      performance === undefined ? Date.now() : performance.now();
     const sentry = await getSentryFunctions();
 
     try {
@@ -202,25 +217,44 @@ export class AgentMonitor {
         `agent_task_${taskType}`,
         "agent.task",
         async () => await executionFn(),
-        { agentId, taskId, taskType }
+        { agentId, taskId, taskType },
       );
 
-      const duration = (performance === undefined ? Date.now() : performance.now()) - startTime;
-      await this.logAction(agentId, `execute_task_${taskType}`, { taskId }, true, duration);
+      const duration =
+        (performance === undefined ? Date.now() : performance.now()) -
+        startTime;
+      await this.logAction(
+        agentId,
+        `execute_task_${taskType}`,
+        { taskId },
+        true,
+        duration,
+      );
 
       sentry.trackMetric("agent_task_success", 1, { agentId, taskType });
 
       return result;
     } catch (error) {
-      const duration = (performance === undefined ? Date.now() : performance.now()) - startTime;
-      await this.logAction(agentId, `execute_task_${taskType}`, { taskId, error }, false, duration);
+      const duration =
+        (performance === undefined ? Date.now() : performance.now()) -
+        startTime;
+      await this.logAction(
+        agentId,
+        `execute_task_${taskType}`,
+        { taskId, error },
+        false,
+        duration,
+      );
 
       sentry.trackMetric("agent_task_failure", 1, { agentId, taskType });
-      sentry.captureError(error instanceof Error ? error : new Error(String(error)), {
-        agentId,
-        taskId,
-        taskType,
-      });
+      sentry.captureError(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          agentId,
+          taskId,
+          taskType,
+        },
+      );
 
       throw error;
     }
@@ -229,7 +263,11 @@ export class AgentMonitor {
   /**
    * Registra mudança de status do agente
    */
-  public async logStatusChange(agentId: string, oldStatus: AgentStatus, newStatus: AgentStatus) {
+  public async logStatusChange(
+    agentId: string,
+    oldStatus: AgentStatus,
+    newStatus: AgentStatus,
+  ) {
     console.log(`[AgentMonitor] ${agentId}: ${oldStatus} -> ${newStatus}`);
     const sentry = await getSentryFunctions();
     sentry.trackMetric("agent_status_change", 1, {

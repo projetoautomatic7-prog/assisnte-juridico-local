@@ -8,7 +8,11 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { LinkIcon } from "@/components/tiptap-icons/link-icon";
 
 // --- Lib ---
-import { isMarkInSchema, isNodeTypeSelected, sanitizeUrl } from "@/lib/tiptap-utils";
+import {
+  isMarkInSchema,
+  isNodeTypeSelected,
+  sanitizeUrl,
+} from "@/lib/tiptap-utils";
 
 /**
  * Configuration for the link popover functionality
@@ -123,7 +127,11 @@ export function useLinkHandler(props: LinkHandlerProps) {
     const { selection } = editor.state;
     const isEmpty = selection.empty;
 
-    let chain = editor.chain().focus().extendMarkRange("link").setLink({ href: url });
+    let chain = editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({ href: url });
 
     if (isEmpty) {
       chain = chain.insertContent({ type: "text", text: url });
@@ -157,7 +165,7 @@ export function useLinkHandler(props: LinkHandlerProps) {
         globalThis.open(safeUrl, target, features);
       }
     },
-    [url]
+    [url],
   );
 
   return {
@@ -172,7 +180,10 @@ export function useLinkHandler(props: LinkHandlerProps) {
 /**
  * Custom hook for link popover state management
  */
-export function useLinkState(props: { editor: Editor | null; hideWhenUnavailable: boolean }) {
+export function useLinkState(props: {
+  editor: Editor | null;
+  hideWhenUnavailable: boolean;
+}) {
   const { editor, hideWhenUnavailable = false } = props;
 
   const canSet = canSetLink(editor);
@@ -188,7 +199,7 @@ export function useLinkState(props: { editor: Editor | null; hideWhenUnavailable
         shouldShowLinkButton({
           editor,
           hideWhenUnavailable,
-        })
+        }),
       );
     };
 
@@ -246,7 +257,11 @@ export function useLinkState(props: { editor: Editor | null; hideWhenUnavailable
  * ```
  */
 export function useLinkPopover(config?: UseLinkPopoverConfig) {
-  const { editor: providedEditor, hideWhenUnavailable = false, onSetLink } = config || {};
+  const {
+    editor: providedEditor,
+    hideWhenUnavailable = false,
+    onSetLink,
+  } = config || {};
 
   const { editor } = useTiptapEditor(providedEditor);
 

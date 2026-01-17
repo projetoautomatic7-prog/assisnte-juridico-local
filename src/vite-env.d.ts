@@ -85,7 +85,11 @@ declare global {
         strings: TemplateStringsArray | string[],
         ...values: readonly unknown[]
       ) => string;
-      llm: (prompt: string, modelName?: string, jsonMode?: boolean) => Promise<string>;
+      llm: (
+        prompt: string,
+        modelName?: string,
+        jsonMode?: boolean,
+      ) => Promise<string>;
       user: () => Promise<{
         avatarUrl: string;
         email: string;
@@ -110,8 +114,15 @@ declare global {
 }
 
 declare const spark: {
-  llmPrompt: (strings: TemplateStringsArray | string[], ...values: readonly unknown[]) => string;
-  llm: (prompt: string, modelName?: string, jsonMode?: boolean) => Promise<string>;
+  llmPrompt: (
+    strings: TemplateStringsArray | string[],
+    ...values: readonly unknown[]
+  ) => string;
+  llm: (
+    prompt: string,
+    modelName?: string,
+    jsonMode?: boolean,
+  ) => Promise<string>;
   user: () => Promise<{
     avatarUrl: string;
     email: string;

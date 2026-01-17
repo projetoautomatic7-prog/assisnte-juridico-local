@@ -10,7 +10,7 @@ export function formatAnalysisResult(
     valores: string[];
     processos: string[];
   },
-  textLength: number
+  textLength: number,
 ): string {
   return `
 📄 **Análise Documental Completa**
@@ -36,7 +36,7 @@ ${entities.processos.map((p) => `  - ${p}`).join("\n")}
 export function formatErrorMessage(
   errorType: string,
   errorMessage: string,
-  context: { tipoDocumento?: string }
+  context: { tipoDocumento?: string },
 ): string {
   return `
 ⚠️ **Erro na análise documental**

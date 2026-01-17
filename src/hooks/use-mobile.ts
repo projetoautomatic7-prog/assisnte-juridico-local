@@ -9,10 +9,14 @@ function getInitialMobileState(): boolean | undefined {
 }
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(getInitialMobileState);
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(
+    getInitialMobileState,
+  );
 
   useEffect(() => {
-    const mql = globalThis.window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const mql = globalThis.window.matchMedia(
+      `(max-width: ${MOBILE_BREAKPOINT - 1}px)`,
+    );
     const onChange = () => {
       setIsMobile(mql.matches);
     };

@@ -8,8 +8,14 @@ import {
   type AgentTask,
   type AgentTaskResult,
 } from "@/lib/agents";
-import { executeHybridTask, hasHybridVersion } from "@/lib/hybrid-agents-integration";
-import { processTaskWithRealAI, processTaskWithStreamingAI } from "@/lib/real-agent-client";
+import {
+  executeHybridTask,
+  hasHybridVersion,
+} from "@/lib/hybrid-agents-integration";
+import {
+  processTaskWithRealAI,
+  processTaskWithStreamingAI,
+} from "@/lib/real-agent-client";
 import { validateAgentTask } from "@/schemas/agent.schema";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -55,7 +61,7 @@ export interface MemoryItem {
 function updateAgentInList(
   agents: Array<Agent>,
   agentId: string,
-  updates: Partial<Agent>
+  updates: Partial<Agent>,
 ): Array<Agent> {
   return agents.map((a) => (a.id === agentId ? { ...a, ...updates } : a));
 }
@@ -63,14 +69,18 @@ function updateAgentInList(
 function updateTaskInQueue(
   tasks: Array<AgentTask>,
   taskId: string,
-  updates: Partial<AgentTask>
+  updates: Partial<AgentTask>,
 ): Array<AgentTask> {
   return tasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
 }
 
-function getQueuedTasksForAgent(queue: Array<AgentTask>, agentId: string): Array<AgentTask> {
+function getQueuedTasksForAgent(
+  queue: Array<AgentTask>,
+  agentId: string,
+): Array<AgentTask> {
   return queue.filter(
-    (t) => t.agentId === agentId && t.status === "queued" && canResumeAfterHuman(t)
+    (t) =>
+      t.agentId === agentId && t.status === "queued" && canResumeAfterHuman(t),
   );
 }
 
@@ -96,7 +106,9 @@ async function fetchAgentsData() {
   if (!json?.ok) return null;
   return {
     queued: Array.isArray(json.queued) ? (json.queued as AgentTask[]) : [],
-    completed: Array.isArray(json.completed) ? (json.completed as AgentTask[]) : [],
+    completed: Array.isArray(json.completed)
+      ? (json.completed as AgentTask[])
+      : [],
     agents: Array.isArray(json.agents) ? (json.agents as Agent[]) : [],
   };
 }
@@ -109,7 +121,9 @@ export function useAutonomousAgents() {
 
   const [serverLogs, setServerLogs] = useState<Array<AgentActionLog>>([]);
   const [legalMemory, setLegalMemory] = useState<Array<MemoryItem>>([]);
-  const [streamingContent, setStreamingContent] = useState<Record<string, string>>({});
+  const [streamingContent, setStreamingContent] = useState<
+    Record<string, string>
+  >({});
   const [useStreaming, setUseStreaming] = useState(true);
 
   const processingRef = useRef<Set<string>>(new Set());
@@ -140,7 +154,10 @@ export function useAutonomousAgents() {
   const fetchServerData = useCallback(async () => {
     try {
       const resLogs = await fetch("/api/agents?action=logs").catch(() => null);
-      if (resLogs?.ok && resLogs.headers.get("content-type")?.includes("application/json")) {
+      if (
+        resLogs?.ok &&
+        resLogs.headers.get("content-type")?.includes("application/json")
+      ) {
         try {
           const data = await resLogs.json();
           if (Array.isArray(data.logs)) setServerLogs(data.logs);
@@ -150,7 +167,10 @@ export function useAutonomousAgents() {
       }
 
       const resMem = await fetch("/api/agents?action=memory").catch(() => null);
-      if (resMem?.ok && resMem.headers.get("content-type")?.includes("application/json")) {
+      if (
+        resMem?.ok &&
+        resMem.headers.get("content-type")?.includes("application/json")
+      ) {
         try {
           const data = await resMem.json();
           if (Array.isArray(data.memory)) setLegalMemory(data.memory);
@@ -182,19 +202,26 @@ export function useAutonomousAgents() {
         return [log, ...(current || [])].slice(0, 100);
       });
     },
-    []
+    [],
   );
 
   const processNextTask = useCallback(
     async (agent: Agent) => {
-      if (processingRef.current.has(agent.id) || !agent.enabled || agent.status === "paused")
+      if (
+        processingRef.current.has(agent.id) ||
+        !agent.enabled ||
+        agent.status === "paused"
+      )
         return;
 
       const queue = getQueuedTasksForAgent(taskQueue || [], agent.id);
       if (queue.length === 0) {
         if (agent.status !== "idle") {
           setAgents((current) =>
-            updateAgentInList(current || [], agent.id, { status: "idle", currentTask: undefined })
+            updateAgentInList(current || [], agent.id, {
+              status: "idle",
+              currentTask: undefined,
+            }),
           );
         }
         return;
@@ -207,7 +234,7 @@ export function useAutonomousAgents() {
             updateAgentInList(current || [], agent.id, {
               status: "waiting_human",
               currentTask: task,
-            })
+            }),
           );
         }
         return;
@@ -220,10 +247,13 @@ export function useAutonomousAgents() {
         updateTaskInQueue(current || [], task.id, {
           status: "processing",
           startedAt: new Date().toISOString(),
-        })
+        }),
       );
       setAgents((current) =>
-        updateAgentInList(current || [], agent.id, { status: "processing", currentTask: task })
+        updateAgentInList(current || [], agent.id, {
+          status: "processing",
+          currentTask: task,
+        }),
       );
 
       const agentSpan = startAgentSpan(agent.id, agent.name, {
@@ -248,7 +278,8 @@ export function useAutonomousAgents() {
                 return rest;
               });
             },
-            onError: (err) => logActivity(agent.id, `Erro: ${err.message}`, "error"),
+            onError: (err) =>
+              logActivity(agent.id, `Erro: ${err.message}`, "error"),
           });
         } else {
           result = await processTaskWithRealAI(task, agent);
@@ -272,13 +303,17 @@ export function useAutonomousAgents() {
           completedAt: new Date().toISOString(),
           result,
         };
-        setTaskQueue((current) => (current || []).filter((t) => t.id !== task.id));
-        setCompletedTasks((current) => [completed, ...(current || [])].slice(0, 500));
+        setTaskQueue((current) =>
+          (current || []).filter((t) => t.id !== task.id),
+        );
+        setCompletedTasks((current) =>
+          [completed, ...(current || [])].slice(0, 500),
+        );
         setAgents((current) =>
           updateAgentInList(current || [], agent.id, {
             lastActivity: `Concluído: ${task.type}`,
             status: "idle",
-          })
+          }),
         );
         logActivity(agent.id, `Concluído: ${task.type}`, "success");
       } catch (err) {
@@ -291,18 +326,30 @@ export function useAutonomousAgents() {
           taskType: task.type,
         });
         trackAgentTask(agent.id, task.type, "FAILED", duration, String(err));
-        trackError(err instanceof Error ? err : new Error(String(err)), { agentId: agent.id });
+        trackError(err instanceof Error ? err : new Error(String(err)), {
+          agentId: agent.id,
+        });
         await endSpan(agentSpan, "error", String(err));
 
         setTaskQueue((current) =>
-          updateTaskInQueue(current || [], task.id, { status: "failed", error: String(err) })
+          updateTaskInQueue(current || [], task.id, {
+            status: "failed",
+            error: String(err),
+          }),
         );
         logActivity(agent.id, `Erro: ${task.type}`, "error");
       } finally {
         processingRef.current.delete(agent.id);
       }
     },
-    [taskQueue, useStreaming, setAgents, setTaskQueue, setCompletedTasks, logActivity]
+    [
+      taskQueue,
+      useStreaming,
+      setAgents,
+      setTaskQueue,
+      setCompletedTasks,
+      logActivity,
+    ],
   );
 
   const processRef = useRef(processNextTask);
@@ -313,7 +360,7 @@ export function useAutonomousAgents() {
   useEffect(() => {
     const loop = () => {
       const enabled = (agentsRef.current || []).filter(
-        (a) => a.enabled && a.status !== "paused" && a.status !== "processing"
+        (a) => a.enabled && a.status !== "paused" && a.status !== "processing",
       );
       enabled.forEach((a) => processRef.current(a));
     };
@@ -324,10 +371,12 @@ export function useAutonomousAgents() {
   const toggleAgent = useCallback(
     (id: string) => {
       setAgents((current) =>
-        (current || []).map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a))
+        (current || []).map((a) =>
+          a.id === id ? { ...a, enabled: !a.enabled } : a,
+        ),
       );
     },
-    [setAgents]
+    [setAgents],
   );
 
   const addTask = useCallback(
@@ -335,11 +384,14 @@ export function useAutonomousAgents() {
       const validation = validateAgentTask(task);
       if (validation.isValid && validation.data) {
         setTaskQueue((current) =>
-          sortTasksByPriority([...(current || []), validation.data as unknown as AgentTask])
+          sortTasksByPriority([
+            ...(current || []),
+            validation.data as unknown as AgentTask,
+          ]),
         );
       }
     },
-    [setTaskQueue]
+    [setTaskQueue],
   );
 
   return {

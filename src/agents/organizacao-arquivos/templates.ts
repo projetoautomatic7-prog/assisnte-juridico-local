@@ -2,7 +2,10 @@
  * Templates para Organização de Arquivos
  */
 
-export function formatOrganizationResult(arquivosCount: number, categorias: number): string {
+export function formatOrganizationResult(
+  arquivosCount: number,
+  categorias: number,
+): string {
   return `
 📁 **Organização Concluída**
 
@@ -13,7 +16,10 @@ export function formatOrganizationResult(arquivosCount: number, categorias: numb
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro na organização: ${errorMessage}`;
 }
 

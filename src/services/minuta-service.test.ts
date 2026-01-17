@@ -30,7 +30,9 @@ describe("minuta-service", () => {
     });
 
     it("deve retornar 'contrato' para contratos", () => {
-      expect(determineMinutaTipo("Contrato de Prestação de Serviços")).toBe("contrato");
+      expect(determineMinutaTipo("Contrato de Prestação de Serviços")).toBe(
+        "contrato",
+      );
       expect(determineMinutaTipo("acordo")).toBe("contrato");
     });
 
@@ -156,7 +158,9 @@ describe("minuta-service", () => {
       expect(minuta.criadoPorAgente).toBe(true);
       expect(minuta.agenteId).toBe("redacao-peticoes");
       expect(minuta.googleDocsId).toBe("doc-789");
-      expect(minuta.googleDocsUrl).toBe("https://docs.google.com/document/d/doc-789");
+      expect(minuta.googleDocsUrl).toBe(
+        "https://docs.google.com/document/d/doc-789",
+      );
     });
   });
 
@@ -277,7 +281,7 @@ describe("minuta-service", () => {
       expect(() =>
         updateMinuta(existing, {
           titulo: "", // Título vazio inválido
-        })
+        }),
       ).toThrow("Minuta inválida");
     });
   });
@@ -311,7 +315,9 @@ describe("minuta-service", () => {
       const validation = validateMinutaForFinalization(minuta);
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain("Conteúdo muito curto para uma minuta válida");
+      expect(validation.errors).toContain(
+        "Conteúdo muito curto para uma minuta válida",
+      );
     });
 
     it("deve rejeitar minuta com título muito curto", () => {
@@ -343,7 +349,9 @@ describe("minuta-service", () => {
       const validation = validateMinutaForFinalization(minuta);
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain("Não é possível finalizar uma minuta arquivada");
+      expect(validation.errors).toContain(
+        "Não é possível finalizar uma minuta arquivada",
+      );
     });
 
     it("deve acumular múltiplos erros", () => {

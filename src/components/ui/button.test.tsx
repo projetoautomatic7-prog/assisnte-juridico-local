@@ -62,7 +62,7 @@ describe("Button", () => {
     render(
       <Button asChild>
         <a href="/test">Link Button</a>
-      </Button>
+      </Button>,
     );
     const link = screen.getByText("Link Button");
     expect(link.tagName).toBe("A");

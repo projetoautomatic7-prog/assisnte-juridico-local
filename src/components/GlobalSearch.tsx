@@ -50,7 +50,12 @@ interface SearchResult {
 }
 
 // Categorias de busca
-type SearchCategory = "all" | "processos" | "clientes" | "minutas" | "expedientes";
+type SearchCategory =
+  | "all"
+  | "processos"
+  | "clientes"
+  | "minutas"
+  | "expedientes";
 
 interface GlobalSearchProps {
   readonly onNavigate?: (view: string, data?: unknown) => void;
@@ -75,7 +80,11 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignorar se estiver em um input/textarea
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
         return;
       }
 
@@ -124,7 +133,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
               p.numeroCNJ?.toLowerCase().includes(q) ||
               p.titulo?.toLowerCase().includes(q) ||
               p.autor?.toLowerCase().includes(q) ||
-              p.reu?.toLowerCase().includes(q)
+              p.reu?.toLowerCase().includes(q),
           )
           .slice(0, 5)
           .map((p) => ({
@@ -145,7 +154,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             (c) =>
               c.nome?.toLowerCase().includes(q) ||
               c.email?.toLowerCase().includes(q) ||
-              c.cpfCnpj?.includes(q)
+              c.cpfCnpj?.includes(q),
           )
           .slice(0, 5)
           .map((c) => ({
@@ -163,7 +172,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
       if (searchCategory === "all" || searchCategory === "minutas") {
         const matchedMinutas = (minutas || [])
           .filter(
-            (m) => m.titulo?.toLowerCase().includes(q) || m.conteudo?.toLowerCase().includes(q)
+            (m) =>
+              m.titulo?.toLowerCase().includes(q) ||
+              m.conteudo?.toLowerCase().includes(q),
           )
           .slice(0, 5)
           .map((m) => ({
@@ -184,14 +195,15 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             (e) =>
               e.numeroProcesso?.toLowerCase().includes(q) ||
               e.summary?.toLowerCase().includes(q) ||
-              e.tribunal?.toLowerCase().includes(q)
+              e.tribunal?.toLowerCase().includes(q),
           )
           .slice(0, 5)
           .map((e) => ({
             id: e.id,
             type: "expediente" as const,
             title: e.numeroProcesso || "Expediente",
-            subtitle: e.summary?.slice(0, 60) + "..." || e.tribunal || "Sem resumo",
+            subtitle:
+              e.summary?.slice(0, 60) + "..." || e.tribunal || "Sem resumo",
             icon: <Inbox className="w-4 h-4 text-orange-500" />,
             data: e,
           }));
@@ -201,7 +213,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
       setResults(newResults);
       setSelectedIndex(0);
     },
-    [processes, clientes, minutas, expedientes]
+    [processes, clientes, minutas, expedientes],
   );
 
   // Efeito para busca com debounce
@@ -321,7 +333,10 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
               className="flex-1 border-0 shadow-none focus-visible:ring-0 text-base"
             />
             {query && (
-              <button onClick={() => setQuery("")} className="p-1 hover:bg-muted rounded">
+              <button
+                onClick={() => setQuery("")}
+                className="p-1 hover:bg-muted rounded"
+              >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             )}
@@ -357,7 +372,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                 return (
                   <div className="p-8 text-center text-muted-foreground">
                     <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm">Digite para pesquisar em todo o sistema</p>
+                    <p className="text-sm">
+                      Digite para pesquisar em todo o sistema
+                    </p>
                     <p className="text-xs mt-1 opacity-70">
                       Processos, clientes, minutas, expedientes...
                     </p>
@@ -369,7 +386,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                 return (
                   <div className="p-8 text-center text-muted-foreground">
                     <p className="text-sm">Nenhum resultado para "{query}"</p>
-                    <p className="text-xs mt-1 opacity-70">Tente outro termo de busca</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      Tente outro termo de busca
+                    </p>
                   </div>
                 );
               }
@@ -382,7 +401,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                       onClick={() => handleSelect(result)}
                       onMouseEnter={() => setSelectedIndex(index)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                        index === selectedIndex ? "bg-muted" : "hover:bg-muted/50"
+                        index === selectedIndex
+                          ? "bg-muted"
+                          : "hover:bg-muted/50"
                       }`}
                     >
                       <div className="shrink-0 w-8 h-8 flex items-center justify-center bg-background rounded-lg border">
@@ -390,7 +411,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{result.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {result.subtitle}
+                        </p>
                       </div>
                       <Badge variant="outline" className="text-xs capitalize">
                         {result.type}
@@ -414,11 +437,16 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                 navegar
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-background rounded border text-xs">↵</kbd>{" "}
+                <kbd className="px-1.5 py-0.5 bg-background rounded border text-xs">
+                  ↵
+                </kbd>{" "}
                 selecionar
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-background rounded border text-xs">esc</kbd> fechar
+                <kbd className="px-1.5 py-0.5 bg-background rounded border text-xs">
+                  esc
+                </kbd>{" "}
+                fechar
               </span>
             </div>
             <div className="flex items-center gap-1">

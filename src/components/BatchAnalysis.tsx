@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -74,13 +80,17 @@ export default function BatchAnalysis() {
     });
 
     if (rejected > 0) {
-      toast.error(`Alguns arquivos foram rejeitados por excederem 200MB (${rejected} arquivo(s))`);
+      toast.error(
+        `Alguns arquivos foram rejeitados por excederem 200MB (${rejected} arquivo(s))`,
+      );
     }
 
     setSelectedFiles(validFiles);
 
     if (validFiles.length > 0) {
-      toast.success(`${validFiles.length} arquivo(s) selecionado(s) para análise em lote`);
+      toast.success(
+        `${validFiles.length} arquivo(s) selecionado(s) para análise em lote`,
+      );
     }
   };
 
@@ -110,7 +120,7 @@ export default function BatchAnalysis() {
       const apiUrl = import.meta.env.VITE_API_BASE_URL;
       if (!apiUrl) {
         toast.error(
-          "Backend não configurado. Configure VITE_API_BASE_URL para usar análise em lote."
+          "Backend não configurado. Configure VITE_API_BASE_URL para usar análise em lote.",
         );
         return;
       }
@@ -131,8 +141,13 @@ export default function BatchAnalysis() {
         error?: string;
       };
 
-      if (parsed.error && (!parsed.expedientes || parsed.expedientes.length === 0)) {
-        setError(parsed.error || "Nenhum expediente encontrado no conteúdo enviado");
+      if (
+        parsed.error &&
+        (!parsed.expedientes || parsed.expedientes.length === 0)
+      ) {
+        setError(
+          parsed.error || "Nenhum expediente encontrado no conteúdo enviado",
+        );
         toast.warning("Nenhum expediente identificado");
         setExtractedData([]);
         return;
@@ -208,10 +223,14 @@ export default function BatchAnalysis() {
       setExpedientes((current) => [...(current || []), ...newExpedientes]);
       setExtractedData(expedientes);
 
-      toast.success(`${expedientes.length} expediente(s) extraído(s) com IA Gemini 2.5 Pro`);
+      toast.success(
+        `${expedientes.length} expediente(s) extraído(s) com IA Gemini 2.5 Pro`,
+      );
     } catch (err) {
       console.error("Erro na análise em lote:", err);
-      setError("Erro ao analisar com IA. Verifique a conexão ou tente novamente.");
+      setError(
+        "Erro ao analisar com IA. Verifique a conexão ou tente novamente.",
+      );
       toast.error("Erro na análise com IA");
     } finally {
       setAnalyzing(false);
@@ -229,7 +248,7 @@ export default function BatchAnalysis() {
       ...extractedData.map((d) =>
         [d.cnj, d.parties, d.deadline, d.type]
           .map((field) => `"${(field || "").replaceAll('"', '""')}"`)
-          .join(",")
+          .join(","),
       ),
     ].join("\n");
 
@@ -243,15 +262,18 @@ export default function BatchAnalysis() {
     toast.success("Dados exportados com sucesso");
   };
 
-  const totalFileSize = selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024);
+  const totalFileSize =
+    selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024);
 
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Análise de Documentos em Lote</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Análise de Documentos em Lote
+        </h1>
         <p className="text-muted-foreground mt-1">
-          Extraia informações estruturadas de múltiplos expedientes, inclusive de documentos grandes
-          (até ~1000 páginas / 200MB por arquivo)
+          Extraia informações estruturadas de múltiplos expedientes, inclusive
+          de documentos grandes (até ~1000 páginas / 200MB por arquivo)
         </p>
       </div>
 
@@ -276,12 +298,19 @@ export default function BatchAnalysis() {
 
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">
-                Ou selecione documentos (até 200MB cada, ~1000 páginas por arquivo)
+                Ou selecione documentos (até 200MB cada, ~1000 páginas por
+                arquivo)
               </p>
-              <Input type="file" multiple onChange={handleFileChange} className="cursor-pointer" />
+              <Input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="cursor-pointer"
+              />
               {selectedFiles.length > 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  {selectedFiles.length} arquivo(s) selecionado(s) · {totalFileSize.toFixed(1)} MB
+                  {selectedFiles.length} arquivo(s) selecionado(s) ·{" "}
+                  {totalFileSize.toFixed(1)} MB
                 </div>
               )}
             </div>
@@ -294,11 +323,15 @@ export default function BatchAnalysis() {
 
             <Button
               onClick={handleAnalyze}
-              disabled={analyzing || (!inputText.trim() && selectedFiles.length === 0)}
+              disabled={
+                analyzing || (!inputText.trim() && selectedFiles.length === 0)
+              }
               className="w-full"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              {analyzing ? "Analisando com IA..." : "Analisar com Gemini 2.5 Pro"}
+              {analyzing
+                ? "Analisando com IA..."
+                : "Analisar com Gemini 2.5 Pro"}
             </Button>
           </CardContent>
         </Card>
@@ -325,9 +358,12 @@ export default function BatchAnalysis() {
             {extractedData.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Sparkles className="w-16 h-16 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium text-foreground">Aguardando análise</p>
+                <p className="text-lg font-medium text-foreground">
+                  Aguardando análise
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Cole os expedientes ou envie arquivos e clique em &quot;Analisar&quot;
+                  Cole os expedientes ou envie arquivos e clique em
+                  &quot;Analisar&quot;
                 </p>
               </div>
             ) : (
@@ -343,10 +379,18 @@ export default function BatchAnalysis() {
                   </TableHeader>
                   <TableBody>
                     {extractedData.map((data) => (
-                      <TableRow key={`${data.cnj}-${data.deadline}-${data.type}`}>
-                        <TableCell className="font-mono text-xs">{data.cnj}</TableCell>
-                        <TableCell className="text-sm">{data.parties}</TableCell>
-                        <TableCell className="text-sm">{data.deadline}</TableCell>
+                      <TableRow
+                        key={`${data.cnj}-${data.deadline}-${data.type}`}
+                      >
+                        <TableCell className="font-mono text-xs">
+                          {data.cnj}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {data.parties}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {data.deadline}
+                        </TableCell>
                         <TableCell className="text-sm">{data.type}</TableCell>
                       </TableRow>
                     ))}

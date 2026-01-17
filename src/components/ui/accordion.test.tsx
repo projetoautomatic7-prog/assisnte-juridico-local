@@ -4,7 +4,12 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "./accordion";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "./accordion";
 
 describe("Accordion", () => {
   it("should render accordion with multiple items", () => {
@@ -18,7 +23,7 @@ describe("Accordion", () => {
           <AccordionTrigger>Item 2</AccordionTrigger>
           <AccordionContent>Content 2</AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     expect(screen.getByText("Item 1")).toBeInTheDocument();
@@ -32,7 +37,7 @@ describe("Accordion", () => {
           <AccordionTrigger>Item 1</AccordionTrigger>
           <AccordionContent>Content 1</AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     const trigger = screen.getByText("Item 1");
@@ -64,7 +69,7 @@ describe("Accordion", () => {
           <AccordionTrigger>Item 1</AccordionTrigger>
           <AccordionContent>Content 1</AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     const trigger = screen.getByRole("button");
@@ -95,7 +100,7 @@ describe("Accordion", () => {
           <AccordionTrigger>Item 2</AccordionTrigger>
           <AccordionContent>Content 2</AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     const trigger1 = screen.getByText("Item 1");

@@ -38,12 +38,14 @@ vi.mock("./retrievers", () => ({
 
 // Mock do Sentry/Tracing
 vi.mock("../../lib/sentry-gemini-integration-v2", () => ({
-  createInvokeAgentSpan: vi.fn().mockImplementation(async (_config, _context, callback) => {
-    return callback({
-      setAttribute: vi.fn(),
-      setStatus: vi.fn(),
-    });
-  }),
+  createInvokeAgentSpan: vi
+    .fn()
+    .mockImplementation(async (_config, _context, callback) => {
+      return callback({
+        setAttribute: vi.fn(),
+        setStatus: vi.fn(),
+      });
+    }),
 }));
 
 describe("Integração: Agente de Pesquisa Jurisprudencial", () => {

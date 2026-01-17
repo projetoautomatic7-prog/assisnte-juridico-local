@@ -1,7 +1,10 @@
 // Tipos mínimos para dependências opcionais usadas em handlers/APIs
 declare module "@prisma/client" {
   export class PrismaClient {
-    task: { create(args: any): Promise<any>; findMany(args?: any): Promise<any[]> };
+    task: {
+      create(args: any): Promise<any>;
+      findMany(args?: any): Promise<any[]>;
+    };
     processo: { findFirst(args: any): Promise<any | null> };
     $disconnect(): Promise<void>;
   }

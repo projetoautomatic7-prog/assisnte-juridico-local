@@ -23,8 +23,9 @@ function extractResponseText(data: Record<string, unknown>): string {
   return (
     (data.response as { text?: string })?.text ??
     (data.response as string) ??
-    (data.choices as Array<{ message?: { content?: string }; text?: string }>)?.[0]?.message
-      ?.content ??
+    (
+      data.choices as Array<{ message?: { content?: string }; text?: string }>
+    )?.[0]?.message?.content ??
     (data.choices as Array<{ text?: string }>)?.[0]?.text ??
     (data.message as { content?: string })?.content ??
     ""
@@ -54,7 +55,9 @@ function fixTruncatedJson(truncated: string): Record<string, unknown> {
 /**
  * Tenta extrair e parsear JSON truncado
  */
-function tryParseTruncatedJson(cleaned: string): Record<string, unknown> | null {
+function tryParseTruncatedJson(
+  cleaned: string,
+): Record<string, unknown> | null {
   const jsonStr = extractJSON(cleaned);
   if (!jsonStr) return null;
 
@@ -63,7 +66,7 @@ function tryParseTruncatedJson(cleaned: string): Record<string, unknown> | null 
   } catch {
     console.warn(
       "[PremonicaoService] JSON truncado não pôde ser corrigido:",
-      jsonStr.substring(0, 200)
+      jsonStr.substring(0, 200),
     );
     return null;
   }
@@ -102,7 +105,10 @@ function parseJsonResponse(responseText: string): Record<string, unknown> {
     const parsed = tryParseJsonBlock(cleaned);
     if (parsed) return parsed;
 
-    console.error("[PremonicaoService] Falha ao parsear JSON:", cleaned.substring(0, 500));
+    console.error(
+      "[PremonicaoService] Falha ao parsear JSON:",
+      cleaned.substring(0, 500),
+    );
     throw new Error("Resposta não contém JSON reconhecível");
   }
 }
@@ -139,7 +145,11 @@ async function fetchLLMResponse(promptText: string) {
   });
 
   if (!response.ok) {
-    console.error("[PremonicaoService] Erro na resposta:", response.status, response.statusText);
+    console.error(
+      "[PremonicaoService] Erro na resposta:",
+      response.status,
+      response.statusText,
+    );
     throw new Error(`Erro na API: ${response.status}`);
   }
 
@@ -150,17 +160,21 @@ async function fetchLLMResponse(promptText: string) {
  * Valida se resposta foi truncada (finish_reason: max_tokens)
  */
 function checkResponseTruncation(data: Record<string, unknown>): void {
-  if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+  if (
+    !data.choices ||
+    !Array.isArray(data.choices) ||
+    data.choices.length === 0
+  ) {
     return;
   }
 
   const firstChoice = data.choices[0] as Record<string, unknown>;
   if (firstChoice.finish_reason === "max_tokens") {
     console.warn(
-      "[PremonicaoService] Resposta truncada (max_tokens). Considere aumentar max_tokens."
+      "[PremonicaoService] Resposta truncada (max_tokens). Considere aumentar max_tokens.",
     );
     throw new Error(
-      "Análise incompleta - resposta muito longa. Tente novamente com um processo mais simples."
+      "Análise incompleta - resposta muito longa. Tente novamente com um processo mais simples.",
     );
   }
 }
@@ -168,7 +182,10 @@ function checkResponseTruncation(data: Record<string, unknown>): void {
 /**
  * Normaliza os dados brutos do parse em PremonicaoJuridica
  */
-function normalizePremonicaoData(cnj: string, parsed: Record<string, unknown>): PremonicaoJuridica {
+function normalizePremonicaoData(
+  cnj: string,
+  parsed: Record<string, unknown>,
+): PremonicaoJuridica {
   const prob = normalizeProbability(parsed.probabilidade_exito);
   const analise =
     typeof parsed.analise_ia === "string" && parsed.analise_ia.trim()
@@ -177,7 +194,7 @@ function normalizePremonicaoData(cnj: string, parsed: Record<string, unknown>): 
 
   const estrategias: string[] = Array.isArray(parsed.estrategias_recomendadas)
     ? parsed.estrategias_recomendadas.filter(
-        (e): e is string => typeof e === "string" && e.trim() !== ""
+        (e): e is string => typeof e === "string" && e.trim() !== "",
       )
     : [];
 
@@ -190,18 +207,17 @@ function normalizePremonicaoData(cnj: string, parsed: Record<string, unknown>): 
     link?: string;
   };
 
-  const precedentes: PremonicaoJuridica["precedentes_relevantes"] = Array.isArray(
-    parsed.precedentes_relevantes
-  )
-    ? (parsed.precedentes_relevantes as PrecedenteRaw[]).map((p) => ({
-        id: p.id || crypto.randomUUID(),
-        tribunal: p.tribunal || "N/A",
-        numero: p.numero || "N/A",
-        tema: p.tema || "N/A",
-        resumo_relevancia: p.resumo_relevancia || "N/A",
-        link: p.link || "",
-      }))
-    : [];
+  const precedentes: PremonicaoJuridica["precedentes_relevantes"] =
+    Array.isArray(parsed.precedentes_relevantes)
+      ? (parsed.precedentes_relevantes as PrecedenteRaw[]).map((p) => ({
+          id: p.id || crypto.randomUUID(),
+          tribunal: p.tribunal || "N/A",
+          numero: p.numero || "N/A",
+          tema: p.tema || "N/A",
+          resumo_relevancia: p.resumo_relevancia || "N/A",
+          link: p.link || "",
+        }))
+      : [];
 
   return {
     processo_cnj: cnj,
@@ -214,7 +230,7 @@ function normalizePremonicaoData(cnj: string, parsed: Record<string, unknown>): 
 
 export async function generatePremonicaoJuridica(
   cnj: string,
-  processData?: Process
+  processData?: Process,
 ): Promise<PremonicaoJuridica> {
   const processInfo = buildProcessInfo(processData);
 
@@ -285,26 +301,30 @@ Retorne APENAS o objeto JSON, sem texto adicional antes ou depois.`;
         dataPreview: JSON.stringify(data).substring(0, 500),
       });
       throw new Error(
-        "Resposta vazia da API de IA. Verifique a chave API (Gemini API key reportada como leaked)."
+        "Resposta vazia da API de IA. Verifique a chave API (Gemini API key reportada como leaked).",
       );
     }
 
     if (responseText.trim().length === 0) {
       console.warn("[PremonicaoService] Resposta vazia (string vazia)");
-      throw new Error("Resposta vazia da API de IA. Tente novamente em alguns segundos.");
+      throw new Error(
+        "Resposta vazia da API de IA. Tente novamente em alguns segundos.",
+      );
     }
 
     console.log(
       "[PremonicaoService] Resposta recebida (",
       responseText.length,
       "chars):",
-      responseText.substring(0, 200)
+      responseText.substring(0, 200),
     );
 
     const parsed = parseJsonResponse(responseText);
     return normalizePremonicaoData(cnj, parsed);
   } catch (error) {
     console.error("[PremonicaoService] Erro ao gerar premonição:", error);
-    throw new Error("Não foi possível gerar a análise preditiva. Tente novamente.");
+    throw new Error(
+      "Não foi possível gerar a análise preditiva. Tente novamente.",
+    );
   }
 }

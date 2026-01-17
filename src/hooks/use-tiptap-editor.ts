@@ -19,7 +19,10 @@ export function useTiptapEditor(providedEditor?: Editor | null): {
   canCommand?: Editor["can"];
 } {
   const { editor: coreEditor } = useCurrentEditor();
-  const mainEditor = useMemo(() => providedEditor || coreEditor, [providedEditor, coreEditor]);
+  const mainEditor = useMemo(
+    () => providedEditor || coreEditor,
+    [providedEditor, coreEditor],
+  );
 
   const editorState = useEditorState({
     editor: mainEditor,

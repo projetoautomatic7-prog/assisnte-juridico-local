@@ -6,7 +6,7 @@ export function formatReviewResult(
   tipoContrato: string,
   clausulasCount: number,
   riscosCount: number,
-  textLength: number
+  textLength: number,
 ): string {
   return `
 📋 **Revisão Contratual Completa**
@@ -26,7 +26,7 @@ ${riscosCount > 3 ? "Sugerimos revisão completa antes da assinatura" : "Revisar
 export function formatErrorMessage(
   errorType: string,
   errorMessage: string,
-  context: { tipoContrato?: string }
+  context: { tipoContrato?: string },
 ): string {
   return `
 ⚠️ **Erro na revisão contratual**

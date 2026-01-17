@@ -6,7 +6,10 @@
 
 import { geminiEmbeddingService } from "@/lib/gemini-embedding-service";
 import { createQdrantService } from "@/lib/qdrant-service";
-import { createExecuteToolSpan, createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createExecuteToolSpan,
+  createInvokeAgentSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
@@ -25,7 +28,8 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
     const qdrantConfig = {
       url: typeof qdrantUrl === "string" ? qdrantUrl : "",
       apiKey: typeof qdrantApiKey === "string" ? qdrantApiKey : "",
-      collectionName: typeof qdrantCollection === "string" ? qdrantCollection : "legal_docs",
+      collectionName:
+        typeof qdrantCollection === "string" ? qdrantCollection : "legal_docs",
     };
 
     this.qdrantService = createQdrantService(qdrantConfig)!;
@@ -35,7 +39,10 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
     }
   }
 
-  protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    signal: AbortSignal,
+  ): Promise<AgentState> {
     return createInvokeAgentSpan(
       {
         agentName: "Pesquisa Jurisprudencial (Qdrant)",
@@ -44,7 +51,8 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
         temperature: 0.4,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `pesquisa_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `pesquisa_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -52,7 +60,9 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "pesquisa-juris:qdrant:start" });
+        let current = updateState(state, {
+          currentStep: "pesquisa-juris:qdrant:start",
+        });
 
         const tema = (state.data?.tema as string) || "direitos trabalhistas";
         const tribunal = (state.data?.tribunal as string) || "todos";
@@ -86,11 +96,16 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
               const results = await this.qdrantService.search(
                 queryEmbedding,
                 10,
-                tribunal !== "todos" ? { tribunal: { $eq: tribunal } } : undefined
+                tribunal !== "todos"
+                  ? { tribunal: { $eq: tribunal } }
+                  : undefined,
               );
 
               toolSpan?.setAttribute("search.results_count", results.length);
-              toolSpan?.setAttribute("search.qdrant_url", process.env.QDRANT_URL);
+              toolSpan?.setAttribute(
+                "search.qdrant_url",
+                process.env.QDRANT_URL,
+              );
 
               return results.map((r) => {
                 const payload = r.payload as Record<string, unknown>;
@@ -98,7 +113,8 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
                   titulo: (payload.titulo as string) || "Sem t\u00edtulo",
                   ementa: (payload.ementa as string) || "",
                   relevancia: r.score,
-                  tribunal: (payload.tribunal as string) || "N\u00e3o especificado",
+                  tribunal:
+                    (payload.tribunal as string) || "N\u00e3o especificado",
                   data: (payload.data as string) || "",
                   numero: (payload.numero as string) || "",
                 };
@@ -108,7 +124,7 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
               toolSpan?.setAttribute("search.error", String(error));
               throw error;
             }
-          }
+          },
         );
 
         type Precedente = {
@@ -122,7 +138,10 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
 
         const precedentesTyped = precedentes as Precedente[];
 
-        span?.setAttribute("pesquisa.resultados_encontrados", precedentesTyped.length);
+        span?.setAttribute(
+          "pesquisa.resultados_encontrados",
+          precedentesTyped.length,
+        );
 
         current = updateState(current, {
           currentStep: "pesquisa-juris:qdrant:complete",
@@ -139,9 +158,9 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
 
         return this.addAgentMessage(
           current,
-          `Pesquisa jurisprudencial via Qdrant: ${precedentesTyped.length} precedentes encontrados`
+          `Pesquisa jurisprudencial via Qdrant: ${precedentesTyped.length} precedentes encontrados`,
         );
-      }
+      },
     );
   }
 
@@ -160,20 +179,23 @@ export class PesquisaJurisAgentQdrant extends LangGraphAgent {
       const dims = result.embedding.length;
       if (dims !== geminiEmbeddingService.getDimensions()) {
         console.warn(
-          `[PesquisaJuris] Embedding dims mismatch: ${dims} != ${geminiEmbeddingService.getDimensions()}`
+          `[PesquisaJuris] Embedding dims mismatch: ${dims} != ${geminiEmbeddingService.getDimensions()}`,
         );
       }
 
       return result.embedding;
     } catch (err) {
-      console.error("[PesquisaJuris] Falha ao gerar embedding via service:", err);
+      console.error(
+        "[PesquisaJuris] Falha ao gerar embedding via service:",
+        err,
+      );
       throw err;
     }
   }
 }
 
 export async function runPesquisaJurisQdrant(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new PesquisaJurisAgentQdrant();
   const initialState: AgentState = {

@@ -44,7 +44,13 @@ export const ExpedienteStatusEnum = z.enum([
   "erro",
 ]);
 
-export const ExpedientePrioridadeEnum = z.enum(["baixa", "media", "alta", "urgente", "critica"]);
+export const ExpedientePrioridadeEnum = z.enum([
+  "baixa",
+  "media",
+  "alta",
+  "urgente",
+  "critica",
+]);
 
 // ============================================================================
 // EXPEDIENTE SCHEMA
@@ -111,7 +117,7 @@ export const expedienteSchema = z.object({
         tipo: z.string(),
         tamanho: z.number().nonnegative(),
         uploadedAt: z.string().datetime(),
-      })
+      }),
     )
     .optional(),
 
@@ -204,7 +210,9 @@ export function validateExpedientes(data: unknown): {
 /**
  * Verifica se expediente est� com prazo vencendo (pr�ximos 3 dias)
  */
-export function isPrazoVencendo(expediente: z.infer<typeof expedienteSchema>): boolean {
+export function isPrazoVencendo(
+  expediente: z.infer<typeof expedienteSchema>,
+): boolean {
   if (!expediente.prazo) return false;
 
   const dataFinal = new Date(expediente.prazo.dataFinal).getTime();
@@ -217,7 +225,9 @@ export function isPrazoVencendo(expediente: z.infer<typeof expedienteSchema>): b
 /**
  * Verifica se expediente est� com prazo vencido
  */
-export function isPrazoVencido(expediente: z.infer<typeof expedienteSchema>): boolean {
+export function isPrazoVencido(
+  expediente: z.infer<typeof expedienteSchema>,
+): boolean {
   if (!expediente.prazo) return false;
 
   const dataFinal = new Date(expediente.prazo.dataFinal).getTime();
@@ -230,12 +240,15 @@ export function isPrazoVencido(expediente: z.infer<typeof expedienteSchema>): bo
  * Determina prioridade autom�tica baseada em prazo e tipo
  */
 export function determinarPrioridade(
-  expediente: Partial<z.infer<typeof expedienteSchema>>
+  expediente: Partial<z.infer<typeof expedienteSchema>>,
 ): z.infer<typeof ExpedientePrioridadeEnum> {
   // Tipos cr�ticos
   if (["citacao", "intimacao", "mandado"].includes(expediente.tipo || "")) {
     if (expediente.prazo?.urgente) return "critica";
-    if (expediente.prazo && isPrazoVencendo(expediente as z.infer<typeof expedienteSchema>))
+    if (
+      expediente.prazo &&
+      isPrazoVencendo(expediente as z.infer<typeof expedienteSchema>)
+    )
       return "urgente";
     return "alta";
   }

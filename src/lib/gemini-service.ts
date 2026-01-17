@@ -14,7 +14,11 @@
  */
 
 import { withRetry, type RetryConfig } from "@/lib/ai-providers";
-import { getGeminiApiKey, isGeminiConfigured, validateGeminiApiKey } from "@/lib/gemini-config";
+import {
+  getGeminiApiKey,
+  isGeminiConfigured,
+  validateGeminiApiKey,
+} from "@/lib/gemini-config";
 import { instrumentGeminiCall } from "@/lib/sentry-gemini-integration";
 import { createChatSpan } from "@/lib/sentry-gemini-integration-v2";
 // 🔍 TRACING: OpenTelemetry
@@ -89,7 +93,11 @@ function getDefaultGeminiModel(): string {
       ? (import.meta.env.VITE_GEMINI_MODEL as string | undefined)
       : undefined;
 
-  const model = (fromProcessEnv || fromImportMetaEnv || "gemini-2.5-pro").trim();
+  const model = (
+    fromProcessEnv ||
+    fromImportMetaEnv ||
+    "gemini-2.5-pro"
+  ).trim();
   return model || "gemini-2.5-pro";
 }
 
@@ -100,7 +108,8 @@ const DEFAULT_CONFIG: GeminiConfig = {
 };
 
 /** URL base da API Gemini */
-const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_API_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** Timeout padrão de requisição (em ms) para evitar funções travadas */
 const DEFAULT_TIMEOUT_MS = 25_000;
@@ -117,20 +126,28 @@ function validateGeminiApiKeyFormat(apiKey: string | undefined): boolean {
   if (!apiKey) {
     if (import.meta.env.DEV) {
       console.warn("[GeminiService] ⚠️ API key não fornecida");
-      console.warn("[GeminiService] Configure VITE_GEMINI_API_KEY no .env.local");
-      console.warn("[GeminiService] Obtenha em: https://aistudio.google.com/app/apikey");
+      console.warn(
+        "[GeminiService] Configure VITE_GEMINI_API_KEY no .env.local",
+      );
+      console.warn(
+        "[GeminiService] Obtenha em: https://aistudio.google.com/app/apikey",
+      );
     }
     return false;
   }
 
   if (!apiKey.startsWith("AIza")) {
-    console.warn('[GeminiService] ⚠️ Formato de API key inválido - deve começar com "AIza"');
+    console.warn(
+      '[GeminiService] ⚠️ Formato de API key inválido - deve começar com "AIza"',
+    );
     console.warn("[GeminiService] Verifique VITE_GEMINI_API_KEY no .env.local");
     return false;
   }
 
   if (apiKey.length < 30) {
-    console.warn("[GeminiService] ⚠️ API key muito curta - verifique a configuração");
+    console.warn(
+      "[GeminiService] ⚠️ API key muito curta - verifique a configuração",
+    );
     return false;
   }
 
@@ -153,7 +170,7 @@ function normalizeGeminiResponse(
       totalTokenCount?: number;
     };
   },
-  model: string
+  model: string,
 ): GeminiResponse {
   const rawText =
     data?.candidates?.[0]?.content?.parts
@@ -184,7 +201,7 @@ function normalizeGeminiResponse(
  */
 function buildGeminiError(
   error: unknown,
-  context?: { endpoint?: string; model?: string }
+  context?: { endpoint?: string; model?: string },
 ): GeminiResponse {
   // Log completo no servidor (sem dados sensíveis do usuário)
   console.error("[GeminiService] Erro na chamada", {
@@ -217,7 +234,7 @@ function buildGeminiError(
  */
 export async function callGemini(
   prompt: string,
-  config: Partial<GeminiConfig> = {}
+  config: Partial<GeminiConfig> = {},
 ): Promise<GeminiResponse> {
   // Variáveis no escopo externo para uso no catch
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
@@ -261,7 +278,8 @@ export async function callGemini(
       if (!validateGeminiApiKeyFormat(apiKey)) {
         const errorResponse = {
           text: "",
-          error: "API key do Gemini em formato inválido. Deve começar com 'AIza'",
+          error:
+            "API key do Gemini em formato inválido. Deve começar com 'AIza'",
         };
 
         await endLLMSpan(llmSpan, {
@@ -276,7 +294,10 @@ export async function callGemini(
     } catch (error) {
       const errorResponse = {
         text: "",
-        error: error instanceof Error ? error.message : "Erro ao obter API key do Gemini",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erro ao obter API key do Gemini",
       };
 
       await endLLMSpan(llmSpan, {
@@ -293,7 +314,10 @@ export async function callGemini(
 
     const makeRequest = async (): Promise<GeminiResponse> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        DEFAULT_TIMEOUT_MS,
+      );
 
       try {
         // 🔍 Instrumentar chamada Gemini com Sentry
@@ -309,7 +333,7 @@ export async function callGemini(
           {
             includePrompts: true,
             captureErrors: true,
-          }
+          },
         );
 
         const response = await geminiWrapper(async () =>
@@ -338,7 +362,7 @@ export async function callGemini(
                 maxOutputTokens: finalConfig.maxOutputTokens,
               },
             }),
-          })
+          }),
         );
 
         if (!response.ok) {
@@ -399,7 +423,7 @@ export async function callGemini(
  */
 export async function callGeminiWithMessages(
   messages: Array<GeminiMessage>,
-  config: Partial<GeminiConfig> = {}
+  config: Partial<GeminiConfig> = {},
 ): Promise<GeminiResponse> {
   if (!isGeminiConfigured()) {
     return {
@@ -421,7 +445,10 @@ export async function callGeminiWithMessages(
   } catch (error) {
     return {
       text: "",
-      error: error instanceof Error ? error.message : "Erro ao obter API key do Gemini",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Erro ao obter API key do Gemini",
     };
   }
 
@@ -491,7 +518,9 @@ export async function callGeminiWithMessages(
  * Analisa um documento jurídico e retorna um resumo estruturado.
  * Ideal para análise de contratos, petições, decisões, etc.
  */
-export async function analyzeDocument(documentText: string): Promise<GeminiResponse> {
+export async function analyzeDocument(
+  documentText: string,
+): Promise<GeminiResponse> {
   const prompt = `Você é um assistente jurídico especializado. Analise o seguinte documento e forneça um resumo estruturado:
 
 Documento:
@@ -514,7 +543,10 @@ Responda de forma clara, objetiva e em português jurídico, mas acessível.`;
  * Gera uma minuta de petição com base no tipo e detalhes fornecidos.
  * Segue as melhores práticas jurídicas brasileiras e o CPC.
  */
-export async function generatePeticao(tipo: string, detalhes: string): Promise<GeminiResponse> {
+export async function generatePeticao(
+  tipo: string,
+  detalhes: string,
+): Promise<GeminiResponse> {
   const prompt = `Você é um assistente jurídico especializado em redação de peças processuais brasileiras.
 
 Tipo de petição: ${tipo}
@@ -542,19 +574,34 @@ A peça deve estar em conformidade com o CPC/2015 e a legislação vigente.`;
     },
     [{ role: "user", content: prompt }],
     async (span) => {
-      const response = await callGemini(prompt, { temperature: 0.5, maxOutputTokens: 4096 });
+      const response = await callGemini(prompt, {
+        temperature: 0.5,
+        maxOutputTokens: 4096,
+      });
 
       // Adicionar metadata ao span
       if (span && response.metadata) {
-        span.setAttribute("gen_ai.response.text", JSON.stringify([response.text]));
-        span.setAttribute("gen_ai.usage.input_tokens", response.metadata.promptTokens || 0);
-        span.setAttribute("gen_ai.usage.output_tokens", response.metadata.responseTokens || 0);
-        span.setAttribute("gen_ai.usage.total_tokens", response.metadata.totalTokens || 0);
+        span.setAttribute(
+          "gen_ai.response.text",
+          JSON.stringify([response.text]),
+        );
+        span.setAttribute(
+          "gen_ai.usage.input_tokens",
+          response.metadata.promptTokens || 0,
+        );
+        span.setAttribute(
+          "gen_ai.usage.output_tokens",
+          response.metadata.responseTokens || 0,
+        );
+        span.setAttribute(
+          "gen_ai.usage.total_tokens",
+          response.metadata.totalTokens || 0,
+        );
         span.setAttribute("gen_ai.petition.type", tipo);
       }
 
       return response;
-    }
+    },
   );
 }
 
@@ -565,7 +612,7 @@ A peça deve estar em conformidade com o CPC/2015 e a legislação vigente.`;
 export async function calculateDeadline(
   publicationDate: string,
   deadlineDays: number,
-  context: string
+  context: string,
 ): Promise<GeminiResponse> {
   const prompt = `Você é um assistente jurídico especializado em prazos processuais no Brasil.
 
@@ -589,7 +636,9 @@ Não invente feriados específicos; apenas alerte que eles podem impactar a cont
  * Sugere estratégias processuais para um caso jurídico.
  * Analisa pontos fortes/fracos, riscos e recomendações.
  */
-export async function suggestStrategy(caseDescription: string): Promise<GeminiResponse> {
+export async function suggestStrategy(
+  caseDescription: string,
+): Promise<GeminiResponse> {
   const prompt = `Você é um estrategista jurídico. Analise o seguinte caso e sugira estratégias:
 
 Descrição do caso:
@@ -612,7 +661,9 @@ Responda como se estivesse orientando um advogado que atua no dia a dia do foro.
  * Resume e analisa jurisprudência (acórdãos e decisões).
  * Extrai tese jurídica, fundamentos e aplicabilidade.
  */
-export async function summarizeJurisprudence(jurisprudenceText: string): Promise<GeminiResponse> {
+export async function summarizeJurisprudence(
+  jurisprudenceText: string,
+): Promise<GeminiResponse> {
   const prompt = `Você é um assistente jurídico especializado em análise de jurisprudência. Analise o seguinte acórdão/decisão:
 
 ${jurisprudenceText}
@@ -632,7 +683,9 @@ Forneça:
  * Responde perguntas jurídicas com fundamentação legal.
  * Baseado no ordenamento jurídico brasileiro.
  */
-export async function answerLegalQuestion(question: string): Promise<GeminiResponse> {
+export async function answerLegalQuestion(
+  question: string,
+): Promise<GeminiResponse> {
   const prompt = `Você é um assistente jurídico especializado no ordenamento brasileiro. Responda à pergunta a seguir:
 
 Pergunta:

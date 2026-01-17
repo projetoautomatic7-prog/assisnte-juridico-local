@@ -5,7 +5,7 @@
 export function formatComplianceResult(
   tipo: string,
   violacoesCount: number,
-  score: number
+  score: number,
 ): string {
   return `
 🔒 **Verificação de Compliance Concluída**
@@ -18,7 +18,10 @@ ${violacoesCount === 0 ? "✅ **Conforme**" : "⚠️ **Ação necessária**"}
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro na verificação de compliance: ${errorMessage}`;
 }
 

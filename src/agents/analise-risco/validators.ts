@@ -13,32 +13,44 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
   }
 }
 
-const TIPOS_CASO = ["trabalhista", "cível", "tributário", "penal", "consumidor"] as const;
+const TIPOS_CASO = [
+  "trabalhista",
+  "cível",
+  "tributário",
+  "penal",
+  "consumidor",
+] as const;
 const COMPLEXIDADES = ["baixa", "média", "alta"] as const;
 
-export function validateAnaliseRiscoInput(data: Record<string, unknown>): AnaliseRiscoInput {
+export function validateAnaliseRiscoInput(
+  data: Record<string, unknown>,
+): AnaliseRiscoInput {
   const tipoCaso = (data.tipoCaso as string) || "trabalhista";
   if (!TIPOS_CASO.includes(tipoCaso as (typeof TIPOS_CASO)[number])) {
     throw new ValidationError(
       `Campo 'tipoCaso' deve ser: ${TIPOS_CASO.join(", ")}`,
       "tipoCaso",
-      tipoCaso
+      tipoCaso,
     );
   }
 
   const valorCausa = data.valorCausa as number | undefined;
-  if (valorCausa === undefined || typeof valorCausa !== "number" || valorCausa < 0) {
+  if (
+    valorCausa === undefined ||
+    typeof valorCausa !== "number" ||
+    valorCausa < 0
+  ) {
     throw new ValidationError(
       "Campo 'valorCausa' deve ser um número >= 0",
       "valorCausa",
-      valorCausa
+      valorCausa,
     );
   }
 
@@ -47,7 +59,7 @@ export function validateAnaliseRiscoInput(data: Record<string, unknown>): Analis
     throw new ValidationError(
       `Campo 'complexidade' deve ser: ${COMPLEXIDADES.join(", ")}`,
       "complexidade",
-      complexidade
+      complexidade,
     );
   }
 

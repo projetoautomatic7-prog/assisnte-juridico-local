@@ -72,7 +72,10 @@ export function extractCodeBlock(text: string, language = ""): string | null {
 /**
  * Parse JSON com fallback para fixar JSON truncado/malformado
  */
-export function parseJSONSafe<T = unknown>(jsonStr: string, fallback?: T): T | null {
+export function parseJSONSafe<T = unknown>(
+  jsonStr: string,
+  fallback?: T,
+): T | null {
   try {
     return JSON.parse(jsonStr) as T;
   } catch {
@@ -94,9 +97,13 @@ export function parseJSONSafe<T = unknown>(jsonStr: string, fallback?: T): T | n
  * Extrai e parseia JSON de resposta LLM
  * Combina limpeza de markdown + extração + parsing
  */
-export function extractAndParseJSON<T = unknown>(response: string, fallback?: T): T | null {
+export function extractAndParseJSON<T = unknown>(
+  response: string,
+  fallback?: T,
+): T | null {
   // 1. Tentar extrair de code block primeiro
-  const codeBlock = extractCodeBlock(response, "json") || extractCodeBlock(response);
+  const codeBlock =
+    extractCodeBlock(response, "json") || extractCodeBlock(response);
   if (codeBlock) {
     const parsed = parseJSONSafe<T>(codeBlock, fallback);
     if (parsed) return parsed;

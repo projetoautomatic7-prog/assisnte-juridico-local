@@ -46,14 +46,25 @@ export interface DataJudSearchOptions {
 // ============================================================================
 
 export class DataJudService {
-  private readonly baseUrl = "https://api-publica.datajud.cnj.jus.br/api_publica";
+  private readonly baseUrl =
+    "https://api-publica.datajud.cnj.jus.br/api_publica";
   private readonly timeout = 30000;
 
   /**
    * Buscar processos por filtros
    */
-  async searchProcessos(options: DataJudSearchOptions = {}): Promise<DataJudProcesso[]> {
-    const { tribunal, classe, assunto, dataInicio, dataFim, limit = 100, offset = 0 } = options;
+  async searchProcessos(
+    options: DataJudSearchOptions = {},
+  ): Promise<DataJudProcesso[]> {
+    const {
+      tribunal,
+      classe,
+      assunto,
+      dataInicio,
+      dataFim,
+      limit = 100,
+      offset = 0,
+    } = options;
 
     const params = new URLSearchParams();
     if (tribunal) params.append("siglaTribunal", tribunal);
@@ -84,7 +95,9 @@ export class DataJudService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`DataJud API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `DataJud API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -109,7 +122,11 @@ export class DataJudService {
   /**
    * Buscar precedentes jurisprudenciais (decis�es de 2� grau)
    */
-  async searchPrecedentes(tribunal: string, tema: string, limit = 50): Promise<DataJudProcesso[]> {
+  async searchPrecedentes(
+    tribunal: string,
+    tema: string,
+    limit = 50,
+  ): Promise<DataJudProcesso[]> {
     return this.searchProcessos({
       tribunal,
       assunto: tema,
@@ -123,7 +140,7 @@ export class DataJudService {
    */
   async searchMultipleTribunals(
     tribunais: string[],
-    options: Omit<DataJudSearchOptions, "tribunal"> = {}
+    options: Omit<DataJudSearchOptions, "tribunal"> = {},
   ): Promise<Map<string, DataJudProcesso[]>> {
     const results = new Map<string, DataJudProcesso[]>();
 
@@ -163,7 +180,11 @@ export class DataJudService {
       { tema: "Direito Administrativo", tribunal: "TRF6" },
     ];
 
-    const results: Array<{ tema: string; tribunal: string; processos: DataJudProcesso[] }> = [];
+    const results: Array<{
+      tema: string;
+      tribunal: string;
+      processos: DataJudProcesso[];
+    }> = [];
 
     for (const { tema, tribunal } of temas) {
       console.log(`[DataJud] Buscando tema: ${tema} (${tribunal})`);
@@ -217,7 +238,7 @@ export class DataJudService {
   }
 
   private parseMovimentacoes(
-    mov: unknown
+    mov: unknown,
   ): Array<{ data: string; tipo: string; descricao: string }> {
     if (!Array.isArray(mov)) return [];
 

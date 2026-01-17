@@ -1,10 +1,16 @@
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan, createChatSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createInvokeAgentSpan,
+  createChatSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 
 export class FinanceiroAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Análise Financeira
     return createInvokeAgentSpan(
       {
@@ -14,7 +20,9 @@ export class FinanceiroAgent extends LangGraphAgent {
         temperature: 0.2,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `financeiro_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `financeiro_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -26,22 +34,32 @@ export class FinanceiroAgent extends LangGraphAgent {
 
         // Extrair dados financeiros
         const periodo = (state.data?.periodo as string) || "mes-atual";
-        const honorariosRecebidos = (state.data?.honorariosRecebidos as number[]) || [];
+        const honorariosRecebidos =
+          (state.data?.honorariosRecebidos as number[]) || [];
         const despesas = (state.data?.despesas as number[]) || [];
         const inadimplentes = (state.data?.inadimplentes as number) || 0;
 
         span?.setAttribute("financeiro.periodo", periodo);
-        span?.setAttribute("financeiro.honorarios_count", honorariosRecebidos.length);
+        span?.setAttribute(
+          "financeiro.honorarios_count",
+          honorariosRecebidos.length,
+        );
         span?.setAttribute("financeiro.despesas_count", despesas.length);
         span?.setAttribute("financeiro.inadimplentes", inadimplentes);
 
         // Calcular KPIs
-        const totalReceitas = honorariosRecebidos.reduce((acc, val) => acc + val, 0);
+        const totalReceitas = honorariosRecebidos.reduce(
+          (acc, val) => acc + val,
+          0,
+        );
         const totalDespesas = despesas.reduce((acc, val) => acc + val, 0);
         const lucroLiquido = totalReceitas - totalDespesas;
-        const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
+        const margemLucro =
+          totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
         const ticketMedio =
-          honorariosRecebidos.length > 0 ? totalReceitas / honorariosRecebidos.length : 0;
+          honorariosRecebidos.length > 0
+            ? totalReceitas / honorariosRecebidos.length
+            : 0;
 
         // Usar LLM para análise financeira e recomendações
         const analiseFinanceira = await createChatSpan(
@@ -96,10 +114,14 @@ Forneça:
             if (margemLucro < 20) {
               saudeFinanceira = "ruim";
               indicadoresAlerta.push("Margem de lucro abaixo de 20%");
-              recomendacoes.push("Revisar estrutura de custos e honorários praticados");
+              recomendacoes.push(
+                "Revisar estrutura de custos e honorários praticados",
+              );
             } else if (margemLucro < 30) {
               saudeFinanceira = "média";
-              indicadoresAlerta.push("Margem de lucro entre 20-30% (melhorável)");
+              indicadoresAlerta.push(
+                "Margem de lucro entre 20-30% (melhorável)",
+              );
             } else if (margemLucro >= 40) {
               saudeFinanceira = "excelente";
             }
@@ -112,7 +134,9 @@ Forneça:
 
             if (taxaInadimplencia > 10) {
               if (saudeFinanceira === "excelente") saudeFinanceira = "boa";
-              indicadoresAlerta.push(`Taxa de inadimplência de ${taxaInadimplencia.toFixed(1)}%`);
+              indicadoresAlerta.push(
+                `Taxa de inadimplência de ${taxaInadimplencia.toFixed(1)}%`,
+              );
               recomendacoes.push("Implementar política de cobrança preventiva");
             }
 
@@ -120,7 +144,9 @@ Forneça:
             if (totalReceitas < totalDespesas) {
               saudeFinanceira = "ruim";
               indicadoresAlerta.push("Fluxo de caixa negativo");
-              recomendacoes.push("URGENTE: Revisar despesas e buscar novas fontes de receita");
+              recomendacoes.push(
+                "URGENTE: Revisar despesas e buscar novas fontes de receita",
+              );
             }
 
             // Ticket médio
@@ -158,23 +184,29 @@ Forneça:
               },
             };
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([resultado]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 280);
 
             return resultado;
-          }
+          },
         );
 
-        span?.setAttribute("financeiro.saude_financeira", analiseFinanceira.saudeFinanceira);
+        span?.setAttribute(
+          "financeiro.saude_financeira",
+          analiseFinanceira.saudeFinanceira,
+        );
         span?.setAttribute("financeiro.margem_lucro", margemLucro);
         span?.setAttribute("financeiro.lucro_liquido", lucroLiquido);
         span?.setAttribute(
           "financeiro.indicadores_alerta_count",
-          analiseFinanceira.indicadoresAlerta.length
+          analiseFinanceira.indicadoresAlerta.length,
         );
         span?.setAttribute(
           "financeiro.recomendacoes_count",
-          analiseFinanceira.recomendacoes.length
+          analiseFinanceira.recomendacoes.length,
         );
 
         current = updateState(current, {
@@ -190,14 +222,16 @@ Forneça:
 
         return this.addAgentMessage(
           current,
-          `Análise financeira: ${analiseFinanceira.saudeFinanceira.toUpperCase()} (margem: ${margemLucro.toFixed(1)}%, ${analiseFinanceira.indicadoresAlerta.length} alerta(s))`
+          `Análise financeira: ${analiseFinanceira.saudeFinanceira.toUpperCase()} (margem: ${margemLucro.toFixed(1)}%, ${analiseFinanceira.indicadoresAlerta.length} alerta(s))`,
         );
-      }
+      },
     );
   }
 }
 
-export async function runFinanceiro(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runFinanceiro(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new FinanceiroAgent();
   const initialState: AgentState = {
     messages: [],

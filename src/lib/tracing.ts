@@ -13,7 +13,12 @@
  */
 
 // Trace Span Types
-export type SpanKind = "internal" | "server" | "client" | "producer" | "consumer";
+export type SpanKind =
+  | "internal"
+  | "server"
+  | "client"
+  | "producer"
+  | "consumer";
 export type SpanStatus = "unset" | "ok" | "error";
 
 // Trace Context for distributed tracing
@@ -98,7 +103,7 @@ class ConsoleExporter implements TraceExporter {
       const duration = span.endTime ? span.endTime - span.startTime : 0;
       console.log(
         `[TRACE] ${span.name} | ${span.kind} | ${duration}ms | ${span.status}`,
-        span.attributes
+        span.attributes,
       );
     });
   }
@@ -194,7 +199,8 @@ class TracingService {
 
     // Add console exporter in development (supports both Vite and Node.js)
     const isDev =
-      (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") ||
+      (typeof process !== "undefined" &&
+        process.env?.NODE_ENV !== "production") ||
       (typeof import.meta !== "undefined" && import.meta.env?.DEV);
     if (isDev) {
       this.exporters.push(new ConsoleExporter());
@@ -239,7 +245,7 @@ class TracingService {
       parentContext?: TraceContext;
       attributes?: SpanAttributes;
       links?: SpanLink[];
-    } = {}
+    } = {},
   ): Span {
     // Tracing desabilitado => span no-op
     if (!this.enabled) {
@@ -247,7 +253,8 @@ class TracingService {
     }
 
     // Sampling check using crypto for better randomness
-    const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+    const randomValue =
+      crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
     if (randomValue > this.samplingRate) {
       // Return a no-op span
       return this.createNoOpSpan(name);
@@ -294,7 +301,11 @@ class TracingService {
   /**
    * End a span
    */
-  async endSpan(span: Span, status?: SpanStatus, statusMessage?: string): Promise<void> {
+  async endSpan(
+    span: Span,
+    status?: SpanStatus,
+    statusMessage?: string,
+  ): Promise<void> {
     // No-op span (não amostrado ou tracing off)
     if (span.context.traceFlags === 0) {
       return;
@@ -311,8 +322,10 @@ class TracingService {
       this.exporters.map((exporter) =>
         exporter
           .export([span])
-          .catch((err) => console.error(`[Tracing] ${exporter.name} export failed:`, err))
-      )
+          .catch((err) =>
+            console.error(`[Tracing] ${exporter.name} export failed:`, err),
+          ),
+      ),
     );
   }
 
@@ -330,7 +343,11 @@ class TracingService {
   /**
    * Set span attribute
    */
-  setAttribute(span: Span, key: string, value: string | number | boolean): void {
+  setAttribute(
+    span: Span,
+    key: string,
+    value: string | number | boolean,
+  ): void {
     span.attributes[key] = value;
   }
 
@@ -364,7 +381,7 @@ class TracingService {
       sessionId?: string;
       parentContext?: TraceContext;
       attributes?: SpanAttributes;
-    } = {}
+    } = {},
   ): AgentSpan {
     const span = this.startSpan(`agent.${agentId}`, {
       kind: "internal",
@@ -395,7 +412,7 @@ class TracingService {
       temperature?: number;
       maxTokens?: number;
       attributes?: SpanAttributes;
-    } = {}
+    } = {},
   ): LLMSpan {
     const span = this.startSpan(`llm.${model}`, {
       kind: "client",
@@ -427,7 +444,7 @@ class TracingService {
       completionTokens: number;
       success: boolean;
       error?: Error;
-    }
+    },
   ): Promise<void> {
     span.promptTokens = result.promptTokens;
     span.completionTokens = result.completionTokens;
@@ -458,7 +475,10 @@ class TracingService {
   /**
    * Configure HTTP exporter
    */
-  configureHTTPExporter(endpoint: string, headers?: Record<string, string>): void {
+  configureHTTPExporter(
+    endpoint: string,
+    headers?: Record<string, string>,
+  ): void {
     this.exporters.push(new HTTPExporter(endpoint, headers));
   }
 
@@ -551,12 +571,14 @@ export const tracingService = new TracingService();
 // Convenience functions
 export const startSpan = tracingService.startSpan.bind(tracingService);
 export const endSpan = tracingService.endSpan.bind(tracingService);
-export const startAgentSpan = tracingService.startAgentSpan.bind(tracingService);
+export const startAgentSpan =
+  tracingService.startAgentSpan.bind(tracingService);
 export const startLLMSpan = tracingService.startLLMSpan.bind(tracingService);
 export const endLLMSpan = tracingService.endLLMSpan.bind(tracingService);
 export const addEvent = tracingService.addEvent.bind(tracingService);
 export const setAttribute = tracingService.setAttribute.bind(tracingService);
-export const recordException = tracingService.recordException.bind(tracingService);
+export const recordException =
+  tracingService.recordException.bind(tracingService);
 export const getTraces = tracingService.getTraces.bind(tracingService);
 
 /**
@@ -568,7 +590,7 @@ export function withTracing<T>(
   options?: {
     kind?: SpanKind;
     attributes?: SpanAttributes;
-  }
+  },
 ): Promise<T> {
   const span = tracingService.startSpan(name, options);
 
@@ -589,7 +611,7 @@ export function withTracing<T>(
  */
 export function injectTraceContext(
   span: Span,
-  headers: Record<string, string>
+  headers: Record<string, string>,
 ): Record<string, string> {
   const flagsHex = span.context.traceFlags.toString(16).padStart(2, "0");
 
@@ -602,7 +624,7 @@ export function injectTraceContext(
 }
 
 export function extractTraceContext(
-  headers: Record<string, string | string[] | undefined>
+  headers: Record<string, string | string[] | undefined>,
 ): TraceContext | undefined {
   const traceparent = headers["traceparent"];
   if (!traceparent || typeof traceparent !== "string") {

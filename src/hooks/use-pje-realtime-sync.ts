@@ -44,7 +44,12 @@ interface Expediente {
 }
 
 interface SyncMessage {
-  type: "SYNC_PROCESSOS" | "SYNC_EXPEDIENTES" | "PING" | "SYNC_ERROR" | "FORCE_SYNC";
+  type:
+    | "SYNC_PROCESSOS"
+    | "SYNC_EXPEDIENTES"
+    | "PING"
+    | "SYNC_ERROR"
+    | "FORCE_SYNC";
   data?: ProcessoPJe[] | Expediente[];
   timestamp?: number;
 }
@@ -85,7 +90,11 @@ function convertProcessoPJeToProcess(pje: ProcessoPJe): Process {
     comarca: pje.comarca,
     vara: pje.vara,
     status:
-      pje.situacao === "ativo" ? "ativo" : pje.situacao === "baixado" ? "concluido" : "arquivado",
+      pje.situacao === "ativo"
+        ? "ativo"
+        : pje.situacao === "baixado"
+          ? "concluido"
+          : "arquivado",
     fase: pje.ultimoMovimento?.descricao || "Em andamento",
     valor: pje.valor
       ? Number.parseFloat(pje.valor.replace(/[^\d,]/g, "").replace(",", "."))
@@ -111,7 +120,12 @@ function convertExpedienteToProcessEvent(exp: Expediente): ProcessEvent {
     dataHora: exp.createdAt,
     titulo: exp.description,
     descricao: exp.description,
-    tipo: exp.type === "intimacao" ? "intimacao" : exp.type === "despacho" ? "despacho" : "outro",
+    tipo:
+      exp.type === "intimacao"
+        ? "intimacao"
+        : exp.type === "despacho"
+          ? "despacho"
+          : "outro",
     documentoUrl: undefined, // Pode ser preenchido depois se houver PDF
     documentoTipo: undefined,
   };
@@ -126,12 +140,18 @@ function shouldIgnoreMessage(event: MessageEvent<SyncMessage>): boolean {
   return event.source !== window && event.origin !== window.location.origin;
 }
 
-function dedupeById<T extends { id: string }>(incoming: T[], existing: T[]): T[] {
+function dedupeById<T extends { id: string }>(
+  incoming: T[],
+  existing: T[],
+): T[] {
   const existingIds = new Set(existing.map((e) => e.id));
   return incoming.filter((e) => !existingIds.has(e.id));
 }
 
-function dedupeByNumeroCNJ(incoming: Process[], existing: Process[]): Process[] {
+function dedupeByNumeroCNJ(
+  incoming: Process[],
+  existing: Process[],
+): Process[] {
   const existingNumbers = new Set(existing.map((p) => p.numeroCNJ));
   return incoming.filter((p) => !existingNumbers.has(p.numeroCNJ));
 }
@@ -141,7 +161,10 @@ function dedupeByNumeroCNJ(incoming: Process[], existing: Process[]): Process[] 
  */
 export function usePJERealTimeSync(): PJERealTimeSyncHook {
   const [processes, setProcesses] = useKV<Process[]>("processes", []);
-  const [processEvents, setProcessEvents] = useKV<ProcessEvent[]>("processEvents", []);
+  const [processEvents, setProcessEvents] = useKV<ProcessEvent[]>(
+    "processEvents",
+    [],
+  );
 
   const [state, setState] = useState<PJERealTimeSyncState>({
     isConnected: false,
@@ -193,7 +216,10 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
             const newProcesses = processosPJe.map(convertProcessoPJeToProcess);
             const currentProcesses = processes || [];
 
-            const uniqueNewProcesses = dedupeByNumeroCNJ(newProcesses, currentProcesses);
+            const uniqueNewProcesses = dedupeByNumeroCNJ(
+              newProcesses,
+              currentProcesses,
+            );
 
             if (uniqueNewProcesses.length > 0) {
               setProcesses([...currentProcesses, ...uniqueNewProcesses]);
@@ -203,12 +229,16 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
                 isSyncing: false,
                 isConnected: true,
                 lastSyncAt: new Date().toISOString(),
-                newProcessosCount: prev.newProcessosCount + uniqueNewProcesses.length,
-                totalProcessos: currentProcesses.length + uniqueNewProcesses.length,
+                newProcessosCount:
+                  prev.newProcessosCount + uniqueNewProcesses.length,
+                totalProcessos:
+                  currentProcesses.length + uniqueNewProcesses.length,
                 error: null,
               }));
 
-              console.log(`[PJE Sync] ${uniqueNewProcesses.length} novos processos sincronizados`);
+              console.log(
+                `[PJE Sync] ${uniqueNewProcesses.length} novos processos sincronizados`,
+              );
             } else {
               setState((prev) => ({
                 ...prev,
@@ -216,7 +246,9 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
                 isConnected: true,
                 lastSyncAt: new Date().toISOString(),
               }));
-              console.log("[PJE Sync] Nenhum processo novo (todos já existiam)");
+              console.log(
+                "[PJE Sync] Nenhum processo novo (todos já existiam)",
+              );
             }
 
             break;
@@ -246,12 +278,15 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
                 isSyncing: false,
                 isConnected: true,
                 lastSyncAt: new Date().toISOString(),
-                newExpedientesCount: prev.newExpedientesCount + uniqueNewEvents.length,
+                newExpedientesCount:
+                  prev.newExpedientesCount + uniqueNewEvents.length,
                 totalExpedientes: currentEvents.length + uniqueNewEvents.length,
                 error: null,
               }));
 
-              console.log(`[PJE Sync] ${uniqueNewEvents.length} novos expedientes sincronizados`);
+              console.log(
+                `[PJE Sync] ${uniqueNewEvents.length} novos expedientes sincronizados`,
+              );
             } else {
               setState((prev) => ({
                 ...prev,
@@ -259,7 +294,9 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
                 isConnected: true,
                 lastSyncAt: new Date().toISOString(),
               }));
-              console.log("[PJE Sync] Nenhum expediente novo (todos já existiam)");
+              console.log(
+                "[PJE Sync] Nenhum expediente novo (todos já existiam)",
+              );
             }
 
             break;
@@ -278,7 +315,7 @@ export function usePJERealTimeSync(): PJERealTimeSyncHook {
         }));
       }
     },
-    [processes, processEvents, setProcesses, setProcessEvents]
+    [processes, processEvents, setProcesses, setProcessEvents],
   );
 
   /**

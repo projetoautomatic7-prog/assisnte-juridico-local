@@ -81,7 +81,10 @@ interface UseAIStreamingReturn {
 /**
  * 🔥 NOVO: Calcula custo baseado em tokens e modelo
  */
-function calculateCost(tokens: { prompt?: number; completion?: number }, model: string): number {
+function calculateCost(
+  tokens: { prompt?: number; completion?: number },
+  model: string,
+): number {
   const promptTokens = tokens.prompt || 0;
   const completionTokens = tokens.completion || 0;
 
@@ -133,7 +136,7 @@ function processStreamEvent(
   onChunk?: (chunk: string) => void,
   onComplete?: (fullContent: string, provider: string) => void,
   onTokens?: (tokens: TokenMetrics) => void, // 🔥 NOVO
-  onToolCall?: (toolCall: { name: string; input: any }) => void // ✅ NOVO
+  onToolCall?: (toolCall: { name: string; input: any }) => void, // ✅ NOVO
 ): void {
   if (event.type === "content" && event.content) {
     contentRef.current += event.content;
@@ -179,7 +182,7 @@ async function processStreamResponse(
   onChunk?: (chunk: string) => void,
   onComplete?: (fullContent: string, provider: string) => void,
   onTokens?: (tokens: TokenMetrics) => void, // 🔥 NOVO
-  onToolCall?: (toolCall: { name: string; input: any }) => void // ✅ NOVO
+  onToolCall?: (toolCall: { name: string; input: any }) => void, // ✅ NOVO
 ): Promise<void> {
   const decoder = new TextDecoder();
   let buffer = "";
@@ -206,13 +209,15 @@ async function processStreamResponse(
         onChunk,
         onComplete,
         onTokens,
-        onToolCall
+        onToolCall,
       );
     }
   }
 }
 
-export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStreamingReturn {
+export function useAIStreaming(
+  options: UseAIStreamingOptions = {},
+): UseAIStreamingReturn {
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -322,22 +327,34 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
               onChunk,
               onComplete,
               onTokens,
-              onToolCall
+              onToolCall,
             );
 
             // 🔥 Adicionar métricas de tokens ao span (se disponível)
             if (tokensRef.current) {
-              span?.setAttribute("gen_ai.usage.input_tokens", tokensRef.current.prompt);
-              span?.setAttribute("gen_ai.usage.output_tokens", tokensRef.current.completion);
-              span?.setAttribute("gen_ai.usage.total_tokens", tokensRef.current.total);
+              span?.setAttribute(
+                "gen_ai.usage.input_tokens",
+                tokensRef.current.prompt,
+              );
+              span?.setAttribute(
+                "gen_ai.usage.output_tokens",
+                tokensRef.current.completion,
+              );
+              span?.setAttribute(
+                "gen_ai.usage.total_tokens",
+                tokensRef.current.total,
+              );
               span?.setAttribute("gen_ai.cost.total", tokensRef.current.cost);
             }
 
             // Adicionar resposta ao span
-            span?.setAttribute("gen_ai.response.text", JSON.stringify([contentRef.current]));
+            span?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([contentRef.current]),
+            );
 
             return contentRef.current;
-          }
+          },
         );
 
         return result;
@@ -347,12 +364,16 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
           return contentRef.current;
         }
 
-        const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
-        if (errorMessage.includes("Failed to fetch") && baseUrl.includes("localhost")) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro desconhecido";
+        if (
+          errorMessage.includes("Failed to fetch") &&
+          baseUrl.includes("localhost")
+        ) {
           console.warn(
             `[AI Streaming] ⚠️ Falha de conexão com ${baseUrl}.\n` +
               `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
           );
         }
         setError(errorMessage);
@@ -376,7 +397,7 @@ export function useAIStreaming(options: UseAIStreamingOptions = {}): UseAIStream
       sessionId,
       conversationTurn,
       agentId,
-    ]
+    ],
   );
 
   return {

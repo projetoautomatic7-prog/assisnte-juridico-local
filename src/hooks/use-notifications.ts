@@ -20,12 +20,15 @@ function buildPrazoBody(prazo: Prazo, suffix: string): string {
 export function useNotifications() {
   // CORRIGIDO: Buscar prazos dos PROCESSOS (onde realmente estão salvos)
   const [processes] = useKV<Process[]>("processes", []);
-  const [preferences, setPreferences] = useKV<NotificationPreferences>("notification-preferences", {
-    enabled: true,
-    prazoAlerts: true,
-    agentAlerts: true,
-    financialAlerts: true,
-  });
+  const [preferences, setPreferences] = useKV<NotificationPreferences>(
+    "notification-preferences",
+    {
+      enabled: true,
+      prazoAlerts: true,
+      agentAlerts: true,
+      financialAlerts: true,
+    },
+  );
 
   // Extrair todos os prazos de todos os processos
   const prazos = useMemo(() => {
@@ -138,7 +141,7 @@ export function useNotifications() {
   };
 
   const updatePreferences = (
-    updater: (current: NotificationPreferences) => NotificationPreferences
+    updater: (current: NotificationPreferences) => NotificationPreferences,
   ) => {
     setPreferences((current) => {
       const currentPrefs: NotificationPreferences = current || {
@@ -162,6 +165,7 @@ export function useNotifications() {
     requestPermission,
     testNotification,
     isSupported: "Notification" in globalThis.window,
-    permission: "Notification" in globalThis.window ? Notification.permission : "denied",
+    permission:
+      "Notification" in globalThis.window ? Notification.permission : "denied",
   };
 }

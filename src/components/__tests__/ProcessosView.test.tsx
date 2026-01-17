@@ -12,7 +12,9 @@ function renderWithProviders(ui: React.ReactElement) {
     },
   });
 
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
 }
 
 describe("ProcessosView - renderização básica", () => {

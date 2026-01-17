@@ -14,7 +14,10 @@ import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import {
+  MeterProvider,
+  PeriodicExportingMetricReader,
+} from "@opentelemetry/sdk-metrics";
 import { trace, metrics, Span, Meter } from "@opentelemetry/api";
 
 // ===========================
@@ -42,7 +45,9 @@ function loadConfig(): DynatraceConfig {
 
   // Validação
   if (config.enabled && (!config.tenant || !config.apiToken)) {
-    console.warn("⚠️  [Dynatrace] Missing tenant or API token. Tracing disabled.");
+    console.warn(
+      "⚠️  [Dynatrace] Missing tenant or API token. Tracing disabled.",
+    );
     config.enabled = false;
   }
 
@@ -171,10 +176,13 @@ export class DynatraceEvalMetrics {
       unit: "ratio",
     });
 
-    this.completenessHistogram = meter.createHistogram("custom.eval.completeness", {
-      description: "Completeness score of agent evals (0-1)",
-      unit: "ratio",
-    });
+    this.completenessHistogram = meter.createHistogram(
+      "custom.eval.completeness",
+      {
+        description: "Completeness score of agent evals (0-1)",
+        unit: "ratio",
+      },
+    );
 
     this.latencyHistogram = meter.createHistogram("custom.eval.latency_ms", {
       description: "Latency of agent execution in evals",
@@ -199,7 +207,7 @@ export class DynatraceEvalMetrics {
   recordEvalMetrics(
     agentName: string,
     metrics: EvalMetrics,
-    attributes?: Record<string, string | number>
+    attributes?: Record<string, string | number>,
   ): void {
     if (!config.enabled) return;
 
@@ -229,7 +237,11 @@ export class DynatraceEvalMetrics {
   /**
    * Registra detecção de regressão
    */
-  recordRegression(agentName: string, metric: string, deltaPercent: number): void {
+  recordRegression(
+    agentName: string,
+    metric: string,
+    deltaPercent: number,
+  ): void {
     if (!config.enabled) return;
 
     this.regressionCounter?.add(1, {
@@ -239,7 +251,7 @@ export class DynatraceEvalMetrics {
     });
 
     console.warn(
-      `⚠️  [Dynatrace] Regression detected: ${agentName} ${metric} (${deltaPercent.toFixed(1)}%)`
+      `⚠️  [Dynatrace] Regression detected: ${agentName} ${metric} (${deltaPercent.toFixed(1)}%)`,
     );
   }
 
@@ -249,7 +261,7 @@ export class DynatraceEvalMetrics {
   recordCustomMetric(
     name: string,
     value: number,
-    attributes?: Record<string, string | number>
+    attributes?: Record<string, string | number>,
   ): void {
     if (!config.enabled || !meter) return;
 
@@ -278,7 +290,11 @@ export function getTracer(name: string, version?: string) {
 /**
  * Cria um span para um eval
  */
-export function createEvalSpan(agentName: string, caseId: string, difficulty?: string): Span {
+export function createEvalSpan(
+  agentName: string,
+  caseId: string,
+  difficulty?: string,
+): Span {
   const tracer = getTracer("eval-runner");
 
   return tracer.startSpan(`eval.${agentName}`, {

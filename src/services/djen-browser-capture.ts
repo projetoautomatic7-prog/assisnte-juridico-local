@@ -77,7 +77,9 @@ function isGeoBlockedError(status: number): boolean {
  * @param params - Parâmetros de busca
  * @returns Resultado da captura com publicações encontradas
  */
-export async function buscarDJENNoBrowser(params: DJENSearchParams): Promise<CaptureResult> {
+export async function buscarDJENNoBrowser(
+  params: DJENSearchParams,
+): Promise<CaptureResult> {
   try {
     const queryParams = new URLSearchParams();
 
@@ -125,7 +127,9 @@ export async function buscarDJENNoBrowser(params: DJENSearchParams): Promise<Cap
         };
       }
 
-      throw new Error(`API retornou ${response.status}: ${response.statusText}`);
+      throw new Error(
+        `API retornou ${response.status}: ${response.statusText}`,
+      );
     }
 
     const data: DJENApiResponse = await response.json();
@@ -141,7 +145,8 @@ export async function buscarDJENNoBrowser(params: DJENSearchParams): Promise<Cap
   } catch (error) {
     console.error("[DJEN Browser] Erro ao capturar:", error);
 
-    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
 
     const isNetworkError =
       errorMessage.includes("Failed to fetch") ||
@@ -164,7 +169,7 @@ export async function buscarDJENNoBrowser(params: DJENSearchParams): Promise<Cap
  * Busca publicações para múltiplos advogados.
  */
 export async function buscarMultiplosAdvogados(
-  advogados: Array<{ numeroOab: string; ufOab: string }>
+  advogados: Array<{ numeroOab: string; ufOab: string }>,
 ): Promise<Map<string, CaptureResult>> {
   const resultados = new Map<string, CaptureResult>();
 
@@ -199,7 +204,7 @@ export async function buscarMultiplosAdvogados(
  */
 export function converterParaFormatoInterno(
   pub: DJENPublicacao,
-  lawyerName: string = "Advogado"
+  lawyerName: string = "Advogado",
 ): {
   id: string;
   tribunal: string;
@@ -254,7 +259,9 @@ export async function verificarAcessoAPI(): Promise<{
     if (isGeoBlockedError(response.status)) {
       return {
         acessivel: false,
-        mensagem: "API DJEN bloqueada geograficamente. " + "A API só aceita requisições do Brasil.",
+        mensagem:
+          "API DJEN bloqueada geograficamente. " +
+          "A API só aceita requisições do Brasil.",
       };
     }
 

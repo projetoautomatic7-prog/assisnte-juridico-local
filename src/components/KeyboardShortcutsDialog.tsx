@@ -124,7 +124,9 @@ export default function KeyboardShortcutsDialog({
                   />
                 ))}
               </div>
-              {idx < SHORTCUT_GROUPS.length - 1 && <Separator className="mt-4" />}
+              {idx < SHORTCUT_GROUPS.length - 1 && (
+                <Separator className="mt-4" />
+              )}
             </div>
           ))}
 

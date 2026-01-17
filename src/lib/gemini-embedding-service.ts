@@ -93,7 +93,11 @@ export class GeminiEmbeddingService {
     movimentacoes?: string;
   }): Promise<EmbeddingResult> {
     // Construir texto representativo do documento
-    const parts = [`Tribunal: ${doc.tribunal}`, `Classe: ${doc.classe}`, `Assunto: ${doc.assunto}`];
+    const parts = [
+      `Tribunal: ${doc.tribunal}`,
+      `Classe: ${doc.classe}`,
+      `Assunto: ${doc.assunto}`,
+    ];
 
     if (doc.movimentacoes) {
       parts.push(`Movimenta��es: ${doc.movimentacoes}`);

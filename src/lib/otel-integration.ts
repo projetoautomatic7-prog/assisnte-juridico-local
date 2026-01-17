@@ -12,7 +12,10 @@ import { Span as OtelSpan, SpanStatusCode, trace } from "@opentelemetry/api";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
 import { tracingService, type Span } from "./tracing";
 
 // Nome do serviço
@@ -22,7 +25,8 @@ const SERVICE_VERSION = "1.0.1";
 // Endpoint do AI Toolkit (HTTP OTLP)
 // Suporta: AI Toolkit, Azure Monitor, Dynatrace, Datadog, Honeycomb, Jaeger
 const rawOtlpEndpoint = import.meta.env.VITE_OTLP_ENDPOINT;
-const OTLP_ENDPOINT = typeof rawOtlpEndpoint === "string" ? rawOtlpEndpoint : undefined;
+const OTLP_ENDPOINT =
+  typeof rawOtlpEndpoint === "string" ? rawOtlpEndpoint : undefined;
 const TRACING_ENABLED = import.meta.env.VITE_ENABLE_TRACING;
 
 // Dynatrace-specific configuration
@@ -53,14 +57,20 @@ let isInitialized = false;
  */
 export function initializeOpenTelemetry(): void {
   if (isInitialized) {
-    console.warn("[OpenTelemetry] Já inicializado, ignorando chamada duplicada");
+    console.warn(
+      "[OpenTelemetry] Já inicializado, ignorando chamada duplicada",
+    );
     return;
   }
 
   // Se não configurado ou apenas console, usar apenas o tracingService interno
   if (!OTLP_ENDPOINT || TRACING_ENABLED === "console") {
-    console.log("[OpenTelemetry] ⚠️ OTLP desabilitado - usando apenas console tracing");
-    console.log("[OpenTelemetry] Para habilitar OTLP, defina VITE_OTLP_ENDPOINT no .env");
+    console.log(
+      "[OpenTelemetry] ⚠️ OTLP desabilitado - usando apenas console tracing",
+    );
+    console.log(
+      "[OpenTelemetry] Para habilitar OTLP, defina VITE_OTLP_ENDPOINT no .env",
+    );
     isInitialized = true; // Marcar como inicializado para evitar warnings
     return;
   }
@@ -118,7 +128,9 @@ export function initializeOpenTelemetry(): void {
 
     console.log("✅ [OpenTelemetry] Inicializado com sucesso");
     console.log(`📊 [OpenTelemetry] Endpoint: ${OTLP_ENDPOINT}`);
-    console.log("🔍 [OpenTelemetry] Abra o AI Toolkit Trace Viewer para visualizar traces");
+    console.log(
+      "🔍 [OpenTelemetry] Abra o AI Toolkit Trace Viewer para visualizar traces",
+    );
 
     // Em desenvolvimento, mostrar instruções
     if (import.meta.env.DEV) {
@@ -126,7 +138,9 @@ export function initializeOpenTelemetry(): void {
       console.log("🎯 TRACING ATIVADO - Como visualizar:");
       console.log("1. Abra o Command Palette (Ctrl+Shift+P)");
       console.log('2. Execute: "AI Toolkit: Open Trace Viewer"');
-      console.log("3. Traces aparecerão automaticamente conforme você usa o sistema");
+      console.log(
+        "3. Traces aparecerão automaticamente conforme você usa o sistema",
+      );
       console.log(`${"=".repeat(70)}\n`);
     }
   } catch (error) {
@@ -237,7 +251,7 @@ export function getOtelTracer() {
 export async function withOtelSpan<T>(
   name: string,
   fn: (span: OtelSpan) => Promise<T>,
-  attributes?: Record<string, string | number | boolean>
+  attributes?: Record<string, string | number | boolean>,
 ): Promise<T> {
   const tracer = getOtelTracer();
 
@@ -264,7 +278,9 @@ export async function withOtelSpan<T>(
         message: error instanceof Error ? error.message : String(error),
       });
 
-      span.recordException(error instanceof Error ? error : new Error(String(error)));
+      span.recordException(
+        error instanceof Error ? error : new Error(String(error)),
+      );
 
       throw error;
     } finally {
@@ -302,7 +318,9 @@ export function getTracingStats() {
  */
 export function setOtlpEndpoint(endpoint: string): void {
   if (isInitialized) {
-    console.warn("[OpenTelemetry] Já inicializado, endpoint não pode ser alterado");
+    console.warn(
+      "[OpenTelemetry] Já inicializado, endpoint não pode ser alterado",
+    );
     return;
   }
 
@@ -310,4 +328,11 @@ export function setOtlpEndpoint(endpoint: string): void {
 }
 
 // Exportar tipos úteis
-export type { AgentSpan, LLMSpan, Span, SpanKind, SpanStatus, TraceContext } from "./tracing";
+export type {
+  AgentSpan,
+  LLMSpan,
+  Span,
+  SpanKind,
+  SpanStatus,
+  TraceContext,
+} from "./tracing";

@@ -10,7 +10,9 @@
 // Safe origin resolver (evita erro se não houver window)
 const getOrigin = () => {
   try {
-    return globalThis.window === undefined ? "http://localhost" : globalThis.window.location.origin;
+    return globalThis.window === undefined
+      ? "http://localhost"
+      : globalThis.window.location.origin;
   } catch {
     return "http://localhost";
   }
@@ -20,11 +22,16 @@ const getOrigin = () => {
  * getEnvVar
  * Lê variável do import.meta.env com fallback seguro
  */
-const getEnvVar = (key: string, defaultValue?: string, logError: boolean = true): string => {
+const getEnvVar = (
+  key: string,
+  defaultValue?: string,
+  logError: boolean = true,
+): string => {
   const value = import.meta.env[key];
 
   // Em desenvolvimento, não logar erros para variáveis opcionais
-  const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === "development";
+  const isDevelopment =
+    import.meta.env.DEV || import.meta.env.MODE === "development";
   const shouldLogError = logError && !isDevelopment;
 
   if ((!value || value === "") && !defaultValue && shouldLogError) {
@@ -41,7 +48,9 @@ const getEnvVar = (key: string, defaultValue?: string, logError: boolean = true)
 export const config = {
   google: {
     clientId: getEnvVar("VITE_GOOGLE_CLIENT_ID", ""),
-    apiKey: getEnvVar("VITE_GEMINI_API_KEY", "") || getEnvVar("VITE_GOOGLE_API_KEY", ""),
+    apiKey:
+      getEnvVar("VITE_GEMINI_API_KEY", "") ||
+      getEnvVar("VITE_GOOGLE_API_KEY", ""),
     redirectUri: getEnvVar("VITE_REDIRECT_URI", getOrigin()),
   },
 
@@ -53,7 +62,11 @@ export const config = {
   gitlab: {
     oauthClientId: getEnvVar("GITLAB_CLIENT_ID", "", false), // opcional
     oauthClientSecret: getEnvVar("GITLAB_CLIENT_SECRET", "", false), // opcional
-    redirectUri: getEnvVar("GITLAB_REDIRECT_URI", `${getOrigin()}/api/auth/callback/gitlab`, false),
+    redirectUri: getEnvVar(
+      "GITLAB_REDIRECT_URI",
+      `${getOrigin()}/api/auth/callback/gitlab`,
+      false,
+    ),
   },
 
   datajud: {
@@ -115,7 +128,9 @@ export const validateConfig = (): boolean => {
   if (errors.length > 0) {
     console.error("Configuration validation failed:");
     errors.forEach((e) => console.error(" - " + e));
-    console.error("\nPlease check your .env file and ensure all required variables are set.");
+    console.error(
+      "\nPlease check your .env file and ensure all required variables are set.",
+    );
     console.error("See OAUTH_SETUP.md for configuration instructions.");
     return false;
   }

@@ -7,7 +7,11 @@
     },
     "expected_output": {
       "estrategia_recomendada": "Ação trabalhista para cobrança de verbas rescisórias + indenização por exposição ao risco",
-      "fundamento_legal": ["CLT art. 477", "CLT art. 467", "Lei 14.020/2020 art. 8º"],
+      "fundamento_legal": [
+        "CLT art. 477",
+        "CLT art. 467",
+        "Lei 14.020/2020 art. 8º"
+      ],
       "chances_sucesso": "alta",
       "valor_causa_estimado": "R$ 15.000 - R$ 25.000",
       "prazo_acao": "2 anos (prescrição bienal - CLT art. 11)",
@@ -40,7 +44,12 @@
     },
     "expected_output": {
       "estrategia_recomendada": "Ação de rescisão contratual com devolução de valores + danos morais",
-      "fundamento_legal": ["CDC art. 18", "CDC art. 20", "CDC art. 35", "CC art. 441"],
+      "fundamento_legal": [
+        "CDC art. 18",
+        "CDC art. 20",
+        "CDC art. 35",
+        "CC art. 441"
+      ],
       "chances_sucesso": "muito_alta",
       "valor_causa_estimado": "R$ 80.000 - R$ 120.000",
       "prazo_acao": "5 anos (prescrição decenal - CC art. 205)",
@@ -103,7 +112,13 @@
     },
     "metadata": {
       "difficulty": "hard",
-      "tags": ["familia", "divorcio", "guarda", "violencia-domestica", "partilha"]
+      "tags": [
+        "familia",
+        "divorcio",
+        "guarda",
+        "violencia-domestica",
+        "partilha"
+      ]
     }
   },
   {
@@ -178,7 +193,13 @@
     },
     "metadata": {
       "difficulty": "hard",
-      "tags": ["civil", "erro-medico", "saude", "danos-morais", "responsabilidade-civil"]
+      "tags": [
+        "civil",
+        "erro-medico",
+        "saude",
+        "danos-morais",
+        "responsabilidade-civil"
+      ]
     }
   }
 ]

@@ -48,7 +48,8 @@ export function useGoogleDocs() {
 
       return success;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao autenticar";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao autenticar";
       setError(errorMessage);
       toast.error(errorMessage);
       return false;
@@ -93,13 +94,14 @@ export function useGoogleDocs() {
           url: result.url,
         };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Erro ao criar documento";
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao criar documento";
         setError(errorMessage);
         toast.error(errorMessage);
         throw err;
       }
     },
-    [isConnected, authenticate]
+    [isConnected, authenticate],
   );
 
   /**
@@ -116,7 +118,10 @@ export function useGoogleDocs() {
           }
         }
 
-        const success = await googleDocsService.updateDocumentContent(docId, content);
+        const success = await googleDocsService.updateDocumentContent(
+          docId,
+          content,
+        );
 
         if (!success) {
           throw new Error("Falha ao atualizar documento");
@@ -125,13 +130,14 @@ export function useGoogleDocs() {
         toast.success("Documento atualizado!");
         return true;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Erro ao atualizar documento";
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao atualizar documento";
         setError(errorMessage);
         toast.error(errorMessage);
         return false;
       }
     },
-    [isConnected, authenticate]
+    [isConnected, authenticate],
   );
 
   /**
@@ -160,13 +166,14 @@ export function useGoogleDocs() {
           content: content,
         };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Erro ao obter documento";
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao obter documento";
         setError(errorMessage);
         toast.error(errorMessage);
         throw err;
       }
     },
-    [isConnected, authenticate]
+    [isConnected, authenticate],
   );
 
   /**
@@ -189,7 +196,7 @@ export function useGoogleDocs() {
         if (minuta.googleDocsId) {
           const success = await googleDocsService.updateDocumentContent(
             minuta.googleDocsId,
-            minuta.conteudo
+            minuta.conteudo,
           );
 
           if (!success) {
@@ -219,7 +226,9 @@ export function useGoogleDocs() {
         };
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Erro ao exportar para Google Docs";
+          err instanceof Error
+            ? err.message
+            : "Erro ao exportar para Google Docs";
         setError(errorMessage);
         toast.error(errorMessage);
         throw err;
@@ -227,7 +236,7 @@ export function useGoogleDocs() {
         setIsExporting(false);
       }
     },
-    [isConnected, authenticate]
+    [isConnected, authenticate],
   );
 
   /**
@@ -238,7 +247,7 @@ export function useGoogleDocs() {
     async (
       minutaId: string,
       minutas: Minuta[],
-      setMinutas: (updater: (prev: Minuta[]) => Minuta[]) => void
+      setMinutas: (updater: (prev: Minuta[]) => Minuta[]) => void,
     ): Promise<boolean> => {
       setIsSyncing(true);
       setError(null);
@@ -259,11 +268,15 @@ export function useGoogleDocs() {
         const toastId = toast.loading("Importando do Google Docs...");
 
         // Buscar conteúdo atualizado do Google Docs
-        const remoteContent = await googleDocsService.getDocumentContent(minuta.googleDocsId);
+        const remoteContent = await googleDocsService.getDocumentContent(
+          minuta.googleDocsId,
+        );
 
         if (remoteContent === null) {
           const lastError = googleDocsService.getLastError();
-          toast.error(lastError || "Erro ao buscar documento do Google Docs", { id: toastId });
+          toast.error(lastError || "Erro ao buscar documento do Google Docs", {
+            id: toastId,
+          });
           return false;
         }
 
@@ -280,7 +293,7 @@ export function useGoogleDocs() {
             `Esta minuta foi modificada localmente após a última sincronização.\n\n` +
               `Última modificação local: ${new Date(minuta.atualizadoEm).toLocaleString("pt-BR")}\n` +
               `Última sincronização: ${lastSyncTime ? new Date(lastSyncTime).toLocaleString("pt-BR") : "Nunca"}\n\n` +
-              `Deseja substituir as alterações locais pelo conteúdo do Google Docs?`
+              `Deseja substituir as alterações locais pelo conteúdo do Google Docs?`,
           );
 
           if (!confirm) {
@@ -299,18 +312,19 @@ export function useGoogleDocs() {
                   atualizadoEm: new Date().toISOString(),
                   ultimaSincronizacao: new Date().toISOString(),
                 }
-              : m
-          )
+              : m,
+          ),
         );
 
         toast.success(
           `✅ Importado do Google Docs! (${remoteContent.length.toLocaleString()} caracteres)`,
-          { id: toastId }
+          { id: toastId },
         );
 
         return true;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Erro ao importar";
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao importar";
         setError(errorMessage);
         toast.error(errorMessage);
         return false;
@@ -318,7 +332,7 @@ export function useGoogleDocs() {
         setIsSyncing(false);
       }
     },
-    [isConnected, authenticate]
+    [isConnected, authenticate],
   );
 
   /**
@@ -327,7 +341,7 @@ export function useGoogleDocs() {
    */
   const syncWithGoogleDocs = useCallback(async () => {
     console.warn(
-      "[useGoogleDocs] syncWithGoogleDocs is deprecated. Use importFromGoogleDocs or exportToGoogleDocs instead."
+      "[useGoogleDocs] syncWithGoogleDocs is deprecated. Use importFromGoogleDocs or exportToGoogleDocs instead.",
     );
     toast.info("Use 'Importar do GDocs' ou 'Exportar para GDocs'");
     return false;

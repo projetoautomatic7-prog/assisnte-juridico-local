@@ -188,7 +188,9 @@ describe("Todoist Integration - Estruturas de Dados", () => {
       const taskType = "Contestação";
       const taskContent = `${taskType} - Processo ${processNumber}`;
 
-      expect(taskContent).toBe("Contestação - Processo 1234567-89.2024.8.09.0000");
+      expect(taskContent).toBe(
+        "Contestação - Processo 1234567-89.2024.8.09.0000",
+      );
     });
 
     it("deve adicionar informações do processo na descrição", () => {

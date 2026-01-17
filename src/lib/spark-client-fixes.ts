@@ -18,7 +18,11 @@ interface SparkKV {
   [key: string]: unknown;
 }
 
-type SparkLLM = (prompt: string, modelName?: string, jsonMode?: boolean) => Promise<string>;
+type SparkLLM = (
+  prompt: string,
+  modelName?: string,
+  jsonMode?: boolean,
+) => Promise<string>;
 
 // Extend Window interface to include spark
 declare global {
@@ -50,7 +54,10 @@ export function patchSparkLocalization() {
     const firstArg = args[0];
     if (firstArg && typeof firstArg === "object" && "name" in firstArg) {
       if (firstArg.name === "RegisterClientLocalizationsError") {
-        console.warn("Spark localization error suppressed (non-critical):", args);
+        console.warn(
+          "Spark localization error suppressed (non-critical):",
+          args,
+        );
         return;
       }
     }
@@ -64,7 +71,10 @@ export function patchFileReader() {
   const originalReadAsText = FileReader.prototype.readAsText;
   FileReader.prototype.readAsText = function (blob, encoding) {
     if (!(blob instanceof Blob)) {
-      console.warn("FileReader.readAsText called with non-Blob argument:", blob);
+      console.warn(
+        "FileReader.readAsText called with non-Blob argument:",
+        blob,
+      );
       // Evita o crash chamando o callback de erro ou apenas retornando
       if (this.onerror) {
         const event = new ProgressEvent("error");
@@ -86,18 +96,24 @@ export function applySparkClientFixes() {
   // Apply FileReader patch to prevent crashes
   patchFileReader();
 
-  const w = globalThis as typeof globalThis & { spark?: { kv?: SparkKV; llm?: SparkLLM } };
+  const w = globalThis as typeof globalThis & {
+    spark?: { kv?: SparkKV; llm?: SparkLLM };
+  };
 
   try {
     if (!w.spark || !w.spark.kv) {
-      console.error("Spark não disponível. Inicialize o runtime antes de aplicar o patch.");
+      console.error(
+        "Spark não disponível. Inicialize o runtime antes de aplicar o patch.",
+      );
       return;
     }
 
     const spark = w.spark;
     const original = { ...spark.kv };
 
-    async function parseJSONSafely(response: Response | ResponseLike | null): Promise<unknown> {
+    async function parseJSONSafely(
+      response: Response | ResponseLike | null,
+    ): Promise<unknown> {
       if (!response) return undefined;
       // response may be a fetch Response object or a plain object with text()
       let contentType = "";
@@ -127,10 +143,10 @@ export function applySparkClientFixes() {
       // If it looks like HTML, log a clear error
       if (trimmed.startsWith("<") || trimmed.startsWith("<!DOCTYPE")) {
         console.error(
-          `Spark KV endpoint returned HTML instead of JSON. Inspect network request to /_spark/kv/* and http proxy rewrites. Response starts with: ${trimmed.slice(0, 120)}`
+          `Spark KV endpoint returned HTML instead of JSON. Inspect network request to /_spark/kv/* and http proxy rewrites. Response starts with: ${trimmed.slice(0, 120)}`,
         );
         throw new Error(
-          "Failed to parse KV key response: expected JSON but received HTML. This often means your dev proxy or runtime proxy returned index.html or a login page. Check environment variables and API proxy rules."
+          "Failed to parse KV key response: expected JSON but received HTML. This often means your dev proxy or runtime proxy returned index.html or a login page. Check environment variables and API proxy rules.",
         );
       }
 
@@ -140,7 +156,7 @@ export function applySparkClientFixes() {
       } catch {
         console.error(
           "Failed to parse KV key response as JSON. Response body (truncated):",
-          trimmed.slice(0, 120)
+          trimmed.slice(0, 120),
         );
         throw new Error("Failed to parse KV key response: not valid JSON");
       }
@@ -168,7 +184,7 @@ export function applySparkClientFixes() {
             if (res.status === 404) return undefined;
             const body = await res.text();
             throw new Error(
-              `Failed to fetch KV key: ${res.status} ${res.statusText} - ${body.slice(0, 600)}`
+              `Failed to fetch KV key: ${res.status} ${res.statusText} - ${body.slice(0, 600)}`,
             );
           }
           return (await parseJSONSafely(res)) as T | undefined;
@@ -188,20 +204,25 @@ export function applySparkClientFixes() {
           }
 
           const res = await fetch("/_spark/kv", { method: "GET" });
-          if (!res.ok) throw new Error(`Failed to fetch KV keys: ${res.status} ${res.statusText}`);
+          if (!res.ok)
+            throw new Error(
+              `Failed to fetch KV keys: ${res.status} ${res.statusText}`,
+            );
           try {
             return (await res.json()) as string[];
           } catch (err) {
             console.error(
-              "Failed to parse KV keys response as JSON. Will attempt to inspect text."
+              "Failed to parse KV keys response as JSON. Will attempt to inspect text.",
             );
             const text = await res.text();
             if (text.trim().startsWith("<")) {
               console.error(
                 "KV keys request returned HTML. Inspect network and proxy (/_spark/kv). Response:",
-                text.slice(0, 300)
+                text.slice(0, 300),
               );
-              throw new Error("Failed to parse KV keys response: expected JSON but received HTML");
+              throw new Error(
+                "Failed to parse KV keys response: expected JSON but received HTML",
+              );
             }
             throw err;
           }
@@ -226,7 +247,7 @@ export function applySparkClientFixes() {
         if (!res.ok) {
           const body = await res.text();
           throw new Error(
-            `Failed to set KV key: ${res.status} ${res.statusText} - ${body.slice(0, 300)}`
+            `Failed to set KV key: ${res.status} ${res.statusText} - ${body.slice(0, 300)}`,
           );
         }
       },
@@ -238,11 +259,13 @@ export function applySparkClientFixes() {
             // fallback
           }
         }
-        const res = await fetch(`/_spark/kv/${encodeURIComponent(key)}`, { method: "DELETE" });
+        const res = await fetch(`/_spark/kv/${encodeURIComponent(key)}`, {
+          method: "DELETE",
+        });
         if (!res.ok) {
           const body = await res.text();
           throw new Error(
-            `Failed to delete KV key: ${res.status} ${res.statusText} - ${body.slice(0, 300)}`
+            `Failed to delete KV key: ${res.status} ${res.statusText} - ${body.slice(0, 300)}`,
           );
         }
         return undefined;
@@ -259,7 +282,7 @@ export function applySparkClientFixes() {
     spark.kv = patchedKV;
 
     console.info(
-      "Applied spark client fixes: kv methods patched for improved error handling and diagnostics"
+      "Applied spark client fixes: kv methods patched for improved error handling and diagnostics",
     );
   } catch (err) {
     console.warn("Unable to apply spark client fixes:", err);
@@ -270,10 +293,17 @@ export function applySparkClientFixes() {
 
 function isParseError(err: unknown): boolean {
   const errorMessage = err instanceof Error ? err.message : String(err);
-  return errorMessage.includes("Unexpected token '<'") || errorMessage.includes("Failed to parse");
+  return (
+    errorMessage.includes("Unexpected token '<'") ||
+    errorMessage.includes("Failed to parse")
+  );
 }
 
-function buildLLMRequestBody(prompt: string, model?: string, jsonResponse?: boolean): string {
+function buildLLMRequestBody(
+  prompt: string,
+  model?: string,
+  jsonResponse?: boolean,
+): string {
   return JSON.stringify({
     messages: [
       { role: "system", content: "You are a helpful assistant." },
@@ -285,17 +315,23 @@ function buildLLMRequestBody(prompt: string, model?: string, jsonResponse?: bool
 }
 
 function isHtmlContentType(contentType: string): boolean {
-  return contentType.includes("text/html") || contentType.trim().startsWith("text/html");
+  return (
+    contentType.includes("text/html") ||
+    contentType.trim().startsWith("text/html")
+  );
 }
 
 function extractChoicesContent(data: unknown): string | null {
   if (data && typeof data === "object" && "choices" in data) {
-    const choices = (data as { choices: Array<{ message?: { content?: unknown } }> }).choices;
+    const choices = (
+      data as { choices: Array<{ message?: { content?: unknown } }> }
+    ).choices;
     const content = choices?.[0]?.message?.content;
     if (content) {
       // Garantir stringify seguro
       if (typeof content === "string") return content;
-      if (typeof content === "object" && content !== null) return JSON.stringify(content);
+      if (typeof content === "object" && content !== null)
+        return JSON.stringify(content);
       return String(content);
     }
   }
@@ -308,7 +344,10 @@ function parseJSONResponse(text: string): string {
     data = JSON.parse(text);
   } catch (e) {
     throw new Error(
-      "LLM response claimed JSON but failed to parse: " + e + " - " + text.slice(0, 500)
+      "LLM response claimed JSON but failed to parse: " +
+        e +
+        " - " +
+        text.slice(0, 500),
     );
   }
 
@@ -321,7 +360,7 @@ function parseJSONResponse(text: string): string {
 async function performDiagnosticFetch(
   prompt: string,
   model?: string,
-  jsonResponse?: boolean
+  jsonResponse?: boolean,
 ): Promise<string> {
   const body = buildLLMRequestBody(prompt, model, jsonResponse);
   const res = await fetch("/api/llm-proxy", {
@@ -333,12 +372,19 @@ async function performDiagnosticFetch(
   const text = await res.text();
 
   if (!res.ok) {
-    throw new Error(`LLM request failed: ${res.status} ${res.statusText} - ${text.slice(0, 600)}`);
+    throw new Error(
+      `LLM request failed: ${res.status} ${res.statusText} - ${text.slice(0, 600)}`,
+    );
   }
 
   if (isHtmlContentType(contentType)) {
-    console.error("LLM endpoint returned HTML. Response (truncated):", text.slice(0, 500));
-    throw new Error("LLM request returned HTML. Check /api/llm-proxy endpoint and credentials.");
+    console.error(
+      "LLM endpoint returned HTML. Response (truncated):",
+      text.slice(0, 500),
+    );
+    throw new Error(
+      "LLM request returned HTML. Check /api/llm-proxy endpoint and credentials.",
+    );
   }
 
   if (contentType.includes("application/json")) {
@@ -348,20 +394,31 @@ async function performDiagnosticFetch(
   return text;
 }
 
-function handleDiagnosticError(diagnosticError: unknown, originalError: unknown): never {
+function handleDiagnosticError(
+  diagnosticError: unknown,
+  originalError: unknown,
+): never {
   console.error("LLM diagnostic fetch failed:", diagnosticError);
   const diagnosticMsg =
-    diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError);
+    diagnosticError instanceof Error
+      ? diagnosticError.message
+      : String(diagnosticError);
   const originalMsg =
-    originalError instanceof Error ? originalError.message : String(originalError);
-  throw new Error(`LLM diagnostic fetch failed: ${diagnosticMsg} | Original error: ${originalMsg}`);
+    originalError instanceof Error
+      ? originalError.message
+      : String(originalError);
+  throw new Error(
+    `LLM diagnostic fetch failed: ${diagnosticMsg} | Original error: ${originalMsg}`,
+  );
 }
 
 // ===== Main refactored function =====
 
 export function applySparkLLMFixes() {
   if (globalThis.window === undefined) return;
-  const w = globalThis.window as Window & { spark?: { kv?: SparkKV; llm?: SparkLLM } };
+  const w = globalThis.window as Window & {
+    spark?: { kv?: SparkKV; llm?: SparkLLM };
+  };
   if (!w.spark?.llm) return;
 
   try {
@@ -369,7 +426,7 @@ export function applySparkLLMFixes() {
     w.spark.llm = async function (
       prompt: string,
       model?: string,
-      jsonResponse?: boolean
+      jsonResponse?: boolean,
     ): Promise<string> {
       try {
         return await originalLlm(prompt, model, jsonResponse);
@@ -383,7 +440,9 @@ export function applySparkLLMFixes() {
         }
       }
     };
-    console.info("Applied spark LLM fixes: wrapped spark.llm with HTML/JSON diagnostics");
+    console.info(
+      "Applied spark LLM fixes: wrapped spark.llm with HTML/JSON diagnostics",
+    );
   } catch (err) {
     console.warn("Unable to apply spark LLM fixes:", err);
   }

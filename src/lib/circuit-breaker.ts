@@ -53,7 +53,7 @@ export class CircuitBreakerError extends Error {
   constructor(
     message: string,
     public readonly state: CircuitState,
-    public readonly nextAttemptMs?: number
+    public readonly nextAttemptMs?: number,
   ) {
     super(message);
     this.name = "CircuitBreakerError";
@@ -80,7 +80,10 @@ export class CircuitBreaker {
   private readonly halfOpenMaxCalls: number;
   private readonly timeout: number;
   private readonly name: string;
-  private readonly onStateChange?: (from: CircuitState, to: CircuitState) => void;
+  private readonly onStateChange?: (
+    from: CircuitState,
+    to: CircuitState,
+  ) => void;
   private readonly onFailure?: (error: Error) => void;
   private readonly onSuccess?: () => void;
 
@@ -112,7 +115,7 @@ export class CircuitBreaker {
         `Circuit breaker "${this.name}" is ${this.state}. ` +
           `Next attempt in ${Math.ceil(nextAttemptMs / 1000)}s`,
         this.state,
-        nextAttemptMs
+        nextAttemptMs,
       );
     }
 
@@ -125,7 +128,9 @@ export class CircuitBreaker {
       this.recordSuccess();
       return result;
     } catch (error) {
-      this.recordFailure(error instanceof Error ? error : new Error(String(error)));
+      this.recordFailure(
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw error;
     }
   }
@@ -207,7 +212,11 @@ export class CircuitBreaker {
   private async executeWithTimeout<T>(fn: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error(`Circuit breaker "${this.name}" timeout after ${this.timeout}ms`));
+        reject(
+          new Error(
+            `Circuit breaker "${this.name}" timeout after ${this.timeout}ms`,
+          ),
+        );
       }, this.timeout);
 
       fn()
@@ -283,13 +292,18 @@ export class CircuitBreaker {
 
     this.onStateChange?.(oldState, newState);
 
-    console.log(`[CircuitBreaker:${this.name}] State changed: ${oldState} -> ${newState}`);
+    console.log(
+      `[CircuitBreaker:${this.name}] State changed: ${oldState} -> ${newState}`,
+    );
   }
 }
 
 const circuitBreakers = new Map<string, CircuitBreaker>();
 
-export function getCircuitBreaker(name: string, config?: CircuitBreakerConfig): CircuitBreaker {
+export function getCircuitBreaker(
+  name: string,
+  config?: CircuitBreakerConfig,
+): CircuitBreaker {
   let cb = circuitBreakers.get(name);
   if (!cb) {
     cb = new CircuitBreaker({ ...config, name });
@@ -304,7 +318,10 @@ export function resetAllCircuitBreakers(): void {
   }
 }
 
-export function getAllCircuitBreakerStats(): Record<string, CircuitBreakerStats> {
+export function getAllCircuitBreakerStats(): Record<
+  string,
+  CircuitBreakerStats
+> {
   const stats: Record<string, CircuitBreakerStats> = {};
   for (const [name, cb] of circuitBreakers.entries()) {
     stats[name] = cb.getStats();
@@ -329,7 +346,7 @@ export const geminiCircuitBreaker = new CircuitBreaker({
 export async function withCircuitBreaker<T>(
   name: string,
   fn: () => Promise<T>,
-  config?: CircuitBreakerConfig
+  config?: CircuitBreakerConfig,
 ): Promise<T> {
   const cb = getCircuitBreaker(name, config);
   return cb.execute(fn);

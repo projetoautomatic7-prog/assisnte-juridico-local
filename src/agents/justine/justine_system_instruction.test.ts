@@ -30,7 +30,9 @@ describe("Mrs. Justin-e Agent - System Instruction Validation", () => {
       }),
       metadata: { model: "gemini-2.5-pro" },
     };
-    const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
+    const callGeminiSpy = vi
+      .mocked(GeminiService.callGemini)
+      .mockResolvedValue(mockResponse);
 
     const input = {
       content:

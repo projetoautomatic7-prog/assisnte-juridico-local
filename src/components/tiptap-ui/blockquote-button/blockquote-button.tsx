@@ -2,7 +2,10 @@ import { forwardRef, useCallback } from "react";
 
 // --- Tiptap UI ---
 import type { UseBlockquoteConfig } from "@/components/tiptap-ui/blockquote-button";
-import { BLOCKQUOTE_SHORTCUT_KEY, useBlockquote } from "@/components/tiptap-ui/blockquote-button";
+import {
+  BLOCKQUOTE_SHORTCUT_KEY,
+  useBlockquote,
+} from "@/components/tiptap-ui/blockquote-button";
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
@@ -15,7 +18,8 @@ import { Badge } from "@/components/tiptap-ui-primitive/badge";
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
 import { Button } from "@/components/tiptap-ui-primitive/button";
 
-export interface BlockquoteButtonProps extends Omit<ButtonProps, "type">, UseBlockquoteConfig {
+export interface BlockquoteButtonProps
+  extends Omit<ButtonProps, "type">, UseBlockquoteConfig {
   /**
    * Optional text to display alongside the icon.
    */
@@ -40,7 +44,10 @@ export function BlockquoteShortcutBadge({
  *
  * For custom button implementations, use the `useBlockquote` hook instead.
  */
-export const BlockquoteButton = forwardRef<HTMLButtonElement, BlockquoteButtonProps>(
+export const BlockquoteButton = forwardRef<
+  HTMLButtonElement,
+  BlockquoteButtonProps
+>(
   (
     {
       editor: providedEditor,
@@ -52,15 +59,22 @@ export const BlockquoteButton = forwardRef<HTMLButtonElement, BlockquoteButtonPr
       children,
       ...buttonProps
     },
-    ref
+    ref,
   ) => {
     const { editor } = useTiptapEditor(providedEditor);
-    const { isVisible, canToggle, isActive, handleToggle, label, shortcutKeys, Icon } =
-      useBlockquote({
-        editor,
-        hideWhenUnavailable,
-        onToggled,
-      });
+    const {
+      isVisible,
+      canToggle,
+      isActive,
+      handleToggle,
+      label,
+      shortcutKeys,
+      Icon,
+    } = useBlockquote({
+      editor,
+      hideWhenUnavailable,
+      onToggled,
+    });
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -68,7 +82,7 @@ export const BlockquoteButton = forwardRef<HTMLButtonElement, BlockquoteButtonPr
         if (event.defaultPrevented) return;
         handleToggle();
       },
-      [handleToggle, onClick]
+      [handleToggle, onClick],
     );
 
     if (!isVisible) {
@@ -94,12 +108,14 @@ export const BlockquoteButton = forwardRef<HTMLButtonElement, BlockquoteButtonPr
           <>
             <Icon className="tiptap-button-icon" />
             {text && <span className="tiptap-button-text">{text}</span>}
-            {showShortcut && <BlockquoteShortcutBadge shortcutKeys={shortcutKeys} />}
+            {showShortcut && (
+              <BlockquoteShortcutBadge shortcutKeys={shortcutKeys} />
+            )}
           </>
         )}
       </Button>
     );
-  }
+  },
 );
 
 BlockquoteButton.displayName = "BlockquoteButton";

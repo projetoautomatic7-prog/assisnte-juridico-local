@@ -101,12 +101,16 @@ export function useAgentBackup(options: BackupOptions) {
 
         // Salvar no histórico do servidor
         const historyKey = `${BACKUP_KEY_PREFIX}:${userId}:history`;
-        const historyResponse = await fetch(`/api/kv?key=${encodeURIComponent(historyKey)}`);
+        const historyResponse = await fetch(
+          `/api/kv?key=${encodeURIComponent(historyKey)}`,
+        );
         let history: BackupData[] = [];
 
         if (historyResponse.ok && isJsonResponse(historyResponse)) {
           try {
-            const historyData = (await historyResponse.json()) as { value?: BackupData[] };
+            const historyData = (await historyResponse.json()) as {
+              value?: BackupData[];
+            };
             history = historyData.value || [];
           } catch {
             // Ignorar erro de parse e assumir histórico vazio
@@ -132,7 +136,9 @@ export function useAgentBackup(options: BackupOptions) {
           }),
         });
         if (!writeHistoryResponse.ok || isHtmlResponse(writeHistoryResponse)) {
-          throw new Error(`Falha ao salvar histórico: ${writeHistoryResponse.status}`);
+          throw new Error(
+            `Falha ao salvar histórico: ${writeHistoryResponse.status}`,
+          );
         }
 
         if (import.meta.env.DEV) {
@@ -145,7 +151,7 @@ export function useAgentBackup(options: BackupOptions) {
         return false;
       }
     },
-    [userId, kvApiEnabled]
+    [userId, kvApiEnabled],
   );
 
   /**
@@ -156,7 +162,9 @@ export function useAgentBackup(options: BackupOptions) {
     try {
       if (isServerCooldownActive()) return null;
       const serverKey = `${BACKUP_KEY_PREFIX}:${userId}:latest`;
-      const response = await fetch(`/api/kv?key=${encodeURIComponent(serverKey)}`);
+      const response = await fetch(
+        `/api/kv?key=${encodeURIComponent(serverKey)}`,
+      );
 
       if (!response.ok || !isJsonResponse(response)) {
         if (response.ok && isHtmlResponse(response)) {
@@ -189,7 +197,9 @@ export function useAgentBackup(options: BackupOptions) {
         timestamp: backupData.timestamp,
         userId: backupData.userId,
         summary: {
-          agentsCount: Array.isArray(backupData.data.agents) ? backupData.data.agents.length : 0,
+          agentsCount: Array.isArray(backupData.data.agents)
+            ? backupData.data.agents.length
+            : 0,
           taskQueueCount: Array.isArray(backupData.data.taskQueue)
             ? backupData.data.taskQueue.length
             : 0,
@@ -245,10 +255,16 @@ export function useAgentBackup(options: BackupOptions) {
             taskQueue: Array.isArray(taskQueue) ? taskQueue.slice(0, 20) : [],
           },
         };
-        localStorage.setItem(`${BACKUP_KEY_PREFIX}:fallback`, JSON.stringify(minimalData));
+        localStorage.setItem(
+          `${BACKUP_KEY_PREFIX}:fallback`,
+          JSON.stringify(minimalData),
+        );
         return true;
       } catch (localError) {
-        if (localError instanceof DOMException && localError.name === "QuotaExceededError") {
+        if (
+          localError instanceof DOMException &&
+          localError.name === "QuotaExceededError"
+        ) {
           cleanLocalStorage();
           console.warn("⚠️ localStorage cheio, limpeza realizada");
         }
@@ -256,7 +272,7 @@ export function useAgentBackup(options: BackupOptions) {
         return false;
       }
     },
-    [userId, agents, taskQueue, cleanLocalStorage]
+    [userId, agents, taskQueue, cleanLocalStorage],
   );
 
   /**
@@ -272,13 +288,15 @@ export function useAgentBackup(options: BackupOptions) {
       if (!localStorageSuccess) {
         return {
           success: false,
-          error: new Error("Falha ao salvar backup: servidor indisponível e localStorage falhou"),
+          error: new Error(
+            "Falha ao salvar backup: servidor indisponível e localStorage falhou",
+          ),
         };
       }
 
       return { success: true };
     },
-    [saveFallbackToLocalStorage]
+    [saveFallbackToLocalStorage],
   );
 
   /**
@@ -330,7 +348,9 @@ export function useAgentBackup(options: BackupOptions) {
           agents,
           monitoredLawyers,
           // Limitar tarefas para economizar espaço
-          taskQueue: Array.isArray(taskQueue) ? taskQueue.slice(0, MAX_TASKS_IN_BACKUP) : [],
+          taskQueue: Array.isArray(taskQueue)
+            ? taskQueue.slice(0, MAX_TASKS_IN_BACKUP)
+            : [],
           completedTasks: Array.isArray(completedTasks)
             ? completedTasks.slice(-MAX_TASKS_IN_BACKUP)
             : [],
@@ -354,7 +374,10 @@ export function useAgentBackup(options: BackupOptions) {
         setLastBackup(backupData.timestamp);
       }
       if (import.meta.env.DEV) {
-        console.log("✅ Backup criado:", new Date(backupData.timestamp).toLocaleString());
+        console.log(
+          "✅ Backup criado:",
+          new Date(backupData.timestamp).toLocaleString(),
+        );
       }
 
       // Return the actual storage used, not the state variable (which might be stale)
@@ -392,7 +415,7 @@ export function useAgentBackup(options: BackupOptions) {
       if (serverBackup) {
         console.log(
           "✅ Backup restaurado do servidor:",
-          new Date(serverBackup.timestamp).toLocaleString()
+          new Date(serverBackup.timestamp).toLocaleString(),
         );
         return serverBackup;
       }
@@ -403,7 +426,7 @@ export function useAgentBackup(options: BackupOptions) {
         const fallback = JSON.parse(fallbackStr);
         console.log(
           "ℹ️ Backup local restaurado (fallback):",
-          new Date(fallback.timestamp).toLocaleString()
+          new Date(fallback.timestamp).toLocaleString(),
         );
         return fallback;
       }
@@ -433,7 +456,9 @@ export function useAgentBackup(options: BackupOptions) {
       }
 
       const historyKey = `${BACKUP_KEY_PREFIX}:${userId}:history`;
-      const response = await fetch(`/api/kv?key=${encodeURIComponent(historyKey)}`);
+      const response = await fetch(
+        `/api/kv?key=${encodeURIComponent(historyKey)}`,
+      );
 
       let history: BackupData[] = [];
       if (response.ok && isJsonResponse(response)) {
@@ -496,7 +521,14 @@ export function useAgentBackup(options: BackupOptions) {
       }
       clearInterval(timer);
     };
-  }, [enableAutoBackup, autoBackupInterval, userId, agents, createBackup, lastBackup]);
+  }, [
+    enableAutoBackup,
+    autoBackupInterval,
+    userId,
+    agents,
+    createBackup,
+    lastBackup,
+  ]);
 
   // Não tenta restaurar automaticamente - dados já estão no Upstash KV
   // Restauração manual disponível via botão

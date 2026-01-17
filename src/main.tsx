@@ -56,26 +56,38 @@ const VITE_PREVIEW_PORT = "4173";
 // Detectar ambiente de teste
 const isTest =
   import.meta.env.MODE === "test" ||
-  (typeof globalThis !== "undefined" && globalThis.location.port === VITE_PREVIEW_PORT);
+  (typeof globalThis !== "undefined" &&
+    globalThis.location.port === VITE_PREVIEW_PORT);
 
 // Monitoring - Carregar após interação do usuário
 const initOnInteraction = () => {
-  const events: Array<keyof WindowEventMap> = ["click", "keydown", "scroll", "touchstart"];
+  const events: Array<keyof WindowEventMap> = [
+    "click",
+    "keydown",
+    "scroll",
+    "touchstart",
+  ];
   const handler = () => {
-    events.forEach((e) => globalThis.removeEventListener(e, handler, { capture: true }));
+    events.forEach((e) =>
+      globalThis.removeEventListener(e, handler, { capture: true }),
+    );
     if ("requestIdleCallback" in globalThis) {
       requestIdleCallback(() => initMonitoring(), { timeout: 2000 });
     } else {
       setTimeout(initMonitoring, 100);
     }
   };
-  events.forEach((e) => globalThis.addEventListener(e, handler, { capture: true, passive: true }));
+  events.forEach((e) =>
+    globalThis.addEventListener(e, handler, { capture: true, passive: true }),
+  );
 };
 
 // Monitoring - Fallback após 3s se não houver interação
 const initOnIdle = () => {
   if ("requestIdleCallback" in globalThis) {
-    requestIdleCallback(() => setTimeout(initMonitoring, 3000), { timeout: 5000 });
+    requestIdleCallback(() => setTimeout(initMonitoring, 3000), {
+      timeout: 5000,
+    });
   } else {
     setTimeout(initMonitoring, 5000);
   }
@@ -93,7 +105,7 @@ createRoot(rootElement).render(
     <StrictMode>
       <App />
     </StrictMode>
-  </ErrorBoundary>
+  </ErrorBoundary>,
 );
 
 // ✅ Limpa o timeout de loading quando o React carrega

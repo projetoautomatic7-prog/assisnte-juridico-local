@@ -55,7 +55,9 @@ export function useClientesManager() {
    * Função interna de upsert (create or update)
    * Busca por CPF/CNPJ ou email para determinar se atualiza ou cria
    */
-  const upsertCliente = (data: Partial<Cliente> & { nome: string }): Cliente | null => {
+  const upsertCliente = (
+    data: Partial<Cliente> & { nome: string },
+  ): Cliente | null => {
     if (!data.nome?.trim()) {
       console.warn("[useClientesManager] Nome do cliente é obrigatório");
       return null;
@@ -86,7 +88,9 @@ export function useClientesManager() {
           : existing.observacoes,
         updatedAt: new Date().toISOString(),
       };
-      setClientes((current = []) => current.map((c) => (c.id === existing.id ? updated : c)));
+      setClientes((current = []) =>
+        current.map((c) => (c.id === existing.id ? updated : c)),
+      );
       return updated;
     } else {
       // CREATE - novo cliente
@@ -172,7 +176,10 @@ export function useClientesManager() {
     });
 
     if (cliente) {
-      console.log("[useClientesManager] Cliente importado de intimação DJEN:", cliente.nome);
+      console.log(
+        "[useClientesManager] Cliente importado de intimação DJEN:",
+        cliente.nome,
+      );
     }
 
     return cliente;
@@ -184,7 +191,9 @@ export function useClientesManager() {
    */
   const createOrUpdateFromDocumento = (payload: DocumentoClientePayload) => {
     if (!payload.nomeCliente?.trim() || !payload.cpfCnpj?.trim()) {
-      console.warn("[useClientesManager] Documento sem nome ou CPF/CNPJ válido");
+      console.warn(
+        "[useClientesManager] Documento sem nome ou CPF/CNPJ válido",
+      );
       return null;
     }
 
@@ -202,7 +211,10 @@ export function useClientesManager() {
     });
 
     if (cliente) {
-      console.log("[useClientesManager] Cliente importado de documento:", cliente.nome);
+      console.log(
+        "[useClientesManager] Cliente importado de documento:",
+        cliente.nome,
+      );
     }
 
     return cliente;

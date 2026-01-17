@@ -88,7 +88,7 @@ export function startAgentInvokeSpan(
     temperature?: number;
     maxTokens?: number;
     messages?: Array<{ role: string; content: string }>;
-  }
+  },
 ): Sentry.Span | undefined {
   const span = Sentry.startInactiveSpan({
     op: "gen_ai.invoke_agent",
@@ -98,8 +98,12 @@ export function startAgentInvokeSpan(
       "gen_ai.system": options.provider,
       "gen_ai.request.model": options.model,
       "gen_ai.agent.name": agent.name,
-      ...(options.temperature && { "gen_ai.request.temperature": options.temperature }),
-      ...(options.maxTokens && { "gen_ai.request.max_tokens": options.maxTokens }),
+      ...(options.temperature && {
+        "gen_ai.request.temperature": options.temperature,
+      }),
+      ...(options.maxTokens && {
+        "gen_ai.request.max_tokens": options.maxTokens,
+      }),
       ...(options.messages && {
         "gen_ai.request.messages": JSON.stringify(options.messages),
       }),
@@ -123,7 +127,7 @@ export function finishAgentInvokeSpan(
       cached?: number;
     };
     toolCalls?: Array<{ name: string; type: string; arguments: string }>;
-  }
+  },
 ): void {
   if (!span) return;
 
@@ -131,7 +135,9 @@ export function finishAgentInvokeSpan(
 
   // Normalizar output para array de strings
   if (result.output) {
-    const outputArray = Array.isArray(result.output) ? result.output : [result.output];
+    const outputArray = Array.isArray(result.output)
+      ? result.output
+      : [result.output];
     attributes["gen_ai.response.text"] = JSON.stringify(outputArray);
   }
 
@@ -204,9 +210,13 @@ export function startAIChatSpan(options: {
       ...(options.temperature !== undefined && {
         "gen_ai.request.temperature": options.temperature,
       }),
-      ...(options.maxTokens && { "gen_ai.request.max_tokens": options.maxTokens }),
+      ...(options.maxTokens && {
+        "gen_ai.request.max_tokens": options.maxTokens,
+      }),
       ...(options.availableTools && {
-        "gen_ai.request.available_tools": JSON.stringify(options.availableTools),
+        "gen_ai.request.available_tools": JSON.stringify(
+          options.availableTools,
+        ),
       }),
     } as AIRequestAttributes,
   });
@@ -227,14 +237,16 @@ export function finishAIChatSpan(
       total?: number;
     };
     toolCalls?: Array<{ name: string; type: string; arguments: string }>;
-  }
+  },
 ): void {
   if (!span) return;
 
   const attributes: Partial<AIResponseAttributes> = {};
 
   if (response.text) {
-    const textArray = Array.isArray(response.text) ? response.text : [response.text];
+    const textArray = Array.isArray(response.text)
+      ? response.text
+      : [response.text];
     attributes["gen_ai.response.text"] = JSON.stringify(textArray);
   }
 
@@ -248,7 +260,9 @@ export function finishAIChatSpan(
   }
 
   if (response.toolCalls) {
-    attributes["gen_ai.response.tool_calls"] = JSON.stringify(response.toolCalls);
+    attributes["gen_ai.response.tool_calls"] = JSON.stringify(
+      response.toolCalls,
+    );
   }
 
   Object.entries(attributes).forEach(([key, value]) => {
@@ -290,7 +304,9 @@ export function startToolExecutionSpan(options: {
       "gen_ai.system": options.provider,
       "gen_ai.request.model": options.model,
       "gen_ai.tool.name": options.toolName,
-      ...(options.toolDescription && { "gen_ai.tool.description": options.toolDescription }),
+      ...(options.toolDescription && {
+        "gen_ai.tool.description": options.toolDescription,
+      }),
       ...(options.toolType && { "gen_ai.tool.type": options.toolType }),
       ...(options.toolInput && { "gen_ai.tool.input": options.toolInput }),
     } as ToolExecutionAttributes,
@@ -304,7 +320,7 @@ export function startToolExecutionSpan(options: {
  */
 export function finishToolExecutionSpan(
   span: Sentry.Span | undefined,
-  result: { output?: string }
+  result: { output?: string },
 ): void {
   if (!span) return;
 
@@ -325,7 +341,10 @@ export function finishToolExecutionSpan(
  * span.end();
  * ```
  */
-export function createHandoffSpan(fromAgent: Agent, toAgent: Agent): Sentry.Span | undefined {
+export function createHandoffSpan(
+  fromAgent: Agent,
+  toAgent: Agent,
+): Sentry.Span | undefined {
   const span = Sentry.startInactiveSpan({
     op: "gen_ai.handoff",
     name: `handoff from ${fromAgent.name} to ${toAgent.name}`,
@@ -350,11 +369,13 @@ export async function instrumentAgentTask<T>(
   options: {
     model: string;
     provider: string;
-  }
+  },
 ): Promise<T> {
   // Extrair descrição da tarefa (pode estar em data.description ou type)
   const taskDescription =
-    (task.data as { description?: string })?.description || task.type || "Unknown task";
+    (task.data as { description?: string })?.description ||
+    task.type ||
+    "Unknown task";
 
   const span = startAgentInvokeSpan(agent, {
     model: options.model,
@@ -369,14 +390,20 @@ export async function instrumentAgentTask<T>(
     if (typeof result === "object" && result !== null) {
       const resultObj = result as Record<string, unknown>;
       if ("tokensUsed" in resultObj || "output" in resultObj) {
-        finishAgentInvokeSpan(span, resultObj as Parameters<typeof finishAgentInvokeSpan>[1]);
+        finishAgentInvokeSpan(
+          span,
+          resultObj as Parameters<typeof finishAgentInvokeSpan>[1],
+        );
       }
     }
 
     span?.setStatus({ code: 1 });
     return result;
   } catch (error) {
-    span?.setStatus({ code: 2, message: error instanceof Error ? error.message : "Unknown error" });
+    span?.setStatus({
+      code: 2,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
     throw error;
   } finally {
     span?.end();

@@ -88,7 +88,9 @@ export type UseAutonomousAgents = ReturnType<
  *
  * @see src/hooks/use-ai-streaming.ts
  */
-export type UseAIStreaming = ReturnType<typeof import("./hooks/use-ai-streaming").useAIStreaming>;
+export type UseAIStreaming = ReturnType<
+  typeof import("./hooks/use-ai-streaming").useAIStreaming
+>;
 
 /**
  * ======================
@@ -198,4 +200,7 @@ export type UseAIStreaming = ReturnType<typeof import("./hooks/use-ai-streaming"
 
 export type { Process, Prazo, Cliente, Minuta, FinancialEntry } from "./types";
 export type { AgentTask } from "./lib/agents";
-export type { ProcessValidated, PrazoValidated } from "./schemas/process.schema";
+export type {
+  ProcessValidated,
+  PrazoValidated,
+} from "./schemas/process.schema";

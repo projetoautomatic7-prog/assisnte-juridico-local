@@ -14,7 +14,7 @@ export const numeroCNJSchema = z
   .string()
   .regex(
     /^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$/,
-    "N�mero CNJ inv�lido. Formato esperado: 0000000-00.0000.0.00.0000"
+    "N�mero CNJ inv�lido. Formato esperado: 0000000-00.0000.0.00.0000",
   );
 
 // Schema para prazo processual
@@ -71,14 +71,17 @@ export const processSchema = z.object({
 // Schema para CPF (valida��o b�sica de formato)
 export const cpfSchema = z
   .string()
-  .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF inv�lido. Formato esperado: 000.000.000-00");
+  .regex(
+    /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
+    "CPF inv�lido. Formato esperado: 000.000.000-00",
+  );
 
 // Schema para CNPJ (valida��o b�sica de formato)
 export const cnpjSchema = z
   .string()
   .regex(
     /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,
-    "CNPJ inv�lido. Formato esperado: 00.000.000/0000-00"
+    "CNPJ inv�lido. Formato esperado: 00.000.000/0000-00",
   );
 
 // Schema para telefone (aceita v�rios formatos)
@@ -86,7 +89,7 @@ export const telefoneSchema = z
   .string()
   .regex(
     /^\(?[1-9]{2}\)?\s?9?\d{4}-?\d{4}$/,
-    "Telefone inv�lido. Formato esperado: (11) 91234-5678 ou 11912345678"
+    "Telefone inv�lido. Formato esperado: (11) 91234-5678 ou 11912345678",
   );
 
 // Schema para email
@@ -95,7 +98,10 @@ export const emailSchema = z.string().email("Email inv�lido");
 // Schema para cliente
 export const clienteSchema = z.object({
   id: z.string().uuid(),
-  nome: z.string().min(3, "Nome deve ter no m�nimo 3 caracteres").max(200, "Nome muito longo"),
+  nome: z
+    .string()
+    .min(3, "Nome deve ter no m�nimo 3 caracteres")
+    .max(200, "Nome muito longo"),
   cpfCnpj: z.union([cpfSchema, cnpjSchema]),
   email: emailSchema.optional(),
   telefone: telefoneSchema.optional(),
@@ -116,9 +122,22 @@ export const minutaSchema = z.object({
     .min(5, "T�tulo deve ter no m�nimo 5 caracteres")
     .max(200, "T�tulo muito longo"),
   processId: z.string().uuid().optional(),
-  tipo: z.enum(["peticao", "contrato", "parecer", "recurso", "procuracao", "outro"]),
+  tipo: z.enum([
+    "peticao",
+    "contrato",
+    "parecer",
+    "recurso",
+    "procuracao",
+    "outro",
+  ]),
   conteudo: z.string().min(10, "Conte�do muito curto"),
-  status: z.enum(["rascunho", "em-revisao", "pendente-revisao", "finalizada", "arquivada"]),
+  status: z.enum([
+    "rascunho",
+    "em-revisao",
+    "pendente-revisao",
+    "finalizada",
+    "arquivada",
+  ]),
   criadoEm: z.string().datetime(),
   atualizadoEm: z.string().datetime(),
   autor: z.string().min(3, "Nome do autor inv�lido"),
@@ -157,7 +176,10 @@ export const agentTaskSchema = z.object({
   type: z.string().min(3, "Tipo de tarefa inv�lido"),
   priority: z.enum(["low", "medium", "high", "critical"]),
   status: z.enum(["pending", "in_progress", "completed", "failed"]),
-  description: z.string().min(5, "Descri��o muito curta").max(1000, "Descri��o muito longa"),
+  description: z
+    .string()
+    .min(5, "Descri��o muito curta")
+    .max(1000, "Descri��o muito longa"),
   data: z.record(z.any()).optional(),
   result: z.record(z.any()).optional(),
   error: z.string().optional(),

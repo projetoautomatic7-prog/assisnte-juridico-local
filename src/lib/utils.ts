@@ -32,7 +32,7 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string) {
         }
         return `"${stringValue.replaceAll('"', '""')}"`;
       })
-      .join(",")
+      .join(","),
   );
 
   const csv = [csvHeaders, ...csvRows].join("\n");
@@ -59,14 +59,17 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string) {
  * Para habilitar, instale: npm install xlsx
  * E descomente o código abaixo.
  */
-export async function exportToXLSX(data: Record<string, unknown>[], filename: string) {
+export async function exportToXLSX(
+  data: Record<string, unknown>[],
+  filename: string,
+) {
   if (globalThis.window === undefined) return;
   if (!data || data.length === 0) return;
 
   // Funcionalidade desabilitada - xlsx não está instalado
   // Para habilitar, instale xlsx e descomente o código abaixo
   console.warn(
-    "[exportToXLSX] Funcionalidade desabilitada. Instale 'xlsx' para habilitar exportação Excel."
+    "[exportToXLSX] Funcionalidade desabilitada. Instale 'xlsx' para habilitar exportação Excel.",
   );
 
   // Fallback: exportar como CSV
@@ -91,7 +94,7 @@ export async function exportToXLSX(data: Record<string, unknown>[], filename: st
             ? `"${str.replaceAll('"', '""')}"`
             : str;
         })
-        .join(",")
+        .join(","),
     ),
   ].join("\n");
 
@@ -133,7 +136,10 @@ export function formatDateTime(date: string | Date): string {
 
 const DEFAULT_TZ = "America/Sao_Paulo";
 
-export function formatDateTz(date: string | Date, timeZone: string = DEFAULT_TZ): string {
+export function formatDateTz(
+  date: string | Date,
+  timeZone: string = DEFAULT_TZ,
+): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return "";
 
@@ -150,7 +156,10 @@ export function formatDateTz(date: string | Date, timeZone: string = DEFAULT_TZ)
   }
 }
 
-export function formatDateTimeTz(date: string | Date, timeZone: string = DEFAULT_TZ): string {
+export function formatDateTimeTz(
+  date: string | Date,
+  timeZone: string = DEFAULT_TZ,
+): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return "";
 
@@ -191,7 +200,10 @@ export function parsePjeDate(dateStr: string): Date | null {
 /**
  * Converte "dd/MM/yyyy" + "HH:mm" → Date
  */
-export function parsePjeDateTime(dateStr: string, timeStr?: string): Date | null {
+export function parsePjeDateTime(
+  dateStr: string,
+  timeStr?: string,
+): Date | null {
   const baseDate = parsePjeDate(dateStr);
   if (!baseDate) return null;
 

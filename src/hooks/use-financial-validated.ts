@@ -21,7 +21,10 @@ export interface FinancialEntry {
 }
 
 export function useFinancialValidated() {
-  const [entries, setEntries] = useKV<FinancialEntry[]>("financial-entries", []);
+  const [entries, setEntries] = useKV<FinancialEntry[]>(
+    "financial-entries",
+    [],
+  );
 
   // Adicionar lan�amento financeiro com valida��o
   const addEntry = useCallback(
@@ -37,7 +40,9 @@ export function useFinancialValidated() {
       const validation = validateFinancialEntry(newEntry);
       if (!validation.isValid) {
         console.error("Valida��o falhou:", validation.errors);
-        toast.error("Dados do lan�amento inv�lidos. Verifique os campos obrigat�rios.");
+        toast.error(
+          "Dados do lan�amento inv�lidos. Verifique os campos obrigat�rios.",
+        );
         return null;
       }
 
@@ -45,7 +50,7 @@ export function useFinancialValidated() {
       toast.success("Lan�amento adicionado com sucesso!");
       return validation.data as FinancialEntry;
     },
-    [setEntries]
+    [setEntries],
   );
 
   // Atualizar lan�amento com valida��o
@@ -74,12 +79,12 @@ export function useFinancialValidated() {
             return updated;
           }
           return e;
-        })
+        }),
       );
 
       return updated;
     },
-    [setEntries]
+    [setEntries],
   );
 
   // Remover lan�amento
@@ -88,7 +93,7 @@ export function useFinancialValidated() {
       setEntries((prev) => prev.filter((e) => e.id !== id));
       toast.success("Lan�amento removido!");
     },
-    [setEntries]
+    [setEntries],
   );
 
   // Buscar lan�amento por ID
@@ -96,7 +101,7 @@ export function useFinancialValidated() {
     (id: string) => {
       return entries.find((e) => e.id === id);
     },
-    [entries]
+    [entries],
   );
 
   // Buscar lan�amentos por tipo
@@ -104,7 +109,7 @@ export function useFinancialValidated() {
     (type: "income" | "expense") => {
       return entries.filter((e) => e.type === type);
     },
-    [entries]
+    [entries],
   );
 
   // Buscar lan�amentos por processo
@@ -112,7 +117,7 @@ export function useFinancialValidated() {
     (processId: string) => {
       return entries.filter((e) => e.processId === processId);
     },
-    [entries]
+    [entries],
   );
 
   // Buscar lan�amentos por categoria
@@ -120,7 +125,7 @@ export function useFinancialValidated() {
     (category: string) => {
       return entries.filter((e) => e.category === category);
     },
-    [entries]
+    [entries],
   );
 
   // Buscar lan�amentos por per�odo
@@ -133,7 +138,7 @@ export function useFinancialValidated() {
         return entryDate >= start && entryDate <= end;
       });
     },
-    [entries]
+    [entries],
   );
 
   // Calcular total de receitas
@@ -144,13 +149,15 @@ export function useFinancialValidated() {
       if (startDate && endDate) {
         filtered = filtered.filter((e) => {
           const entryDate = new Date(e.date);
-          return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
+          return (
+            entryDate >= new Date(startDate) && entryDate <= new Date(endDate)
+          );
         });
       }
 
       return filtered.reduce((sum, e) => sum + e.amount, 0);
     },
-    [entries]
+    [entries],
   );
 
   // Calcular total de despesas
@@ -161,13 +168,15 @@ export function useFinancialValidated() {
       if (startDate && endDate) {
         filtered = filtered.filter((e) => {
           const entryDate = new Date(e.date);
-          return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
+          return (
+            entryDate >= new Date(startDate) && entryDate <= new Date(endDate)
+          );
         });
       }
 
       return filtered.reduce((sum, e) => sum + e.amount, 0);
     },
-    [entries]
+    [entries],
   );
 
   // Calcular saldo (receitas - despesas)
@@ -177,13 +186,15 @@ export function useFinancialValidated() {
       const expense = getTotalExpense(startDate, endDate);
       return income - expense;
     },
-    [getTotalIncome, getTotalExpense]
+    [getTotalIncome, getTotalExpense],
   );
 
   // Obter categorias �nicas
   const getUniqueCategories = useCallback(() => {
     const categories = entries.map((e) => e.category);
-    return Array.from(new Set(categories)).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return Array.from(new Set(categories)).sort((a, b) =>
+      a.localeCompare(b, "pt-BR"),
+    );
   }, [entries]);
 
   // Resumo financeiro por categoria

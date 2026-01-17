@@ -20,7 +20,8 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-pro";
 
 /** URL base da API do Gemini */
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
  * Configurações opcionais para chamadas ao Gemini
@@ -65,7 +66,9 @@ interface GeminiResponse {
  */
 function ensureGeminiConfigured(): void {
   if (!GEMINI_API_KEY) {
-    throw new Error("Chave do Gemini não configurada. Defina VITE_GEMINI_API_KEY no .env");
+    throw new Error(
+      "Chave do Gemini não configurada. Defina VITE_GEMINI_API_KEY no .env",
+    );
   }
 }
 
@@ -93,7 +96,7 @@ export function isGeminiAvailable(): boolean {
  */
 export async function geminiGenerateText(
   prompt: string,
-  options: GeminiOptions = {}
+  options: GeminiOptions = {},
 ): Promise<string> {
   ensureGeminiConfigured();
 
@@ -136,7 +139,9 @@ export async function geminiGenerateText(
 
   if (!res.ok) {
     const errorText = await res.text().catch(() => "");
-    throw new Error(`Erro ao chamar Gemini: ${res.status} ${res.statusText} ${errorText}`);
+    throw new Error(
+      `Erro ao chamar Gemini: ${res.status} ${res.statusText} ${errorText}`,
+    );
   }
 
   const data = (await res.json()) as GeminiResponse;
@@ -183,7 +188,7 @@ export async function geminiGenerateText(
  */
 export async function geminiGenerateJSON<T = unknown>(
   prompt: string,
-  options: GeminiOptions = {}
+  options: GeminiOptions = {},
 ): Promise<T> {
   const rawText = await geminiGenerateText(prompt, options);
 
@@ -192,7 +197,9 @@ export async function geminiGenerateJSON<T = unknown>(
   const codeBlockStart = rawText.indexOf("```");
   const codeBlockEnd = rawText.indexOf("```", codeBlockStart + 3);
   if (codeBlockStart !== -1 && codeBlockEnd !== -1) {
-    let blockContent = rawText.substring(codeBlockStart + 3, codeBlockEnd).trim();
+    let blockContent = rawText
+      .substring(codeBlockStart + 3, codeBlockEnd)
+      .trim();
     // Remove 'json' prefix if present
     if (blockContent.startsWith("json")) {
       blockContent = blockContent.substring(4).trim();
@@ -209,7 +216,7 @@ export async function geminiGenerateJSON<T = unknown>(
       parseError: error,
     });
     throw new Error(
-      "A IA não retornou um JSON válido. Tente novamente ou ajuste o prompt/entrada."
+      "A IA não retornou um JSON válido. Tente novamente ou ajuste o prompt/entrada.",
     );
   }
 }
@@ -233,7 +240,7 @@ export async function geminiGenerateJSON<T = unknown>(
 export async function geminiGenerateWithSystem(
   systemPrompt: string,
   userPrompt: string,
-  options: GeminiOptions = {}
+  options: GeminiOptions = {},
 ): Promise<string> {
   ensureGeminiConfigured();
 
@@ -279,7 +286,9 @@ export async function geminiGenerateWithSystem(
 
   if (!res.ok) {
     const errorText = await res.text().catch(() => "");
-    throw new Error(`Erro ao chamar Gemini: ${res.status} ${res.statusText} ${errorText}`);
+    throw new Error(
+      `Erro ao chamar Gemini: ${res.status} ${res.statusText} ${errorText}`,
+    );
   }
 
   const data = (await res.json()) as GeminiResponse;
@@ -317,16 +326,22 @@ export async function geminiGenerateWithSystem(
 export async function geminiGenerateJSONWithSystem<T = unknown>(
   systemPrompt: string,
   userPrompt: string,
-  options: GeminiOptions = {}
+  options: GeminiOptions = {},
 ): Promise<T> {
-  const rawText = await geminiGenerateWithSystem(systemPrompt, userPrompt, options);
+  const rawText = await geminiGenerateWithSystem(
+    systemPrompt,
+    userPrompt,
+    options,
+  );
 
   // Tenta extrair JSON de bloco de código markdown se presente
   let jsonText = rawText;
   const codeBlockStart = rawText.indexOf("```");
   const codeBlockEnd = rawText.indexOf("```", codeBlockStart + 3);
   if (codeBlockStart !== -1 && codeBlockEnd !== -1) {
-    let blockContent = rawText.substring(codeBlockStart + 3, codeBlockEnd).trim();
+    let blockContent = rawText
+      .substring(codeBlockStart + 3, codeBlockEnd)
+      .trim();
     if (blockContent.startsWith("json")) {
       blockContent = blockContent.substring(4).trim();
     }
@@ -342,7 +357,7 @@ export async function geminiGenerateJSONWithSystem<T = unknown>(
       parseError: error,
     });
     throw new Error(
-      "A IA não retornou um JSON válido. Tente novamente ou ajuste o prompt/entrada."
+      "A IA não retornou um JSON válido. Tente novamente ou ajuste o prompt/entrada.",
     );
   }
 }

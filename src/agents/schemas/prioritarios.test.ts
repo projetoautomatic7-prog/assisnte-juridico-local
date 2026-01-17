@@ -71,7 +71,9 @@ describe("RedacaoPeticoesOutputSchema", () => {
       revisao_ortografica: true,
     };
 
-    expect(() => validateAgentOutput(RedacaoPeticoesOutputSchema, invalid)).toThrow();
+    expect(() =>
+      validateAgentOutput(RedacaoPeticoesOutputSchema, invalid),
+    ).toThrow();
   });
 
   test("rejeita pedidos vazios", () => {
@@ -87,7 +89,9 @@ describe("RedacaoPeticoesOutputSchema", () => {
       revisao_ortografica: true,
     };
 
-    expect(() => validateAgentOutput(RedacaoPeticoesOutputSchema, invalid)).toThrow();
+    expect(() =>
+      validateAgentOutput(RedacaoPeticoesOutputSchema, invalid),
+    ).toThrow();
   });
 });
 
@@ -101,7 +105,8 @@ describe("PesquisaJurisOutputSchema", () => {
       consulta_realizada: "danos morais consumidor",
       resultados: [
         {
-          ementa: "CONSUMIDOR. DANOS MORAIS. FALHA NA PRESTAÇÃO DE SERVIÇO. DEVER DE INDENIZAR.",
+          ementa:
+            "CONSUMIDOR. DANOS MORAIS. FALHA NA PRESTAÇÃO DE SERVIÇO. DEVER DE INDENIZAR.",
           numero_processo: "1234567-89.2020.8.26.0100",
           tribunal: "TJSP",
           data_julgamento: "2023-05-15",
@@ -148,7 +153,9 @@ describe("PesquisaJurisOutputSchema", () => {
         "Na ausência de jurisprudência específica, fundamentar o pedido em princípios constitucionais e legislação pertinente",
     };
 
-    expect(() => validateAgentOutput(PesquisaJurisOutputSchema, valid)).not.toThrow();
+    expect(() =>
+      validateAgentOutput(PesquisaJurisOutputSchema, valid),
+    ).not.toThrow();
   });
 
   test("rejeita relevância fora do range", () => {
@@ -168,7 +175,9 @@ describe("PesquisaJurisOutputSchema", () => {
       recomendacao_uso: "Recomendação",
     };
 
-    expect(() => validateAgentOutput(PesquisaJurisOutputSchema, invalid)).toThrow();
+    expect(() =>
+      validateAgentOutput(PesquisaJurisOutputSchema, invalid),
+    ).toThrow();
   });
 });
 
@@ -225,7 +234,8 @@ describe("AnaliseDocumentalOutputSchema", () => {
           clausula: "Cláusula 5ª - Rescisão",
           localizacao: "Cláusula 5ª",
           tipo: "risco_medio",
-          observacao: "Multa rescisória de 3 meses pode ser alta para o contratante",
+          observacao:
+            "Multa rescisória de 3 meses pode ser alta para o contratante",
         },
       ],
       conformidade_legal: {
@@ -238,7 +248,8 @@ describe("AnaliseDocumentalOutputSchema", () => {
       },
       documentos_faltantes: ["Anexo I - Escopo de serviços detalhado"],
       pontos_atencao: ["Valor da multa rescisória", "Ausência de SLA definido"],
-      proxima_acao: "Solicitar revisão das cláusulas 5ª e 8ª antes da assinatura",
+      proxima_acao:
+        "Solicitar revisão das cláusulas 5ª e 8ª antes da assinatura",
     };
 
     const result = validateAgentOutput(AnaliseDocumentalOutputSchema, valid);
@@ -274,7 +285,9 @@ describe("AnaliseDocumentalOutputSchema", () => {
       proxima_acao: "Ação sugerida",
     };
 
-    expect(() => validateAgentOutput(AnaliseDocumentalOutputSchema, invalid)).toThrow();
+    expect(() =>
+      validateAgentOutput(AnaliseDocumentalOutputSchema, invalid),
+    ).toThrow();
   });
 });
 
@@ -350,7 +363,9 @@ describe("MonitorDJENOutputSchema", () => {
       proxima_consulta_sugerida: "Amanhã",
     };
 
-    expect(() => validateAgentOutput(MonitorDJENOutputSchema, invalid)).toThrow();
+    expect(() =>
+      validateAgentOutput(MonitorDJENOutputSchema, invalid),
+    ).toThrow();
   });
 
   test("valida consulta sem publicações", () => {
@@ -371,6 +386,8 @@ describe("MonitorDJENOutputSchema", () => {
       proxima_consulta_sugerida: "2024-01-16 às 10:00",
     };
 
-    expect(() => validateAgentOutput(MonitorDJENOutputSchema, valid)).not.toThrow();
+    expect(() =>
+      validateAgentOutput(MonitorDJENOutputSchema, valid),
+    ).not.toThrow();
   });
 });

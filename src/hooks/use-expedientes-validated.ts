@@ -28,7 +28,7 @@ export function useExpedientesValidated() {
       if (expediente.numeroProcesso) {
         const normalizedNum = normalizeProcessNumber(expediente.numeroProcesso);
         const processo = (processes || []).find(
-          (p) => normalizeProcessNumber(p.numeroCNJ) === normalizedNum
+          (p) => normalizeProcessNumber(p.numeroCNJ) === normalizedNum,
         );
         if (processo) {
           return { ...expediente, processId: processo.id };
@@ -37,7 +37,7 @@ export function useExpedientesValidated() {
 
       return expediente;
     },
-    [processes]
+    [processes],
   );
 
   /**
@@ -63,7 +63,9 @@ export function useExpedientesValidated() {
 
       if (!validation.isValid) {
         console.error("Valida��o falhou:", validation.errors);
-        toast.error("Dados do expediente inv�lidos. Verifique os campos obrigat�rios.");
+        toast.error(
+          "Dados do expediente inv�lidos. Verifique os campos obrigat�rios.",
+        );
         return null;
       }
 
@@ -78,7 +80,7 @@ export function useExpedientesValidated() {
 
       return linkedExpediente;
     },
-    [setExpedientes, autoLinkToProcess, triggerProcessSync]
+    [setExpedientes, autoLinkToProcess, triggerProcessSync],
   );
 
   /**
@@ -103,7 +105,9 @@ export function useExpedientesValidated() {
           const linked = autoLinkToProcess(validation.data as Expediente);
           validados.push(linked);
         } else {
-          erros.push(`Expediente inv�lido: ${JSON.stringify(validation.errors)}`);
+          erros.push(
+            `Expediente inv�lido: ${JSON.stringify(validation.errors)}`,
+          );
         }
       }
 
@@ -120,7 +124,7 @@ export function useExpedientesValidated() {
 
       return { validados, erros };
     },
-    [setExpedientes, autoLinkToProcess, triggerProcessSync]
+    [setExpedientes, autoLinkToProcess, triggerProcessSync],
   );
 
   /**
@@ -153,12 +157,12 @@ export function useExpedientesValidated() {
             return updated;
           }
           return exp;
-        })
+        }),
       );
 
       return updated;
     },
-    [setExpedientes, triggerProcessSync]
+    [setExpedientes, triggerProcessSync],
   );
 
   /**
@@ -170,7 +174,7 @@ export function useExpedientesValidated() {
       toast.success("Expediente removido!");
       triggerProcessSync();
     },
-    [setExpedientes, triggerProcessSync]
+    [setExpedientes, triggerProcessSync],
   );
 
   /**
@@ -180,7 +184,7 @@ export function useExpedientesValidated() {
     (id: string) => {
       return expedientes.find((exp) => exp.id === id);
     },
-    [expedientes]
+    [expedientes],
   );
 
   /**
@@ -194,10 +198,11 @@ export function useExpedientesValidated() {
       return expedientes.filter(
         (exp) =>
           exp.processId === processId ||
-          normalizeProcessNumber(exp.numeroProcesso) === normalizeProcessNumber(processo.numeroCNJ)
+          normalizeProcessNumber(exp.numeroProcesso) ===
+            normalizeProcessNumber(processo.numeroCNJ),
       );
     },
-    [expedientes, processes]
+    [expedientes, processes],
   );
 
   /**
@@ -214,7 +219,7 @@ export function useExpedientesValidated() {
     (status: Expediente["status"]) => {
       return expedientes.filter((exp) => exp.status === status);
     },
-    [expedientes]
+    [expedientes],
   );
 
   /**
@@ -224,7 +229,7 @@ export function useExpedientesValidated() {
     (prioridade: Expediente["prioridade"]) => {
       return expedientes.filter((exp) => exp.prioridade === prioridade);
     },
-    [expedientes]
+    [expedientes],
   );
 
   /**
@@ -235,7 +240,9 @@ export function useExpedientesValidated() {
       if (!exp.prazo) return false;
       const dataFinal = new Date(exp.prazo.dataFinal);
       const hoje = new Date();
-      const diffDias = Math.ceil((dataFinal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDias = Math.ceil(
+        (dataFinal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+      );
       return diffDias <= 3 && diffDias >= 0;
     });
   }, [expedientes]);

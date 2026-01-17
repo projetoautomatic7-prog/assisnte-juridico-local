@@ -90,9 +90,15 @@ interface MessageContentParams {
 
 function renderMessageContent(
   params: MessageContentParams,
-  SimpleMarkdown: ComponentType<{ content: string }>
+  SimpleMarkdown: ComponentType<{ content: string }>,
 ): ReactNode {
-  const { messageId, streamingMessageId, isStreaming, streamingContent, messageContent } = params;
+  const {
+    messageId,
+    streamingMessageId,
+    isStreaming,
+    streamingContent,
+    messageContent,
+  } = params;
 
   // Caso 1: Mensagem em streaming ativo
   if (messageId === streamingMessageId && isStreaming) {
@@ -193,17 +199,29 @@ const SimpleMarkdown = memo(({ content }: { content: string }) => {
     return (
       content
         // Headers
-        .replaceAll(/^### (.+)$/gm, '<h3 class="text-base font-bold mt-3 mb-1">$1</h3>')
-        .replaceAll(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-4 mb-2">$1</h2>')
-        .replaceAll(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
+        .replaceAll(
+          /^### (.+)$/gm,
+          '<h3 class="text-base font-bold mt-3 mb-1">$1</h3>',
+        )
+        .replaceAll(
+          /^## (.+)$/gm,
+          '<h2 class="text-lg font-bold mt-4 mb-2">$1</h2>',
+        )
+        .replaceAll(
+          /^# (.+)$/gm,
+          '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>',
+        )
         // Bold
-        .replaceAll(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+        .replaceAll(
+          /\*\*(.+?)\*\*/g,
+          '<strong class="font-semibold">$1</strong>',
+        )
         // Italic
         .replaceAll(/\*(.+?)\*/g, "<em>$1</em>")
         // Code inline
         .replaceAll(
           /`(.+?)`/g,
-          '<code class="px-1 py-0.5 bg-muted rounded text-sm font-mono">$1</code>'
+          '<code class="px-1 py-0.5 bg-muted rounded text-sm font-mono">$1</code>',
         )
         // Lists
         .replaceAll(/^• (.+)$/gm, '<li class="ml-4">$1</li>')
@@ -246,7 +264,11 @@ const CopyButton = memo(({ text }: { text: string }) => {
       onClick={handleCopy}
       aria-label="Copiar mensagem"
     >
-      {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+      {copied ? (
+        <Check className="w-3 h-3 text-green-500" />
+      ) : (
+        <Copy className="w-3 h-3" />
+      )}
     </Button>
   );
 });
@@ -272,25 +294,32 @@ const ChatMessage = ({
 
   return (
     <div className="group">
-      <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+      <div
+        className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}
+      >
         {/* Avatar */}
         <div
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
             isUser
               ? "bg-primary text-primary-foreground"
-              : "bg-linear-to-br from-primary/20 to-accent/20"
+              : "bg-linear-to-br from-primary/20 to-accent/20",
           )}
         >
           {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
         </div>
 
         {/* Content */}
-        <div className={cn("flex-1 max-w-[80%]", isUser ? "text-right" : "text-left")}>
+        <div
+          className={cn(
+            "flex-1 max-w-[80%]",
+            isUser ? "text-right" : "text-left",
+          )}
+        >
           <Card
             className={cn(
               "p-3 inline-block text-left",
-              isUser ? "bg-primary text-primary-foreground" : "bg-card"
+              isUser ? "bg-primary text-primary-foreground" : "bg-card",
             )}
           >
             {/* Streaming ou conteúdo final */}
@@ -302,7 +331,7 @@ const ChatMessage = ({
                 streamingContent,
                 messageContent: message.content,
               },
-              SimpleMarkdown
+              SimpleMarkdown,
             )}
           </Card>
 
@@ -327,19 +356,29 @@ const ChatMessage = ({
                   key={insight.title}
                   className={cn(
                     "px-2 py-1.5 inline-flex items-center gap-1.5 text-xs",
-                    insight.action && "cursor-pointer hover:bg-accent/10"
+                    insight.action && "cursor-pointer hover:bg-accent/10",
                   )}
                   onClick={() => onInsightClick(insight.action)}
                 >
-                  {insight.type === "alert" && <Bell className="w-3 h-3 text-red-500" />}
-                  {insight.type === "statistics" && <BarChart2 className="w-3 h-3 text-blue-500" />}
-                  {insight.type === "trend" && <BarChart2 className="w-3 h-3 text-green-500" />}
+                  {insight.type === "alert" && (
+                    <Bell className="w-3 h-3 text-red-500" />
+                  )}
+                  {insight.type === "statistics" && (
+                    <BarChart2 className="w-3 h-3 text-blue-500" />
+                  )}
+                  {insight.type === "trend" && (
+                    <BarChart2 className="w-3 h-3 text-green-500" />
+                  )}
                   {insight.type === "suggestion" && (
                     <Sparkles className="w-3 h-3 text-purple-500" />
                   )}
-                  {insight.type === "info" && <AlertTriangle className="w-3 h-3 text-amber-500" />}
+                  {insight.type === "info" && (
+                    <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  )}
                   <span className="font-medium">{insight.title}</span>
-                  {insight.value && <span className="font-bold">{insight.value}</span>}
+                  {insight.value && (
+                    <span className="font-bold">{insight.value}</span>
+                  )}
                   {insight.action && <ArrowRight className="w-3 h-3" />}
                 </Card>
               ))}
@@ -363,7 +402,9 @@ export default function HarveySpecterChat({
   const [messages, setMessages] = useKV<Message[]>("harvey-messages", []);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null,
+  );
   const [sessionId] = useState(`harvey-${Date.now()}`); // 🔥 Session ID para tracking
   const [conversationTurn, setConversationTurn] = useState(0); // 🔥 Contador de turnos
 
@@ -392,7 +433,9 @@ export default function HarveySpecterChat({
       // Scroll suave durante streaming
       requestAnimationFrame(() => {
         if (scrollAreaRef.current) {
-          const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
+          const viewport = scrollAreaRef.current.querySelector(
+            "[data-radix-scroll-area-viewport]",
+          );
           if (viewport) {
             viewport.scrollTop = viewport.scrollHeight;
           }
@@ -405,7 +448,9 @@ export default function HarveySpecterChat({
     },
     onTokens: (metrics) => {
       // 🔥 NOVO: Log de métricas de tokens
-      console.log(`[Harvey] Tokens: ${metrics.total} | Custo: $${metrics.cost.toFixed(4)}`);
+      console.log(
+        `[Harvey] Tokens: ${metrics.total} | Custo: $${metrics.cost.toFixed(4)}`,
+      );
     },
   });
 
@@ -420,7 +465,8 @@ export default function HarveySpecterChat({
 
     const totalProcesses = processes?.length || 0;
     const processesByStatus = {
-      "Em Andamento": processes?.filter((p) => p.status === "ativo").length || 0,
+      "Em Andamento":
+        processes?.filter((p) => p.status === "ativo").length || 0,
       Aguardando: processes?.filter((p) => p.status === "suspenso").length || 0,
       Concluído: processes?.filter((p) => p.status === "concluido").length || 0,
       Arquivado: processes?.filter((p) => p.status === "arquivado").length || 0,
@@ -458,7 +504,9 @@ export default function HarveySpecterChat({
     const monthlyRecords =
       financialRecords?.filter((r) => {
         const date = new Date(r.date);
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        return (
+          date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        );
       }) || [];
 
     const receita = monthlyRecords
@@ -467,11 +515,14 @@ export default function HarveySpecterChat({
     const despesas = monthlyRecords
       .filter((r) => r.type === "expense")
       .reduce((sum, r) => sum + r.amount, 0);
-    const margem = receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
+    const margem =
+      receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
 
     // Tarefas
-    const pendingTasks = taskQueue?.filter((t) => t.status === "queued").length || 0;
-    const inProgressTasks = taskQueue?.filter((t) => t.status === "processing").length || 0;
+    const pendingTasks =
+      taskQueue?.filter((t) => t.status === "queued").length || 0;
+    const inProgressTasks =
+      taskQueue?.filter((t) => t.status === "processing").length || 0;
 
     return {
       totalProcesses,
@@ -484,7 +535,9 @@ export default function HarveySpecterChat({
       pendingTasks,
       inProgressTasks,
       hasData:
-        totalProcesses > 0 || (financialRecords?.length ?? 0) > 0 || (taskQueue?.length ?? 0) > 0,
+        totalProcesses > 0 ||
+        (financialRecords?.length ?? 0) > 0 ||
+        (taskQueue?.length ?? 0) > 0,
     };
   }, [processes, financialRecords, taskQueue]);
 
@@ -595,11 +648,12 @@ export default function HarveySpecterChat({
         {
           type: "suggestion",
           title: "Dica",
-          description: "Pergunte sobre processos, prazos, financeiro ou tarefas",
+          description:
+            "Pergunte sobre processos, prazos, financeiro ou tarefas",
         },
       ];
     },
-    [realStats]
+    [realStats],
   );
 
   // System prompt (memoizado)
@@ -668,8 +722,8 @@ Regras:
 
         setMessages((current) =>
           (current || []).map((msg) =>
-            msg.id === assistantId ? { ...msg, content: finalContent } : msg
-          )
+            msg.id === assistantId ? { ...msg, content: finalContent } : msg,
+          ),
         );
 
         // 🔥 Incrementar contador de turnos após sucesso
@@ -683,8 +737,8 @@ Regras:
                   ...msg,
                   content: "Desculpe, ocorreu um erro. Tente novamente.",
                 }
-              : msg
-          )
+              : msg,
+          ),
         );
         toast.error("Erro ao processar mensagem");
       } finally {
@@ -701,7 +755,7 @@ Regras:
       streamChat,
       setMessages,
       maxMessages,
-    ]
+    ],
   );
 
   // Handlers
@@ -724,8 +778,8 @@ Regras:
                 ...msg,
                 content: (streamingContent || "") + "\n\n*[Interrompido]*",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
       setStreamingMessageId(null);
     }
@@ -745,7 +799,7 @@ Regras:
         handleSend();
       }
     },
-    [handleSend]
+    [handleSend],
   );
 
   const handleInsightClick = useCallback(
@@ -754,13 +808,15 @@ Regras:
         onNavigate(action);
       }
     },
-    [onNavigate]
+    [onNavigate],
   );
 
   // Auto-scroll quando mensagens mudam
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
+      const viewport = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
       }
@@ -784,7 +840,9 @@ Regras:
           </div>
           <div>
             <h1 className="text-lg font-bold">Harvey Specter</h1>
-            <p className="text-xs text-muted-foreground">Assistente Jurídico IA</p>
+            <p className="text-xs text-muted-foreground">
+              Assistente Jurídico IA
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -794,7 +852,12 @@ Regras:
               {realStats.urgentDeadlines > 1 ? "s" : ""}
             </Badge>
           )}
-          <Button variant="ghost" size="sm" onClick={handleClear} aria-label="Limpar conversa">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClear}
+            aria-label="Limpar conversa"
+          >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -808,9 +871,12 @@ Regras:
               // Welcome Screen
               <div className="space-y-6 py-8">
                 <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-2">Olá! Sou o Harvey Specter</h2>
+                  <h2 className="text-xl font-semibold mb-2">
+                    Olá! Sou o Harvey Specter
+                  </h2>
                   <p className="text-muted-foreground text-sm">
-                    Seu assistente jurídico com dados em tempo real do escritório
+                    Seu assistente jurídico com dados em tempo real do
+                    escritório
                   </p>
                 </div>
 
@@ -829,8 +895,12 @@ Regras:
                             <Icon className="w-4 h-4" />
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{action.title}</p>
-                            <p className="text-xs text-muted-foreground">{action.description}</p>
+                            <p className="font-medium text-sm">
+                              {action.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {action.description}
+                            </p>
                           </div>
                         </div>
                       </Card>
@@ -840,7 +910,9 @@ Regras:
 
                 {/* Suggested Questions */}
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Sugestões:</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Sugestões:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {SUGGESTED_QUESTIONS.map((q) => (
                       <Button
@@ -885,7 +957,9 @@ Regras:
               ref={inputRef}
               placeholder="Pergunte sobre processos, prazos, financeiro..."
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH + 100))}
+              onChange={(e) =>
+                setInput(e.target.value.slice(0, MAX_INPUT_LENGTH + 100))
+              }
               onKeyDown={handleKeyDown}
               disabled={isProcessing || isStreaming}
               className={cn("pr-16", isOverLimit && "border-red-500")}
@@ -893,7 +967,7 @@ Regras:
             <span
               className={cn(
                 "absolute right-2 top-1/2 -translate-y-1/2 text-xs",
-                isOverLimit ? "text-red-500" : "text-muted-foreground"
+                isOverLimit ? "text-red-500" : "text-muted-foreground",
               )}
             >
               {charCount}/{MAX_INPUT_LENGTH}
@@ -901,7 +975,12 @@ Regras:
           </div>
 
           {isStreaming ? (
-            <Button onClick={handleCancel} variant="destructive" size="icon" aria-label="Parar">
+            <Button
+              onClick={handleCancel}
+              variant="destructive"
+              size="icon"
+              aria-label="Parar"
+            >
               <Square className="w-4 h-4" />
             </Button>
           ) : (
@@ -919,12 +998,15 @@ Regras:
         {/* 🔥 NOVO: Exibir status de streaming + métricas de tokens */}
         <div className="mt-2 flex items-center justify-between text-xs">
           {isStreaming ? (
-            <p className="text-muted-foreground animate-pulse">✨ Harvey está pensando...</p>
+            <p className="text-muted-foreground animate-pulse">
+              ✨ Harvey está pensando...
+            </p>
           ) : (
             <div className="text-muted-foreground">
               {tokens && (
                 <span>
-                  📊 Tokens: {tokens.total.toLocaleString()} • Custo: ${tokens.cost.toFixed(4)}
+                  📊 Tokens: {tokens.total.toLocaleString()} • Custo: $
+                  {tokens.cost.toFixed(4)}
                 </span>
               )}
             </div>
@@ -932,8 +1014,12 @@ Regras:
 
           {tokens && !isStreaming && (
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span title="Tokens de entrada (prompt)">↗ {tokens.prompt.toLocaleString()}</span>
-              <span title="Tokens de saída (resposta)">↙ {tokens.completion.toLocaleString()}</span>
+              <span title="Tokens de entrada (prompt)">
+                ↗ {tokens.prompt.toLocaleString()}
+              </span>
+              <span title="Tokens de saída (resposta)">
+                ↙ {tokens.completion.toLocaleString()}
+              </span>
             </div>
           )}
         </div>

@@ -10,7 +10,7 @@ export class QdrantApiClient implements QdrantClient {
   async search(
     vector: number[],
     limit: number = 10,
-    filter?: Record<string, unknown>
+    filter?: Record<string, unknown>,
   ): Promise<SearchResult[]> {
     const response = await fetch(`${this.baseUrl}/api/qdrant/search`, {
       method: "POST",

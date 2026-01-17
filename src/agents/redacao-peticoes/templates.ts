@@ -5,7 +5,7 @@
 export function formatPetitionResult(
   tipo: string,
   draftLength: number,
-  tokenUsage?: number
+  tokenUsage?: number,
 ): string {
   return `
 📝 **Petição Redigida com Sucesso**
@@ -27,7 +27,7 @@ export function formatPetitionResult(
 export function formatErrorMessage(
   errorType: string,
   errorMessage: string,
-  context: { tipo?: string }
+  context: { tipo?: string },
 ): string {
   return `
 ⚠️ **Erro na redação da petição**

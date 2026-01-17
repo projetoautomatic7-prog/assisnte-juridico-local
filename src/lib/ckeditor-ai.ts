@@ -78,11 +78,14 @@ class CkEditorAiToolkitImpl implements AiToolkit {
     if (plugins.has("Italic")) features.push("Italic text (<em>)");
     if (plugins.has("Underline")) features.push("Underline (<u>)");
     if (plugins.has("Strikethrough")) features.push("Strikethrough (<s>)");
-    if (plugins.has("Heading")) features.push("Headings (<h1>, <h2>, <h3>, <h4>)");
-    if (plugins.has("List")) features.push("Bullet lists (<ul>) and Ordered lists (<ol>)");
+    if (plugins.has("Heading"))
+      features.push("Headings (<h1>, <h2>, <h3>, <h4>)");
+    if (plugins.has("List"))
+      features.push("Bullet lists (<ul>) and Ordered lists (<ol>)");
     if (plugins.has("BlockQuote")) features.push("Block quotes (<blockquote>)");
     if (plugins.has("Link")) features.push('Links (<a href="...">)');
-    if (plugins.has("Table")) features.push("Tables (<table>, <tr>, <td>, <th>)");
+    if (plugins.has("Table"))
+      features.push("Tables (<table>, <tr>, <td>, <th>)");
     if (plugins.has("Image")) features.push("Images (<img>)");
     if (plugins.has("HorizontalLine")) features.push("Horizontal rules (<hr>)");
     if (plugins.has("Code")) features.push("Inline code (<code>)");
@@ -125,7 +128,10 @@ Do not use unsupported tags like <video>, <iframe>, <canvas> or custom component
         return this.handleRead(input);
       } else if (toolName === "tiptapEdit" || toolName === "edit") {
         return this.handleEdit(input);
-      } else if (toolName === "tiptapReadSelection" || toolName === "readSelection") {
+      } else if (
+        toolName === "tiptapReadSelection" ||
+        toolName === "readSelection"
+      ) {
         return this.handleReadSelection(input);
       }
 
@@ -204,7 +210,9 @@ Do not use unsupported tags like <video>, <iframe>, <canvas> or custom component
 
   private handleEdit(input: unknown): ExecuteToolResult {
     const content =
-      input && typeof input === "object" ? (input as Record<string, unknown>).content : undefined;
+      input && typeof input === "object"
+        ? (input as Record<string, unknown>).content
+        : undefined;
 
     if (typeof content !== "string" || content.trim().length === 0) {
       return {

@@ -28,7 +28,7 @@ export interface QdrantClient {
   search(
     vector: number[],
     limit?: number,
-    filter?: Record<string, unknown>
+    filter?: Record<string, unknown>,
   ): Promise<SearchResult[]>;
   upsert(points: QdrantPoint[]): Promise<void>;
 }
@@ -64,7 +64,7 @@ export class QdrantService {
   async search(
     vector: number[],
     limit: number = 10,
-    filter?: Record<string, unknown>
+    filter?: Record<string, unknown>,
   ): Promise<SearchResult[]> {
     this.validateVector(vector, this.collectionVectorSize);
 
@@ -78,7 +78,7 @@ export class QdrantService {
     try {
       if (process.env.DEBUG_TESTS === "true") {
         console.debug(
-          `QdrantService: searching collection=${this.config.collectionName} limit=${limit}`
+          `QdrantService: searching collection=${this.config.collectionName} limit=${limit}`,
         );
       }
       const response = await fetch(
@@ -94,11 +94,13 @@ export class QdrantService {
             with_payload: true,
             with_vector: false,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
-        throw new Error(`Qdrant API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Qdrant API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -141,15 +143,17 @@ export class QdrantService {
           body: JSON.stringify({
             points,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
-        throw new Error(`Qdrant API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Qdrant API error: ${response.status} ${response.statusText}`,
+        );
       }
       if (process.env.DEBUG_TESTS === "true") {
         console.debug(
-          `QdrantService: upserted ${points.length} points into ${this.config.collectionName}`
+          `QdrantService: upserted ${points.length} points into ${this.config.collectionName}`,
         );
       }
     } finally {
@@ -164,7 +168,7 @@ export class QdrantService {
    */
   async createCollection(
     vectorSize: number,
-    distance: "Cosine" | "Euclidean" | "Dot" = "Cosine"
+    distance: "Cosine" | "Euclidean" | "Dot" = "Cosine",
   ): Promise<void> {
     if (vectorSize < 1 || vectorSize > 10000) {
       throw new Error("Vector size must be between 1 and 10000");
@@ -176,24 +180,29 @@ export class QdrantService {
     try {
       if (process.env.DEBUG_TESTS === "true") {
         console.debug(
-          `QdrantService: creating collection=${this.config.collectionName} size=${vectorSize}`
+          `QdrantService: creating collection=${this.config.collectionName} size=${vectorSize}`,
         );
       }
-      const response = await fetch(`${this.config.url}/collections/${this.config.collectionName}`, {
-        method: "PUT",
-        headers: this.baseHeaders,
-        signal: controller.signal,
-        body: JSON.stringify({
-          vectors: {
-            size: vectorSize,
-            distance,
-          },
-        }),
-      });
+      const response = await fetch(
+        `${this.config.url}/collections/${this.config.collectionName}`,
+        {
+          method: "PUT",
+          headers: this.baseHeaders,
+          signal: controller.signal,
+          body: JSON.stringify({
+            vectors: {
+              size: vectorSize,
+              distance,
+            },
+          }),
+        },
+      );
 
       if (!response.ok && response.status !== 409) {
         // 409 = already exists
-        throw new Error(`Qdrant API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Qdrant API error: ${response.status} ${response.statusText}`,
+        );
       }
       // If creation or already exists (409), set collection vector size
       this.collectionVectorSize = vectorSize;
@@ -262,7 +271,9 @@ export class QdrantService {
  *
  * Security: Requires explicit configuration, no defaults
  */
-export function createQdrantService(config?: QdrantConfig): QdrantService | null {
+export function createQdrantService(
+  config?: QdrantConfig,
+): QdrantService | null {
   if (!config?.url || !config?.apiKey || !config?.collectionName) {
     console.warn("Qdrant configuration incomplete. Service not initialized.");
     return null;

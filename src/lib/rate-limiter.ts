@@ -202,7 +202,10 @@ export class RateLimiter {
 export class RateLimiterPresets {
   private readonly limiter: RateLimiter;
 
-  private readonly presets: Record<string, { limit: number; windowMs: number }> = {
+  private readonly presets: Record<
+    string,
+    { limit: number; windowMs: number }
+  > = {
     gemini: { limit: 60, windowMs: 60000 },
     "gemini-burst": { limit: 10, windowMs: 1000 },
     user: { limit: 100, windowMs: 60000 },
@@ -249,6 +252,10 @@ export function getDefaultRateLimiter(): RateLimiter {
   return defaultInstance;
 }
 
-export function isRateLimited(key: string, limit: number, windowMs: number): boolean {
+export function isRateLimited(
+  key: string,
+  limit: number,
+  windowMs: number,
+): boolean {
   return !getDefaultRateLimiter().isAllowed(key, limit, windowMs);
 }

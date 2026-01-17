@@ -2,7 +2,11 @@
  * Templates para Comunicação com Clientes
  */
 
-export function formatMessageResult(tipo: string, cliente: string, length: number): string {
+export function formatMessageResult(
+  tipo: string,
+  cliente: string,
+  length: number,
+): string {
   return `
 ✉️ **Mensagem Gerada com Sucesso**
 
@@ -14,7 +18,10 @@ export function formatMessageResult(tipo: string, cliente: string, length: numbe
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro ao gerar mensagem: ${errorMessage}`;
 }
 

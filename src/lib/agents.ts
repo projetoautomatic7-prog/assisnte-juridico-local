@@ -204,12 +204,13 @@ export interface AgentTaskGenerator {
 export function calcularAtrasoRetry(
   retryCount: number,
   baseMs: number = 10_000,
-  maxMs: number = 10 * 60 * 1_000
+  maxMs: number = 10 * 60 * 1_000,
 ): number {
   const safeRetry = Math.max(0, retryCount);
   const expo = Math.pow(2, safeRetry);
   // Use crypto for secure random jitter
-  const jitter = (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.3 + 0.85; // 0.85–1.15
+  const jitter =
+    (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.3 + 0.85; // 0.85–1.15
   return Math.min(baseMs * expo * jitter, maxMs);
 }
 
@@ -258,7 +259,7 @@ export const DEFAULT_TASK_TIMEOUT_MS = 10 * 60 * 1_000;
 export function isTaskTimedOut(
   task: AgentTask,
   nowMs: number = Date.now(),
-  defaultTimeoutMs: number = DEFAULT_TASK_TIMEOUT_MS
+  defaultTimeoutMs: number = DEFAULT_TASK_TIMEOUT_MS,
 ): boolean {
   if (!task.startedAt) return false;
   if (task.status !== "processing") return false;
@@ -275,7 +276,7 @@ export function isTaskTimedOut(
  */
 export function detectarTarefasTravadas(
   tarefas: AgentTask[],
-  limiteMs: number = DEFAULT_TASK_TIMEOUT_MS
+  limiteMs: number = DEFAULT_TASK_TIMEOUT_MS,
 ): AgentTask[] {
   const agora = Date.now();
 
@@ -290,7 +291,9 @@ export function recuperarTarefaTravada(task: AgentTask): AgentTask {
   const maxRetries = task.maxRetries ?? 3;
   const nowIso = new Date().toISOString();
 
-  console.warn(`[TaskEngine] Tarefa travada detectada: ${task.id} (${task.type})`);
+  console.warn(
+    `[TaskEngine] Tarefa travada detectada: ${task.id} (${task.type})`,
+  );
 
   if (retryCount <= maxRetries) {
     return agendarRetryTarefa({
@@ -459,7 +462,12 @@ export const DEFAULT_AGENTS: Agent[] = [
     enabled: true,
     lastActivity: "Aguardando tarefas",
     continuousMode: true,
-    capabilities: ["document-analysis", "text-extraction", "entity-recognition", "classification"],
+    capabilities: [
+      "document-analysis",
+      "text-extraction",
+      "entity-recognition",
+      "classification",
+    ],
   },
   {
     id: "monitor-djen",
@@ -522,7 +530,12 @@ export const DEFAULT_AGENTS: Agent[] = [
     enabled: false,
     lastActivity: "Aguardando tarefas",
     continuousMode: false,
-    capabilities: ["file-organization", "categorization", "indexing", "duplicate-detection"],
+    capabilities: [
+      "file-organization",
+      "categorization",
+      "indexing",
+      "duplicate-detection",
+    ],
   },
   {
     id: "pesquisa-juris",
@@ -585,7 +598,12 @@ export const DEFAULT_AGENTS: Agent[] = [
     enabled: false,
     lastActivity: "Aguardando tarefas",
     continuousMode: false,
-    capabilities: ["contract-analysis", "clause-review", "compliance-check", "risk-identification"],
+    capabilities: [
+      "contract-analysis",
+      "clause-review",
+      "compliance-check",
+      "risk-identification",
+    ],
   },
   {
     id: "comunicacao-clientes",
@@ -631,7 +649,12 @@ export const DEFAULT_AGENTS: Agent[] = [
     enabled: true,
     lastActivity: "Aguardando tarefas",
     continuousMode: true,
-    capabilities: ["strategic-planning", "option-analysis", "cost-benefit", "success-probability"],
+    capabilities: [
+      "strategic-planning",
+      "option-analysis",
+      "cost-benefit",
+      "success-probability",
+    ],
   },
   {
     id: "traducao-juridica",
@@ -660,7 +683,12 @@ export const DEFAULT_AGENTS: Agent[] = [
     enabled: false,
     lastActivity: "Aguardando tarefas",
     continuousMode: false,
-    capabilities: ["compliance-check", "lgpd-verification", "ethics-review", "regulatory-audit"],
+    capabilities: [
+      "compliance-check",
+      "lgpd-verification",
+      "ethics-review",
+      "regulatory-audit",
+    ],
   },
 ];
 
@@ -727,7 +755,10 @@ export function initializeAgents(existingAgents?: Agent[]): Agent[] {
  * Processa tarefa usando uma simulação de IA
  * Hoje o fluxo real usa a IA via outro cliente; isto aqui é fallback/ambiente de teste.
  */
-export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<AgentTaskResult> {
+export async function processTaskWithAI(
+  task: AgentTask,
+  agent: Agent,
+): Promise<AgentTaskResult> {
   // Simula latência mínima
   await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -743,7 +774,10 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
         lastChecked: new Date().toISOString(),
         source: "DJEN/DataJud",
       },
-      suggestions: ["Verificar publicações encontradas", "Atualizar filtros de busca"],
+      suggestions: [
+        "Verificar publicações encontradas",
+        "Atualizar filtros de busca",
+      ],
     };
   }
 
@@ -758,7 +792,9 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
       success: true,
       message: "Análise concluída com sucesso",
       data: {
-        confidence: 0.85 + (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.1,
+        confidence:
+          0.85 +
+          (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.1,
         entities: ["partes", "valores", "datas"],
         summary: "Documento analisado com alta confiança",
       },
@@ -767,7 +803,11 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
   }
 
   // Prazos
-  if (taskType.includes("deadline") || taskType.includes("prazo") || agent.type === "calculator") {
+  if (
+    taskType.includes("deadline") ||
+    taskType.includes("prazo") ||
+    agent.type === "calculator"
+  ) {
     const businessDays = (task.data.businessDays as number) || 15;
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + Math.ceil(businessDays * 1.4));
@@ -806,7 +846,7 @@ export async function processTaskWithAI(task: AgentTask, agent: Agent): Promise<
  */
 export function createTaskGenerator(
   config: AgentTaskGeneratorConfig,
-  onTaskGenerated: (task: AgentTask) => void
+  onTaskGenerated: (task: AgentTask) => void,
 ): AgentTaskGenerator {
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let currentConfig: AgentTaskGeneratorConfig = { ...config };
@@ -816,7 +856,8 @@ export function createTaskGenerator(
   const generateTask = (): AgentTask => {
     const agentsPool = currentConfig.agentIds;
     const randomIndex =
-      crypto.getRandomValues(new Uint32Array(1))[0] % Math.max(agentsPool.length, 1);
+      crypto.getRandomValues(new Uint32Array(1))[0] %
+      Math.max(agentsPool.length, 1);
     const agentId = agentsPool[randomIndex] ?? "harvey";
 
     const taskTypes: TarefaSistemaTipo[] = [
@@ -830,8 +871,13 @@ export function createTaskGenerator(
     return {
       id: `task-${Date.now()}-${crypto.randomUUID().split("-")[0]}`,
       agentId,
-      type: taskTypes[crypto.getRandomValues(new Uint32Array(1))[0] % taskTypes.length],
-      priority: priorities[crypto.getRandomValues(new Uint32Array(1))[0] % priorities.length],
+      type: taskTypes[
+        crypto.getRandomValues(new Uint32Array(1))[0] % taskTypes.length
+      ],
+      priority:
+        priorities[
+          crypto.getRandomValues(new Uint32Array(1))[0] % priorities.length
+        ],
       status: "queued",
       createdAt: new Date().toISOString(),
       data: {

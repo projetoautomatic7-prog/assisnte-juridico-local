@@ -6,7 +6,12 @@ import { useKV } from "@/hooks/use-kv";
 import { calcularDiasRestantes, formatarData, isUrgente } from "@/lib/prazos";
 import { exportToCSV } from "@/lib/utils";
 import type { Prazo, Process } from "@/types";
-import { CalendarCheck, CheckCircle, Clock, Download as DownloadSimple } from "lucide-react";
+import {
+  CalendarCheck,
+  CheckCircle,
+  Clock,
+  Download as DownloadSimple,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -53,7 +58,7 @@ function updatePrazosWithToggle(prazos: Prazo[], prazoId: string): Prazo[] {
 function updateProcessWithToggledPrazo(
   process: Process,
   prazoId: string,
-  prazoProcessId: string
+  prazoProcessId: string,
 ): Process {
   if (process.id !== prazoProcessId) return process;
 
@@ -66,9 +71,9 @@ function updateProcessWithToggledPrazo(
 
 export default function PrazosView() {
   const [processes, setProcesses] = useKV<Process[]>("processes", []);
-  const [filter, setFilter] = useState<"todos" | "pendentes" | "urgentes" | "concluidos">(
-    "pendentes"
-  );
+  const [filter, setFilter] = useState<
+    "todos" | "pendentes" | "urgentes" | "concluidos"
+  >("pendentes");
 
   const prazosComProcesso = useMemo(() => {
     const lista: (Prazo & { processo: Process })[] = [];
@@ -82,7 +87,9 @@ export default function PrazosView() {
       }
     });
 
-    return lista.sort((a, b) => a.dataFinal.localeCompare(b.dataFinal, "pt-BR"));
+    return lista.sort((a, b) =>
+      a.dataFinal.localeCompare(b.dataFinal, "pt-BR"),
+    );
   }, [processes]);
 
   const filteredPrazos = useMemo(() => {
@@ -91,7 +98,8 @@ export default function PrazosView() {
 
       if (filter === "pendentes") return !prazo.concluido;
       if (filter === "concluidos") return prazo.concluido;
-      if (filter === "urgentes") return !prazo.concluido && isUrgente(diasRestantes);
+      if (filter === "urgentes")
+        return !prazo.concluido && isUrgente(diasRestantes);
       return true;
     });
   }, [prazosComProcesso, filter]);
@@ -100,7 +108,7 @@ export default function PrazosView() {
     const pendentes = prazosComProcesso.filter((p) => !p.concluido).length;
     const concluidos = prazosComProcesso.filter((p) => p.concluido).length;
     const urgentes = prazosComProcesso.filter(
-      (p) => !p.concluido && isUrgente(calcularDiasRestantes(p.dataFinal))
+      (p) => !p.concluido && isUrgente(calcularDiasRestantes(p.dataFinal)),
     ).length;
 
     return { pendentes, concluidos, urgentes };
@@ -110,11 +118,13 @@ export default function PrazosView() {
     // Use extracted helper to reduce nesting (S2004 compliance)
     setProcesses((current) =>
       (current || []).map((process) =>
-        updateProcessWithToggledPrazo(process, prazo.id, prazo.processId)
-      )
+        updateProcessWithToggledPrazo(process, prazo.id, prazo.processId),
+      ),
     );
 
-    toast.success(prazo.concluido ? "Prazo marcado como pendente" : "Prazo concluído");
+    toast.success(
+      prazo.concluido ? "Prazo marcado como pendente" : "Prazo concluído",
+    );
   };
 
   const handleExportCSV = () => {
@@ -128,7 +138,10 @@ export default function PrazosView() {
       Vencimento: p.dataFinal,
       "Dias Restantes": calcularDiasRestantes(p.dataFinal),
       Status: p.concluido ? "Concluído" : "Pendente",
-      Urgente: !p.concluido && isUrgente(calcularDiasRestantes(p.dataFinal)) ? "Sim" : "Não",
+      Urgente:
+        !p.concluido && isUrgente(calcularDiasRestantes(p.dataFinal))
+          ? "Sim"
+          : "Não",
     }));
     exportToCSV(exportData, "prazos");
     toast.success("Prazos exportados com sucesso!");
@@ -138,8 +151,12 @@ export default function PrazosView() {
     <div className="flex flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Prazos</h1>
-          <p className="text-muted-foreground">Gerencie todos os seus prazos processuais</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Prazos
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie todos os seus prazos processuais
+          </p>
         </div>
         <Button variant="outline" onClick={handleExportCSV}>
           <DownloadSimple size={20} />
@@ -170,7 +187,9 @@ export default function PrazosView() {
             <CalendarCheck className="text-accent" size={20} />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-accent">{stats.urgentes}</div>
+            <div className="text-3xl font-bold text-accent">
+              {stats.urgentes}
+            </div>
           </CardContent>
         </Card>
 
@@ -200,8 +219,13 @@ export default function PrazosView() {
           {filteredPrazos.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
-                <CalendarCheck size={64} className="text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum prazo encontrado</h3>
+                <CalendarCheck
+                  size={64}
+                  className="text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">
+                  Nenhum prazo encontrado
+                </h3>
                 <p className="text-sm text-muted-foreground text-center max-w-md">
                   {getEmptyStateMessage(filter)}
                 </p>
@@ -214,14 +238,20 @@ export default function PrazosView() {
                 const urgente = isUrgente(diasRestantes) && !prazo.concluido;
 
                 return (
-                  <Card key={prazo.id} className={urgente ? "border-accent" : ""}>
+                  <Card
+                    key={prazo.id}
+                    className={urgente ? "border-accent" : ""}
+                  >
                     <CardContent className="flex items-start gap-4 p-6">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div className="flex flex-col gap-1 flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">{prazo.descricao}</h3>
+                            <h3 className="font-semibold truncate">
+                              {prazo.descricao}
+                            </h3>
                             <p className="text-sm text-muted-foreground truncate">
-                              {prazo.processo.titulo} - {prazo.processo.numeroCNJ}
+                              {prazo.processo.titulo} -{" "}
+                              {prazo.processo.numeroCNJ}
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1 shrink-0">
@@ -229,7 +259,9 @@ export default function PrazosView() {
                               <Badge variant="secondary">Concluído</Badge>
                             ) : (
                               <>
-                                <Badge variant={urgente ? "destructive" : "default"}>
+                                <Badge
+                                  variant={urgente ? "destructive" : "default"}
+                                >
                                   {formatDiasRestantesBadge(diasRestantes)}
                                 </Badge>
                                 {urgente && (
@@ -244,23 +276,32 @@ export default function PrazosView() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-xs text-muted-foreground">Data Início</span>
+                            <span className="text-xs text-muted-foreground">
+                              Data Início
+                            </span>
                             <span>{formatarData(prazo.dataInicio)}</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-xs text-muted-foreground">Data Final</span>
+                            <span className="text-xs text-muted-foreground">
+                              Data Final
+                            </span>
                             <span
                               className={
-                                urgente && !prazo.concluido ? "text-accent font-semibold" : ""
+                                urgente && !prazo.concluido
+                                  ? "text-accent font-semibold"
+                                  : ""
                               }
                             >
                               {formatarData(prazo.dataFinal)}
                             </span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-xs text-muted-foreground">Prazo</span>
+                            <span className="text-xs text-muted-foreground">
+                              Prazo
+                            </span>
                             <span>
-                              {prazo.diasCorridos} dias ({prazo.tipoPrazo.toUpperCase()})
+                              {prazo.diasCorridos} dias (
+                              {prazo.tipoPrazo.toUpperCase()})
                             </span>
                           </div>
                         </div>
@@ -272,7 +313,9 @@ export default function PrazosView() {
                             onClick={() => handleToggleConcluido(prazo)}
                           >
                             <CheckCircle size={16} />
-                            {prazo.concluido ? "Reabrir" : "Marcar como Concluído"}
+                            {prazo.concluido
+                              ? "Reabrir"
+                              : "Marcar como Concluído"}
                           </Button>
                         </div>
                       </div>

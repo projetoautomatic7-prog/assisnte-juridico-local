@@ -81,7 +81,10 @@ class AgentLogger {
     if (this.enableConsole) {
       const prefix = this.getPrefix(level);
       const agentInfo = context.agentName ? `[${context.agentName}]` : "";
-      console[level === "debug" ? "log" : level](`${prefix} ${agentInfo} ${message}`, context);
+      console[level === "debug" ? "log" : level](
+        `${prefix} ${agentInfo} ${message}`,
+        context,
+      );
     }
 
     // Sentry logging (produção)
@@ -147,7 +150,7 @@ export function logRetryAttempt(
   agentName: string,
   attempt: number,
   maxRetries: number,
-  delayMs: number
+  delayMs: number,
 ): void {
   logger.info("agent_retry_attempt", {
     agentName,
@@ -160,7 +163,10 @@ export function logRetryAttempt(
 /**
  * Helper para logar sucesso após retry
  */
-export function logRetrySuccess(agentName: string, successfulAttempt: number): void {
+export function logRetrySuccess(
+  agentName: string,
+  successfulAttempt: number,
+): void {
   logger.info("agent_retry_succeeded", {
     agentName,
     successfulAttempt,
@@ -173,7 +179,7 @@ export function logRetrySuccess(agentName: string, successfulAttempt: number): v
 export function logRetryExhausted(
   agentName: string,
   totalAttempts: number,
-  lastError: string
+  lastError: string,
 ): void {
   logger.error("agent_retry_exhausted", {
     agentName,
@@ -189,7 +195,7 @@ export function logValidationError(
   agentName: string,
   field: string,
   errorMessage: string,
-  receivedValue: unknown
+  receivedValue: unknown,
 ): void {
   logger.error("input_validation_failed", {
     agentName,
@@ -205,7 +211,7 @@ export function logValidationError(
 export function logAgentExecution(
   agentName: string,
   step: string,
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): void {
   logger.info("agent_execution_step", {
     agentName,
@@ -221,7 +227,7 @@ export function logStructuredError(
   agentName: string,
   errorType: string,
   errorMessage: string,
-  context: Record<string, unknown> = {}
+  context: Record<string, unknown> = {},
 ): void {
   logger.error("agent_execution_failed", {
     agentName,

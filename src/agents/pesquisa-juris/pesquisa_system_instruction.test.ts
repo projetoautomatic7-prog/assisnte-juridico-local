@@ -39,12 +39,14 @@ vi.mock("./retrievers", () => ({
 
 // Mock do Sentry/Tracing para evitar erros de alias @/
 vi.mock("../../lib/sentry-gemini-integration-v2", () => ({
-  createInvokeAgentSpan: vi.fn().mockImplementation(async (_config, _context, callback) => {
-    return callback({
-      setAttribute: vi.fn(),
-      setStatus: vi.fn(),
-    });
-  }),
+  createInvokeAgentSpan: vi
+    .fn()
+    .mockImplementation(async (_config, _context, callback) => {
+      return callback({
+        setAttribute: vi.fn(),
+        setStatus: vi.fn(),
+      });
+    }),
 }));
 
 describe("Pesquisa Juris Agent - System Instruction Validation", () => {
@@ -58,7 +60,9 @@ describe("Pesquisa Juris Agent - System Instruction Validation", () => {
       text: "Análise da pesquisa realizada com sucesso.",
       metadata: { model: "gemini-2.5-pro" },
     };
-    const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
+    const callGeminiSpy = vi
+      .mocked(GeminiService.callGemini)
+      .mockResolvedValue(mockResponse);
 
     const input = {
       tema: "Dano moral em voo atrasado",

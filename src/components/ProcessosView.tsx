@@ -38,7 +38,8 @@ type ViewMode = "grid" | "list";
 type SortOption = "recent" | "alpha" | "value" | "status";
 
 export default function ProcessosView() {
-  const { processes, addProcess, updateProcess, deleteProcess } = useProcesses();
+  const { processes, addProcess, updateProcess, deleteProcess } =
+    useProcesses();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [comarcaFilter, setComarcaFilter] = useState<string>("all");
@@ -51,7 +52,9 @@ export default function ProcessosView() {
 
   // Get unique comarcas for filter
   const comarcas = useMemo(() => {
-    const uniqueComarcas = Array.from(new Set((processes || []).map((p) => p.comarca)));
+    const uniqueComarcas = Array.from(
+      new Set((processes || []).map((p) => p.comarca)),
+    );
     return uniqueComarcas.sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [processes]);
 
@@ -67,7 +70,7 @@ export default function ProcessosView() {
           p.autor.toLowerCase().includes(searchLower) ||
           p.reu.toLowerCase().includes(searchLower) ||
           p.comarca.toLowerCase().includes(searchLower) ||
-          p.vara.toLowerCase().includes(searchLower)
+          p.vara.toLowerCase().includes(searchLower),
       );
     }
 
@@ -82,20 +85,24 @@ export default function ProcessosView() {
     // Sort results
     switch (sortBy) {
       case "alpha":
-        results = [...results].sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+        results = [...results].sort((a, b) =>
+          a.titulo.localeCompare(b.titulo, "pt-BR"),
+        );
         break;
       case "value":
         results = [...results].sort((a, b) => (b.valor || 0) - (a.valor || 0));
         break;
       case "status":
-        results = [...results].sort((a, b) => a.status.localeCompare(b.status, "pt-BR"));
+        results = [...results].sort((a, b) =>
+          a.status.localeCompare(b.status, "pt-BR"),
+        );
         break;
       case "recent":
       default:
         results = [...results].sort(
           (a, b) =>
             new Date(b.dataUltimaMovimentacao || b.dataDistribuicao).getTime() -
-            new Date(a.dataUltimaMovimentacao || a.dataDistribuicao).getTime()
+            new Date(a.dataUltimaMovimentacao || a.dataDistribuicao).getTime(),
         );
         break;
     }
@@ -107,12 +114,16 @@ export default function ProcessosView() {
   const stats = useMemo(() => {
     const total = processes?.length || 0;
     const active = processes?.filter((p) => p.status === "ativo").length || 0;
-    const archived = processes?.filter((p) => p.status === "arquivado").length || 0;
-    const totalValue = processes?.reduce((sum, p) => sum + (p.valor || 0), 0) || 0;
+    const archived =
+      processes?.filter((p) => p.status === "arquivado").length || 0;
+    const totalValue =
+      processes?.reduce((sum, p) => sum + (p.valor || 0), 0) || 0;
     const urgentDeadlines =
       processes?.reduce(
-        (count, p) => count + (p.prazos?.filter((pr) => pr.urgente && !pr.concluido).length || 0),
-        0
+        (count, p) =>
+          count +
+          (p.prazos?.filter((pr) => pr.urgente && !pr.concluido).length || 0),
+        0,
       ) || 0;
 
     return { total, active, archived, totalValue, urgentDeadlines };
@@ -179,7 +190,7 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
       const analysis = await llm(prompt, "gpt-4o");
 
       const updatedNotes = `${process.notas || ""}\n\n--- ANÁLISE IA (${new Date().toLocaleString(
-        "pt-BR"
+        "pt-BR",
       )}) ---\n${analysis}`;
 
       updateProcess(process.id, { notas: updatedNotes });
@@ -272,7 +283,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total
+              </CardTitle>
               <Scale className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>
@@ -285,12 +298,16 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Ativos</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Ativos
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.active}
+            </div>
             <p className="text-xs text-muted-foreground">em andamento</p>
           </CardContent>
         </Card>
@@ -305,7 +322,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.archived}</div>
+            <div className="text-2xl font-bold text-gray-600">
+              {stats.archived}
+            </div>
             <p className="text-xs text-muted-foreground">finalizados</p>
           </CardContent>
         </Card>
@@ -330,12 +349,17 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Prazos</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Prazos
+              </CardTitle>
               <AlertCircle className="h-4 w-4 text-red-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" style={{ color: themeConfig.colors.urgente }}>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: themeConfig.colors.urgente }}
+            >
               {stats.urgentDeadlines}
             </div>
             <p className="text-xs text-muted-foreground">urgentes</p>
@@ -385,7 +409,10 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
           </SelectContent>
         </Select>
 
-        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+        <Select
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as SortOption)}
+        >
           <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Ordenar" />
           </SelectTrigger>
@@ -398,7 +425,8 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
         </Select>
 
         <Badge variant="secondary" className="shrink-0">
-          {filteredProcesses.length} {filteredProcesses.length === 1 ? "processo" : "processos"}
+          {filteredProcesses.length}{" "}
+          {filteredProcesses.length === 1 ? "processo" : "processos"}
         </Badge>
 
         {/* View Mode Toggle */}
@@ -430,7 +458,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Gavel size={48} className="text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              {search ? "Nenhum processo encontrado" : "Nenhum processo cadastrado"}
+              {search
+                ? "Nenhum processo encontrado"
+                : "Nenhum processo cadastrado"}
             </h3>
             <p className="text-muted-foreground text-center max-w-md">
               {search
@@ -456,15 +486,22 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base line-clamp-2 mb-2">{process.titulo}</CardTitle>
-                    <p className="text-xs text-muted-foreground font-mono">{process.numeroCNJ}</p>
+                    <CardTitle className="text-base line-clamp-2 mb-2">
+                      {process.titulo}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {process.numeroCNJ}
+                    </p>
                   </div>
                   <Badge style={getStatusStyle(process.status)}>
                     {getStatusLabel(process.status)}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3" onClick={(e) => e.stopPropagation()}>
+              <CardContent
+                className="space-y-3"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
                     <Scale className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -483,14 +520,18 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                       <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs text-muted-foreground">Comarca</p>
-                        <p className="text-sm font-medium line-clamp-1">{process.comarca}</p>
+                        <p className="text-sm font-medium line-clamp-1">
+                          {process.comarca}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2">
                       <Gavel className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs text-muted-foreground">Vara</p>
-                        <p className="text-sm font-medium line-clamp-1">{process.vara}</p>
+                        <p className="text-sm font-medium line-clamp-1">
+                          {process.vara}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -499,7 +540,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-blue-500" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Valor da Causa</p>
+                        <p className="text-xs text-muted-foreground">
+                          Valor da Causa
+                        </p>
                         <p className="text-sm font-bold text-blue-600">
                           {formatCurrency(process.valor)}
                         </p>
@@ -511,7 +554,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                     <Clock className="h-3 w-3" />
                     <span>
                       Distribuído em{" "}
-                      {new Date(process.dataDistribuicao).toLocaleDateString("pt-BR")}
+                      {new Date(process.dataDistribuicao).toLocaleDateString(
+                        "pt-BR",
+                      )}
                     </span>
                   </div>
 
@@ -520,7 +565,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                       <Calendar className="h-3 w-3" />
                       <span>
                         Última movimentação:{" "}
-                        {new Date(process.dataUltimaMovimentacao).toLocaleDateString("pt-BR")}
+                        {new Date(
+                          process.dataUltimaMovimentacao,
+                        ).toLocaleDateString("pt-BR")}
                       </span>
                     </div>
                   )}
@@ -531,9 +578,12 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                     <p className="text-xs text-muted-foreground mb-1">Prazos</p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
-                        {process.prazos.filter((p) => !p.concluido).length} pendentes
+                        {process.prazos.filter((p) => !p.concluido).length}{" "}
+                        pendentes
                       </Badge>
-                      {process.prazos.some((p) => p.urgente && !p.concluido) && (
+                      {process.prazos.some(
+                        (p) => p.urgente && !p.concluido,
+                      ) && (
                         <Badge style={getUrgenteStyle()} className="text-xs">
                           <AlertCircle className="h-3 w-3 mr-1" />
                           Urgente
@@ -569,7 +619,9 @@ Seja objetivo e prático, focando em insights acionáveis para o advogado.`;
                       size={16}
                       className={`mr-2 ${analyzingProcess === process.id ? "animate-spin" : ""}`}
                     />
-                    {analyzingProcess === process.id ? "Analisando..." : "Análise IA"}
+                    {analyzingProcess === process.id
+                      ? "Analisando..."
+                      : "Análise IA"}
                   </Button>
                 </div>
               </CardContent>

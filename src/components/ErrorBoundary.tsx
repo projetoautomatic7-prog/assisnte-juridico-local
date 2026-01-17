@@ -92,8 +92,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 <div>
                   <CardTitle>Algo deu errado</CardTitle>
                   <CardDescription>
-                    Ocorreu um erro inesperado. Já fomos notificados e vamos corrigir o mais rápido
-                    possível.
+                    Ocorreu um erro inesperado. Já fomos notificados e vamos
+                    corrigir o mais rápido possível.
                   </CardDescription>
                 </div>
               </div>
@@ -107,7 +107,9 @@ export class ErrorBoundary extends Component<Props, State> {
                     Detalhes do erro (visível apenas em desenvolvimento):
                   </p>
                   <div className="p-3 bg-muted rounded-md">
-                    <pre className="text-xs overflow-auto">{this.state.error.toString()}</pre>
+                    <pre className="text-xs overflow-auto">
+                      {this.state.error.toString()}
+                    </pre>
                   </div>
                   {this.state.errorInfo?.componentStack && (
                     <details className="text-xs">
@@ -131,17 +133,27 @@ export class ErrorBoundary extends Component<Props, State> {
                   <li>Tentar novamente (clique em "Tentar novamente")</li>
                   <li>Voltar para a página inicial</li>
                   <li>Recarregar a página (F5)</li>
-                  <li>Se o problema persistir, entre em contato com o suporte</li>
+                  <li>
+                    Se o problema persistir, entre em contato com o suporte
+                  </li>
                 </ul>
               </div>
             </CardContent>
 
             <CardFooter className="flex gap-2">
-              <Button onClick={this.handleReset} variant="default" className="flex-1">
+              <Button
+                onClick={this.handleReset}
+                variant="default"
+                className="flex-1"
+              >
                 <RefreshCw className="mr-2 w-4 h-4" />
                 Tentar novamente
               </Button>
-              <Button onClick={this.handleGoHome} variant="outline" className="flex-1">
+              <Button
+                onClick={this.handleGoHome}
+                variant="outline"
+                className="flex-1"
+              >
                 <Home className="mr-2 w-4 h-4" />
                 Voltar ao início
               </Button>
@@ -173,7 +185,9 @@ export function ErrorFallback({
             <AlertTriangle className="w-5 h-5 text-destructive" />
             Erro
           </CardTitle>
-          <CardDescription>{error.message || "Ocorreu um erro inesperado"}</CardDescription>
+          <CardDescription>
+            {error.message || "Ocorreu um erro inesperado"}
+          </CardDescription>
         </CardHeader>
         <CardFooter>
           <Button onClick={resetErrorBoundary} className="w-full">

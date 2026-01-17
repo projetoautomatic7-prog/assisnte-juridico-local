@@ -25,7 +25,8 @@ export abstract class LangGraphAgent {
 
       return state;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       logger.error("Erro fatal na execução do agente", {
         agentName: this.constructor.name,
@@ -43,7 +44,10 @@ export abstract class LangGraphAgent {
   /**
    * Lógica principal do agente a ser implementada pelas subclasses
    */
-  protected abstract run(state: AgentState, signal: AbortSignal): Promise<AgentState>;
+  protected abstract run(
+    state: AgentState,
+    signal: AbortSignal,
+  ): Promise<AgentState>;
 
   /**
    * Helper para adicionar mensagem do agente ao histórico

@@ -24,12 +24,18 @@ interface LegalTaskInput {
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
 
-async function callTodoist<T>(action: string, payload?: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`${baseUrl}/api/todoist?action=${encodeURIComponent(action)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: payload ? JSON.stringify(payload) : undefined,
-  });
+async function callTodoist<T>(
+  action: string,
+  payload?: Record<string, unknown>,
+): Promise<T> {
+  const response = await fetch(
+    `${baseUrl}/api/todoist?action=${encodeURIComponent(action)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload ? JSON.stringify(payload) : undefined,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`Todoist API error: ${response.status}`);
@@ -76,9 +82,12 @@ export async function addLegalTasks(tasks: LegalTaskInput[]): Promise<Task[]> {
  * const tasks = await findLegalTasksByDate("2024-12-15");
  */
 export async function findLegalTasksByDate(date: string): Promise<Task[]> {
-  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
-    filter: date,
-  });
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>(
+    "getTasks",
+    {
+      filter: date,
+    },
+  );
   return response.tasks;
 }
 
@@ -90,9 +99,12 @@ export async function findLegalTasksByDate(date: string): Promise<Task[]> {
  * const urgentTasks = await searchLegalTasks("@processo & p1");
  */
 export async function searchLegalTasks(searchText: string): Promise<Task[]> {
-  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
-    filter: searchText,
-  });
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>(
+    "getTasks",
+    {
+      filter: searchText,
+    },
+  );
   return response.tasks;
 }
 
@@ -110,14 +122,17 @@ export async function updateLegalTask(
     dueDate?: string;
     priority?: Priority;
     labels?: string[];
-  }
+  },
 ) {
   const { dueDate, ...rest } = updates;
-  const response = await callTodoist<{ ok: boolean; task: Task }>("updateTask", {
-    id: taskId,
-    ...rest,
-    dueString: dueDate,
-  });
+  const response = await callTodoist<{ ok: boolean; task: Task }>(
+    "updateTask",
+    {
+      id: taskId,
+      ...rest,
+      dueString: dueDate,
+    },
+  );
   return response.task;
 }
 
@@ -127,7 +142,9 @@ export async function updateLegalTask(
  * @param taskId ID da tarefa no Todoist
  */
 export async function completeLegalTask(taskId: string) {
-  return await callTodoist<{ ok: boolean; message: string }>("closeTask", { id: taskId });
+  return await callTodoist<{ ok: boolean; message: string }>("closeTask", {
+    id: taskId,
+  });
 }
 
 /**
@@ -142,7 +159,7 @@ export async function createTaskFromDeadline(
   processNumber: string,
   taskType: string,
   deadline: string,
-  description?: string
+  description?: string,
 ) {
   const taskContent = `${taskType} - Processo ${processNumber}`;
   const taskDescription = description
@@ -208,9 +225,12 @@ export async function getTodayTasks() {
  * Obtém tarefas urgentes (próximos 3 dias)
  */
 export async function getUrgentTasks() {
-  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>("getTasks", {
-    filter: "3 days",
-  });
+  const response = await callTodoist<{ ok: boolean; tasks: Task[] }>(
+    "getTasks",
+    {
+      filter: "3 days",
+    },
+  );
   return response.tasks;
 }
 
@@ -218,7 +238,9 @@ export async function getUrgentTasks() {
  * Verifica se o Todoist está configurado no backend
  */
 export async function checkTodoistConfig(): Promise<boolean> {
-  const response = await callTodoist<{ ok: boolean; configured: boolean }>("checkConfig");
+  const response = await callTodoist<{ ok: boolean; configured: boolean }>(
+    "checkConfig",
+  );
   return response.configured === true;
 }
 
@@ -243,7 +265,8 @@ export function getTodoistTools() {
     },
     addTasks: {
       name: "addTasks",
-      execute: (input: { tasks: LegalTaskInput[] }) => addLegalTasks(input.tasks),
+      execute: (input: { tasks: LegalTaskInput[] }) =>
+        addLegalTasks(input.tasks),
     },
     findTasks: {
       name: "findTasks",
@@ -251,8 +274,10 @@ export function getTodoistTools() {
     },
     updateTasks: {
       name: "updateTasks",
-      execute: (input: { id: string; updates: Parameters<typeof updateLegalTask>[1] }) =>
-        updateLegalTask(input.id, input.updates),
+      execute: (input: {
+        id: string;
+        updates: Parameters<typeof updateLegalTask>[1];
+      }) => updateLegalTask(input.id, input.updates),
     },
     completeTasks: {
       name: "completeTasks",

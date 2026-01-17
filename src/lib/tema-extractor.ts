@@ -38,19 +38,47 @@ export interface TemaExtracao {
 const TAXONOMIA_JURIDICA = {
   "Direito do Trabalho": {
     Rescisão: ["Indireta", "Direta", "Culpa Recíproca", "Sem Justa Causa"],
-    Férias: ["Proporcionais", "Vencidas", "1/3 Constitucional", "Conversão em Pecúnia"],
-    Jornada: ["Horas Extras", "Adicional Noturno", "Intervalo Intrajornada", "Banco de Horas"],
-    Salário: ["13º Salário", "Equiparação Salarial", "Desvio de Função", "Gratificações"],
+    Férias: [
+      "Proporcionais",
+      "Vencidas",
+      "1/3 Constitucional",
+      "Conversão em Pecúnia",
+    ],
+    Jornada: [
+      "Horas Extras",
+      "Adicional Noturno",
+      "Intervalo Intrajornada",
+      "Banco de Horas",
+    ],
+    Salário: [
+      "13º Salário",
+      "Equiparação Salarial",
+      "Desvio de Função",
+      "Gratificações",
+    ],
     FGTS: ["Depósitos", "Multa 40%", "Saque"],
   },
   "Direito Civil": {
     Contratos: ["Rescisão", "Revisão", "Inexecução", "Vício de Consentimento"],
-    "Responsabilidade Civil": ["Danos Morais", "Danos Materiais", "Lucros Cessantes"],
-    "Direito de Família": ["Divórcio", "Alimentos", "Guarda", "Partilha de Bens"],
+    "Responsabilidade Civil": [
+      "Danos Morais",
+      "Danos Materiais",
+      "Lucros Cessantes",
+    ],
+    "Direito de Família": [
+      "Divórcio",
+      "Alimentos",
+      "Guarda",
+      "Partilha de Bens",
+    ],
     "Direitos Reais": ["Propriedade", "Posse", "Usucapião", "Servidões"],
   },
   "Direito Tributário": {
-    ICMS: ["Substituição Tributária", "Diferencial de Alíquota", "Crédito Presumido"],
+    ICMS: [
+      "Substituição Tributária",
+      "Diferencial de Alíquota",
+      "Crédito Presumido",
+    ],
     IRPJ: ["Lucro Real", "Lucro Presumido", "Distribuição de Lucros"],
     PIS: ["Cumulativo", "Não Cumulativo", "Créditos"],
     COFINS: ["Cumulativo", "Não Cumulativo", "Exclusão de ICMS"],
@@ -61,11 +89,21 @@ const TAXONOMIA_JURIDICA = {
     Auxílios: ["Doença", "Acidente", "Reclusão"],
   },
   "Direito Penal": {
-    "Crimes Contra Patrimônio": ["Furto", "Roubo", "Estelionato", "Apropriação Indébita"],
+    "Crimes Contra Patrimônio": [
+      "Furto",
+      "Roubo",
+      "Estelionato",
+      "Apropriação Indébita",
+    ],
     "Crimes Contra Pessoa": ["Homicídio", "Lesão Corporal", "Ameaça"],
   },
   "Direito Administrativo": {
-    "Servidores Públicos": ["Reintegração", "Remoção", "Gratificações", "Licenças"],
+    "Servidores Públicos": [
+      "Reintegração",
+      "Remoção",
+      "Gratificações",
+      "Licenças",
+    ],
     Licitações: ["Pregão", "Tomada de Preços", "Concorrência"],
   },
 } as const;
@@ -104,7 +142,9 @@ export class TemaExtractorService {
 
     // 3. Validação de confiança
     if (!temas.confidence || temas.confidence < this.MIN_CONFIDENCE) {
-      throw new Error(`Confiança muito baixa na extração de temas: ${temas.confidence || 0}`);
+      throw new Error(
+        `Confiança muito baixa na extração de temas: ${temas.confidence || 0}`,
+      );
     }
 
     // 4. Classificação na taxonomia
@@ -117,7 +157,7 @@ export class TemaExtractorService {
         empresas: [],
         leis: [],
         tribunais: [],
-      }
+      },
     );
 
     return {
@@ -133,7 +173,9 @@ export class TemaExtractorService {
   /**
    * Extrai temas de um expediente completo
    */
-  async extractTemasFromExpediente(expediente: Expediente): Promise<TemaExtracao> {
+  async extractTemasFromExpediente(
+    expediente: Expediente,
+  ): Promise<TemaExtracao> {
     return this.extractTemas({
       texto: expediente.conteudo || "",
       numeroProcesso: expediente.numeroProcesso,
@@ -218,7 +260,9 @@ ${intimacao.texto.substring(0, 3000)}
           if (temaNorm.includes(subareaNorm)) {
             // Busca especialidade
             const especialidade =
-              especialidades.find((e: string) => temaNorm.includes(e.toLowerCase())) ||
+              especialidades.find((e: string) =>
+                temaNorm.includes(e.toLowerCase()),
+              ) ||
               especialidades[0] ||
               "Geral";
 
@@ -247,12 +291,16 @@ ${intimacao.texto.substring(0, 3000)}
   /**
    * Sanitiza entidades extraídas (LGPD compliance)
    */
-  private sanitizeEntidades(entidades: TemaExtracao["entidades"]): TemaExtracao["entidades"] {
+  private sanitizeEntidades(
+    entidades: TemaExtracao["entidades"],
+  ): TemaExtracao["entidades"] {
     return {
       pessoas: entidades.pessoas
         .filter((nome) => nome && nome.length > 3)
         .map((nome) => this.redactIfNeeded(nome)),
-      empresas: entidades.empresas.filter((empresa) => empresa && empresa.length > 3),
+      empresas: entidades.empresas.filter(
+        (empresa) => empresa && empresa.length > 3,
+      ),
       leis: entidades.leis
         .filter((lei) => lei && lei.length > 3)
         .map((lei) => this.normalizeLei(lei)),

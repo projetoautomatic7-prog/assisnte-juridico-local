@@ -15,7 +15,10 @@ export interface AgentState {
   error?: string;
 }
 
-export function updateState(currentState: AgentState, updates: Partial<AgentState>): AgentState {
+export function updateState(
+  currentState: AgentState,
+  updates: Partial<AgentState>,
+): AgentState {
   return {
     ...currentState,
     ...updates,

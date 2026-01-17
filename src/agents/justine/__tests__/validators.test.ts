@@ -12,31 +12,43 @@ describe("validateJustineInput", () => {
       const result = validateJustineInput({
         task: "Analisar intimações do Diário de Justiça Eletrônico",
       });
-      expect(result.task).toBe("Analisar intimações do Diário de Justiça Eletrônico");
+      expect(result.task).toBe(
+        "Analisar intimações do Diário de Justiça Eletrônico",
+      );
     });
 
     it("deve rejeitar task ausente", () => {
       expect(() => validateJustineInput({})).toThrow(ValidationError);
-      expect(() => validateJustineInput({})).toThrow(/Campo 'task' é obrigatório/);
+      expect(() => validateJustineInput({})).toThrow(
+        /Campo 'task' é obrigatório/,
+      );
     });
 
     it("deve rejeitar task não-string", () => {
-      expect(() => validateJustineInput({ task: 123 })).toThrow(ValidationError);
-      expect(() => validateJustineInput({ task: 123 })).toThrow("Campo 'task' deve ser uma string");
+      expect(() => validateJustineInput({ task: 123 })).toThrow(
+        ValidationError,
+      );
+      expect(() => validateJustineInput({ task: 123 })).toThrow(
+        "Campo 'task' deve ser uma string",
+      );
     });
 
     it("deve rejeitar task muito curta (< 10 caracteres)", () => {
-      expect(() => validateJustineInput({ task: "curta" })).toThrow(ValidationError);
       expect(() => validateJustineInput({ task: "curta" })).toThrow(
-        /deve ter entre 10 e 5000 caracteres/
+        ValidationError,
+      );
+      expect(() => validateJustineInput({ task: "curta" })).toThrow(
+        /deve ter entre 10 e 5000 caracteres/,
       );
     });
 
     it("deve rejeitar task muito longa (> 5000 caracteres)", () => {
       const longTask = "a".repeat(5001);
-      expect(() => validateJustineInput({ task: longTask })).toThrow(ValidationError);
       expect(() => validateJustineInput({ task: longTask })).toThrow(
-        /deve ter entre 10 e 5000 caracteres/
+        ValidationError,
+      );
+      expect(() => validateJustineInput({ task: longTask })).toThrow(
+        /deve ter entre 10 e 5000 caracteres/,
       );
     });
 
@@ -84,13 +96,13 @@ describe("validateJustineInput", () => {
         validateJustineInput({
           task: "Analisar intimações recentes",
           publications: "invalid",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateJustineInput({
           task: "Analisar intimações recentes",
           publications: { id: "pub-001" },
-        })
+        }),
       ).toThrow("Campo 'publications' deve ser um array");
     });
 
@@ -148,13 +160,13 @@ describe("validateJustineInput", () => {
         validateJustineInput({
           task: "Analisar intimações recentes",
           priority: "urgent",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateJustineInput({
           task: "Analisar intimações recentes",
           priority: "invalid",
-        })
+        }),
       ).toThrow(/Campo 'priority' deve ser um dos seguintes/);
     });
   });

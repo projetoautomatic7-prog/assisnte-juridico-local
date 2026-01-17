@@ -71,7 +71,11 @@ describe("AI Agents System", () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain("Análise");
       // depende da implementação, então só garante que existe confidence numérico
-      if (result.data && typeof result.data === "object" && "confidence" in result.data) {
+      if (
+        result.data &&
+        typeof result.data === "object" &&
+        "confidence" in result.data
+      ) {
         const confidence = (result.data as { confidence?: number }).confidence;
         expect(typeof confidence).toBe("number");
       }
@@ -103,7 +107,10 @@ describe("AI Agents System", () => {
 
       expect(result.success).toBe(true);
       if (result.data && typeof result.data === "object") {
-        const data = result.data as { deadline?: unknown; businessDays?: number };
+        const data = result.data as {
+          deadline?: unknown;
+          businessDays?: number;
+        };
         expect(data.deadline).toBeDefined();
         if (typeof data.businessDays === "number") {
           expect(data.businessDays).toBe(15);
@@ -242,7 +249,7 @@ describe("AI Agents System", () => {
           maxTasksPerInterval: 2,
           agentIds: ["harvey", "justine"],
         },
-        (task) => generatedTasks.push(task)
+        (task) => generatedTasks.push(task),
       );
 
       generator.start();
@@ -267,7 +274,7 @@ describe("AI Agents System", () => {
           maxTasksPerInterval: 1,
           agentIds: ["harvey"],
         },
-        (task) => generatedTasks.push(task)
+        (task) => generatedTasks.push(task),
       );
 
       generator.start();

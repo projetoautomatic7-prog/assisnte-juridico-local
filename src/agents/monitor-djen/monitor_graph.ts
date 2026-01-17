@@ -36,7 +36,10 @@ export class DJENMonitorAgent extends LangGraphAgent {
   /**
    * Main workflow execution
    */
-  protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Monitor DJEN
     return createInvokeAgentSpan(
       {
@@ -59,15 +62,29 @@ export class DJENMonitorAgent extends LangGraphAgent {
         try {
           // Step 0: Validate inputs
           const validatedInput = validateMonitorDJENInput(state.data || {});
-          span?.setAttribute("djen.lawyer_oab", validatedInput.lawyerOAB || "default");
-          span?.setAttribute("djen.courts", validatedInput.courts?.join(",") || "all");
-          span?.setAttribute("djen.auto_register", validatedInput.autoRegister || false);
+          span?.setAttribute(
+            "djen.lawyer_oab",
+            validatedInput.lawyerOAB || "default",
+          );
+          span?.setAttribute(
+            "djen.courts",
+            validatedInput.courts?.join(",") || "all",
+          );
+          span?.setAttribute(
+            "djen.auto_register",
+            validatedInput.autoRegister || false,
+          );
 
           // Step 1: Fetch publications
-          let currentState = updateState(state, { currentStep: "fetching_publications" });
+          let currentState = updateState(state, {
+            currentStep: "fetching_publications",
+          });
 
           const startFetch = Date.now();
-          const publications = await this.fetchPublications(signal, validatedInput);
+          const publications = await this.fetchPublications(
+            signal,
+            validatedInput,
+          );
           const fetchDuration = Date.now() - startFetch;
 
           // Adicionar métricas ao span
@@ -76,18 +93,29 @@ export class DJENMonitorAgent extends LangGraphAgent {
           span?.setAttribute("djen.scan_timestamp", new Date().toISOString());
 
           // Analisar publicações críticas (com número de processo)
-          const criticalPublications = publications.filter((p) => p.processNumber);
+          const criticalPublications = publications.filter(
+            (p) => p.processNumber,
+          );
           const courtDistribution = publications.reduce(
             (acc, p) => {
               acc[p.court] = (acc[p.court] || 0) + 1;
               return acc;
             },
-            {} as Record<string, number>
+            {} as Record<string, number>,
           );
 
-          span?.setAttribute("djen.critical_count", criticalPublications.length);
-          span?.setAttribute("djen.courts_found", Object.keys(courtDistribution).join(", "));
-          span?.setAttribute("djen.court_distribution", JSON.stringify(courtDistribution));
+          span?.setAttribute(
+            "djen.critical_count",
+            criticalPublications.length,
+          );
+          span?.setAttribute(
+            "djen.courts_found",
+            Object.keys(courtDistribution).join(", "),
+          );
+          span?.setAttribute(
+            "djen.court_distribution",
+            JSON.stringify(courtDistribution),
+          );
 
           // Step 2: Process publications
           currentState = updateState(currentState, {
@@ -135,16 +163,23 @@ export class DJENMonitorAgent extends LangGraphAgent {
             publications.length,
             criticalPublications.length,
             courtDistribution,
-            fetchDuration
+            fetchDuration,
           );
 
           return this.addAgentMessage(currentState, summaryMessage);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Monitor DJEN", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Monitor DJEN",
+              error.field,
+              error.message,
+              error.receivedValue,
+            );
           } else {
             logStructuredError("Monitor DJEN", errorType, errorMessage, {
               lawyerOAB: (state.data?.lawyerOAB as string) || undefined,
@@ -163,11 +198,13 @@ export class DJENMonitorAgent extends LangGraphAgent {
                   courts: (state.data?.courts as string[]) || undefined,
                   step: state.currentStep,
                 })
-              : formatFallbackMessage((state.data?.lawyerOAB as string) || undefined);
+              : formatFallbackMessage(
+                  (state.data?.lawyerOAB as string) || undefined,
+                );
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 
@@ -179,7 +216,7 @@ export class DJENMonitorAgent extends LangGraphAgent {
    */
   private async fetchPublications(
     signal: AbortSignal,
-    input: { startDate?: string; endDate?: string; courts?: string[] }
+    input: { startDate?: string; endDate?: string; courts?: string[] },
   ): Promise<DJENPublication[]> {
     // Import DJEN API service
     const { consultarDJEN } = await import("@/lib/djen-api");
@@ -242,7 +279,9 @@ export class DJENMonitorAgent extends LangGraphAgent {
 /**
  * Factory function to create and execute the DJEN monitor agent
  */
-export async function monitorDJEN(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function monitorDJEN(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new DJENMonitorAgent();
 
   const initialState: AgentState = {

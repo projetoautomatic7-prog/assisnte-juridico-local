@@ -8,7 +8,10 @@
 import { generatePeticao } from "@/lib/gemini-service";
 import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
 import type { Minuta } from "@/types";
-import { googleCalendarService, type DeadlineEvent } from "./google-calendar-service";
+import {
+  googleCalendarService,
+  type DeadlineEvent,
+} from "./google-calendar-service";
 import { googleDocsService } from "./google-docs-service";
 
 // Mesmo shape do módulo de integração de prazos (deadline-integration)
@@ -75,7 +78,7 @@ function normalizeDateToISO(dateStr: string): string {
  * Converte prioridade textual para enum usado pelo GoogleCalendarService
  */
 function mapPriority(
-  priority?: MinutaAgentDeadline["priority"]
+  priority?: MinutaAgentDeadline["priority"],
 ): "baixa" | "media" | "alta" | "critica" | undefined {
   const PRIORITY_MAP: Record<string, "baixa" | "media" | "alta" | "critica"> = {
     baixa: "baixa",
@@ -89,13 +92,17 @@ function mapPriority(
 /**
  * Retorna array de lembretes baseado na prioridade
  */
-function getRemindersForPriority(priority?: MinutaAgentDeadline["priority"]): number[] {
+function getRemindersForPriority(
+  priority?: MinutaAgentDeadline["priority"],
+): number[] {
   const REMINDER_CONFIG: Record<string, number[]> = {
     crítica: [60, 240, 1440, 2880, 4320],
     alta: [60, 1440, 2880],
     média: [60, 1440],
   };
-  return priority && REMINDER_CONFIG[priority] ? REMINDER_CONFIG[priority] : [60];
+  return priority && REMINDER_CONFIG[priority]
+    ? REMINDER_CONFIG[priority]
+    : [60];
 }
 
 /**
@@ -115,7 +122,10 @@ function logError(message: string): void {
 /**
  * Cria resultado de erro padrão
  */
-function createErrorResult(errors: string[], prazo: MinutaAgentDeadline | null): MinutaAgentResult {
+function createErrorResult(
+  errors: string[],
+  prazo: MinutaAgentDeadline | null,
+): MinutaAgentResult {
   return {
     success: false,
     provider: "gemini-2.5-pro",
@@ -133,12 +143,13 @@ function createErrorResult(errors: string[], prazo: MinutaAgentDeadline | null):
  */
 async function generateMinutaContent(
   tipoMinuta: string,
-  detalhesCaso: string
+  detalhesCaso: string,
 ): Promise<{ content: string | null; error: string | null }> {
   const response = await generatePeticao(tipoMinuta, detalhesCaso);
 
   if (response.error || !response.text) {
-    const errorMsg = response.error || "Gemini retornou texto vazio na geração da minuta";
+    const errorMsg =
+      response.error || "Gemini retornou texto vazio na geração da minuta";
     return { content: null, error: errorMsg };
   }
 
@@ -152,7 +163,7 @@ function buildMinutaObject(
   titulo: string | undefined,
   tipoMinuta: string,
   numeroProcesso: string | undefined,
-  conteudo: string
+  conteudo: string,
 ): Minuta {
   const sufixoProcesso = numeroProcesso ? ` - Proc. ${numeroProcesso}` : "";
   const tituloMinuta = titulo || `Minuta - ${tipoMinuta}${sufixoProcesso}`;
@@ -169,7 +180,7 @@ function buildMinutaObject(
  */
 async function saveToGoogleDocs(
   minuta: Minuta,
-  errors: string[]
+  errors: string[],
 ): Promise<{ docsId: string | null; docsUrl: string | null }> {
   try {
     const docsResult = await googleDocsService.createDocument(minuta);
@@ -198,7 +209,7 @@ function buildDeadlineEvent(
   numeroProcesso: string | undefined,
   tribunal: string | undefined,
   prazo: MinutaAgentDeadline,
-  isoDate: string
+  isoDate: string,
 ): DeadlineEvent {
   const descriptionParts = [
     `Minuta: ${tipoMinuta}`,
@@ -227,7 +238,7 @@ async function createCalendarEvent(
   tipoMinuta: string,
   numeroProcesso: string | undefined,
   tribunal: string | undefined,
-  errors: string[]
+  errors: string[],
 ): Promise<{ eventId: string | null; prazoNormalizado: MinutaAgentDeadline }> {
   try {
     const isoDate = normalizeDateToISO(prazo.endDate);
@@ -238,13 +249,16 @@ async function createCalendarEvent(
       numeroProcesso,
       tribunal,
       prazo,
-      isoDate
+      isoDate,
     );
 
-    const eventId = await googleCalendarService.createDeadlineEvent(deadlineEvent);
+    const eventId =
+      await googleCalendarService.createDeadlineEvent(deadlineEvent);
 
     if (!eventId) {
-      errors.push("Não foi possível criar o evento de prazo no Google Calendar");
+      errors.push(
+        "Não foi possível criar o evento de prazo no Google Calendar",
+      );
       logError("Erro ao criar evento no Google Calendar");
     }
 
@@ -272,7 +286,7 @@ async function createCalendarEvent(
  * 🔥 INSTRUMENTADO COM SENTRY AI MONITORING V2
  */
 export async function criarMinutaComAgenteIA(
-  params: MinutaAgentParams
+  params: MinutaAgentParams,
 ): Promise<MinutaAgentResult> {
   const sessionId = `minuta-${Date.now()}`;
 
@@ -296,7 +310,15 @@ export async function criarMinutaComAgenteIA(
     },
     async (span) => {
       const errors: string[] = [];
-      const { tipoMinuta, detalhesCaso, titulo, numeroProcesso, tribunal, prazo, sync } = params;
+      const {
+        tipoMinuta,
+        detalhesCaso,
+        titulo,
+        numeroProcesso,
+        tribunal,
+        prazo,
+        sync,
+      } = params;
 
       const syncDocs = sync?.docs ?? true;
       const syncCalendar = sync?.calendar ?? true;
@@ -309,7 +331,10 @@ export async function criarMinutaComAgenteIA(
       span?.setAttribute("sync.calendar", syncCalendar);
 
       // 1) Gera a minuta usando Gemini
-      const { content, error: geminiError } = await generateMinutaContent(tipoMinuta, detalhesCaso);
+      const { content, error: geminiError } = await generateMinutaContent(
+        tipoMinuta,
+        detalhesCaso,
+      );
 
       if (geminiError || !content) {
         errors.push(geminiError || "Erro ao gerar minuta");
@@ -318,7 +343,12 @@ export async function criarMinutaComAgenteIA(
       }
 
       // 2) Monta objeto Minuta
-      const minuta = buildMinutaObject(titulo, tipoMinuta, numeroProcesso, content);
+      const minuta = buildMinutaObject(
+        titulo,
+        tipoMinuta,
+        numeroProcesso,
+        content,
+      );
 
       // 3) Salvar no Google Docs (se habilitado)
       let docsId: string | null = null;
@@ -341,7 +371,7 @@ export async function criarMinutaComAgenteIA(
           tipoMinuta,
           numeroProcesso,
           tribunal,
-          errors
+          errors,
         );
         calendarEventId = calendarResult.eventId;
         prazoNormalizado = calendarResult.prazoNormalizado;
@@ -366,6 +396,6 @@ export async function criarMinutaComAgenteIA(
         prazo: prazoNormalizado,
         errors,
       };
-    }
+    },
   );
 }

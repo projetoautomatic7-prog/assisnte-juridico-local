@@ -78,7 +78,7 @@ interface GeminiCallMetadata {
 // Helper: Adiciona atributos opcionais ao span
 function addOptionalAttributes(
   span: ReturnType<typeof Sentry.startInactiveSpan>,
-  metadata: GeminiCallMetadata
+  metadata: GeminiCallMetadata,
 ): void {
   if (metadata.temperature !== undefined) {
     span?.setAttribute("gen_ai.request.temperature", metadata.temperature);
@@ -91,7 +91,7 @@ function addOptionalAttributes(
 // Helper: Adiciona prompts ao span
 function addPromptAttributes(
   span: ReturnType<typeof Sentry.startInactiveSpan>,
-  prompt: string | string[]
+  prompt: string | string[],
 ): void {
   const messages = Array.isArray(prompt)
     ? prompt.map((p) => ({ role: "user", content: p }))
@@ -102,7 +102,7 @@ function addPromptAttributes(
 // Helper: Extrai e adiciona tokens usage
 function extractTokenUsage(
   span: ReturnType<typeof Sentry.startInactiveSpan>,
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
 ): void {
   const meta = metadata;
 
@@ -121,7 +121,7 @@ function extractTokenUsage(
 function processGeminiResponse<T>(
   span: ReturnType<typeof Sentry.startInactiveSpan>,
   result: T,
-  includePrompts: boolean
+  includePrompts: boolean,
 ): void {
   if (!result || typeof result !== "object") return;
 
@@ -131,8 +131,10 @@ function processGeminiResponse<T>(
     span?.setAttribute(
       "gen_ai.response.text",
       JSON.stringify([
-        typeof response.text === "object" ? JSON.stringify(response.text) : String(response.text),
-      ])
+        typeof response.text === "object"
+          ? JSON.stringify(response.text)
+          : String(response.text),
+      ]),
     );
   }
 
@@ -145,7 +147,7 @@ function processGeminiResponse<T>(
 function captureGeminiError(
   error: unknown,
   metadata: GeminiCallMetadata,
-  captureErrors: boolean
+  captureErrors: boolean,
 ): void {
   if (!captureErrors) return;
 
@@ -182,7 +184,7 @@ function captureGeminiError(
  */
 export function instrumentGeminiCall<T>(
   metadata: GeminiCallMetadata,
-  options: GeminiIntegrationOptions = {}
+  options: GeminiIntegrationOptions = {},
 ): (fn: () => Promise<T>) => Promise<T> {
   const { includePrompts = true, captureErrors = true } = options;
 
@@ -209,7 +211,8 @@ export function instrumentGeminiCall<T>(
       span?.setStatus({ code: 1 });
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       span?.setStatus({ code: 2, message: errorMessage });
       captureGeminiError(error, metadata, captureErrors);
       throw error;
@@ -234,7 +237,9 @@ export function instrumentGeminiCall<T>(
  * });
  * ```
  */
-export function useGeminiInstrumentation(options: GeminiIntegrationOptions = {}) {
+export function useGeminiInstrumentation(
+  options: GeminiIntegrationOptions = {},
+) {
   const wrapGeminiCall = async <T>(
     config: {
       model: string;
@@ -243,7 +248,7 @@ export function useGeminiInstrumentation(options: GeminiIntegrationOptions = {})
       maxTokens?: number;
       operation?: "generate_content" | "stream_generate_content";
     },
-    fn: () => Promise<T>
+    fn: () => Promise<T>,
   ): Promise<T> => {
     const metadata: GeminiCallMetadata = {
       model: config.model,
@@ -282,7 +287,7 @@ export function withGeminiInstrumentation<TArgs extends unknown[], TReturn>(
     temperature?: number;
     maxTokens?: number;
   },
-  options: GeminiIntegrationOptions = {}
+  options: GeminiIntegrationOptions = {},
 ): (...args: TArgs) => Promise<TReturn> {
   return async (...args: TArgs): Promise<TReturn> => {
     const metadata: GeminiCallMetadata = {

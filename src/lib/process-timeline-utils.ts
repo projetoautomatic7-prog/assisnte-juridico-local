@@ -8,7 +8,9 @@ import type { Expediente, Minuta, ProcessEvent } from "@/types";
  * Converte expedientes em eventos de timeline processual
  * Compatível com dados DJEN/DataJud existentes
  */
-export function expedientesToProcessEvents(expedientes: Expediente[]): ProcessEvent[] {
+export function expedientesToProcessEvents(
+  expedientes: Expediente[],
+): ProcessEvent[] {
   return expedientes.map((exp) => ({
     id: exp.id,
     processId: exp.processId || "",
@@ -46,12 +48,17 @@ export function minutasToProcessEvents(minutas: Minuta[]): ProcessEvent[] {
  */
 export function createProcessTimeline(
   expedientes: Expediente[],
-  minutas: Minuta[]
+  minutas: Minuta[],
 ): ProcessEvent[] {
-  const events = [...expedientesToProcessEvents(expedientes), ...minutasToProcessEvents(minutas)];
+  const events = [
+    ...expedientesToProcessEvents(expedientes),
+    ...minutasToProcessEvents(minutas),
+  ];
 
   // Ordenar por data/hora (mais recente primeiro)
-  return events.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
+  return events.sort(
+    (a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime(),
+  );
 }
 
 /**
@@ -96,7 +103,9 @@ function mapTipoToTitulo(tipo?: string): string {
 /**
  * Agrupa eventos por dia
  */
-export function groupEventsByDay(events: ProcessEvent[]): Record<string, ProcessEvent[]> {
+export function groupEventsByDay(
+  events: ProcessEvent[],
+): Record<string, ProcessEvent[]> {
   const groups: Record<string, ProcessEvent[]> = {};
 
   for (const event of events) {
@@ -115,7 +124,7 @@ export function groupEventsByDay(events: ProcessEvent[]): Record<string, Process
  */
 export function filterEventsByType(
   events: ProcessEvent[],
-  tipos: ProcessEvent["tipo"][]
+  tipos: ProcessEvent["tipo"][],
 ): ProcessEvent[] {
   return events.filter((ev) => ev.tipo && tipos.includes(ev.tipo));
 }
@@ -126,7 +135,7 @@ export function filterEventsByType(
 export function filterEventsByDateRange(
   events: ProcessEvent[],
   startDate: string,
-  endDate: string
+  endDate: string,
 ): ProcessEvent[] {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();

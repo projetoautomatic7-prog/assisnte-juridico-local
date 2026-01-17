@@ -59,7 +59,9 @@ export function useMenuNavigation<T>({
   orientation = "vertical",
   autoSelectFirstItem = true,
 }: MenuNavigationOptions<T>) {
-  const [selectedIndex, setSelectedIndex] = useState<number>(autoSelectFirstItem ? 0 : -1);
+  const [selectedIndex, setSelectedIndex] = useState<number>(
+    autoSelectFirstItem ? 0 : -1,
+  );
 
   // Usar refs para valores que mudam com frequência mas não precisam disparar o efeito
   const itemsRef = useRef(items);
@@ -86,7 +88,8 @@ export function useMenuNavigation<T>({
       const currentItems = itemsRef.current;
       if (!currentItems.length) return;
 
-      const move = (delta: 1 | -1) => setSelectedIndex((current) => getNextIndex(current, delta));
+      const move = (delta: 1 | -1) =>
+        setSelectedIndex((current) => getNextIndex(current, delta));
 
       switch (event.key) {
         case "ArrowUp": {
@@ -168,7 +171,11 @@ export function useMenuNavigation<T>({
     if (targetElement) {
       targetElement.addEventListener("keydown", handleKeyboardNavigation, true);
       return () => {
-        targetElement?.removeEventListener("keydown", handleKeyboardNavigation, true);
+        targetElement?.removeEventListener(
+          "keydown",
+          handleKeyboardNavigation,
+          true,
+        );
       };
     }
   }, [editor, containerRef, orientation, getNextIndex]); // Dependências reduzidas drasticamente

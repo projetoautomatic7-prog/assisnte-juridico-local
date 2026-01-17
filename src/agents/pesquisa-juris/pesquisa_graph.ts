@@ -4,13 +4,21 @@ import { LangGraphAgent } from "../base/langgraph_agent";
 import { callGemini } from "@/lib/gemini-service";
 import { createInvokeAgentSpan } from "@/lib/sentry-gemini-integration-v2";
 import { validatePesquisaInput, ValidationError } from "./validators";
-import { JurisprudenceRetriever, formatPrecedentes, type SearchResult } from "./retrievers";
+import {
+  JurisprudenceRetriever,
+  formatPrecedentes,
+  type SearchResult,
+} from "./retrievers";
 import {
   PESQUISA_JURIS_SYSTEM_PROMPT,
   generateSearchQueryPrompt,
   formatErrorMessage,
 } from "./templates";
-import { logAgentExecution, logStructuredError, logValidationError } from "../base/agent_logger";
+import {
+  logAgentExecution,
+  logStructuredError,
+  logValidationError,
+} from "../base/agent_logger";
 
 export class PesquisaJurisAgent extends LangGraphAgent {
   private readonly retriever: JurisprudenceRetriever;
@@ -20,7 +28,10 @@ export class PesquisaJurisAgent extends LangGraphAgent {
     this.retriever = new JurisprudenceRetriever();
   }
 
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     return createInvokeAgentSpan(
       {
         agentName: "Pesquisa Jurisprudencial",
@@ -29,7 +40,8 @@ export class PesquisaJurisAgent extends LangGraphAgent {
         temperature: 0.3,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `pesquisa_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `pesquisa_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -50,16 +62,23 @@ export class PesquisaJurisAgent extends LangGraphAgent {
           });
 
           span?.setAttribute("pesquisa.tema", validatedInput.tema);
-          span?.setAttribute("pesquisa.tribunal", validatedInput.tribunal || "todos");
+          span?.setAttribute(
+            "pesquisa.tribunal",
+            validatedInput.tribunal || "todos",
+          );
 
           // 2. Busca (Retrieval)
           current = updateState(current, { currentStep: "pesquisa:retrieve" });
 
           logAgentExecution("Pesquisa Jurisprudencial", "searching_database");
 
-          const searchResults: SearchResult = await this.retriever.search(validatedInput);
-          const { precedentes, totalFound, avgRelevance, executionTimeMs } = searchResults;
-          const tribunaisEncontrados = [...new Set(precedentes.map((p) => p.tribunal))];
+          const searchResults: SearchResult =
+            await this.retriever.search(validatedInput);
+          const { precedentes, totalFound, avgRelevance, executionTimeMs } =
+            searchResults;
+          const tribunaisEncontrados = [
+            ...new Set(precedentes.map((p) => p.tribunal)),
+          ];
 
           span?.setAttribute("pesquisa.results_count", totalFound);
           span?.setAttribute("pesquisa.avg_relevance", avgRelevance);
@@ -79,7 +98,7 @@ export class PesquisaJurisAgent extends LangGraphAgent {
             validatedInput.tema,
             validatedInput.tribunal || "todos",
             validatedInput.dataInicio,
-            validatedInput.dataFim
+            validatedInput.dataFim,
           );
 
           const prompt = `CONTEXTO JURISPRUDENCIAL ENCONTRADO:\n${contextData}\n\nSOLICITAÇÃO DO USUÁRIO:\n${userPrompt}`;
@@ -110,21 +129,28 @@ export class PesquisaJurisAgent extends LangGraphAgent {
           span?.setStatus({ code: 1, message: "ok" });
           return this.addAgentMessage(current, result);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
             logValidationError(
               "Pesquisa Jurisprudencial",
               error.field,
               error.message,
-              error.receivedValue
+              error.receivedValue,
             );
           } else {
-            logStructuredError("Pesquisa Jurisprudencial", errorType, errorMessage, {
-              tema: (state.data?.tema as string) || undefined,
-              step: current.currentStep,
-            });
+            logStructuredError(
+              "Pesquisa Jurisprudencial",
+              errorType,
+              errorMessage,
+              {
+                tema: (state.data?.tema as string) || undefined,
+                step: current.currentStep,
+              },
+            );
           }
 
           span?.setStatus({ code: 2, message: errorMessage });
@@ -141,15 +167,17 @@ export class PesquisaJurisAgent extends LangGraphAgent {
               completed: false,
               error: errorMessage,
             }),
-            errorMsg
+            errorMsg,
           );
         }
-      }
+      },
     );
   }
 }
 
-export async function runPesquisaJuris(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runPesquisaJuris(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new PesquisaJurisAgent();
   const initialState: AgentState = {
     messages: [],

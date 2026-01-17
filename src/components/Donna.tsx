@@ -27,7 +27,7 @@ function getMessageContent(
   message: { id: string; content: string },
   streamingMessageId: string | null,
   isStreaming: boolean,
-  streamingContent: string
+  streamingContent: string,
 ): string {
   if (message.id === streamingMessageId && isStreaming) {
     return streamingContent || "▋";
@@ -104,7 +104,9 @@ export default function HarveySpecter() {
   const [messages, setMessages] = useKV<Message[]>("harvey-messages", []);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null,
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Hook de streaming de IA
@@ -143,7 +145,8 @@ export default function HarveySpecter() {
     // Processos
     const totalProcesses = processes?.length || 0;
     const processesByStatus = {
-      "Em Andamento": processes?.filter((p) => p.status === "ativo").length || 0,
+      "Em Andamento":
+        processes?.filter((p) => p.status === "ativo").length || 0,
       Aguardando: processes?.filter((p) => p.status === "suspenso").length || 0,
       Concluído: processes?.filter((p) => p.status === "concluido").length || 0,
       Arquivado: processes?.filter((p) => p.status === "arquivado").length || 0,
@@ -179,7 +182,9 @@ export default function HarveySpecter() {
     const monthlyRecords =
       financialRecords?.filter((r) => {
         const date = new Date(r.date);
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        return (
+          date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        );
       }) || [];
 
     const receita = monthlyRecords
@@ -188,17 +193,21 @@ export default function HarveySpecter() {
     const despesas = monthlyRecords
       .filter((r) => r.type === "expense")
       .reduce((sum, r) => sum + r.amount, 0);
-    const margem = receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
+    const margem =
+      receita > 0 ? (((receita - despesas) / receita) * 100).toFixed(1) : "0";
 
     // Tarefas dos Agentes - CORRIGIDO: usar taskQueue e completedTasks
-    const pendingTasks = taskQueue?.filter((t) => t.status === "queued").length || 0;
-    const inProgressTasks = taskQueue?.filter((t) => t.status === "processing").length || 0;
+    const pendingTasks =
+      taskQueue?.filter((t) => t.status === "queued").length || 0;
+    const inProgressTasks =
+      taskQueue?.filter((t) => t.status === "processing").length || 0;
     const totalCompletedTasks = completedTasks?.length || 0;
 
     // Expedientes/Intimações - NOVO
     const totalExpedientes = expedientes?.length || 0;
     const expedientesUrgentes =
-      expedientes?.filter((e: Expediente) => e.urgente && !e.processado).length || 0;
+      expedientes?.filter((e: Expediente) => e.urgente && !e.processado)
+        .length || 0;
     const expedientesNaoProcessados =
       expedientes?.filter((e: Expediente) => !e.processado).length || 0;
 
@@ -227,7 +236,9 @@ export default function HarveySpecter() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      const scrollElement = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]");
+      const scrollElement = scrollRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
       }
@@ -243,7 +254,8 @@ export default function HarveySpecter() {
         {
           type: "info",
           title: "Sem Dados Cadastrados",
-          description: "Cadastre processos, financeiro ou tarefas para ver estatísticas reais.",
+          description:
+            "Cadastre processos, financeiro ou tarefas para ver estatísticas reais.",
         },
       ];
     }
@@ -451,7 +463,10 @@ IMPORTANTE:
       insights: getInsights(query),
     };
 
-    setMessages((currentMessages) => [...(currentMessages || []), streamingMessage]);
+    setMessages((currentMessages) => [
+      ...(currentMessages || []),
+      streamingMessage,
+    ]);
 
     try {
       const systemPrompt = buildSystemPrompt();
@@ -464,8 +479,8 @@ IMPORTANTE:
       // Atualiza a mensagem com o conteúdo final
       setMessages((currentMessages) =>
         (currentMessages || []).map((msg) =>
-          msg.id === assistantId ? { ...msg, content: finalContent } : msg
-        )
+          msg.id === assistantId ? { ...msg, content: finalContent } : msg,
+        ),
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -479,8 +494,8 @@ IMPORTANTE:
                 content:
                   "Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
       toast.error("Erro ao processar mensagem");
     } finally {
@@ -503,8 +518,8 @@ IMPORTANTE:
                 ...msg,
                 content: streamingContent + "\n\n*[Resposta interrompida]*",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
       setStreamingMessageId(null);
     }
@@ -544,7 +559,10 @@ IMPORTANTE:
       insights: getInsights(question),
     };
 
-    setMessages((currentMessages) => [...(currentMessages || []), streamingMessage]);
+    setMessages((currentMessages) => [
+      ...(currentMessages || []),
+      streamingMessage,
+    ]);
 
     try {
       const systemPrompt = buildSystemPrompt();
@@ -556,8 +574,8 @@ IMPORTANTE:
 
       setMessages((currentMessages) =>
         (currentMessages || []).map((msg) =>
-          msg.id === assistantId ? { ...msg, content: finalContent } : msg
-        )
+          msg.id === assistantId ? { ...msg, content: finalContent } : msg,
+        ),
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -569,8 +587,8 @@ IMPORTANTE:
                 ...msg,
                 content: "Desculpe, ocorreu um erro ao processar sua mensagem.",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
       toast.error("Erro ao processar mensagem");
     } finally {
@@ -618,8 +636,12 @@ IMPORTANTE:
       <div className="border-b bg-card px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Harvey Specter</h1>
-            <p className="text-sm text-muted-foreground">Seu assistente jurídico inteligente</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Harvey Specter
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Seu assistente jurídico inteligente
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => setMessages([])}>
             Limpar Conversa
@@ -637,7 +659,8 @@ IMPORTANTE:
                     Bem-vindo ao Harvey Specter
                   </h2>
                   <p className="text-muted-foreground">
-                    Seu assistente jurídico inteligente para gestão completa do escritório
+                    Seu assistente jurídico inteligente para gestão completa do
+                    escritório
                   </p>
                 </div>
 
@@ -655,8 +678,12 @@ IMPORTANTE:
                             <Icon className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground">{insight.title}</h3>
-                            <p className="text-sm text-muted-foreground">{insight.description}</p>
+                            <h3 className="font-semibold text-foreground">
+                              {insight.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {insight.description}
+                            </p>
                           </div>
                         </div>
                       </Card>
@@ -690,7 +717,9 @@ IMPORTANTE:
                     <Card
                       className={cn(
                         "p-4",
-                        message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card"
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card",
                       )}
                     >
                       <div className="whitespace-pre-wrap text-sm">
@@ -699,7 +728,7 @@ IMPORTANTE:
                           message,
                           streamingMessageId,
                           isStreaming,
-                          streamingContent
+                          streamingContent,
                         )}
                         {/* Cursor piscante durante streaming */}
                         {message.id === streamingMessageId && isStreaming && (
@@ -717,7 +746,10 @@ IMPORTANTE:
                           >
                             <div className="flex items-start gap-2">
                               <div
-                                className={cn("p-1.5 rounded-md", getInsightColor(insight.type))}
+                                className={cn(
+                                  "p-1.5 rounded-md",
+                                  getInsightColor(insight.type),
+                                )}
                               >
                                 {getInsightIcon(insight.type)}
                               </div>

@@ -84,12 +84,16 @@ describe("useAutoMinuta", () => {
       expect(result.current.minutasCriadasPorAgente).toBe(3);
 
       const processed = JSON.parse(
-        localStorage.getItem("processed-petition-tasks") ?? "[]"
+        localStorage.getItem("processed-petition-tasks") ?? "[]",
       ) as string[];
 
-      expect(processed).toEqual(expect.arrayContaining(["task-1", "task-2", "task-3"]));
+      expect(processed).toEqual(
+        expect.arrayContaining(["task-1", "task-2", "task-3"]),
+      );
 
-      const storedMinutas = JSON.parse(localStorage.getItem("minutas") ?? "[]") as Minuta[];
+      const storedMinutas = JSON.parse(
+        localStorage.getItem("minutas") ?? "[]",
+      ) as Minuta[];
       expect(storedMinutas).toHaveLength(3);
     });
   });

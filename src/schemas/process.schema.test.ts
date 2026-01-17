@@ -58,8 +58,12 @@ describe("Validação de Processo", () => {
   });
 
   it("deve validar formato de número CNJ", () => {
-    expect(numeroCNJSchema.safeParse("1234567-89.2024.5.02.0999").success).toBe(true);
-    expect(numeroCNJSchema.safeParse("0000000-00.0000.0.00.0000").success).toBe(true);
+    expect(numeroCNJSchema.safeParse("1234567-89.2024.5.02.0999").success).toBe(
+      true,
+    );
+    expect(numeroCNJSchema.safeParse("0000000-00.0000.0.00.0000").success).toBe(
+      true,
+    );
     expect(numeroCNJSchema.safeParse("123-45").success).toBe(false);
   });
 });

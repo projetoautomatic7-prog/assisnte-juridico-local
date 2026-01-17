@@ -228,7 +228,10 @@ describe("PII Filtering Service - LGPD Compliance", () => {
 
       const sanitizado = sanitizeObject(obj);
 
-      expect(sanitizado.contatos).toEqual(["[EMAIL_REDACTED]", "[EMAIL_REDACTED]"]);
+      expect(sanitizado.contatos).toEqual([
+        "[EMAIL_REDACTED]",
+        "[EMAIL_REDACTED]",
+      ]);
     });
 
     it("deve sanitizar objetos aninhados", () => {
@@ -316,7 +319,9 @@ describe("PII Filtering Service - LGPD Compliance", () => {
       const stats = getPIIStats();
 
       expect(stats.lastSanitized).toBeDefined();
-      expect(stats.lastSanitized).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+      expect(stats.lastSanitized).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+      );
       expect(stats.lastSanitized >= beforeTimestamp).toBe(true);
       expect(stats.lastSanitized <= afterTimestamp).toBe(true);
     });
@@ -356,7 +361,9 @@ describe("PII Filtering Service - LGPD Compliance", () => {
       const errorMsg = "Erro ao processar CPF 123.456.789-09 do cliente";
       const sanitizado = sanitizePII(errorMsg);
 
-      expect(sanitizado).toBe("Erro ao processar CPF [CPF_REDACTED] do cliente");
+      expect(sanitizado).toBe(
+        "Erro ao processar CPF [CPF_REDACTED] do cliente",
+      );
     });
 
     it("deve sanitizar log de aplicação com múltiplos dados", () => {
@@ -422,23 +429,27 @@ describe("PII Filtering Service - LGPD Compliance", () => {
   // ============================================
 
   describe("Performance e Edge Cases", () => {
-    it("deve processar texto grande em tempo razoável", { timeout: 60000 }, () => {
-      const textoGrande = `
+    it(
+      "deve processar texto grande em tempo razoável",
+      { timeout: 60000 },
+      () => {
+        const textoGrande = `
         Cliente: João Silva
         CPF: 123.456.789-09
         Email: joao@example.com
       `.repeat(1000); // 3000 linhas
 
-      const startTime = performance.now();
-      const sanitizado = sanitizePII(textoGrande);
-      const endTime = performance.now();
+        const startTime = performance.now();
+        const sanitizado = sanitizePII(textoGrande);
+        const endTime = performance.now();
 
-      const duration = endTime - startTime;
+        const duration = endTime - startTime;
 
-      // Aumentar timeout para 500ms em ambientes mais lentos
-      expect(duration).toBeLessThan(500);
-      expect(sanitizado).toContain("[CPF_REDACTED]");
-    });
+        // Aumentar timeout para 500ms em ambientes mais lentos
+        expect(duration).toBeLessThan(500);
+        expect(sanitizado).toContain("[CPF_REDACTED]");
+      },
+    );
 
     it("deve lidar com string vazia", () => {
       expect(sanitizePII("")).toBe("");

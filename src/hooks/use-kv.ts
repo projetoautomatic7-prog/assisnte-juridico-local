@@ -137,7 +137,7 @@ function loadFromLocalStorage(keys: string[]): Map<string, unknown> {
  */
 function processApiResponse(
   data: { values?: Record<string, unknown> },
-  results: Map<string, unknown>
+  results: Map<string, unknown>,
 ): void {
   if (data.values && typeof data.values === "object") {
     for (const [k, v] of Object.entries(data.values)) {
@@ -150,7 +150,9 @@ function processApiResponse(
 /**
  * Carrega múltiplas chaves em uma única requisição
  */
-async function batchLoadFromVercelKV(keys: string[]): Promise<Map<string, unknown>> {
+async function batchLoadFromVercelKV(
+  keys: string[],
+): Promise<Map<string, unknown>> {
   const results = new Map<string, unknown>();
 
   if (keys.length === 0) return results;
@@ -177,7 +179,9 @@ async function batchLoadFromVercelKV(keys: string[]): Promise<Map<string, unknow
       }
 
       try {
-        const data = (await response.json()) as { values?: Record<string, unknown> };
+        const data = (await response.json()) as {
+          values?: Record<string, unknown>;
+        };
         recordApiSuccess();
         processApiResponse(data, results);
       } catch {
@@ -294,7 +298,9 @@ async function processWriteBatch(): Promise<void> {
     } else if (response.status === 429 || response.status === 413) {
       // 429 = Rate limit, 413 = Payload muito grande
       if (response.status === 413 && import.meta.env.DEV) {
-        console.warn("[KV] Payload excede limite do Upstash - considere reduzir tamanho dos dados");
+        console.warn(
+          "[KV] Payload excede limite do Upstash - considere reduzir tamanho dos dados",
+        );
       }
       recordApiError();
     }
@@ -342,7 +348,10 @@ function scheduleWrite<T>(key: string, value: T): void {
  * @param initialValue - Initial value if key doesn't exist
  * @returns [value, setValue] - Current value and setter function
  */
-export function useKV<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
+export function useKV<T>(
+  key: string,
+  initialValue: T,
+): [T, (value: T | ((prev: T) => T)) => void] {
   // Inicializa com valor do cache ou localStorage
   const [storedValue, setStoredValue] = useState<T>(() => {
     // Verifica cache em memória primeiro
@@ -380,7 +389,9 @@ export function useKV<T>(key: string, initialValue: T): [T, (value: T | ((prev: 
     (value: T | ((prev: T) => T)) => {
       setStoredValue((currentStoredValue) => {
         const valueToStore =
-          typeof value === "function" ? (value as (prev: T) => T)(currentStoredValue) : value;
+          typeof value === "function"
+            ? (value as (prev: T) => T)(currentStoredValue)
+            : value;
 
         // Agenda escrita (debounced)
         scheduleWrite(keyRef.current, valueToStore);
@@ -388,7 +399,7 @@ export function useKV<T>(key: string, initialValue: T): [T, (value: T | ((prev: 
         return valueToStore;
       });
     },
-    [] // scheduleWrite é função estável, não precisa estar nas dependências
+    [], // scheduleWrite é função estável, não precisa estar nas dependências
   );
 
   // Carrega do Vercel KV em produção (batched)

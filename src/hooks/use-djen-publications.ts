@@ -21,7 +21,9 @@ const VITE_DJEN_ADVOGADO_OAB =
     ? import.meta.env.VITE_DJEN_ADVOGADO_OAB
     : "000000/XX";
 const VITE_API_BASE_URL =
-  typeof import.meta.env.VITE_API_BASE_URL === "string" ? import.meta.env.VITE_API_BASE_URL : "";
+  typeof import.meta.env.VITE_API_BASE_URL === "string"
+    ? import.meta.env.VITE_API_BASE_URL
+    : "";
 
 interface ExpedientesResponse {
   success: boolean;
@@ -51,10 +53,12 @@ const DEFAULT_LAWYERS: MonitoredLawyer[] = [
 async function fetchFromBackend(
   baseUrl: string,
   maxItems: number,
-  filter: "all" | "unread"
+  filter: "all" | "unread",
 ): Promise<ExpedientesResponse> {
   const statusParam = filter === "unread" ? "&status=unread" : "";
-  const response = await fetch(`${baseUrl}/api/expedientes?limit=${maxItems * 2}${statusParam}`);
+  const response = await fetch(
+    `${baseUrl}/api/expedientes?limit=${maxItems * 2}${statusParam}`,
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
@@ -63,7 +67,9 @@ async function fetchFromBackend(
   return response.json();
 }
 
-async function fetchMonitoredLawyers(baseUrl: string): Promise<MonitoredLawyer[]> {
+async function fetchMonitoredLawyers(
+  baseUrl: string,
+): Promise<MonitoredLawyer[]> {
   try {
     const response = await fetch(`${baseUrl}/api/lawyers`);
     if (!response.ok) return [];
@@ -98,16 +104,18 @@ function parseOAB(oab: string): { numero?: string; uf?: string } {
   if (!oab) return {};
   const normalized = oab.trim().toUpperCase();
   const matchNumericUF = /(\d+)[\s/-]{1,2}([A-Z]{2})/i.exec(normalized);
-  if (matchNumericUF) return { numero: matchNumericUF[1], uf: matchNumericUF[2] };
+  if (matchNumericUF)
+    return { numero: matchNumericUF[1], uf: matchNumericUF[2] };
   const matchUFNumeric = /([A-Z]{2})[\s/-]{1,2}(\d+)/i.exec(normalized);
-  if (matchUFNumeric) return { numero: matchUFNumeric[2], uf: matchUFNumeric[1] };
+  if (matchUFNumeric)
+    return { numero: matchUFNumeric[2], uf: matchUFNumeric[1] };
   return {};
 }
 
 async function fetchPublicationsForLawyer(
   baseUrl: string,
   lawyer: MonitoredLawyer,
-  maxItems: number
+  maxItems: number,
 ): Promise<DJENPublication[]> {
   const { numero, uf } = parseOAB(lawyer.oab);
   if (!numero || !uf) return [];
@@ -120,20 +128,22 @@ async function fetchPublicationsForLawyer(
     const data = (await response.ok) ? await response.json() : null;
     if (!data?.success || !Array.isArray(data.publicacoes)) return [];
 
-    return (data.publicacoes as Array<Record<string, unknown>>).slice(0, maxItems).map((pub) => ({
-      id: (pub.id as string) || crypto.randomUUID(),
-      tribunal: pub.siglaTribunal as string,
-      data: pub.dataDisponibilizacao as string,
-      tipo: (pub.tipoComunicacao as string) || "Intimação",
-      teor: pub.texto as string,
-      numeroProcesso: pub.numeroProcesso as string,
-      orgao: pub.nomeOrgao as string,
-      lawyerName: lawyer.name,
-      matchType: "oab" as const,
-      source: "DJEN-Proxy",
-      createdAt: new Date().toISOString(),
-      notified: false,
-    }));
+    return (data.publicacoes as Array<Record<string, unknown>>)
+      .slice(0, maxItems)
+      .map((pub) => ({
+        id: (pub.id as string) || crypto.randomUUID(),
+        tribunal: pub.siglaTribunal as string,
+        data: pub.dataDisponibilizacao as string,
+        tipo: (pub.tipoComunicacao as string) || "Intimação",
+        teor: pub.texto as string,
+        numeroProcesso: pub.numeroProcesso as string,
+        orgao: pub.nomeOrgao as string,
+        lawyerName: lawyer.name,
+        matchType: "oab" as const,
+        source: "DJEN-Proxy",
+        createdAt: new Date().toISOString(),
+        notified: false,
+      }));
   } catch {
     return [];
   }
@@ -141,14 +151,15 @@ async function fetchPublicationsForLawyer(
 
 async function fetchFromBackendProxy(
   baseUrl: string,
-  maxItems: number
+  maxItems: number,
 ): Promise<{ expedientes: DJENPublication[]; lawyersConfigured: number }> {
   let lawyers = await fetchMonitoredLawyers(baseUrl);
   if (lawyers.length === 0) lawyers = loadLawyersFromStorage();
   if (lawyers.length === 0) lawyers = ensureDefaultLawyersPersisted();
 
   const enabledLawyers = lawyers.filter((l) => l.enabled);
-  if (enabledLawyers.length === 0) return { expedientes: [], lawyersConfigured: 0 };
+  if (enabledLawyers.length === 0)
+    return { expedientes: [], lawyersConfigured: 0 };
 
   const allPublications: DJENPublication[] = [];
   for (const lawyer of enabledLawyers) {
@@ -162,7 +173,10 @@ async function fetchFromBackendProxy(
   };
 }
 
-export function useDJENPublications(maxItems: number, filter: "all" | "unread") {
+export function useDJENPublications(
+  maxItems: number,
+  filter: "all" | "unread",
+) {
   const [publications, setPublications] = useState<DJENPublication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,7 +196,11 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
       setIsGeoBlocked(false);
 
       try {
-        const data = await fetchFromBackend(VITE_API_BASE_URL, maxItems, filter);
+        const data = await fetchFromBackend(
+          VITE_API_BASE_URL,
+          maxItems,
+          filter,
+        );
         if (data.success) {
           setPublications(data.expedientes.slice(0, maxItems));
           setLastCheck(data.lastCheck);
@@ -193,7 +211,10 @@ export function useDJENPublications(maxItems: number, filter: "all" | "unread") 
         // Fallback silently to proxy
       }
 
-      const browserResult = await fetchFromBackendProxy(VITE_API_BASE_URL, maxItems);
+      const browserResult = await fetchFromBackendProxy(
+        VITE_API_BASE_URL,
+        maxItems,
+      );
       setPublications(browserResult.expedientes);
       setLawyersCount(browserResult.lawyersConfigured);
       setLastCheck(new Date().toISOString());

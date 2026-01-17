@@ -29,11 +29,11 @@ export function useProcessSync() {
     (numeroProcesso: string | undefined): string | undefined => {
       if (!numeroProcesso) return undefined;
       const processo = (processes || []).find((p) =>
-        processNumbersMatch(p.numeroCNJ, numeroProcesso)
+        processNumbersMatch(p.numeroCNJ, numeroProcesso),
       );
       return processo?.id;
     },
-    [processes]
+    [processes],
   );
 
   /**
@@ -74,14 +74,18 @@ export function useProcessSync() {
         current.documentos++;
 
         // Contar intimações especificamente
-        const isIntimacao = exp.tipo === "intimacao" || exp.type === "intimacao";
+        const isIntimacao =
+          exp.tipo === "intimacao" || exp.type === "intimacao";
         if (isIntimacao) {
           current.intimacoes++;
         }
 
         // Atualizar data do último expediente
         const expDate = exp.dataRecebimento || exp.receivedAt || exp.createdAt;
-        if (expDate && (!current.lastExpediente || expDate > current.lastExpediente)) {
+        if (
+          expDate &&
+          (!current.lastExpediente || expDate > current.lastExpediente)
+        ) {
           current.lastExpediente = expDate;
         }
 
@@ -97,7 +101,10 @@ export function useProcessSync() {
         current.documentos++;
 
         // Atualizar data da última minuta
-        if (min.criadoEm && (!current.lastMinuta || min.criadoEm > current.lastMinuta)) {
+        if (
+          min.criadoEm &&
+          (!current.lastMinuta || min.criadoEm > current.lastMinuta)
+        ) {
           current.lastMinuta = min.criadoEm;
         }
 
@@ -129,7 +136,8 @@ export function useProcessSync() {
         p.minutasCount !== stats.minutas ||
         p.documentosCount !== stats.documentos;
       const hasDateChanges =
-        p.lastExpedienteAt !== stats.lastExpediente || p.lastMinutaAt !== stats.lastMinuta;
+        p.lastExpedienteAt !== stats.lastExpediente ||
+        p.lastMinutaAt !== stats.lastMinuta;
       const changed = hasStatChanges || hasDateChanges;
 
       if (changed) {
@@ -163,7 +171,7 @@ export function useProcessSync() {
     (processId: string): ProcessStats | undefined => {
       return processStats.get(processId);
     },
-    [processStats]
+    [processStats],
   );
 
   /**
@@ -176,10 +184,11 @@ export function useProcessSync() {
 
       return (expedientes || []).filter(
         (exp) =>
-          exp.processId === processId || processNumbersMatch(exp.numeroProcesso, processo.numeroCNJ)
+          exp.processId === processId ||
+          processNumbersMatch(exp.numeroProcesso, processo.numeroCNJ),
       );
     },
-    [processes, expedientes]
+    [processes, expedientes],
   );
 
   /**
@@ -189,7 +198,7 @@ export function useProcessSync() {
     (processId: string): Minuta[] => {
       return (minutas || []).filter((min) => min.processId === processId);
     },
-    [minutas]
+    [minutas],
   );
 
   /**
@@ -208,7 +217,7 @@ export function useProcessSync() {
 
       return expediente;
     },
-    [findProcessIdByNumber]
+    [findProcessIdByNumber],
   );
 
   /**
@@ -224,7 +233,10 @@ export function useProcessSync() {
     globalThis.addEventListener("minuta-added", handleProcessUpdate);
 
     return () => {
-      globalThis.removeEventListener("process-update-needed", handleProcessUpdate);
+      globalThis.removeEventListener(
+        "process-update-needed",
+        handleProcessUpdate,
+      );
       globalThis.removeEventListener("expediente-added", handleProcessUpdate);
       globalThis.removeEventListener("minuta-added", handleProcessUpdate);
     };

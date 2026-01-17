@@ -73,7 +73,8 @@ export const MARK_SHORTCUT_KEYS: Record<Mark, string> = {
  */
 export function canToggleMark(editor: Editor | null, type: Mark): boolean {
   if (!editor || !editor.isEditable) return false;
-  if (!isMarkInSchema(type, editor) || isNodeTypeSelected(editor, ["image"])) return false;
+  if (!isMarkInSchema(type, editor) || isNodeTypeSelected(editor, ["image"]))
+    return false;
 
   return editor.can().toggleMark(type);
 }
@@ -161,7 +162,12 @@ export function getFormattedMarkName(type: Mark): string {
  * ```
  */
 export function useMark(config: UseMarkConfig) {
-  const { editor: providedEditor, type, hideWhenUnavailable = false, onToggled } = config;
+  const {
+    editor: providedEditor,
+    type,
+    hideWhenUnavailable = false,
+    onToggled,
+  } = config;
 
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);

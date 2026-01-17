@@ -62,7 +62,9 @@ export function StatusChart({ chartData }: Readonly<DashboardChartsProps>) {
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
-              label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+              label={({ name, percent }) =>
+                `${name} ${((percent || 0) * 100).toFixed(0)}%`
+              }
             >
               {chartData.statusData.map((entry) => (
                 <Cell key={`cell-${entry.name}`} fill={entry.color} />
@@ -78,7 +80,9 @@ export function StatusChart({ chartData }: Readonly<DashboardChartsProps>) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <ChartPie size={48} className="text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">Erro ao carregar gráfico</p>
+        <p className="text-sm text-muted-foreground">
+          Erro ao carregar gráfico
+        </p>
       </div>
     );
   }
@@ -131,7 +135,9 @@ export function VaraChart({ chartData }: Readonly<DashboardChartsProps>) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <Gavel size={48} className="text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">Erro ao carregar gráfico</p>
+        <p className="text-sm text-muted-foreground">
+          Erro ao carregar gráfico
+        </p>
       </div>
     );
   }
@@ -198,7 +204,9 @@ export function TrendChart({ chartData }: Readonly<DashboardChartsProps>) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <TrendingUp size={48} className="text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">Erro ao carregar gráfico</p>
+        <p className="text-sm text-muted-foreground">
+          Erro ao carregar gráfico
+        </p>
       </div>
     );
   }

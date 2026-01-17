@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { geminiGenerateJSON } from "@/lib/gemini-client";
@@ -94,16 +100,22 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
       // Hardening contra respostas parcialmente fora do esquema
       const safeResult: ResearchResult = {
         precedents: Array.isArray(raw.precedents) ? raw.precedents : [],
-        legalArguments: Array.isArray(raw.legalArguments) ? raw.legalArguments : [],
+        legalArguments: Array.isArray(raw.legalArguments)
+          ? raw.legalArguments
+          : [],
         keywords: Array.isArray(raw.keywords) ? raw.keywords : [],
-        relatedThemes: Array.isArray(raw.relatedThemes) ? raw.relatedThemes : [],
+        relatedThemes: Array.isArray(raw.relatedThemes)
+          ? raw.relatedThemes
+          : [],
       };
 
       setResult(safeResult);
       toast.success("Pesquisa concluída!");
     } catch (error) {
       console.error("Erro na pesquisa:", error);
-      toast.error(error instanceof Error ? error.message : "Falha ao realizar pesquisa");
+      toast.error(
+        error instanceof Error ? error.message : "Falha ao realizar pesquisa",
+      );
     } finally {
       setIsResearching(false);
     }
@@ -121,7 +133,8 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
           Pesquisa Jurídica IA
         </h1>
         <p className="text-muted-foreground mt-1">
-          Encontre precedentes, argumentos e fundamentação legal instantaneamente
+          Encontre precedentes, argumentos e fundamentação legal
+          instantaneamente
         </p>
       </div>
 
@@ -152,13 +165,18 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
               disabled={isResearching || !query.trim()}
               className="button-gradient"
             >
-              <Sparkles size={20} className={isResearching ? "animate-spin" : ""} />
+              <Sparkles
+                size={20}
+                className={isResearching ? "animate-spin" : ""}
+              />
               {isResearching ? "Pesquisando..." : "Pesquisar"}
             </Button>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <p className="text-xs text-muted-foreground w-full">Pesquisas rápidas:</p>
+            <p className="text-xs text-muted-foreground w-full">
+              Pesquisas rápidas:
+            </p>
             {[
               "Prescrição quinquenal trabalhista",
               "Dano moral em acidente de trânsito",
@@ -190,8 +208,12 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
               <FileText size={16} className="mr-2" />
               Argumentos ({result.legalArguments.length})
             </TabsTrigger>
-            <TabsTrigger value="keywords">Palavras-chave ({result.keywords.length})</TabsTrigger>
-            <TabsTrigger value="related">Temas ({result.relatedThemes.length})</TabsTrigger>
+            <TabsTrigger value="keywords">
+              Palavras-chave ({result.keywords.length})
+            </TabsTrigger>
+            <TabsTrigger value="related">
+              Temas ({result.relatedThemes.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="precedents" className="space-y-4">
@@ -216,7 +238,9 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
                     <p className="text-sm leading-relaxed">{prec.ementa}</p>
                   </div>
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground mb-1">Relevância para o caso</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Relevância para o caso
+                    </p>
                     <p className="text-sm text-primary">{prec.relevancia}</p>
                   </div>
                 </CardContent>
@@ -239,13 +263,19 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">Fundamentação</p>
-                    <p className="text-sm leading-relaxed">{arg.fundamentacao}</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Fundamentação
+                    </p>
+                    <p className="text-sm leading-relaxed">
+                      {arg.fundamentacao}
+                    </p>
                   </div>
 
                   {arg.precedentes.length > 0 && (
                     <div className="pt-3 border-t">
-                      <p className="text-xs text-muted-foreground mb-2">Precedentes citados</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Precedentes citados
+                      </p>
                       <ul className="space-y-1">
                         {arg.precedentes.map((prec) => (
                           <li key={prec} className="text-sm flex gap-2">
@@ -259,7 +289,9 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
 
                   {arg.doutrina.length > 0 && (
                     <div className="pt-3 border-t">
-                      <p className="text-xs text-muted-foreground mb-2">Doutrina</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Doutrina
+                      </p>
                       <ul className="space-y-1">
                         {arg.doutrina.map((doc) => (
                           <li key={doc} className="text-sm flex gap-2">
@@ -286,7 +318,9 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
             <Card className="glassmorphic">
               <CardHeader>
                 <CardTitle>Palavras-chave Relevantes</CardTitle>
-                <CardDescription>Use essas palavras para refinar sua busca</CardDescription>
+                <CardDescription>
+                  Use essas palavras para refinar sua busca
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {result.keywords.length === 0 ? (
@@ -314,7 +348,9 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
             <Card className="glassmorphic">
               <CardHeader>
                 <CardTitle>Temas Relacionados</CardTitle>
-                <CardDescription>Explore esses temas para aprofundar sua pesquisa</CardDescription>
+                <CardDescription>
+                  Explore esses temas para aprofundar sua pesquisa
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {result.relatedThemes.length === 0 ? (
@@ -346,9 +382,12 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
         <Card className="glassmorphic">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookOpen size={64} className="text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Pronto para pesquisar</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Pronto para pesquisar
+            </h3>
             <p className="text-muted-foreground max-w-md">
-              Digite um tema jurídico acima ou clique em uma das pesquisas rápidas para começar
+              Digite um tema jurídico acima ou clique em uma das pesquisas
+              rápidas para começar
             </p>
           </CardContent>
         </Card>

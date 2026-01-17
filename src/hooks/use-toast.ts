@@ -32,7 +32,12 @@ export function useToast() {
   dismissRef.current = dismiss;
 
   const toast = useCallback(
-    ({ title, description, variant = "default", duration = 3000 }: Omit<Toast, "id">) => {
+    ({
+      title,
+      description,
+      variant = "default",
+      duration = 3000,
+    }: Omit<Toast, "id">) => {
       const id = String(toastCount++);
       const newToast: Toast = { id, title, description, variant, duration };
 
@@ -49,7 +54,7 @@ export function useToast() {
 
       return id;
     },
-    []
+    [],
   );
 
   return {

@@ -1,5 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { HarveyOutputSchema, validateAgentOutput, StructuredOutputValidationError } from "./index";
+import {
+  HarveyOutputSchema,
+  validateAgentOutput,
+  StructuredOutputValidationError,
+} from "./index";
 
 describe("HarveyOutputSchema", () => {
   test("valida output correto completo", () => {
@@ -30,7 +34,8 @@ describe("HarveyOutputSchema", () => {
         {
           risco: "Dificuldade probatória",
           severidade: "media",
-          mitigacao: "Buscar testemunhas e documentos informais (WhatsApp, emails)",
+          mitigacao:
+            "Buscar testemunhas e documentos informais (WhatsApp, emails)",
         },
       ],
       fundamentacao_legal: [
@@ -50,7 +55,8 @@ describe("HarveyOutputSchema", () => {
         "Elaborar petição inicial",
         "Protocolar no prazo",
       ],
-      observacoes_adicionais: "Caso com boas chances de êxito dado o conjunto probatório",
+      observacoes_adicionais:
+        "Caso com boas chances de êxito dado o conjunto probatório",
     };
 
     const result = validateAgentOutput(HarveyOutputSchema, valid);
@@ -76,7 +82,9 @@ describe("HarveyOutputSchema", () => {
       proximos_passos: ["Próximo passo"],
     };
 
-    expect(() => validateAgentOutput(HarveyOutputSchema, minimal)).not.toThrow();
+    expect(() =>
+      validateAgentOutput(HarveyOutputSchema, minimal),
+    ).not.toThrow();
   });
 
   test("rejeita output sem análise estratégica", () => {
@@ -88,7 +96,7 @@ describe("HarveyOutputSchema", () => {
     };
 
     expect(() => validateAgentOutput(HarveyOutputSchema, invalid)).toThrow(
-      StructuredOutputValidationError
+      StructuredOutputValidationError,
     );
   });
 
@@ -182,7 +190,9 @@ describe("HarveyOutputSchema", () => {
       expect.fail("Deveria ter lançado erro");
     } catch (error) {
       expect(error).toBeInstanceOf(StructuredOutputValidationError);
-      const friendlyMsg = (error as StructuredOutputValidationError).getFriendlyMessage();
+      const friendlyMsg = (
+        error as StructuredOutputValidationError
+      ).getFriendlyMessage();
       expect(friendlyMsg).toContain("Erros de validação:");
     }
   });

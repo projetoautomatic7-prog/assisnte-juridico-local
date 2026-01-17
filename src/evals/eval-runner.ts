@@ -81,14 +81,19 @@ export class EvalRunner {
   private datasetsPath: string;
 
   constructor(datasetsPath?: string) {
-    this.datasetsPath = datasetsPath || path.join(process.cwd(), "src/evals/datasets");
+    this.datasetsPath =
+      datasetsPath || path.join(process.cwd(), "src/evals/datasets");
   }
 
   /**
    * Carrega golden dataset de um agente
    */
   async loadDataset(agentName: string): Promise<EvalCase[]> {
-    const datasetPath = path.join(this.datasetsPath, agentName, "golden-cases.json");
+    const datasetPath = path.join(
+      this.datasetsPath,
+      agentName,
+      "golden-cases.json",
+    );
 
     try {
       const content = await fs.readFile(datasetPath, "utf-8");
@@ -108,7 +113,7 @@ export class EvalRunner {
   async runCase(
     agentName: string,
     testCase: EvalCase,
-    agentExecutor: (input: Record<string, unknown>) => Promise<AgentState>
+    agentExecutor: (input: Record<string, unknown>) => Promise<AgentState>,
   ): Promise<EvalResult> {
     return this.tracer.startActiveSpan(
       `eval.run_case`,
@@ -129,13 +134,23 @@ export class EvalRunner {
 
           // Extrair output estruturado se disponível
           const actualOutput =
-            result.data?.structuredOutput || result.messages[result.messages.length - 1]?.content;
+            result.data?.structuredOutput ||
+            result.messages[result.messages.length - 1]?.content;
 
           // Calcular métricas
           const metrics: EvalMetrics = {
-            accuracy: await calculateAccuracy(actualOutput, testCase.expected_output),
-            relevance: await calculateRelevance(actualOutput, testCase.expected_output),
-            completeness: await calculateCompleteness(actualOutput, testCase.expected_output),
+            accuracy: await calculateAccuracy(
+              actualOutput,
+              testCase.expected_output,
+            ),
+            relevance: await calculateRelevance(
+              actualOutput,
+              testCase.expected_output,
+            ),
+            completeness: await calculateCompleteness(
+              actualOutput,
+              testCase.expected_output,
+            ),
             latency_ms: latency,
           };
 
@@ -157,7 +172,7 @@ export class EvalRunner {
           span.setStatus({ code: SpanStatusCode.OK });
 
           console.log(
-            `${passed ? "✅" : "❌"} ${testCase.id}: accuracy=${(metrics.accuracy * 100).toFixed(1)}%, latency=${metrics.latency_ms}ms`
+            `${passed ? "✅" : "❌"} ${testCase.id}: accuracy=${(metrics.accuracy * 100).toFixed(1)}%, latency=${metrics.latency_ms}ms`,
           );
 
           return {
@@ -171,7 +186,8 @@ export class EvalRunner {
           };
         } catch (error) {
           const latency = Date.now() - startTime;
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           span.recordException(error as Error);
           span.setStatus({ code: SpanStatusCode.ERROR, message: errorMessage });
@@ -196,7 +212,7 @@ export class EvalRunner {
         } finally {
           span.end();
         }
-      }
+      },
     );
   }
 
@@ -209,7 +225,7 @@ export class EvalRunner {
     options?: {
       limit?: number;
       difficulty?: "easy" | "medium" | "hard";
-    }
+    },
   ): Promise<EvalReport> {
     return this.tracer.startActiveSpan(
       `eval.run_agent`,
@@ -229,7 +245,9 @@ export class EvalRunner {
 
           // Filtrar por dificuldade se especificado
           if (options?.difficulty) {
-            cases = cases.filter((c) => c.metadata?.difficulty === options.difficulty);
+            cases = cases.filter(
+              (c) => c.metadata?.difficulty === options.difficulty,
+            );
           }
 
           // Limitar número de casos se especificado
@@ -240,7 +258,11 @@ export class EvalRunner {
           // Executar todos os casos
           const results: EvalResult[] = [];
           for (const testCase of cases) {
-            const result = await this.runCase(agentName, testCase, agentExecutor);
+            const result = await this.runCase(
+              agentName,
+              testCase,
+              agentExecutor,
+            );
             results.push(result);
           }
 
@@ -250,11 +272,18 @@ export class EvalRunner {
           const passRate = passedCases / results.length;
 
           const avgMetrics: EvalMetrics = {
-            accuracy: results.reduce((sum, r) => sum + r.metrics.accuracy, 0) / results.length,
-            relevance: results.reduce((sum, r) => sum + r.metrics.relevance, 0) / results.length,
+            accuracy:
+              results.reduce((sum, r) => sum + r.metrics.accuracy, 0) /
+              results.length,
+            relevance:
+              results.reduce((sum, r) => sum + r.metrics.relevance, 0) /
+              results.length,
             completeness:
-              results.reduce((sum, r) => sum + r.metrics.completeness, 0) / results.length,
-            latency_ms: results.reduce((sum, r) => sum + r.metrics.latency_ms, 0) / results.length,
+              results.reduce((sum, r) => sum + r.metrics.completeness, 0) /
+              results.length,
+            latency_ms:
+              results.reduce((sum, r) => sum + r.metrics.latency_ms, 0) /
+              results.length,
           };
 
           const duration = Date.now() - startTime;
@@ -284,9 +313,13 @@ export class EvalRunner {
           // Log resumo
           console.log(`\n📊 ${agentName} Eval Results:`);
           console.log(`   Total: ${report.total_cases}`);
-          console.log(`   Passed: ${passedCases} (${(passRate * 100).toFixed(1)}%)`);
+          console.log(
+            `   Passed: ${passedCases} (${(passRate * 100).toFixed(1)}%)`,
+          );
           console.log(`   Failed: ${failedCases}`);
-          console.log(`   Avg Accuracy: ${(avgMetrics.accuracy * 100).toFixed(1)}%`);
+          console.log(
+            `   Avg Accuracy: ${(avgMetrics.accuracy * 100).toFixed(1)}%`,
+          );
           console.log(`   Avg Latency: ${avgMetrics.latency_ms.toFixed(0)}ms`);
           console.log(`   Duration: ${(duration / 1000).toFixed(1)}s`);
 
@@ -298,7 +331,7 @@ export class EvalRunner {
         } finally {
           span.end();
         }
-      }
+      },
     );
   }
 
@@ -325,12 +358,16 @@ export class EvalRunner {
   async detectRegression(
     current: EvalReport,
     baseline: EvalReport,
-    threshold: number = -0.05 // -5%
+    threshold: number = -0.05, // -5%
   ): Promise<RegressionCheck[]> {
     const checks: RegressionCheck[] = [];
 
     // Verificar cada métrica
-    const metrics: Array<keyof EvalMetrics> = ["accuracy", "relevance", "completeness"];
+    const metrics: Array<keyof EvalMetrics> = [
+      "accuracy",
+      "relevance",
+      "completeness",
+    ];
 
     for (const metric of metrics) {
       const currentValue = current.avg_metrics[metric];
@@ -366,7 +403,7 @@ export class EvalRunner {
     const baselinePath = path.join(
       process.cwd(),
       "src/evals/reports",
-      `${agentName}-baseline.json`
+      `${agentName}-baseline.json`,
     );
 
     try {
@@ -385,7 +422,7 @@ export class EvalRunner {
     const baselinePath = path.join(
       process.cwd(),
       "src/evals/reports",
-      `${report.agent_name}-baseline.json`
+      `${report.agent_name}-baseline.json`,
     );
     await fs.writeFile(baselinePath, JSON.stringify(report, null, 2));
     console.log(`📌 Saved as baseline: ${baselinePath}`);

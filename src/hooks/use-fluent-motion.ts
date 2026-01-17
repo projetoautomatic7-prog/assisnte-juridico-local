@@ -82,7 +82,9 @@ export function useFluentMotion() {
 
   return {
     transitions: shouldReduceMotion ? { duration: 0.01 } : fluentTransitions,
-    variants: shouldReduceMotion ? { initial: {}, animate: {}, exit: {} } : fluentVariants,
+    variants: shouldReduceMotion
+      ? { initial: {}, animate: {}, exit: {} }
+      : fluentVariants,
     shouldReduceMotion,
   };
 }

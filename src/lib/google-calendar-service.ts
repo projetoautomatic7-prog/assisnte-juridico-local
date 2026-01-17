@@ -28,7 +28,9 @@ const debugError = (message: string, error?: unknown) => {
 /**
  * Get appointment type from deadline type
  */
-function getAppointmentType(type?: string): "prazo" | "audiencia" | "reuniao" | "outro" {
+function getAppointmentType(
+  type?: string,
+): "prazo" | "audiencia" | "reuniao" | "outro" {
   if (type === "prazo") return "prazo";
   if (type === "audiencia") return "audiencia";
   if (type === "reuniao") return "reuniao";
@@ -97,7 +99,8 @@ class GoogleCalendarService {
 
     // Segurança para SSR / Node (Vercel server functions)
     if (globalThis.window === undefined) {
-      this.lastError = "Google Calendar só pode ser inicializado no ambiente de browser.";
+      this.lastError =
+        "Google Calendar só pode ser inicializado no ambiente de browser.";
       debugError(this.lastError);
       return false;
     }
@@ -164,7 +167,9 @@ class GoogleCalendarService {
       }
 
       const gapiWindow = globalThis.window as unknown as { gapi?: GapiGlobal };
-      const googleWindow = globalThis.window as unknown as { google?: GoogleGisGlobal };
+      const googleWindow = globalThis.window as unknown as {
+        google?: GoogleGisGlobal;
+      };
 
       // Já carregados
       if (gapiWindow.gapi && googleWindow.google) {
@@ -179,7 +184,11 @@ class GoogleCalendarService {
       }, 15000);
 
       const loadGis = () => {
-        if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
+        if (
+          document.querySelector(
+            'script[src*="accounts.google.com/gsi/client"]',
+          )
+        ) {
           debug("GIS script already exists");
           clearTimeout(timeout);
           resolve();
@@ -249,7 +258,10 @@ class GoogleCalendarService {
 
         const clientInit = (
           gapiWindow.gapi?.client as {
-            init?: (opts: { apiKey: string; discoveryDocs: string[] }) => Promise<void>;
+            init?: (opts: {
+              apiKey: string;
+              discoveryDocs: string[];
+            }) => Promise<void>;
           }
         )?.init;
 
@@ -263,7 +275,9 @@ class GoogleCalendarService {
         try {
           await clientInit({
             apiKey: GOOGLE_API_KEY,
-            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+            discoveryDocs: [
+              "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+            ],
           });
           this.gapiInited = true;
           debug("GAPI client initialized successfully");
@@ -282,7 +296,9 @@ class GoogleCalendarService {
   private initializeGis(): void {
     debug("Initializing Google Identity Services...");
 
-    const google = (globalThis.window as unknown as { google?: GoogleGisGlobal })?.google;
+    const google = (
+      globalThis.window as unknown as { google?: GoogleGisGlobal }
+    )?.google;
 
     if (!google?.accounts?.oauth2) {
       this.lastError = "Google Identity Services não disponível";
@@ -326,7 +342,8 @@ class GoogleCalendarService {
     return new Promise((resolve) => {
       // Timeout de 60 segundos para autenticação
       const timeout = setTimeout(() => {
-        this.lastError = "Timeout na autenticação (60s) - popup pode ter sido bloqueado";
+        this.lastError =
+          "Timeout na autenticação (60s) - popup pode ter sido bloqueado";
         debugError(this.lastError);
         resolve(false);
       }, 60000);
@@ -358,7 +375,9 @@ class GoogleCalendarService {
         if (this.accessToken && gapiWindow.gapi?.client) {
           try {
             (
-              gapiWindow.gapi.client as { setToken?: (token: { access_token: string }) => void }
+              gapiWindow.gapi.client as {
+                setToken?: (token: { access_token: string }) => void;
+              }
             ).setToken?.({
               access_token: this.accessToken,
             });
@@ -390,7 +409,10 @@ class GoogleCalendarService {
     });
   }
 
-  async listEvents(timeMin?: Date, timeMax?: Date): Promise<GoogleCalendarEvent[]> {
+  async listEvents(
+    timeMin?: Date,
+    timeMax?: Date,
+  ): Promise<GoogleCalendarEvent[]> {
     debug("Listing events...", { timeMin, timeMax });
 
     if (!this.accessToken) {
@@ -445,7 +467,10 @@ class GoogleCalendarService {
   }
 
   async createEvent(appointment: Appointment): Promise<string | null> {
-    debug("Creating event...", { title: appointment.title, date: appointment.date });
+    debug("Creating event...", {
+      title: appointment.title,
+      date: appointment.date,
+    });
 
     if (!this.accessToken) {
       const authenticated = await this.authenticate();
@@ -457,7 +482,9 @@ class GoogleCalendarService {
 
     try {
       const startDateTime = new Date(`${appointment.date}T${appointment.time}`);
-      const endDateTime = new Date(startDateTime.getTime() + (appointment.duration || 60) * 60000);
+      const endDateTime = new Date(
+        startDateTime.getTime() + (appointment.duration || 60) * 60000,
+      );
 
       const event: GoogleCalendarEvent = {
         summary: appointment.title,
@@ -535,7 +562,9 @@ class GoogleCalendarService {
       description: [
         deadline.description || "",
         deadline.processNumber ? `Processo: ${deadline.processNumber}` : "",
-        deadline.priority ? `Prioridade: ${deadline.priority.toUpperCase()}` : "",
+        deadline.priority
+          ? `Prioridade: ${deadline.priority.toUpperCase()}`
+          : "",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -550,7 +579,10 @@ class GoogleCalendarService {
     return this.createEvent(appointment);
   }
 
-  async updateEvent(eventId: string, appointment: Appointment): Promise<boolean> {
+  async updateEvent(
+    eventId: string,
+    appointment: Appointment,
+  ): Promise<boolean> {
     debug("Updating event...", { eventId, title: appointment.title });
 
     if (!this.accessToken) {
@@ -560,7 +592,9 @@ class GoogleCalendarService {
 
     try {
       const startDateTime = new Date(`${appointment.date}T${appointment.time}`);
-      const endDateTime = new Date(startDateTime.getTime() + (appointment.duration || 60) * 60000);
+      const endDateTime = new Date(
+        startDateTime.getTime() + (appointment.duration || 60) * 60000,
+      );
 
       const event: GoogleCalendarEvent = {
         summary: appointment.title,
@@ -664,7 +698,9 @@ class GoogleCalendarService {
   revokeAccess(): void {
     debug("Revoking access...");
     if (this.accessToken) {
-      const google = (globalThis.window as unknown as { google?: GoogleGisGlobal })?.google;
+      const google = (
+        globalThis.window as unknown as { google?: GoogleGisGlobal }
+      )?.google;
       try {
         google?.accounts.oauth2.revoke(this.accessToken);
         debug("Access revoked");

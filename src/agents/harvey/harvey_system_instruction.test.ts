@@ -24,7 +24,9 @@ describe("Harvey Agent - System Instruction Validation", () => {
       text: "Análise realizada com sucesso pelo Harvey.",
       metadata: { model: "gemini-2.5-pro" },
     };
-    const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
+    const callGeminiSpy = vi
+      .mocked(GeminiService.callGemini)
+      .mockResolvedValue(mockResponse);
 
     const input = {
       task: "Revisar contrato de prestação de serviços",

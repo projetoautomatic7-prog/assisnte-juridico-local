@@ -5,11 +5,17 @@ import type { AgentState } from "@/agents/base/agent_state";
 class SucceedAfterAttemptsAgent extends LangGraphAgent {
   private failsBeforeSuccess: number;
   private attempts = 0;
-  constructor(failsBeforeSuccess: number, config?: Partial<typeof DEFAULT_CONFIG>) {
+  constructor(
+    failsBeforeSuccess: number,
+    config?: Partial<typeof DEFAULT_CONFIG>,
+  ) {
     super({ timeoutMs: 200, maxRetries: 3, retryDelayMs: 10, ...config });
     this.failsBeforeSuccess = failsBeforeSuccess;
   }
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     this.attempts++;
     if (this.attempts <= this.failsBeforeSuccess) {
       throw new Error("transient error");
@@ -19,7 +25,10 @@ class SucceedAfterAttemptsAgent extends LangGraphAgent {
 }
 
 class HangingAgent extends LangGraphAgent {
-  protected async run(state: AgentState, signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    signal: AbortSignal,
+  ): Promise<AgentState> {
     await new Promise((_, reject) => {
       signal.addEventListener("abort", () => reject(new Error("aborted"))); // will reject on abort
     });
@@ -53,7 +62,11 @@ describe("LangGraphAgent base class", () => {
   });
 
   it("times out and marks state as completed with error", async () => {
-    const agent = new HangingAgent({ timeoutMs: 50, maxRetries: 1, retryDelayMs: 10 });
+    const agent = new HangingAgent({
+      timeoutMs: 50,
+      maxRetries: 1,
+      retryDelayMs: 10,
+    });
     const state: AgentState = {
       messages: [],
       currentStep: "init",
@@ -71,7 +84,11 @@ describe("LangGraphAgent base class", () => {
   });
 
   it("aborts explicitly and returns an error state", async () => {
-    const agent = new HangingAgent({ timeoutMs: 5000, maxRetries: 1, retryDelayMs: 10 });
+    const agent = new HangingAgent({
+      timeoutMs: 5000,
+      maxRetries: 1,
+      retryDelayMs: 10,
+    });
     const state: AgentState = {
       messages: [],
       currentStep: "init",
@@ -98,11 +115,18 @@ describe("LangGraphAgent base class", () => {
 
   it("aborts during backoff delay and returns an error state", async () => {
     class FailingAgent extends LangGraphAgent {
-      protected async run(_state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+      protected async run(
+        _state: AgentState,
+        _signal: AbortSignal,
+      ): Promise<AgentState> {
         throw new Error("transient error");
       }
     }
-    const agent = new FailingAgent({ timeoutMs: 5000, maxRetries: 3, retryDelayMs: 1000 });
+    const agent = new FailingAgent({
+      timeoutMs: 5000,
+      maxRetries: 3,
+      retryDelayMs: 1000,
+    });
     const state: AgentState = {
       messages: [],
       currentStep: "init",

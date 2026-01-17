@@ -8,7 +8,10 @@ import {
 } from "@/lib/sentry-gemini-integration-v2";
 
 export class EstrategiaProcessualAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Estratégia Processual
     return createInvokeAgentSpan(
       {
@@ -18,7 +21,9 @@ export class EstrategiaProcessualAgent extends LangGraphAgent {
         temperature: 0.6,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `estrategia_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `estrategia_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -26,13 +31,18 @@ export class EstrategiaProcessualAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "estrategia-processual:start" });
+        let current = updateState(state, {
+          currentStep: "estrategia-processual:start",
+        });
 
         // Extrair dados do caso
         const tipoCaso = (state.data?.tipoCaso as string) || "trabalhista";
-        const fasseProcessual = (state.data?.faseProcessual as string) || "inicial";
-        const resultadoAnterior = (state.data?.resultadoAnterior as string) || "";
-        const objetivoCliente = (state.data?.objetivoCliente as string) || "vitória total";
+        const fasseProcessual =
+          (state.data?.faseProcessual as string) || "inicial";
+        const resultadoAnterior =
+          (state.data?.resultadoAnterior as string) || "";
+        const objetivoCliente =
+          (state.data?.objetivoCliente as string) || "vitória total";
         const riskScore = (state.data?.riskScore as number) || 0.5;
 
         span?.setAttribute("estrategia.tipo_caso", tipoCaso);
@@ -44,7 +54,10 @@ export class EstrategiaProcessualAgent extends LangGraphAgent {
         if (riskScore === undefined || riskScore === 0.5) {
           await createHandoffSpan("Estratégia Processual", "Análise de Risco");
           span?.setAttribute("estrategia.handoff_triggered", true);
-          span?.setAttribute("estrategia.handoff_reason", "Necessário análise de risco primeiro");
+          span?.setAttribute(
+            "estrategia.handoff_reason",
+            "Necessário análise de risco primeiro",
+          );
 
           // Simular que análise de risco foi solicitada
           current = updateState(current, {
@@ -99,13 +112,17 @@ Forneça:
             let estrategiasAlternativas: string[] = [];
 
             if (fasseProcessual === "inicial") {
-              estrategiaPrincipal = "Contestação completa com preliminares e mérito";
+              estrategiaPrincipal =
+                "Contestação completa com preliminares e mérito";
               acoesImediatas = [
                 "Juntar documentos comprobatórios",
                 "Arrolar testemunhas",
                 "Protocolar resposta no prazo",
               ];
-              estrategiasAlternativas = ["Propor acordo", "Apresentar reconvenção"];
+              estrategiasAlternativas = [
+                "Propor acordo",
+                "Apresentar reconvenção",
+              ];
             } else if (fasseProcessual === "recursal") {
               if (riskScore > 0.6) {
                 estrategiaPrincipal = "Avaliar acordo antes de recorrer";
@@ -114,14 +131,18 @@ Forneça:
                   "Avaliar custo x benefício do recurso",
                 ];
               } else {
-                estrategiaPrincipal = "Recurso de Apelação com ênfase em precedentes";
+                estrategiaPrincipal =
+                  "Recurso de Apelação com ênfase em precedentes";
                 acoesImediatas = [
                   "Pesquisar jurisprudência favorável",
                   "Elaborar razões recursais",
                   "Protocolar recurso no prazo",
                 ];
               }
-              estrategiasAlternativas = ["Embargos de Declaração", "Acordo em segunda instância"];
+              estrategiasAlternativas = [
+                "Embargos de Declaração",
+                "Acordo em segunda instância",
+              ];
             } else if (fasseProcessual === "execucao") {
               estrategiaPrincipal = "Execução forçada com penhora de bens";
               acoesImediatas = [
@@ -136,10 +157,14 @@ Forneça:
             } else {
               estrategiaPrincipal = "Aguardar decisão judicial";
               acoesImediatas = ["Acompanhar movimentação do processo"];
-              estrategiasAlternativas = ["Petição intermediária", "Diligências probatórias"];
+              estrategiasAlternativas = [
+                "Petição intermediária",
+                "Diligências probatórias",
+              ];
             }
 
-            const previsaoTempo = fasseProcessual === "inicial" ? "6-12 meses" : "12-24 meses";
+            const previsaoTempo =
+              fasseProcessual === "inicial" ? "6-12 meses" : "12-24 meses";
             const previsaoCusto = riskScore < 0.4 ? "moderado" : "elevado";
 
             const resultado = {
@@ -147,7 +172,9 @@ Forneça:
               estrategiasAlternativas,
               acoesImediatas,
               riscos: [
-                riskScore > 0.6 ? "Risco elevado de sucumbência" : "Risco moderado",
+                riskScore > 0.6
+                  ? "Risco elevado de sucumbência"
+                  : "Risco moderado",
                 "Possível extensão do prazo processual",
               ],
               previsaoTempo,
@@ -155,21 +182,33 @@ Forneça:
               confianca: riskScore < 0.4 ? 0.8 : 0.6,
             };
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([resultado]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 350);
 
             return resultado;
-          }
+          },
         );
 
-        span?.setAttribute("estrategia.principal", estrategia.estrategiaPrincipal);
+        span?.setAttribute(
+          "estrategia.principal",
+          estrategia.estrategiaPrincipal,
+        );
         span?.setAttribute(
           "estrategia.alternativas_count",
-          estrategia.estrategiasAlternativas.length
+          estrategia.estrategiasAlternativas.length,
         );
-        span?.setAttribute("estrategia.acoes_count", estrategia.acoesImediatas.length);
+        span?.setAttribute(
+          "estrategia.acoes_count",
+          estrategia.acoesImediatas.length,
+        );
         span?.setAttribute("estrategia.confianca", estrategia.confianca);
-        span?.setAttribute("estrategia.previsao_tempo", estrategia.previsaoTempo);
+        span?.setAttribute(
+          "estrategia.previsao_tempo",
+          estrategia.previsaoTempo,
+        );
 
         current = updateState(current, {
           currentStep: "estrategia-processual:complete",
@@ -184,15 +223,15 @@ Forneça:
 
         return this.addAgentMessage(
           current,
-          `Estratégia recomendada: ${estrategia.estrategiaPrincipal} (confiança: ${(estrategia.confianca * 100).toFixed(0)}%)`
+          `Estratégia recomendada: ${estrategia.estrategiaPrincipal} (confiança: ${(estrategia.confianca * 100).toFixed(0)}%)`,
         );
-      }
+      },
     );
   }
 }
 
 export async function runEstrategiaProcessual(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new EstrategiaProcessualAgent();
   const initialState: AgentState = {

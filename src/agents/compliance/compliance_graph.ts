@@ -8,7 +8,10 @@ import {
 } from "@/lib/sentry-gemini-integration-v2";
 
 export class ComplianceAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Compliance
     return createInvokeAgentSpan(
       {
@@ -18,7 +21,9 @@ export class ComplianceAgent extends LangGraphAgent {
         temperature: 0.1,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `compliance_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `compliance_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -29,13 +34,20 @@ export class ComplianceAgent extends LangGraphAgent {
         let current = updateState(state, { currentStep: "compliance:start" });
 
         // Extrair dados para verificação
-        const tipoVerificacao = (state.data?.tipoVerificacao as string) || "lgpd";
+        const tipoVerificacao =
+          (state.data?.tipoVerificacao as string) || "lgpd";
         const documentoTexto = (state.data?.documentoTexto as string) || "";
         const dadosPessoais = (state.data?.dadosPessoais as string[]) || [];
 
         span?.setAttribute("compliance.tipo_verificacao", tipoVerificacao);
-        span?.setAttribute("compliance.documento_length", documentoTexto.length);
-        span?.setAttribute("compliance.dados_pessoais_count", dadosPessoais.length);
+        span?.setAttribute(
+          "compliance.documento_length",
+          documentoTexto.length,
+        );
+        span?.setAttribute(
+          "compliance.dados_pessoais_count",
+          dadosPessoais.length,
+        );
 
         // 1. Usar tool para detectar dados sensíveis
         const dadosDetectados = await createExecuteToolSpan(
@@ -56,8 +68,18 @@ export class ComplianceAgent extends LangGraphAgent {
             await new Promise((resolve) => setTimeout(resolve, 20));
 
             const deteccoes = [
-              { tipo: "cpf", valor: "***.***.***-**", posicao: 120, sensibilidade: "alta" },
-              { tipo: "email", valor: "****@gmail.com", posicao: 250, sensibilidade: "média" },
+              {
+                tipo: "cpf",
+                valor: "***.***.***-**",
+                posicao: 120,
+                sensibilidade: "alta",
+              },
+              {
+                tipo: "email",
+                valor: "****@gmail.com",
+                posicao: 250,
+                sensibilidade: "média",
+              },
               {
                 tipo: "endereco",
                 valor: "Rua ******, 123",
@@ -66,18 +88,27 @@ export class ComplianceAgent extends LangGraphAgent {
               },
             ];
 
-            toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(deteccoes));
-            toolSpan?.setAttribute("compliance.detections_count", deteccoes.length);
+            toolSpan?.setAttribute(
+              "gen_ai.tool.output",
+              JSON.stringify(deteccoes),
+            );
+            toolSpan?.setAttribute(
+              "compliance.detections_count",
+              deteccoes.length,
+            );
             toolSpan?.setAttribute(
               "compliance.high_sensitivity_count",
-              deteccoes.filter((d) => d.sensibilidade === "alta").length
+              deteccoes.filter((d) => d.sensibilidade === "alta").length,
             );
 
             return deteccoes;
-          }
+          },
         );
 
-        span?.setAttribute("compliance.dados_detectados", dadosDetectados.length);
+        span?.setAttribute(
+          "compliance.dados_detectados",
+          dadosDetectados.length,
+        );
 
         // 2. Usar LLM para verificar conformidade LGPD
         const verificacao = await createChatSpan(
@@ -119,13 +150,18 @@ Verifique:
             const recomendacoes = [];
 
             // Regras de compliance
-            if (dadosDetectados.filter((d) => d.sensibilidade === "alta").length > 0) {
+            if (
+              dadosDetectados.filter((d) => d.sensibilidade === "alta").length >
+              0
+            ) {
               problemas.push({
                 artigo: "Art. 11 LGPD",
                 descricao: "Dados sensíveis detectados sem proteção específica",
                 severidade: "alta",
               });
-              recomendacoes.push("Implementar criptografia para dados sensíveis (Art. 46, II)");
+              recomendacoes.push(
+                "Implementar criptografia para dados sensíveis (Art. 46, II)",
+              );
             }
 
             if (dadosPessoais.length === 0) {
@@ -134,10 +170,13 @@ Verifique:
                 descricao: "Finalidade do tratamento não está clara",
                 severidade: "média",
               });
-              recomendacoes.push("Declarar finalidade específica do tratamento de dados");
+              recomendacoes.push(
+                "Declarar finalidade específica do tratamento de dados",
+              );
             }
 
-            const lgpdPassed = problemas.filter((p) => p.severidade === "alta").length === 0;
+            const lgpdPassed =
+              problemas.filter((p) => p.severidade === "alta").length === 0;
 
             const resultado = {
               lgpdPassed,
@@ -147,15 +186,21 @@ Verifique:
               status: lgpdPassed ? "conforme" : "não-conforme",
             };
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([resultado]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 250);
 
             return resultado;
-          }
+          },
         );
 
         span?.setAttribute("compliance.lgpd_passed", verificacao.lgpdPassed);
-        span?.setAttribute("compliance.problemas_count", verificacao.problemas.length);
+        span?.setAttribute(
+          "compliance.problemas_count",
+          verificacao.problemas.length,
+        );
         span?.setAttribute("compliance.status", verificacao.status);
         span?.setAttribute("compliance.score", verificacao.score);
 
@@ -173,14 +218,16 @@ Verifique:
 
         return this.addAgentMessage(
           current,
-          `Compliance ${verificacao.status.toUpperCase()}: ${verificacao.problemas.length} problema(s) (score: ${verificacao.score.toFixed(2)})`
+          `Compliance ${verificacao.status.toUpperCase()}: ${verificacao.problemas.length} problema(s) (score: ${verificacao.score.toFixed(2)})`,
         );
-      }
+      },
     );
   }
 }
 
-export async function runCompliance(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runCompliance(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new ComplianceAgent();
   const initialState: AgentState = {
     messages: [],

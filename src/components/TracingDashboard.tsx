@@ -6,7 +6,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tracingService, type Span } from "@/lib/tracing";
@@ -105,7 +111,8 @@ export default function TracingDashboard({
 
     // Calcular error rate manualmente se não existir
     const errorCount = traces.filter((t) => t.status === "error").length;
-    const errorRate = traces.length > 0 ? (errorCount / traces.length) * 100 : 0;
+    const errorRate =
+      traces.length > 0 ? (errorCount / traces.length) * 100 : 0;
 
     setSpans(traces);
     setMetrics({
@@ -164,14 +171,23 @@ export default function TracingDashboard({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Observabilidade de Agentes</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Observabilidade de Agentes
+          </h2>
           <p className="text-muted-foreground">
             Monitoramento em tempo real de performance e custos de LLM
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadData} disabled={isRefreshing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadData}
+            disabled={isRefreshing}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
           <Button
@@ -191,12 +207,16 @@ export default function TracingDashboard({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Operações</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Operações
+            </CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totalSpans}</div>
-            <p className="text-xs text-muted-foreground">Registros de execução</p>
+            <p className="text-xs text-muted-foreground">
+              Registros de execução
+            </p>
           </CardContent>
         </Card>
 
@@ -219,19 +239,27 @@ export default function TracingDashboard({
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.llm.totalTokens.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {metrics.llm.totalTokens.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">Consumo acumulado</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custo Estimado</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Custo Estimado
+            </CardTitle>
             <LineChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${metrics.llm.estimatedCost.toFixed(4)}</div>
-            <p className="text-xs text-muted-foreground">Baseado em GPT-4o-mini</p>
+            <div className="text-2xl font-bold">
+              ${metrics.llm.estimatedCost.toFixed(4)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Baseado em GPT-4o-mini
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -254,7 +282,9 @@ export default function TracingDashboard({
                 <ScrollArea className="h-[300px]">
                   <div className="space-y-4 p-4">
                     {spans.slice(0, 10).map((span, index) => {
-                      const duration = span.endTime ? span.endTime - span.startTime : 0;
+                      const duration = span.endTime
+                        ? span.endTime - span.startTime
+                        : 0;
                       const agentId = span.attributes["agent.id"] as string;
 
                       return (
@@ -267,11 +297,18 @@ export default function TracingDashboard({
                             <div>
                               <p className="text-sm font-medium">{span.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(span.startTime).toLocaleTimeString()} • {duration}ms
+                                {new Date(span.startTime).toLocaleTimeString()}{" "}
+                                • {duration}ms
                               </p>
                             </div>
                           </div>
-                          <Badge variant={span.status === "error" ? "destructive" : "secondary"}>
+                          <Badge
+                            variant={
+                              span.status === "error"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
                             {agentId || "system"}
                           </Badge>
                         </div>
@@ -290,7 +327,10 @@ export default function TracingDashboard({
               <CardContent>
                 <div className="space-y-4">
                   {Object.entries(metrics.agents).map(([agentId, data]) => (
-                    <div key={agentId} className="flex items-center justify-between">
+                    <div
+                      key={agentId}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
                         <Bot className="h-4 w-4 text-primary" />
                         <span className="text-sm font-medium">{agentId}</span>
@@ -310,7 +350,9 @@ export default function TracingDashboard({
           <Card>
             <CardHeader>
               <CardTitle>Detalhamento por Agente</CardTitle>
-              <CardDescription>Métricas detalhadas de execução e erros</CardDescription>
+              <CardDescription>
+                Métricas detalhadas de execução e erros
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
@@ -326,11 +368,15 @@ export default function TracingDashboard({
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-muted-foreground">Duração Média</p>
-                        <p className="font-medium">{Math.round(data.avgDuration)}ms</p>
+                        <p className="font-medium">
+                          {Math.round(data.avgDuration)}ms
+                        </p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-muted-foreground">Erros</p>
-                        <p className={`font-medium ${data.errors > 0 ? "text-destructive" : ""}`}>
+                        <p
+                          className={`font-medium ${data.errors > 0 ? "text-destructive" : ""}`}
+                        >
                           {data.errors}
                         </p>
                       </div>
@@ -352,19 +398,25 @@ export default function TracingDashboard({
           <Card>
             <CardHeader>
               <CardTitle>Consumo de LLM</CardTitle>
-              <CardDescription>Uso de tokens e custos estimados</CardDescription>
+              <CardDescription>
+                Uso de tokens e custos estimados
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 border rounded-lg">
-                    <h4 className="text-sm font-medium mb-2">Tokens de Entrada</h4>
+                    <h4 className="text-sm font-medium mb-2">
+                      Tokens de Entrada
+                    </h4>
                     <p className="text-2xl font-bold">
                       {metrics.llm.promptTokens.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <h4 className="text-sm font-medium mb-2">Tokens de Saída</h4>
+                    <h4 className="text-sm font-medium mb-2">
+                      Tokens de Saída
+                    </h4>
                     <p className="text-2xl font-bold">
                       {metrics.llm.completionTokens.toLocaleString()}
                     </p>
@@ -372,17 +424,23 @@ export default function TracingDashboard({
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium mb-4">Operações Recentes de LLM</h4>
+                  <h4 className="text-sm font-medium mb-4">
+                    Operações Recentes de LLM
+                  </h4>
                   <div className="space-y-2">
                     {spans
                       .filter((s) => s.attributes["ai.model"])
                       .slice(0, 5)
                       .map((span, index) => {
-                        const duration = span.endTime ? span.endTime - span.startTime : 0;
+                        const duration = span.endTime
+                          ? span.endTime - span.startTime
+                          : 0;
                         const model = span.attributes["ai.model"] as string;
-                        const promptTokens = (span.attributes["ai.prompt_tokens"] as number) || 0;
+                        const promptTokens =
+                          (span.attributes["ai.prompt_tokens"] as number) || 0;
                         const completionTokens =
-                          (span.attributes["ai.completion_tokens"] as number) || 0;
+                          (span.attributes["ai.completion_tokens"] as number) ||
+                          0;
 
                         return (
                           <div
@@ -392,7 +450,9 @@ export default function TracingDashboard({
                             <div className="flex items-center gap-3">
                               <Brain className="h-4 w-4 text-primary" />
                               <div>
-                                <p className="text-sm font-medium">{span.name}</p>
+                                <p className="text-sm font-medium">
+                                  {span.name}
+                                </p>
                                 <p className="text-xs text-muted-foreground">
                                   {model} • {duration}ms
                                 </p>
@@ -420,13 +480,17 @@ export default function TracingDashboard({
           <Card>
             <CardHeader>
               <CardTitle>Traces Completos</CardTitle>
-              <CardDescription>Histórico detalhado de todas as operações</CardDescription>
+              <CardDescription>
+                Histórico detalhado de todas as operações
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px]">
                 <div className="space-y-4">
                   {spans.map((span, index) => {
-                    const duration = span.endTime ? span.endTime - span.startTime : 0;
+                    const duration = span.endTime
+                      ? span.endTime - span.startTime
+                      : 0;
                     const agentId = span.attributes["agent.id"] as string;
 
                     return (
@@ -449,10 +513,15 @@ export default function TracingDashboard({
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-muted-foreground">Duração:</span> {duration}ms
+                            <span className="text-muted-foreground">
+                              Duração:
+                            </span>{" "}
+                            {duration}ms
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Trace ID:</span>
+                            <span className="text-muted-foreground">
+                              Trace ID:
+                            </span>
                             <span className="font-mono text-xs ml-1">
                               {span.context.traceId.slice(0, 8)}...
                             </span>

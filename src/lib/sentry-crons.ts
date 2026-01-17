@@ -188,7 +188,7 @@ export function captureCheckin(options: CaptureCheckinOptions): string {
 export function monitorCron<T extends (...args: any[]) => Promise<any>>(
   monitorSlug: string,
   fn: T,
-  monitorConfig?: MonitorConfig
+  monitorConfig?: MonitorConfig,
 ): T {
   return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     const startTime = Date.now();
@@ -252,7 +252,7 @@ export function monitorCron<T extends (...args: any[]) => Promise<any>>(
 export async function withCronMonitor<T>(
   monitorSlug: string,
   fn: (reportStatus: (status: MonitorStatus) => void) => Promise<T>,
-  monitorConfig?: MonitorConfig
+  monitorConfig?: MonitorConfig,
 ): Promise<T> {
   const startTime = Date.now();
 

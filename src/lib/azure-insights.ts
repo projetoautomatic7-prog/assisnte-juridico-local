@@ -22,8 +22,10 @@ const reactPlugin = new ReactPlugin();
 
 // Connection string do Application Insights
 // Configurar em variável de ambiente: VITE_AZURE_INSIGHTS_CONNECTION_STRING
-const rawConnectionString = import.meta.env.VITE_AZURE_INSIGHTS_CONNECTION_STRING;
-const connectionString = typeof rawConnectionString === "string" ? rawConnectionString : undefined;
+const rawConnectionString = import.meta.env
+  .VITE_AZURE_INSIGHTS_CONNECTION_STRING;
+const connectionString =
+  typeof rawConnectionString === "string" ? rawConnectionString : undefined;
 
 // Inicializar Application Insights
 const appInsights = new ApplicationInsights({
@@ -45,7 +47,9 @@ const appInsights = new ApplicationInsights({
 
     // Configurações de cookies
     isCookieUseDisabled: false,
-    cookieDomain: import.meta.env.PROD ? "assistente-juridico-github.vercel.app" : undefined,
+    cookieDomain: import.meta.env.PROD
+      ? "assistente-juridico-github.vercel.app"
+      : undefined,
 
     // Integração com React
     extensions: [reactPlugin],
@@ -79,7 +83,7 @@ export function trackAgentEvent(
   agentId: string,
   eventName: string,
   properties?: Record<string, string | number | boolean>,
-  metrics?: Record<string, number>
+  metrics?: Record<string, number>,
 ) {
   appInsights.trackEvent({
     name: `Agent_${eventName}`,
@@ -100,7 +104,7 @@ export function trackAgentTask(
   taskType: string,
   status: "QUEUED" | "PROCESSING" | "COMPLETED" | "FAILED",
   durationMs?: number,
-  error?: string
+  error?: string,
 ) {
   trackAgentEvent(
     agentId,
@@ -112,7 +116,7 @@ export function trackAgentTask(
     },
     {
       duration: durationMs || 0,
-    }
+    },
   );
 }
 
@@ -125,19 +129,25 @@ export function trackAgentPerformance(
     tasksCompleted: number;
     averageProcessingTime: number;
     errorRate: number;
-  }
+  },
 ) {
   appInsights.trackMetric(
     { name: "Agent_TasksCompleted", average: metrics.tasksCompleted },
-    { agentId }
+    { agentId },
   );
 
   appInsights.trackMetric(
-    { name: "Agent_AverageProcessingTime", average: metrics.averageProcessingTime },
-    { agentId }
+    {
+      name: "Agent_AverageProcessingTime",
+      average: metrics.averageProcessingTime,
+    },
+    { agentId },
   );
 
-  appInsights.trackMetric({ name: "Agent_ErrorRate", average: metrics.errorRate }, { agentId });
+  appInsights.trackMetric(
+    { name: "Agent_ErrorRate", average: metrics.errorRate },
+    { agentId },
+  );
 }
 
 // ==========================================
@@ -152,7 +162,7 @@ export function trackAPICall(
   method: string,
   statusCode: number,
   durationMs: number,
-  success: boolean
+  success: boolean,
 ) {
   appInsights.trackDependencyData({
     id: `api-${Date.now()}`,
@@ -174,7 +184,7 @@ export function trackRedisCall(
   operation: string,
   key: string,
   durationMs: number,
-  success: boolean
+  success: boolean,
 ) {
   appInsights.trackDependencyData({
     id: `redis-${Date.now()}`,
@@ -203,7 +213,7 @@ export function trackError(
     agentId?: string;
     taskId?: string;
     severity?: "critical" | "error" | "warning";
-  }
+  },
 ) {
   appInsights.trackException({
     exception: error,
@@ -243,7 +253,7 @@ export function identifyUser(
     name?: string;
     oab?: string;
     email?: string;
-  }
+  },
 ) {
   appInsights.setAuthenticatedUserContext(userId, undefined, true);
 
@@ -267,7 +277,7 @@ export function identifyUser(
  */
 export function trackUserAction(
   action: string,
-  properties?: Record<string, string | number | boolean>
+  properties?: Record<string, string | number | boolean>,
 ) {
   appInsights.trackEvent({
     name: `User_${action}`,
@@ -289,7 +299,7 @@ export function trackIntimacaoProcessed(
   processNumber: string,
   tribunal: string,
   prazoEmDias: number,
-  criadoPorAgente: boolean
+  criadoPorAgente: boolean,
 ) {
   trackUserAction("IntimacaoProcessed", {
     processNumber,
@@ -301,7 +311,7 @@ export function trackIntimacaoProcessed(
   // Métrica: Total de intimações processadas
   appInsights.trackMetric(
     { name: "Intimacoes_Processed", average: 1 },
-    { tribunal, automated: String(criadoPorAgente) }
+    { tribunal, automated: String(criadoPorAgente) },
   );
 }
 
@@ -312,7 +322,7 @@ export function trackMinutaGenerated(
   type: string,
   agentId: string,
   confidence: number,
-  durationMs: number
+  durationMs: number,
 ) {
   trackUserAction("MinutaGenerated", {
     type,
@@ -322,7 +332,10 @@ export function trackMinutaGenerated(
   });
 
   // Métrica: Confidence das minutas
-  appInsights.trackMetric({ name: "Minuta_Confidence", average: confidence }, { type, agentId });
+  appInsights.trackMetric(
+    { name: "Minuta_Confidence", average: confidence },
+    { type, agentId },
+  );
 }
 
 /**
@@ -332,7 +345,7 @@ export function trackPrazoCalculated(
   processNumber: string,
   prazoEmDias: number,
   dataVencimento: string,
-  agentId: string
+  agentId: string,
 ) {
   trackUserAction("PrazoCalculated", {
     processNumber,
@@ -352,7 +365,7 @@ export function trackPrazoCalculated(
 export function trackPageView(
   name: string,
   url?: string,
-  properties?: Record<string, string | number>
+  properties?: Record<string, string | number>,
 ) {
   appInsights.trackPageView({
     name,
@@ -375,7 +388,10 @@ export function startTimer(name: string) {
     stop: (properties?: Record<string, string | number>) => {
       const duration = performance.now() - startTime;
 
-      appInsights.trackMetric({ name: `Performance_${name}`, average: duration }, properties);
+      appInsights.trackMetric(
+        { name: `Performance_${name}`, average: duration },
+        properties,
+      );
 
       return duration;
     },
@@ -388,7 +404,7 @@ export function startTimer(name: string) {
 export async function measurePerformance<T>(
   name: string,
   fn: () => Promise<T> | T,
-  properties?: Record<string, string | number>
+  properties?: Record<string, string | number>,
 ): Promise<T> {
   const timer = startTimer(name);
 

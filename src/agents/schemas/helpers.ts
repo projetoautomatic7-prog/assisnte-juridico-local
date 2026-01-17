@@ -36,7 +36,7 @@ export function extractJSON(text: string): string {
 export function parseStructuredOutput<T extends z.ZodType>(
   schema: T,
   responseText: string,
-  agentName: string
+  agentName: string,
 ): {
   success: boolean;
   data?: z.infer<T>;
@@ -69,13 +69,19 @@ export function parseStructuredOutput<T extends z.ZodType>(
  * Formata lista como markdown
  */
 export function formatList(items: string[], ordered: boolean = true): string {
-  return items.map((item, i) => `${ordered ? `${i + 1}.` : "-"} ${item}`).join("\n");
+  return items
+    .map((item, i) => `${ordered ? `${i + 1}.` : "-"} ${item}`)
+    .join("\n");
 }
 
 /**
  * Formata seção com título
  */
-export function formatSection(title: string, content: string, emoji?: string): string {
+export function formatSection(
+  title: string,
+  content: string,
+  emoji?: string,
+): string {
   const titleWithEmoji = emoji ? `${emoji} ${title}` : `## ${title}`;
   return `${titleWithEmoji}\n\n${content}\n`;
 }
@@ -116,7 +122,10 @@ export function formatDate(isoDate: string): string {
 /**
  * Badge de prioridade/severidade
  */
-export function formatBadge(level: "alta" | "media" | "baixa", label: string): string {
+export function formatBadge(
+  level: "alta" | "media" | "baixa",
+  label: string,
+): string {
   const emoji = {
     alta: "🔴",
     media: "🟡",

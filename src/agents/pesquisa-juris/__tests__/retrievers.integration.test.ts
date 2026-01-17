@@ -10,7 +10,9 @@ import type { PesquisaJurisInput } from "../validators";
 
 describe("JurisprudenceRetriever - Integração Real", () => {
   let retriever: JurisprudenceRetriever;
-  const hasQdrantConfig = !!(process.env.QDRANT_URL && process.env.QDRANT_API_KEY);
+  const hasQdrantConfig = !!(
+    process.env.QDRANT_URL && process.env.QDRANT_API_KEY
+  );
 
   beforeEach(() => {
     retriever = new JurisprudenceRetriever();
@@ -21,9 +23,13 @@ describe("JurisprudenceRetriever - Integração Real", () => {
       expect(retriever).toBeInstanceOf(JurisprudenceRetriever);
     });
 
-    it("deve conectar ao Qdrant quando configurado", { skip: !hasQdrantConfig }, () => {
-      expect(retriever).toHaveProperty("qdrantService");
-    });
+    it(
+      "deve conectar ao Qdrant quando configurado",
+      { skip: !hasQdrantConfig },
+      () => {
+        expect(retriever).toHaveProperty("qdrantService");
+      },
+    );
   });
 
   describe("✅ Busca Real com Qdrant", () => {
@@ -62,7 +68,7 @@ describe("JurisprudenceRetriever - Integração Real", () => {
           expect(p.tribunal).toBe("STF");
           expect(p.relevancia).toBeGreaterThanOrEqual(0.6);
         }
-      }
+      },
     );
 
     it(
@@ -90,7 +96,7 @@ describe("JurisprudenceRetriever - Integração Real", () => {
             expect(["STF", "STJ", "TST"]).toContain(p.tribunal);
           });
         }
-      }
+      },
     );
 
     it(
@@ -117,7 +123,7 @@ describe("JurisprudenceRetriever - Integração Real", () => {
         if (result.precedentes.length > 0) {
           expect(result.avgRelevance).toBeGreaterThanOrEqual(0.85);
         }
-      }
+      },
     );
 
     it(
@@ -138,10 +144,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
         // Validar ordenação
         for (let i = 1; i < result.precedentes.length; i++) {
           expect(result.precedentes[i - 1].relevancia).toBeGreaterThanOrEqual(
-            result.precedentes[i].relevancia
+            result.precedentes[i].relevancia,
           );
         }
-      }
+      },
     );
   });
 
@@ -159,8 +165,10 @@ describe("JurisprudenceRetriever - Integração Real", () => {
           dataFim: "2024-12-31",
         };
 
-        await expect(retriever.search(input)).rejects.toThrow(/Qdrant não configurado/);
-      }
+        await expect(retriever.search(input)).rejects.toThrow(
+          /Qdrant não configurado/,
+        );
+      },
     );
 
     it(
@@ -182,7 +190,7 @@ describe("JurisprudenceRetriever - Integração Real", () => {
         expect(result.precedentes).toEqual([]);
         expect(result.totalFound).toBe(0);
         expect(result.avgRelevance).toBe(0);
-      }
+      },
     );
   });
 });

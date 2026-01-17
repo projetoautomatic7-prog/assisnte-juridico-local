@@ -182,7 +182,7 @@ describe("Tool Auditor", () => {
       "legal_research",
       { query: "teste" },
       "session_test",
-      mockExecutor
+      mockExecutor,
     );
 
     expect(result.results).toHaveLength(1);
@@ -203,8 +203,8 @@ describe("Tool Auditor", () => {
         "legal_research",
         { query: "teste" },
         "session_error",
-        mockExecutor
-      )
+        mockExecutor,
+      ),
     ).rejects.toThrow("Erro simulado");
 
     const recent = getRecentToolCalls(10);

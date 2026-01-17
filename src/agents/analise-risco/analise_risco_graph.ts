@@ -1,10 +1,16 @@
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan, createChatSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createInvokeAgentSpan,
+  createChatSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 
 export class AnaliseRiscoAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Análise de Risco
     return createInvokeAgentSpan(
       {
@@ -14,7 +20,8 @@ export class AnaliseRiscoAgent extends LangGraphAgent {
         temperature: 0.3,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `risco_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `risco_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -22,7 +29,9 @@ export class AnaliseRiscoAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "analise-risco:start" });
+        let current = updateState(state, {
+          currentStep: "analise-risco:start",
+        });
 
         // Extrair dados do caso
         const tipoCaso = (state.data?.tipoCaso as string) || "trabalhista";
@@ -90,7 +99,8 @@ Forneça:
             const analise = {
               riskScore,
               probabilidadeSucesso,
-              classificacao: riskScore < 0.3 ? "baixo" : riskScore < 0.6 ? "médio" : "alto",
+              classificacao:
+                riskScore < 0.3 ? "baixo" : riskScore < 0.6 ? "médio" : "alto",
               fatoresRisco: [
                 complexidade === "alta" && "Complexidade elevada do caso",
                 precedentes.length === 0 && "Falta de precedentes favoráveis",
@@ -103,18 +113,30 @@ Forneça:
               ].filter(Boolean),
             };
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([analise]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([analise]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 250);
 
             return analise;
-          }
+          },
         );
 
         span?.setAttribute("risco.score", analiseRisco.riskScore);
         span?.setAttribute("risco.classificacao", analiseRisco.classificacao);
-        span?.setAttribute("risco.probabilidade_sucesso", analiseRisco.probabilidadeSucesso);
-        span?.setAttribute("risco.fatores_count", analiseRisco.fatoresRisco.length);
-        span?.setAttribute("risco.recomendacoes_count", analiseRisco.recomendacoes.length);
+        span?.setAttribute(
+          "risco.probabilidade_sucesso",
+          analiseRisco.probabilidadeSucesso,
+        );
+        span?.setAttribute(
+          "risco.fatores_count",
+          analiseRisco.fatoresRisco.length,
+        );
+        span?.setAttribute(
+          "risco.recomendacoes_count",
+          analiseRisco.recomendacoes.length,
+        );
 
         current = updateState(current, {
           currentStep: "analise-risco:done",
@@ -129,14 +151,16 @@ Forneça:
 
         return this.addAgentMessage(
           current,
-          `Análise de risco concluída: ${analiseRisco.classificacao.toUpperCase()} (score: ${analiseRisco.riskScore.toFixed(2)}, ${analiseRisco.probabilidadeSucesso.toFixed(1)}% de sucesso)`
+          `Análise de risco concluída: ${analiseRisco.classificacao.toUpperCase()} (score: ${analiseRisco.riskScore.toFixed(2)}, ${analiseRisco.probabilidadeSucesso.toFixed(1)}% de sucesso)`,
         );
-      }
+      },
     );
   }
 }
 
-export async function runAnaliseRisco(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runAnaliseRisco(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new AnaliseRiscoAgent();
   const initialState: AgentState = {
     messages: [],

@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import * as Sentry from "@sentry/react";
-import { setUserContext, clearUserContext, setErrorTag } from "../services/error-tracking";
+import {
+  setUserContext,
+  clearUserContext,
+  setErrorTag,
+} from "../services/error-tracking";
 
 /**
  * Hook para rastrear usuário no Sentry
  * Use isso no seu componente de login/auth
  */
-export function useUserTracking(userId?: string, email?: string, username?: string) {
+export function useUserTracking(
+  userId?: string,
+  email?: string,
+  username?: string,
+) {
   useEffect(() => {
     if (userId) {
       setUserContext(userId, email, username);
@@ -25,9 +33,11 @@ export function usePageTracking() {
 
   useEffect(() => {
     // Atualizar quando a URL mudar
-    const handleLocationChange = () => setPathname(globalThis.window.location.pathname);
+    const handleLocationChange = () =>
+      setPathname(globalThis.window.location.pathname);
     globalThis.window.addEventListener("popstate", handleLocationChange);
-    return () => globalThis.window.removeEventListener("popstate", handleLocationChange);
+    return () =>
+      globalThis.window.removeEventListener("popstate", handleLocationChange);
   }, []);
 
   useEffect(() => {
@@ -76,7 +86,7 @@ export function useAsyncTracking(functionName: string) {
           Sentry.captureException(error);
           throw error;
         }
-      }
+      },
     );
   };
 }

@@ -17,7 +17,11 @@ describe("useTimelineSync", () => {
         description: "Evento A",
         type: "intimacao",
         createdAt: new Date().toISOString(),
-        metadata: { vara: "Vara 1", comarca: "Comarca 1", timestamp: Date.now() },
+        metadata: {
+          vara: "Vara 1",
+          comarca: "Comarca 1",
+          timestamp: Date.now(),
+        },
       },
       {
         id: "2",
@@ -27,12 +31,16 @@ describe("useTimelineSync", () => {
         description: "Evento B",
         type: "intimacao",
         createdAt: new Date().toISOString(),
-        metadata: { vara: "Vara 2", comarca: "Comarca 2", timestamp: Date.now() },
+        metadata: {
+          vara: "Vara 2",
+          comarca: "Comarca 2",
+          timestamp: Date.now(),
+        },
       },
     ]);
 
     const { result } = renderHook(() =>
-      useTimelineSync({ processId: "123456", autoRefresh: false })
+      useTimelineSync({ processId: "123456", autoRefresh: false }),
     );
 
     await waitFor(() => {
@@ -52,12 +60,16 @@ describe("useTimelineSync", () => {
         description: "Evento A",
         type: "intimacao",
         createdAt: new Date().toISOString(),
-        metadata: { vara: "Vara 1", comarca: "Comarca 1", timestamp: Date.now() },
+        metadata: {
+          vara: "Vara 1",
+          comarca: "Comarca 1",
+          timestamp: Date.now(),
+        },
       },
     ]);
 
     const { result } = renderHook(() =>
-      useTimelineSync({ processId: "000000", autoRefresh: false })
+      useTimelineSync({ processId: "000000", autoRefresh: false }),
     );
 
     await waitFor(() => {

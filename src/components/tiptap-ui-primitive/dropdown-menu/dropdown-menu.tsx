@@ -3,7 +3,9 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/tiptap-utils";
 import "@/components/tiptap-ui-primitive/dropdown-menu/dropdown-menu.scss";
 
-function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+function DropdownMenu({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   return <DropdownMenuPrimitive.Root modal={false} {...props} />;
 }
 
@@ -16,7 +18,9 @@ function DropdownMenuPortal({
 const DropdownMenuTrigger = forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
->(({ ...props }, ref) => <DropdownMenuPrimitive.Trigger ref={ref} {...props} />);
+>(({ ...props }, ref) => (
+  <DropdownMenuPrimitive.Trigger ref={ref} {...props} />
+));
 DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
@@ -51,7 +55,8 @@ const DropdownMenuSubContent = forwardRef<
     content
   );
 });
-DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
+DropdownMenuSubContent.displayName =
+  DropdownMenuPrimitive.SubContent.displayName;
 
 const DropdownMenuContent = forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Content>,

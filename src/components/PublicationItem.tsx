@@ -7,7 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DJENPublication } from "@/types/djen-publication";
-import { BellRing, CheckCircle, ChevronDown, ChevronUp, Copy, Plus } from "lucide-react";
+import {
+  BellRing,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Plus,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface PublicationItemProps {
@@ -64,7 +71,7 @@ export function PublicationItem({
       className={cn(
         "p-3 rounded-lg border transition-all cursor-pointer w-full text-left",
         "hover:bg-accent/50 hover:border-primary/30",
-        expanded === pub.id && "bg-accent/30 border-primary/50"
+        expanded === pub.id && "bg-accent/30 border-primary/50",
       )}
       onClick={() => onToggleExpand(expanded === pub.id ? null : pub.id)}
     >
@@ -83,7 +90,9 @@ export function PublicationItem({
             )}
           </div>
 
-          <p className="text-xs font-medium truncate">{pub.tipo || "Intimação"}</p>
+          <p className="text-xs font-medium truncate">
+            {pub.tipo || "Intimação"}
+          </p>
 
           <p className="text-xs text-muted-foreground truncate">
             {pub.numeroProcesso && `Processo: ${pub.numeroProcesso}`}
@@ -91,7 +100,9 @@ export function PublicationItem({
         </div>
 
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="text-xs text-muted-foreground">{formatRelativeDate(pub.createdAt)}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatRelativeDate(pub.createdAt)}
+          </span>
           {expanded === pub.id ? (
             <ChevronUp size={14} className="text-muted-foreground" />
           ) : (
@@ -137,7 +148,10 @@ export function PublicationItem({
             <Button
               variant={isAlreadyRegistered ? "ghost" : "default"}
               size="sm"
-              className={cn("h-7 text-xs flex-1", !isAlreadyRegistered && "button-gradient")}
+              className={cn(
+                "h-7 text-xs flex-1",
+                !isAlreadyRegistered && "button-gradient",
+              )}
               disabled={isAlreadyRegistered}
               onClick={(e) => {
                 e.stopPropagation();

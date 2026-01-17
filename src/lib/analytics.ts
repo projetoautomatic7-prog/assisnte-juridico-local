@@ -108,7 +108,9 @@ export function initGA4(): void {
 
   if (isInitialized || !GA_MEASUREMENT_ID) {
     if (!GA_MEASUREMENT_ID) {
-      console.info("📊 GA4: Não configurado (VITE_GA_MEASUREMENT_ID não definido)");
+      console.info(
+        "📊 GA4: Não configurado (VITE_GA_MEASUREMENT_ID não definido)",
+      );
     }
     return;
   }
@@ -166,7 +168,10 @@ export function initAnalytics(): void {
 /**
  * Envia um evento para o dataLayer (GTM) ou gtag (GA4)
  */
-export function trackEvent(eventName: string, params?: Record<string, unknown>): void {
+export function trackEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+): void {
   if (!isBrowser()) return;
 
   // Se não tem nenhuma config, não faz nada
@@ -226,7 +231,7 @@ export function trackNavigation(from: string, to: string): void {
 export function trackProcessAction(
   action: "view" | "create" | "update" | "delete" | "move",
   processId?: string,
-  processType?: string
+  processType?: string,
 ): void {
   trackEvent("process_action", {
     action,
@@ -241,7 +246,7 @@ export function trackProcessAction(
 export function trackAgentInteraction(
   agentId: string,
   action: "activate" | "deactivate" | "task_complete" | "task_failed",
-  taskType?: string
+  taskType?: string,
 ): void {
   trackEvent("agent_interaction", {
     agent_id: agentId,
@@ -253,7 +258,10 @@ export function trackAgentInteraction(
 /**
  * Rastreia uso da calculadora de prazos
  */
-export function trackDeadlineCalculation(deadlineType: string, daysCalculated: number): void {
+export function trackDeadlineCalculation(
+  deadlineType: string,
+  daysCalculated: number,
+): void {
   trackEvent("deadline_calculation", {
     deadline_type: deadlineType,
     days_calculated: daysCalculated,
@@ -265,7 +273,7 @@ export function trackDeadlineCalculation(deadlineType: string, daysCalculated: n
  */
 export function trackDJENSearch(
   searchType: "oab" | "processo" | "parte",
-  resultsCount: number
+  resultsCount: number,
 ): void {
   trackEvent("djen_search", {
     search_type: searchType,
@@ -279,7 +287,7 @@ export function trackDJENSearch(
 export function trackMinutaAction(
   action: "create" | "edit" | "save" | "export" | "ai_generate",
   minutaType?: string,
-  templateUsed?: string
+  templateUsed?: string,
 ): void {
   trackEvent("minuta_action", {
     action,
@@ -291,7 +299,10 @@ export function trackMinutaAction(
 /**
  * Rastreia uso do chat com Donna
  */
-export function trackChatInteraction(messageType: "user" | "assistant", tokensUsed?: number): void {
+export function trackChatInteraction(
+  messageType: "user" | "assistant",
+  tokensUsed?: number,
+): void {
   trackEvent("chat_interaction", {
     message_type: messageType,
     tokens_used: tokensUsed,
@@ -301,7 +312,10 @@ export function trackChatInteraction(messageType: "user" | "assistant", tokensUs
 /**
  * Rastreia login/logout
  */
-export function trackAuth(action: "login" | "logout" | "login_failed", method?: string): void {
+export function trackAuth(
+  action: "login" | "logout" | "login_failed",
+  method?: string,
+): void {
   trackEvent("auth", {
     action,
     method: method || "google",
@@ -311,7 +325,11 @@ export function trackAuth(action: "login" | "logout" | "login_failed", method?: 
 /**
  * Rastreia erros para analytics
  */
-export function trackError(errorType: string, errorMessage: string, errorLocation?: string): void {
+export function trackError(
+  errorType: string,
+  errorMessage: string,
+  errorLocation?: string,
+): void {
   trackEvent("error", {
     error_type: errorType,
     error_message: errorMessage.substring(0, 200),

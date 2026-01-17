@@ -11,7 +11,8 @@ import { SimpleAuth } from "@/components/SimpleAuth";
 import { Toaster } from "@/components/ui/sonner";
 
 // SpeedInsights só funciona no Vercel - desabilitar em outros hosts
-const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+const isVercel =
+  typeof window !== "undefined" && window.location.hostname.includes("vercel");
 
 // QueryClient global (criado fora do componente para evitar recriação)
 const queryClient = new QueryClient({
@@ -33,14 +34,20 @@ const HarveySpecterChat = lazy(() => import("@/components/HarveySpecterChat"));
 const MinutasManager = lazy(() => import("@/components/MinutasManager"));
 const ProcessCRM = lazy(() => import("@/components/ProcessCRM"));
 const Calendar = lazy(() => import("@/components/Calendar"));
-const FinancialManagement = lazy(() => import("@/components/FinancialManagement"));
+const FinancialManagement = lazy(
+  () => import("@/components/FinancialManagement"),
+);
 const CalculadoraPrazos = lazy(() => import("@/components/CalculadoraPrazos"));
 const PDFUploader = lazy(() => import("@/components/PDFUploader"));
 const AIAgents = lazy(() => import("@/components/AIAgents"));
-const AnalyticsDashboard = lazy(() => import("@/components/AnalyticsDashboard"));
+const AnalyticsDashboard = lazy(
+  () => import("@/components/AnalyticsDashboard"),
+);
 const ExpedientePanel = lazy(() => import("@/components/ExpedientePanel"));
 const BatchAnalysis = lazy(() => import("@/components/BatchAnalysis"));
-const AudioTranscription = lazy(() => import("@/components/AudioTranscription"));
+const AudioTranscription = lazy(
+  () => import("@/components/AudioTranscription"),
+);
 const DatabaseQueries = lazy(() => import("@/components/DatabaseQueries"));
 const DatajudChecklist = lazy(() => import("@/components/DatajudChecklist"));
 const KnowledgeBase = lazy(() => import("@/components/KnowledgeBase"));
@@ -263,8 +270,12 @@ function App() {
         >
           <div className="max-w-md w-full space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Assistente Jurídico PJe</h1>
-              <p className="text-muted-foreground">Sistema inteligente de gestão jurídica com IA</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                Assistente Jurídico PJe
+              </h1>
+              <p className="text-muted-foreground">
+                Sistema inteligente de gestão jurídica com IA
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -296,7 +307,9 @@ function App() {
               <GlobalSearch onNavigate={handleNavigate} />
               <span className="text-xs text-muted-foreground hidden sm:inline">
                 Pressione{" "}
-                <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded border">/</kbd>{" "}
+                <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded border">
+                  /
+                </kbd>{" "}
                 para buscar
               </span>
             </div>

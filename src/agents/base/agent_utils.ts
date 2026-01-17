@@ -50,20 +50,31 @@ export class CircuitBreaker {
         this.state = "half-open";
         this.halfOpenCalls = 0;
       } else {
-        console.warn(`[CircuitBreaker:${this.serviceName}] Circuit OPEN - using fallback`);
+        console.warn(
+          `[CircuitBreaker:${this.serviceName}] Circuit OPEN - using fallback`,
+        );
         if (fallback) {
           return fallback();
         }
-        throw new Error(`Service ${this.serviceName} is unavailable (circuit open)`);
+        throw new Error(
+          `Service ${this.serviceName} is unavailable (circuit open)`,
+        );
       }
     }
 
-    if (this.state === "half-open" && this.halfOpenCalls >= this.config.halfOpenMaxCalls) {
-      console.warn(`[CircuitBreaker:${this.serviceName}] Half-open limit reached - using fallback`);
+    if (
+      this.state === "half-open" &&
+      this.halfOpenCalls >= this.config.halfOpenMaxCalls
+    ) {
+      console.warn(
+        `[CircuitBreaker:${this.serviceName}] Half-open limit reached - using fallback`,
+      );
       if (fallback) {
         return fallback();
       }
-      throw new Error(`Service ${this.serviceName} is unavailable (half-open limit)`);
+      throw new Error(
+        `Service ${this.serviceName} is unavailable (half-open limit)`,
+      );
     }
 
     try {
@@ -77,7 +88,9 @@ export class CircuitBreaker {
     } catch (error) {
       this.onFailure(error);
       if (fallback) {
-        console.warn(`[CircuitBreaker:${this.serviceName}] Execution failed - using fallback`);
+        console.warn(
+          `[CircuitBreaker:${this.serviceName}] Execution failed - using fallback`,
+        );
         return fallback();
       }
       throw error;
@@ -86,7 +99,9 @@ export class CircuitBreaker {
 
   private onSuccess(): void {
     if (this.state === "half-open") {
-      console.info(`[CircuitBreaker:${this.serviceName}] Recovery successful - closing circuit`);
+      console.info(
+        `[CircuitBreaker:${this.serviceName}] Recovery successful - closing circuit`,
+      );
     }
     this.failureCount = 0;
     this.state = "closed";
@@ -98,13 +113,13 @@ export class CircuitBreaker {
 
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `[CircuitBreaker:${this.serviceName}] Failure ${this.failureCount}/${this.config.failureThreshold}: ${errorMessage}`
+      `[CircuitBreaker:${this.serviceName}] Failure ${this.failureCount}/${this.config.failureThreshold}: ${errorMessage}`,
     );
 
     if (this.failureCount >= this.config.failureThreshold) {
       this.state = "open";
       console.error(
-        `[CircuitBreaker:${this.serviceName}] Circuit OPENED after ${this.failureCount} failures`
+        `[CircuitBreaker:${this.serviceName}] Circuit OPENED after ${this.failureCount} failures`,
       );
     }
   }
@@ -121,20 +136,28 @@ export class CircuitBreaker {
     return {
       serviceName: this.serviceName,
       status:
-        this.state === "closed" ? "healthy" : this.state === "half-open" ? "degraded" : "unhealthy",
+        this.state === "closed"
+          ? "healthy"
+          : this.state === "half-open"
+            ? "degraded"
+            : "unhealthy",
       lastCheck: Date.now(),
       errorCount: this.failureCount,
     };
   }
 }
 
-export function validateEnvironment(requiredVars: string[]): { valid: boolean; missing: string[] } {
+export function validateEnvironment(requiredVars: string[]): {
+  valid: boolean;
+  missing: string[];
+} {
   const missing: string[] = [];
 
   for (const varName of requiredVars) {
     const value =
       process.env[varName] ||
-      (typeof import.meta !== "undefined" && (import.meta as any).env?.[varName]);
+      (typeof import.meta !== "undefined" &&
+        (import.meta as any).env?.[varName]);
     if (!value) {
       missing.push(varName);
     }
@@ -154,7 +177,9 @@ export function validateGeminiConfig(): { valid: boolean; errors: string[] } {
   if (!apiKey) {
     errors.push("GEMINI_API_KEY ou VITE_GEMINI_API_KEY não configurada");
   } else if (!apiKey.startsWith("AIza")) {
-    errors.push("API Key do Gemini em formato inválido (deve começar com 'AIza')");
+    errors.push(
+      "API Key do Gemini em formato inválido (deve começar com 'AIza')",
+    );
   } else if (apiKey.length < 30) {
     errors.push("API Key do Gemini muito curta");
   }
@@ -179,7 +204,7 @@ export function createStructuredError(
   message: string,
   context: Record<string, unknown> = {},
   recoverable = true,
-  suggestedAction?: string
+  suggestedAction?: string,
 ): StructuredError {
   return {
     code,
@@ -213,7 +238,7 @@ export function classifyGeminiError(error: unknown): StructuredError {
       "Limite de requisições atingido",
       { originalError: message },
       true,
-      "Aguarde alguns segundos e tente novamente"
+      "Aguarde alguns segundos e tente novamente",
     );
   }
 
@@ -223,7 +248,7 @@ export function classifyGeminiError(error: unknown): StructuredError {
       "Cota de uso excedida",
       { originalError: message },
       false,
-      "Verifique sua cota no Google AI Studio"
+      "Verifique sua cota no Google AI Studio",
     );
   }
 
@@ -233,7 +258,7 @@ export function classifyGeminiError(error: unknown): StructuredError {
       "Chave de API inválida",
       { originalError: message },
       false,
-      "Configure VITE_GEMINI_API_KEY corretamente"
+      "Configure VITE_GEMINI_API_KEY corretamente",
     );
   }
 
@@ -243,7 +268,7 @@ export function classifyGeminiError(error: unknown): StructuredError {
       "Timeout na comunicação com Gemini",
       { originalError: message },
       true,
-      "Verifique sua conexão e tente novamente"
+      "Verifique sua conexão e tente novamente",
     );
   }
 
@@ -251,7 +276,7 @@ export function classifyGeminiError(error: unknown): StructuredError {
     ErrorCodes.GEMINI_API_ERROR,
     "Erro ao comunicar com Gemini",
     { originalError: message },
-    true
+    true,
   );
 }
 
@@ -268,7 +293,7 @@ export async function withGracefulDegradation<T>(
   options: {
     timeoutMs?: number;
     serviceName?: string;
-  } = {}
+  } = {},
 ): Promise<GracefulDegradationResult<T>> {
   const startTime = Date.now();
   const { timeoutMs = 25000, serviceName = "unknown" } = options;
@@ -279,7 +304,9 @@ export async function withGracefulDegradation<T>(
 
     const result = await Promise.race([
       primaryFn(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs)),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeoutMs),
+      ),
     ]);
 
     clearTimeout(timeoutId);
@@ -291,7 +318,10 @@ export async function withGracefulDegradation<T>(
       latencyMs: Date.now() - startTime,
     };
   } catch (error) {
-    console.warn(`[GracefulDegradation:${serviceName}] Primary failed, using fallback:`, error);
+    console.warn(
+      `[GracefulDegradation:${serviceName}] Primary failed, using fallback:`,
+      error,
+    );
 
     return {
       result: fallbackFn(),
@@ -335,7 +365,7 @@ class AgentMetricsCollector {
     agentName: string,
     outcome: ExecutionOutcome,
     latencyMs: number,
-    error?: StructuredError
+    error?: StructuredError,
   ): void {
     const current = this.metrics.get(agentName) || {
       executions: 0,
@@ -382,10 +412,14 @@ class AgentMetricsCollector {
       };
     }
 
-    const errorRate = metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
+    const errorRate =
+      metrics.executions > 0 ? metrics.failures / metrics.executions : 0;
     const degradedRate =
-      metrics.executions > 0 ? metrics.degradedExecutions / metrics.executions : 0;
-    const avgLatencyMs = metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
+      metrics.executions > 0
+        ? metrics.degradedExecutions / metrics.executions
+        : 0;
+    const avgLatencyMs =
+      metrics.executions > 0 ? metrics.totalLatencyMs / metrics.executions : 0;
 
     let status: "healthy" | "degraded" | "unhealthy" = "healthy";
     if (errorRate > 0.5) {
@@ -406,8 +440,14 @@ class AgentMetricsCollector {
     };
   }
 
-  getAllMetrics(): Record<string, ReturnType<AgentMetricsCollector["getHealthCheck"]>> {
-    const result: Record<string, ReturnType<AgentMetricsCollector["getHealthCheck"]>> = {};
+  getAllMetrics(): Record<
+    string,
+    ReturnType<AgentMetricsCollector["getHealthCheck"]>
+  > {
+    const result: Record<
+      string,
+      ReturnType<AgentMetricsCollector["getHealthCheck"]>
+    > = {};
     for (const agentName of this.metrics.keys()) {
       result[agentName] = this.getHealthCheck(agentName);
     }
@@ -421,7 +461,10 @@ class AgentMetricsCollector {
 
 export const agentMetrics = new AgentMetricsCollector();
 
-export function createFallbackResponse(agentName: string, task: string): string {
+export function createFallbackResponse(
+  agentName: string,
+  task: string,
+): string {
   const fallbackMessages: Record<string, string> = {
     "Harvey Specter": `[Modo Offline] Não foi possível processar a análise estratégica no momento. 
 Sugestão: Revise manualmente os seguintes pontos:

@@ -59,7 +59,12 @@ describe("processSchema", () => {
   });
 
   it("should throw on invalid numero CNJ format", () => {
-    const invalidNumeros = ["123456", "1234567-89.2024", "invalid-format", "1234567-89.2024.5.02"];
+    const invalidNumeros = [
+      "123456",
+      "1234567-89.2024",
+      "invalid-format",
+      "1234567-89.2024.5.02",
+    ];
 
     invalidNumeros.forEach((numeroCNJ) => {
       const process = {

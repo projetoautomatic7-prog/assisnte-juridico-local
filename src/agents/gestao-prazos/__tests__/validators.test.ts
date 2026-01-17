@@ -15,22 +15,34 @@ describe("validateGestaoPrazosInput", () => {
 
   describe("✅ Validação de tipoProcesso (obrigatório)", () => {
     it("deve aceitar tipoProcesso 'cível'", () => {
-      const result = validateGestaoPrazosInput({ ...validInput, tipoProcesso: "cível" });
+      const result = validateGestaoPrazosInput({
+        ...validInput,
+        tipoProcesso: "cível",
+      });
       expect(result.tipoProcesso).toBe("cível");
     });
 
     it("deve aceitar tipoProcesso 'trabalhista'", () => {
-      const result = validateGestaoPrazosInput({ ...validInput, tipoProcesso: "trabalhista" });
+      const result = validateGestaoPrazosInput({
+        ...validInput,
+        tipoProcesso: "trabalhista",
+      });
       expect(result.tipoProcesso).toBe("trabalhista");
     });
 
     it("deve aceitar tipoProcesso 'penal'", () => {
-      const result = validateGestaoPrazosInput({ ...validInput, tipoProcesso: "penal" });
+      const result = validateGestaoPrazosInput({
+        ...validInput,
+        tipoProcesso: "penal",
+      });
       expect(result.tipoProcesso).toBe("penal");
     });
 
     it("deve aceitar tipoProcesso 'tributário'", () => {
-      const result = validateGestaoPrazosInput({ ...validInput, tipoProcesso: "tributário" });
+      const result = validateGestaoPrazosInput({
+        ...validInput,
+        tipoProcesso: "tributário",
+      });
       expect(result.tipoProcesso).toBe("tributário");
     });
 
@@ -39,13 +51,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           dataPublicacao: "2024-01-15",
           prazoEmDias: 15,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           dataPublicacao: "2024-01-15",
           prazoEmDias: 15,
-        })
+        }),
       ).toThrow(/Campo 'tipoProcesso' é obrigatório/);
     });
 
@@ -54,13 +66,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           tipoProcesso: "administrativo",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           tipoProcesso: "invalid",
-        })
+        }),
       ).toThrow(/Campo 'tipoProcesso' deve ser um dos seguintes/);
     });
   });
@@ -76,13 +88,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           tipoProcesso: "cível",
           prazoEmDias: 15,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           tipoProcesso: "cível",
           prazoEmDias: 15,
-        })
+        }),
       ).toThrow(/Campo 'dataPublicacao' é obrigatório/);
     });
 
@@ -91,13 +103,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           dataPublicacao: "15/01/2024",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           dataPublicacao: "15/01/2024",
-        })
+        }),
       ).toThrow(/Use formato YYYY-MM-DD/);
     });
 
@@ -106,7 +118,7 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           dataPublicacao: "15-01-2024",
-        })
+        }),
       ).toThrow(ValidationError);
     });
 
@@ -119,13 +131,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           dataPublicacao: futureDateStr,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           dataPublicacao: futureDateStr,
-        })
+        }),
       ).toThrow(/não pode ser futura/);
     });
 
@@ -150,13 +162,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           tipoProcesso: "cível",
           dataPublicacao: "2024-01-15",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           tipoProcesso: "cível",
           dataPublicacao: "2024-01-15",
-        })
+        }),
       ).toThrow(/Campo 'prazoEmDias' é obrigatório/);
     });
 
@@ -165,13 +177,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: "quinze",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: "15",
-        })
+        }),
       ).toThrow(/deve ser um número/);
     });
 
@@ -180,13 +192,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: 0,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: -5,
-        })
+        }),
       ).toThrow(/deve estar entre 1 e 365/);
     });
 
@@ -195,13 +207,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: 366,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           prazoEmDias: 400,
-        })
+        }),
       ).toThrow(/deve estar entre 1 e 365/);
     });
 
@@ -239,13 +251,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           processNumber: 12345,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           processNumber: 12345,
-        })
+        }),
       ).toThrow("Campo 'processNumber' deve ser uma string");
     });
   });
@@ -277,13 +289,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           considerarFeriados: "sim",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           considerarFeriados: 1,
-        })
+        }),
       ).toThrow("Campo 'considerarFeriados' deve ser um boolean");
     });
   });
@@ -315,13 +327,13 @@ describe("validateGestaoPrazosInput", () => {
         validateGestaoPrazosInput({
           ...validInput,
           considerarRecessoForense: "true",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateGestaoPrazosInput({
           ...validInput,
           considerarRecessoForense: 0,
-        })
+        }),
       ).toThrow("Campo 'considerarRecessoForense' deve ser um boolean");
     });
   });

@@ -71,7 +71,12 @@ export interface Minuta {
   processId?: string;
   tipo: "peticao" | "contrato" | "parecer" | "recurso" | "procuracao" | "outro";
   conteudo: string;
-  status: "rascunho" | "em-revisao" | "pendente-revisao" | "finalizada" | "arquivada";
+  status:
+    | "rascunho"
+    | "em-revisao"
+    | "pendente-revisao"
+    | "finalizada"
+    | "arquivada";
   criadoEm: string;
   atualizadoEm: string;
   autor: string;
@@ -162,7 +167,15 @@ export interface Appointment {
   processId?: string;
   location?: string;
   // Aceita tanto pt-BR quanto inglês para compatibilidade com componentes existentes
-  type: "audiencia" | "reuniao" | "prazo" | "outro" | "hearing" | "meeting" | "deadline" | "other";
+  type:
+    | "audiencia"
+    | "reuniao"
+    | "prazo"
+    | "outro"
+    | "hearing"
+    | "meeting"
+    | "deadline"
+    | "other";
   reminders?: number[];
   googleEventId?: string;
 }

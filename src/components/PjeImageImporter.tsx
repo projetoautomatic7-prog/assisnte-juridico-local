@@ -4,7 +4,13 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,9 +24,20 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useKV } from "@/hooks/use-kv";
-import { processarImagemPJe, type PjeDocumentData } from "@/lib/pje-ocr-extractor";
+import {
+  processarImagemPJe,
+  type PjeDocumentData,
+} from "@/lib/pje-ocr-extractor";
 import type { Expediente, Process } from "@/types";
-import { AlertCircle, Camera, CheckCircle, FileImage, Loader2, Upload, X } from "lucide-react";
+import {
+  AlertCircle,
+  Camera,
+  CheckCircle,
+  FileImage,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,38 +51,45 @@ export function PjeImageImporter() {
   const [progressStage, setProgressStage] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [extractedData, setExtractedData] = useState<PjeDocumentData | null>(null);
-  const [processoGerado, setProcessoGerado] = useState<Partial<Process> | null>(null);
+  const [extractedData, setExtractedData] = useState<PjeDocumentData | null>(
+    null,
+  );
+  const [processoGerado, setProcessoGerado] = useState<Partial<Process> | null>(
+    null,
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    // Validar tipo de arquivo
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione uma imagem válida");
-      return;
-    }
+      // Validar tipo de arquivo
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor, selecione uma imagem válida");
+        return;
+      }
 
-    // Validar tamanho (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo: 10MB");
-      return;
-    }
+      // Validar tamanho (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Imagem muito grande. Máximo: 10MB");
+        return;
+      }
 
-    setSelectedImage(file);
+      setSelectedImage(file);
 
-    // Criar preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+      // Criar preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
 
-    toast.success(`Imagem "${file.name}" selecionada`);
-  }, []);
+      toast.success(`Imagem "${file.name}" selecionada`);
+    },
+    [],
+  );
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -116,7 +140,8 @@ export function PjeImageImporter() {
 
       toast.success("✅ Imagem processada com sucesso!", { id: toastId });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Erro ao processar imagem";
+      const errorMsg =
+        error instanceof Error ? error.message : "Erro ao processar imagem";
       toast.error(errorMsg, { id: toastId });
       console.error("[PjeImageImporter] Erro:", error);
     } finally {
@@ -208,8 +233,9 @@ export function PjeImageImporter() {
             Importar Processo via Screenshot/Imagem
           </DialogTitle>
           <DialogDescription>
-            Tire um print do PJe ou faça upload de uma certidão/expediente. O sistema extrairá
-            automaticamente os dados usando OCR (Reconhecimento Óptico de Caracteres).
+            Tire um print do PJe ou faça upload de uma certidão/expediente. O
+            sistema extrairá automaticamente os dados usando OCR (Reconhecimento
+            Óptico de Caracteres).
           </DialogDescription>
         </DialogHeader>
 
@@ -253,7 +279,9 @@ export function PjeImageImporter() {
                         <p className="text-sm text-muted-foreground mb-2">
                           Clique ou arraste uma imagem aqui
                         </p>
-                        <p className="text-xs text-muted-foreground">PNG, JPG, JPEG (máx. 10MB)</p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, JPEG (máx. 10MB)
+                        </p>
                       </>
                     )}
                   </div>
@@ -268,7 +296,8 @@ export function PjeImageImporter() {
 
                   {selectedImage && (
                     <div className="mt-4 text-xs text-muted-foreground">
-                      📄 {selectedImage.name} ({(selectedImage.size / 1024).toFixed(0)} KB)
+                      📄 {selectedImage.name} (
+                      {(selectedImage.size / 1024).toFixed(0)} KB)
                     </div>
                   )}
                 </CardContent>
@@ -279,8 +308,12 @@ export function PjeImageImporter() {
                   <CardContent className="pt-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{progressStage}</span>
-                        <span className="font-medium">{Math.round(progress)}%</span>
+                        <span className="text-muted-foreground">
+                          {progressStage}
+                        </span>
+                        <span className="font-medium">
+                          {Math.round(progress)}%
+                        </span>
                       </div>
                       <Progress value={progress} />
                     </div>
@@ -294,7 +327,9 @@ export function PjeImageImporter() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">2. Dados Extraídos</CardTitle>
-                  <CardDescription>Revise e edite os dados antes de salvar</CardDescription>
+                  <CardDescription>
+                    Revise e edite os dados antes de salvar
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {extractedData ? (
@@ -305,10 +340,14 @@ export function PjeImageImporter() {
                             Número do Processo
                           </Label>
                           <Input
-                            value={processoGerado?.numeroCNJ || "Não identificado"}
+                            value={
+                              processoGerado?.numeroCNJ || "Não identificado"
+                            }
                             onChange={(e) =>
                               setProcessoGerado((prev) =>
-                                prev ? { ...prev, numeroCNJ: e.target.value } : null
+                                prev
+                                  ? { ...prev, numeroCNJ: e.target.value }
+                                  : null,
                               )
                             }
                             className="mt-1"
@@ -316,21 +355,29 @@ export function PjeImageImporter() {
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Tipo de Documento</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Tipo de Documento
+                          </Label>
                           <Input
-                            value={extractedData.tipoDocumento || "Não identificado"}
+                            value={
+                              extractedData.tipoDocumento || "Não identificado"
+                            }
                             readOnly
                             className="mt-1 bg-muted"
                           />
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Autor</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Autor
+                          </Label>
                           <Input
                             value={processoGerado?.autor || ""}
                             onChange={(e) =>
                               setProcessoGerado((prev) =>
-                                prev ? { ...prev, autor: e.target.value } : null
+                                prev
+                                  ? { ...prev, autor: e.target.value }
+                                  : null,
                               )
                             }
                             className="mt-1"
@@ -338,12 +385,14 @@ export function PjeImageImporter() {
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Réu</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Réu
+                          </Label>
                           <Input
                             value={processoGerado?.reu || ""}
                             onChange={(e) =>
                               setProcessoGerado((prev) =>
-                                prev ? { ...prev, reu: e.target.value } : null
+                                prev ? { ...prev, reu: e.target.value } : null,
                               )
                             }
                             className="mt-1"
@@ -351,12 +400,16 @@ export function PjeImageImporter() {
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Comarca</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Comarca
+                          </Label>
                           <Input
                             value={processoGerado?.comarca || ""}
                             onChange={(e) =>
                               setProcessoGerado((prev) =>
-                                prev ? { ...prev, comarca: e.target.value } : null
+                                prev
+                                  ? { ...prev, comarca: e.target.value }
+                                  : null,
                               )
                             }
                             className="mt-1"
@@ -364,12 +417,14 @@ export function PjeImageImporter() {
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Vara</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Vara
+                          </Label>
                           <Input
                             value={processoGerado?.vara || ""}
                             onChange={(e) =>
                               setProcessoGerado((prev) =>
-                                prev ? { ...prev, vara: e.target.value } : null
+                                prev ? { ...prev, vara: e.target.value } : null,
                               )
                             }
                             className="mt-1"
@@ -377,7 +432,9 @@ export function PjeImageImporter() {
                         </div>
 
                         <div>
-                          <Label className="text-xs text-muted-foreground">Data de Expedição</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Data de Expedição
+                          </Label>
                           <Input
                             value={extractedData.dataExpedicao || ""}
                             readOnly
@@ -402,7 +459,8 @@ export function PjeImageImporter() {
                       <div>
                         <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p className="text-sm">
-                          Faça upload de uma imagem e clique em "Processar" para extrair os dados
+                          Faça upload de uma imagem e clique em "Processar" para
+                          extrair os dados
                         </p>
                       </div>
                     </div>
@@ -430,7 +488,10 @@ export function PjeImageImporter() {
             </Button>
 
             {!extractedData ? (
-              <Button onClick={processImage} disabled={!selectedImage || isProcessing}>
+              <Button
+                onClick={processImage}
+                disabled={!selectedImage || isProcessing}
+              >
                 {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

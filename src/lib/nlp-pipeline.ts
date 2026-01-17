@@ -80,7 +80,10 @@ export class NLPPipeline {
   /**
    * Extract named entities from text
    */
-  async extractEntities(text: string, config: LLMRequestConfig = {}): Promise<NamedEntity[]> {
+  async extractEntities(
+    text: string,
+    config: LLMRequestConfig = {},
+  ): Promise<NamedEntity[]> {
     // Validating the input text to ensure it's not empty
     if (!text || text.trim().length === 0) {
       throw new Error("Input text is empty or invalid.");
@@ -112,10 +115,13 @@ export class NLPPipeline {
     }`;
 
     try {
-      const result = await llmService.executeJSON<{ entities: NamedEntity[] }>(prompt, {
-        ...config,
-        feature: "ner",
-      });
+      const result = await llmService.executeJSON<{ entities: NamedEntity[] }>(
+        prompt,
+        {
+          ...config,
+          feature: "ner",
+        },
+      );
       return result.entities || [];
     } catch (error) {
       console.error("Error during NER processing:", error);
@@ -126,7 +132,10 @@ export class NLPPipeline {
   /**
    * Analyze sentiment of text
    */
-  async analyzeSentiment(text: string, config: LLMRequestConfig = {}): Promise<SentimentAnalysis> {
+  async analyzeSentiment(
+    text: string,
+    config: LLMRequestConfig = {},
+  ): Promise<SentimentAnalysis> {
     // Validating the input text to ensure it's not empty
     if (!text || text.trim().length === 0) {
       throw new Error("Input text is empty or invalid.");
@@ -176,7 +185,7 @@ export class NLPPipeline {
    */
   async classifyDocument(
     text: string,
-    config: LLMRequestConfig = {}
+    config: LLMRequestConfig = {},
   ): Promise<DocumentClassification> {
     // Validating the input text to ensure it's not empty
     if (!text || text.trim().length === 0) {
@@ -205,10 +214,13 @@ export class NLPPipeline {
     }`;
 
     try {
-      const result = await llmService.executeJSON<DocumentClassification>(prompt, {
-        ...config,
-        feature: "document-classification",
-      });
+      const result = await llmService.executeJSON<DocumentClassification>(
+        prompt,
+        {
+          ...config,
+          feature: "document-classification",
+        },
+      );
       return result;
     } catch (error) {
       console.error("Error during document classification:", error);
@@ -221,7 +233,7 @@ export class NLPPipeline {
    */
   async extractInformation(
     text: string,
-    config: LLMRequestConfig = {}
+    config: LLMRequestConfig = {},
   ): Promise<ExtractedInformation> {
     // Validating the input text to ensure it's not empty
     if (!text || text.trim().length === 0) {
@@ -264,10 +276,13 @@ export class NLPPipeline {
     }`;
 
     try {
-      const result = await llmService.executeJSON<ExtractedInformation>(prompt, {
-        ...config,
-        feature: "information-extraction",
-      });
+      const result = await llmService.executeJSON<ExtractedInformation>(
+        prompt,
+        {
+          ...config,
+          feature: "information-extraction",
+        },
+      );
       return result;
     } catch (error) {
       console.error("Error during information extraction:", error);
@@ -281,7 +296,7 @@ export class NLPPipeline {
   async batchProcess(
     documents: Array<{ id: string; text: string }>,
     operation: "entities" | "sentiment" | "classify" | "extract",
-    config: LLMRequestConfig = {}
+    config: LLMRequestConfig = {},
   ): Promise<BatchProcessResultItem[]> {
     const operations = {
       entities: this.extractEntities.bind(this),
@@ -296,14 +311,18 @@ export class NLPPipeline {
       documents.map(async ({ id, text }) => {
         const result = await operationFn(text, config);
         return { id, result };
-      })
+      }),
     );
 
     return results.map((result, index) => {
       if (result.status === "fulfilled") {
         return result.value as {
           id: string;
-          result: NamedEntity[] | SentimentAnalysis | DocumentClassification | ExtractedInformation;
+          result:
+            | NamedEntity[]
+            | SentimentAnalysis
+            | DocumentClassification
+            | ExtractedInformation;
         };
       } else {
         // Create default result based on operation type
@@ -311,7 +330,8 @@ export class NLPPipeline {
           | NamedEntity[]
           | SentimentAnalysis
           | DocumentClassification
-          | ExtractedInformation = operation === "entities" ? [] : ({} as SentimentAnalysis);
+          | ExtractedInformation =
+          operation === "entities" ? [] : ({} as SentimentAnalysis);
         return {
           id: documents[index].id,
           result: defaultResult,
@@ -327,8 +347,10 @@ export class NLPPipeline {
   async analyzePatterns(
     text: string,
     patterns: string[],
-    config: LLMRequestConfig = {}
-  ): Promise<Array<{ pattern: string; found: boolean; occurrences: string[] }>> {
+    config: LLMRequestConfig = {},
+  ): Promise<
+    Array<{ pattern: string; found: boolean; occurrences: string[] }>
+  > {
     const prompt = `Você é um especialista em análise de padrões em documentos jurídicos.
 
     Analise o seguinte texto e identifique a presença dos padrões especificados:
@@ -357,7 +379,11 @@ export class NLPPipeline {
 
     try {
       const result = await llmService.executeJSON<{
-        results: Array<{ pattern: string; found: boolean; occurrences: string[] }>;
+        results: Array<{
+          pattern: string;
+          found: boolean;
+          occurrences: string[];
+        }>;
       }>(prompt, { ...config, feature: "pattern-analysis" });
 
       return result.results || [];
@@ -373,7 +399,7 @@ export class NLPPipeline {
   async compareDocuments(
     document1: string,
     document2: string,
-    config: LLMRequestConfig = {}
+    config: LLMRequestConfig = {},
   ): Promise<{
     similarity: number;
     differences: string[];
@@ -429,7 +455,7 @@ export class NLPPipeline {
   async generateInsights(
     text: string,
     documentType: string,
-    config: LLMRequestConfig = {}
+    config: LLMRequestConfig = {},
   ): Promise<{
     summary: string;
     risks: string[];

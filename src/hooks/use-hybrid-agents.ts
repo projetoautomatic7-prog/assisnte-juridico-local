@@ -49,7 +49,9 @@ export function useHybridAgents(options: UseHybridAgentsOptions = {}) {
   } = options;
 
   const [isExecuting, setIsExecuting] = useState(false);
-  const [lastResult, setLastResult] = useState<HybridExecutionResult | null>(null);
+  const [lastResult, setLastResult] = useState<HybridExecutionResult | null>(
+    null,
+  );
   const [stats, setStats] = useState<HybridStats>(getHybridStats());
   const [error, setError] = useState<Error | null>(null);
 
@@ -67,7 +69,7 @@ export function useHybridAgents(options: UseHybridAgentsOptions = {}) {
     async (
       agentId: string,
       task: AgentTask,
-      config?: Partial<HybridExecutionConfig>
+      config?: Partial<HybridExecutionConfig>,
     ): Promise<HybridExecutionResult> => {
       setIsExecuting(true);
       setError(null);
@@ -96,7 +98,12 @@ export function useHybridAgents(options: UseHybridAgentsOptions = {}) {
         setIsExecuting(false);
       }
     },
-    [autoEnableLangGraph, defaultCoordinationMode, defaultTimeout, refreshStats]
+    [
+      autoEnableLangGraph,
+      defaultCoordinationMode,
+      defaultTimeout,
+      refreshStats,
+    ],
   );
 
   /**
@@ -151,7 +158,11 @@ export function useHybridTaskExecution() {
   const [error, setError] = useState<Error | null>(null);
 
   const execute = useCallback(
-    async (agentId: string, task: AgentTask, config?: Partial<HybridExecutionConfig>) => {
+    async (
+      agentId: string,
+      task: AgentTask,
+      config?: Partial<HybridExecutionConfig>,
+    ) => {
       setLoading(true);
       setError(null);
 
@@ -168,7 +179,7 @@ export function useHybridTaskExecution() {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return { result, loading, error, execute };

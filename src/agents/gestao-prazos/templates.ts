@@ -14,7 +14,7 @@ export function formatPrazoSummary(
   diasRestantes: number,
   isUrgente: boolean,
   considerouFeriados: boolean,
-  considerouRecesso: boolean
+  considerouRecesso: boolean,
 ): string {
   const urgencyIcon = isUrgente ? "⚠️" : diasRestantes < 0 ? "🔴" : "✅";
   const urgencyText = isUrgente
@@ -65,7 +65,7 @@ export function formatErrorMessage(
     tipoProcesso?: string;
     dataPublicacao?: string;
     step?: string;
-  }
+  },
 ): string {
   return `
 ⚠️ **Erro ao calcular prazo processual**
@@ -95,7 +95,10 @@ export function formatErrorMessage(
 /**
  * Template para mensagem de fallback
  */
-export function formatFallbackMessage(tipoProcesso?: string, dataPublicacao?: string): string {
+export function formatFallbackMessage(
+  tipoProcesso?: string,
+  dataPublicacao?: string,
+): string {
   return `
 ⚠️ **Sistema de cálculo de prazos temporariamente indisponível**
 
@@ -132,7 +135,7 @@ export function formatPrazoVencidoAlert(
   processNumber: string | undefined,
   tipoProcesso: string,
   deadline: string,
-  diasAtrasados: number
+  diasAtrasados: number,
 ): string {
   return `
 🔴 **ALERTA: PRAZO PROCESSUAL VENCIDO**
@@ -163,7 +166,7 @@ export function formatPrazoUrgenteAlert(
   processNumber: string | undefined,
   tipoProcesso: string,
   deadline: string,
-  diasRestantes: number
+  diasRestantes: number,
 ): string {
   return `
 ⚠️ **ALERTA: PRAZO PROCESSUAL URGENTE**

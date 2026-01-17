@@ -87,7 +87,7 @@ export class DiarioOficialAPIError extends Error {
     message: string,
     public gazette?: string,
     public statusCode?: number,
-    public originalError?: unknown
+    public originalError?: unknown,
   ) {
     super(message);
     this.name = "DiarioOficialAPIError";
@@ -117,7 +117,7 @@ interface QueridoDiarioResponse {
  * This is an open source project with a public API
  */
 export async function consultarQueridoDiario(
-  params: PublicationSearchParams
+  params: PublicationSearchParams,
 ): Promise<UnifiedPublication[]> {
   const publications: UnifiedPublication[] = [];
 
@@ -140,9 +140,11 @@ export async function consultarQueridoDiario(
     }
 
     // Add lawyer/party search terms to query
-    const additionalTerms = [params.lawyerName, params.oabNumber, params.partyName].filter(
-      Boolean
-    ) as string[];
+    const additionalTerms = [
+      params.lawyerName,
+      params.oabNumber,
+      params.partyName,
+    ].filter(Boolean) as string[];
 
     if (additionalTerms.length > 0) {
       queryParams.append("excerpt_size", "500");
@@ -162,7 +164,7 @@ export async function consultarQueridoDiario(
       throw new DiarioOficialAPIError(
         `HTTP ${response.status}: ${response.statusText}`,
         "querido_diario",
-        response.status
+        response.status,
       );
     }
 
@@ -199,7 +201,7 @@ export async function consultarQueridoDiario(
         `Error searching Querido Diário: ${error.message}`,
         "querido_diario",
         undefined,
-        error
+        error,
       );
     }
 
@@ -207,7 +209,7 @@ export async function consultarQueridoDiario(
       "Unknown error searching gazettes",
       "querido_diario",
       undefined,
-      error
+      error,
     );
   }
 }

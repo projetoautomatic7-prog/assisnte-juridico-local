@@ -77,7 +77,7 @@ export function formatMonitoringSummary(
   totalPublications: number,
   criticalCount: number,
   courtDistribution: Record<string, number>,
-  executionTimeMs: number
+  executionTimeMs: number,
 ): string {
   const courtsList = Object.entries(courtDistribution)
     .map(([court, count]) => `${court}: ${count}`)
@@ -106,7 +106,7 @@ export function formatErrorMessage(
     lawyerOAB?: string;
     courts?: string[];
     step?: string;
-  }
+  },
 ): string {
   return `
 ⚠️ **Erro ao monitorar DJEN**

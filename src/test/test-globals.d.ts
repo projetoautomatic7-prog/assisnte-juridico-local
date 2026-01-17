@@ -22,7 +22,9 @@ interface Gapi {
   auth2: {
     getAuthInstance: () => {
       isSignedIn: { get: () => boolean };
-      currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
+      currentUser: {
+        get: () => { getAuthResponse: () => { access_token: string } };
+      };
     };
   };
 }
@@ -30,7 +32,9 @@ interface Gapi {
 interface GoogleAccounts {
   accounts: {
     oauth2: {
-      initTokenClient: (...args: unknown[]) => { requestAccessToken: () => void };
+      initTokenClient: (...args: unknown[]) => {
+        requestAccessToken: () => void;
+      };
     };
   };
 }

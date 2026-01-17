@@ -57,7 +57,14 @@ type FilterStatus =
   | "pendente-revisao"
   | "finalizada"
   | "arquivada";
-type FilterTipo = "all" | "peticao" | "contrato" | "parecer" | "recurso" | "procuracao" | "outro";
+type FilterTipo =
+  | "all"
+  | "peticao"
+  | "contrato"
+  | "parecer"
+  | "recurso"
+  | "procuracao"
+  | "outro";
 
 export default function MinutasManagerV2() {
   const [minutas, setMinutas] = useKV<Minuta[]>("minutas", []);
@@ -88,7 +95,7 @@ export default function MinutasManagerV2() {
         (m) =>
           m.titulo.toLowerCase().includes(query) ||
           m.conteudo.toLowerCase().includes(query) ||
-          m.autor.toLowerCase().includes(query)
+          m.autor.toLowerCase().includes(query),
       );
     }
 
@@ -104,7 +111,8 @@ export default function MinutasManagerV2() {
 
     // Ordenar por data de atualização (mais recente primeiro)
     return filtered.sort(
-      (a, b) => new Date(b.atualizadoEm).getTime() - new Date(a.atualizadoEm).getTime()
+      (a, b) =>
+        new Date(b.atualizadoEm).getTime() - new Date(a.atualizadoEm).getTime(),
     );
   }, [minutas, searchQuery, filterStatus, filterTipo]);
 
@@ -139,9 +147,11 @@ export default function MinutasManagerV2() {
         atualizadoEm: new Date().toISOString(),
       };
 
-      setMinutas(minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || []);
+      setMinutas(
+        minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || [],
+      );
     },
-    [selectedMinuta, minutas, setMinutas]
+    [selectedMinuta, minutas, setMinutas],
   );
 
   // Atualizar título da minuta
@@ -155,9 +165,11 @@ export default function MinutasManagerV2() {
         atualizadoEm: new Date().toISOString(),
       };
 
-      setMinutas(minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || []);
+      setMinutas(
+        minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || [],
+      );
     },
-    [selectedMinuta, minutas, setMinutas]
+    [selectedMinuta, minutas, setMinutas],
   );
 
   // Atualizar status da minuta
@@ -171,10 +183,12 @@ export default function MinutasManagerV2() {
         atualizadoEm: new Date().toISOString(),
       };
 
-      setMinutas(minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || []);
+      setMinutas(
+        minutas?.map((m) => (m.id === selectedMinuta.id ? updated : m)) || [],
+      );
       toast.success(`Status alterado para: ${status}`);
     },
-    [selectedMinuta, minutas, setMinutas]
+    [selectedMinuta, minutas, setMinutas],
   );
 
   // Deletar minuta
@@ -186,7 +200,7 @@ export default function MinutasManagerV2() {
       }
       toast.success("Minuta excluída!");
     },
-    [minutas, setMinutas, selectedMinutaId]
+    [minutas, setMinutas, selectedMinutaId],
   );
 
   // Geração com IA (streaming)
@@ -197,7 +211,7 @@ export default function MinutasManagerV2() {
         onChunk: (chunk: string) => void;
         onComplete: () => void;
         onError: (error: Error) => void;
-      }
+      },
     ) => {
       try {
         await streamChat([
@@ -210,10 +224,12 @@ export default function MinutasManagerV2() {
         ]);
         callbacks.onComplete();
       } catch (error) {
-        callbacks.onError(error instanceof Error ? error : new Error("Erro desconhecido"));
+        callbacks.onError(
+          error instanceof Error ? error : new Error("Erro desconhecido"),
+        );
       }
     },
-    [streamChat]
+    [streamChat],
   );
 
   return (
@@ -260,7 +276,10 @@ export default function MinutasManagerV2() {
 
           {/* Filtros */}
           <div className="grid grid-cols-2 gap-2">
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+            <Select
+              value={filterStatus}
+              onValueChange={(v) => setFilterStatus(v as FilterStatus)}
+            >
               <SelectTrigger className="text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -274,7 +293,10 @@ export default function MinutasManagerV2() {
               </SelectContent>
             </Select>
 
-            <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as FilterTipo)}>
+            <Select
+              value={filterTipo}
+              onValueChange={(v) => setFilterTipo(v as FilterTipo)}
+            >
               <SelectTrigger className="text-xs">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
@@ -316,12 +338,14 @@ export default function MinutasManagerV2() {
                     "w-full text-left p-3 rounded-lg border transition-colors",
                     selectedMinutaId === minuta.id
                       ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                      : "border-border bg-background hover:bg-muted/70"
+                      : "border-border bg-background hover:bg-muted/70",
                   )}
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-sm line-clamp-2">{minuta.titulo}</h3>
+                      <h3 className="font-medium text-sm line-clamp-2">
+                        {minuta.titulo}
+                      </h3>
                       {minuta.criadoPorAgente && (
                         <Badge variant="secondary" className="text-xs shrink-0">
                           <Bot className="h-3 w-3 mr-1" />
@@ -331,7 +355,10 @@ export default function MinutasManagerV2() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" style={getStatusBadgeStyle(minuta.status)}>
+                      <Badge
+                        variant="outline"
+                        style={getStatusBadgeStyle(minuta.status)}
+                      >
                         {minuta.status}
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
@@ -340,7 +367,10 @@ export default function MinutasManagerV2() {
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      Atualizada: {new Date(minuta.atualizadoEm).toLocaleDateString("pt-BR")}
+                      Atualizada:{" "}
+                      {new Date(minuta.atualizadoEm).toLocaleDateString(
+                        "pt-BR",
+                      )}
                     </p>
                   </div>
                 </button>
@@ -373,7 +403,9 @@ export default function MinutasManagerV2() {
                 <div className="flex items-center gap-2 shrink-0">
                   <Select
                     value={selectedMinuta.status}
-                    onValueChange={(v) => handleStatusChange(v as Minuta["status"])}
+                    onValueChange={(v) =>
+                      handleStatusChange(v as Minuta["status"])
+                    }
                   >
                     <SelectTrigger className="w-40">
                       <SelectValue />
@@ -401,7 +433,11 @@ export default function MinutasManagerV2() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Criada por: {selectedMinuta.autor}</span>
                 <span>•</span>
-                <span>{new Date(selectedMinuta.criadoEm).toLocaleDateString("pt-BR")}</span>
+                <span>
+                  {new Date(selectedMinuta.criadoEm).toLocaleDateString(
+                    "pt-BR",
+                  )}
+                </span>
                 {selectedMinuta.processId && (
                   <>
                     <span>•</span>
@@ -430,7 +466,10 @@ export default function MinutasManagerV2() {
                 </TabsList>
               </div>
 
-              <TabsContent value="editor" className="flex-1 m-0 data-[state=inactive]:hidden">
+              <TabsContent
+                value="editor"
+                className="flex-1 m-0 data-[state=inactive]:hidden"
+              >
                 <ProfessionalEditor
                   content={selectedMinuta.conteudo}
                   onChange={handleContentChange}
@@ -440,7 +479,10 @@ export default function MinutasManagerV2() {
                 />
               </TabsContent>
 
-              <TabsContent value="google-docs" className="flex-1 m-0 data-[state=inactive]:hidden">
+              <TabsContent
+                value="google-docs"
+                className="flex-1 m-0 data-[state=inactive]:hidden"
+              >
                 {selectedMinuta.googleDocsId && selectedMinuta.googleDocsUrl ? (
                   <GoogleDocsEmbed
                     docId={selectedMinuta.googleDocsId}
@@ -451,8 +493,13 @@ export default function MinutasManagerV2() {
                   <div className="h-full flex items-center justify-center text-muted-foreground">
                     <div className="text-center">
                       <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Esta minuta ainda não está sincronizada com o Google Docs</p>
-                      <Button className="mt-4">Criar documento no Google Docs</Button>
+                      <p>
+                        Esta minuta ainda não está sincronizada com o Google
+                        Docs
+                      </p>
+                      <Button className="mt-4">
+                        Criar documento no Google Docs
+                      </Button>
                     </div>
                   </div>
                 )}

@@ -75,9 +75,11 @@ function isValidSentryDSN(dsn: string): boolean {
 
   // DSN do Sentry.io: https://<key>@<org>.ingest.sentry.io/<project>
   // ou https://<key>@sentry.io/<project>
-  const sentryPattern = /^https:\/\/[a-f0-9]+@([a-z0-9-]+\.)?ingest\.sentry\.io\/\d+$/i;
+  const sentryPattern =
+    /^https:\/\/[a-f0-9]+@([a-z0-9-]+\.)?ingest\.sentry\.io\/\d+$/i;
   const sentryPatternAlt = /^https:\/\/[a-f0-9]+@sentry\.io\/\d+$/i;
-  const sentryPatternOrg = /^https:\/\/[a-f0-9]+@[a-z0-9-]+\.ingest\.sentry\.io\/\d+$/i;
+  const sentryPatternOrg =
+    /^https:\/\/[a-f0-9]+@[a-z0-9-]+\.ingest\.sentry\.io\/\d+$/i;
 
   // Também aceita DSN com formato mais flexível
   const genericPattern = /^https:\/\/[a-f0-9]+@.+\.sentry\.io\/\d+$/i;
@@ -114,7 +116,9 @@ export function initErrorTracking(): void {
     if (APP_ENVIRONMENT !== "development") {
       console.info("🔴 Sentry: Não configurado (VITE_SENTRY_DSN não definido)");
       console.info("   Para habilitar, adicione VITE_SENTRY_DSN ao .env");
-      console.info("   Obtenha seu DSN em: https://sentry.io/settings/projects/");
+      console.info(
+        "   Obtenha seu DSN em: https://sentry.io/settings/projects/",
+      );
     }
     return;
   }
@@ -132,7 +136,9 @@ export function initErrorTracking(): void {
   // Valida formato do DSN
   if (!isValidSentryDSN(SENTRY_DSN)) {
     console.warn("⚠️ Sentry: DSN inválido ou não é do Sentry.io");
-    console.info("   DSN esperado: https://<key>@<org>.ingest.sentry.io/<project>");
+    console.info(
+      "   DSN esperado: https://<key>@<org>.ingest.sentry.io/<project>",
+    );
     console.info("   DSN recebido:", SENTRY_DSN.substring(0, 50) + "...");
     return;
   }
@@ -216,7 +222,7 @@ export function initErrorTracking(): void {
         // 2. Filtra erros de extensões do navegador
         if (
           event.exception?.values?.[0]?.stacktrace?.frames?.some((frame) =>
-            frame.filename?.includes("extension")
+            frame.filename?.includes("extension"),
           )
         ) {
           return null;
@@ -228,7 +234,10 @@ export function initErrorTracking(): void {
             ? hint.originalException.message
             : String(hint.originalException);
 
-        if (errorMessage?.includes("Failed to fetch") && !errorMessage.includes("api/")) {
+        if (
+          errorMessage?.includes("Failed to fetch") &&
+          !errorMessage.includes("api/")
+        ) {
           // Ignora fetch failures que não são de nossas APIs
           return null;
         }
@@ -253,7 +262,10 @@ export function initErrorTracking(): void {
         }
 
         // ✅ LGPD: Remove URLs sensíveis
-        if (breadcrumb.data?.url?.includes("token") || breadcrumb.data?.url?.includes("password")) {
+        if (
+          breadcrumb.data?.url?.includes("token") ||
+          breadcrumb.data?.url?.includes("password")
+        ) {
           breadcrumb.data.url = "[REDACTED]";
         }
 
@@ -308,7 +320,9 @@ export function initErrorTracking(): void {
 
       // URLs permitidas (apenas rastrear erros dessas origens)
       allowUrls: [
-        globalThis.window === undefined ? "" : globalThis.window.location.origin,
+        globalThis.window === undefined
+          ? ""
+          : globalThis.window.location.origin,
         /^https:\/\/.*\.vercel\.app/,
       ],
     });
@@ -317,14 +331,17 @@ export function initErrorTracking(): void {
     console.log("✅ Sentry Error Tracking inicializado");
     console.log(`   Environment: ${APP_ENVIRONMENT}`);
     console.log(`   Release: assistente-juridico@${APP_VERSION}`);
-    console.log(`   PII Filtering: ${ENABLE_PII_FILTERING ? "ATIVO ✅" : "DESATIVADO ⚠️"}`);
+    console.log(
+      `   PII Filtering: ${ENABLE_PII_FILTERING ? "ATIVO ✅" : "DESATIVADO ⚠️"}`,
+    );
 
     // 🔍 Inicializar integração Gemini para AI Monitoring (lazy loading)
     // Dynamic import para evitar erro de módulo não encontrado durante type-check
     let geminiTimeoutId: ReturnType<typeof setTimeout> | null = null;
     geminiTimeoutId = setTimeout(async () => {
       try {
-        const { initGeminiIntegration } = await import("../lib/sentry-gemini-integration.js");
+        const { initGeminiIntegration } =
+          await import("../lib/sentry-gemini-integration.js");
         initGeminiIntegration({
           includePrompts: true,
           captureErrors: true,
@@ -339,7 +356,9 @@ export function initErrorTracking(): void {
     // Expor para cleanup em testes/hot reload
     if (typeof window !== "undefined") {
       (
-        window as unknown as { __sentryGeminiTimeout?: ReturnType<typeof setTimeout> | null }
+        window as unknown as {
+          __sentryGeminiTimeout?: ReturnType<typeof setTimeout> | null;
+        }
       ).__sentryGeminiTimeout = geminiTimeoutId;
     }
   } catch (error) {
@@ -350,7 +369,11 @@ export function initErrorTracking(): void {
 /**
  * Set user context for error tracking
  */
-export function setUserContext(userId: string, email?: string, username?: string) {
+export function setUserContext(
+  userId: string,
+  email?: string,
+  username?: string,
+) {
   Sentry.setUser({
     id: userId,
     email: email || undefined,
@@ -391,7 +414,7 @@ export function captureError(error: Error, context?: Record<string, unknown>) {
  */
 export function captureMessage(
   message: string,
-  level: "fatal" | "error" | "warning" | "info" | "debug" = "info"
+  level: "fatal" | "error" | "warning" | "info" | "debug" = "info",
 ) {
   Sentry.captureMessage(message, level);
 
@@ -406,7 +429,7 @@ export function captureApiError(
   method: string,
   url: string,
   statusCode?: number,
-  responseBody?: unknown
+  responseBody?: unknown,
 ) {
   Sentry.captureException(error, {
     contexts: {
@@ -446,11 +469,14 @@ export function captureApiError(
  *
  * @throws {Error} Always throws an error to prevent silent failures
  */
-export function startTransaction(_name: string, _op: string = "http.request"): never {
+export function startTransaction(
+  _name: string,
+  _op: string = "http.request",
+): never {
   throw new Error(
     "startTransaction is deprecated in Sentry v10+. " +
       "Use Sentry.startSpan() directly. " +
-      "See: https://docs.sentry.io/platforms/javascript/guides/react/performance/"
+      "See: https://docs.sentry.io/platforms/javascript/guides/react/performance/",
   );
 }
 
@@ -474,7 +500,11 @@ export async function flushErrors(timeout: number = 2000) {
  * Incrementa um contador de métrica usando Sentry.metrics.count
  * @example trackMetric('button_clicks', 1, { button: 'submit' })
  */
-export function trackMetric(name: string, value: number = 1, _tags?: Record<string, string>) {
+export function trackMetric(
+  name: string,
+  value: number = 1,
+  _tags?: Record<string, string>,
+) {
   try {
     // Usa a API mais recente do Sentry
     Sentry.metrics.count(name, value);
@@ -487,7 +517,11 @@ export function trackMetric(name: string, value: number = 1, _tags?: Record<stri
  * Registra uma distribuição de valores (latência, tamanhos, etc)
  * @example trackDistribution('api_latency_ms', 150)
  */
-export function trackDistribution(name: string, value: number, _tags?: Record<string, string>) {
+export function trackDistribution(
+  name: string,
+  value: number,
+  _tags?: Record<string, string>,
+) {
   try {
     Sentry.metrics.distribution(name, value);
   } catch {
@@ -499,7 +533,11 @@ export function trackDistribution(name: string, value: number, _tags?: Record<st
  * Registra um gauge (valor pontual no tempo)
  * @example trackGauge('active_users', 42)
  */
-export function trackGauge(name: string, value: number, _tags?: Record<string, string>) {
+export function trackGauge(
+  name: string,
+  value: number,
+  _tags?: Record<string, string>,
+) {
   try {
     Sentry.metrics.gauge(name, value);
   } catch {
@@ -522,7 +560,7 @@ export async function withSpan<T>(
   name: string,
   op: string,
   callback: () => Promise<T>,
-  attributes?: Record<string, string | number>
+  attributes?: Record<string, string | number>,
 ): Promise<T> {
   return Sentry.startSpan({ name, op, attributes }, async () => callback());
 }
@@ -534,7 +572,7 @@ export function withSyncSpan<T>(
   name: string,
   op: string,
   callback: () => T,
-  attributes?: Record<string, string | number>
+  attributes?: Record<string, string | number>,
 ): T {
   return Sentry.startSpan({ name, op, attributes }, () => callback());
 }

@@ -500,7 +500,8 @@ Apelado(a): {{apelado.nome}}</p>
     nome: "Ação de Alimentos",
     tipo: "peticao",
     categoria: "Família",
-    descricao: "Modelo de ação de alimentos com pedido de alimentos provisórios",
+    descricao:
+      "Modelo de ação de alimentos com pedido de alimentos provisórios",
     variaveis: [
       "VARA",
       "COMARCA",
@@ -716,7 +717,13 @@ Apelado(a): {{apelado.nome}}</p>
       "NUMERO_OAB",
       "LISTA_DOCUMENTOS",
     ],
-    tags: ["indenização", "danos morais", "danos materiais", "responsabilidade civil", "cível"],
+    tags: [
+      "indenização",
+      "danos morais",
+      "danos materiais",
+      "responsabilidade civil",
+      "cível",
+    ],
     conteudo: `<h1 style="text-align: center;">AÇÃO DE INDENIZAÇÃO POR DANOS MORAIS E MATERIAIS</h1>
 
 <h2 style="text-align: center;">EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA {{VARA}} DA COMARCA DE {{COMARCA}}/{{UF}}</h2>
@@ -843,7 +850,8 @@ Apelado(a): {{apelado.nome}}</p>
     nome: "Ação Revisional de Contrato Bancário",
     tipo: "peticao",
     categoria: "Consumidor",
-    descricao: "Modelo de ação revisional de contrato bancário com pedido de repetição de indébito",
+    descricao:
+      "Modelo de ação revisional de contrato bancário com pedido de repetição de indébito",
     variaveis: [
       "VARA",
       "COMARCA",
@@ -1036,7 +1044,8 @@ Apelado(a): {{apelado.nome}}</p>
     nome: "Ação de Usucapião",
     tipo: "peticao",
     categoria: "Imobiliário",
-    descricao: "Modelo de ação de usucapião para aquisição de propriedade imobiliária",
+    descricao:
+      "Modelo de ação de usucapião para aquisição de propriedade imobiliária",
     variaveis: [
       "VARA",
       "COMARCA",
@@ -1076,7 +1085,14 @@ Apelado(a): {{apelado.nome}}</p>
       "NUMERO_OAB",
       "LISTA_DOCUMENTOS",
     ],
-    tags: ["usucapião", "imóvel", "propriedade", "posse", "registro", "imobiliário"],
+    tags: [
+      "usucapião",
+      "imóvel",
+      "propriedade",
+      "posse",
+      "registro",
+      "imobiliário",
+    ],
     conteudo: `<h1 style="text-align: center;">AÇÃO DE USUCAPIÃO</h1>
 
 <h2 style="text-align: center;">EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA {{VARA}} DA COMARCA DE {{COMARCA}}/{{UF}}</h2>
@@ -1253,7 +1269,9 @@ export function getTemplateById(id: string): DocumentTemplate | undefined {
 }
 
 // Função para buscar templates por tipo
-export function getTemplatesByTipo(tipo: DocumentTemplate["tipo"]): DocumentTemplate[] {
+export function getTemplatesByTipo(
+  tipo: DocumentTemplate["tipo"],
+): DocumentTemplate[] {
   return documentTemplates.filter((t) => t.tipo === tipo);
 }
 
@@ -1270,14 +1288,14 @@ export function searchTemplates(query: string): DocumentTemplate[] {
       t.nome.toLowerCase().includes(lowerQuery) ||
       t.descricao.toLowerCase().includes(lowerQuery) ||
       t.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
-      t.categoria.toLowerCase().includes(lowerQuery)
+      t.categoria.toLowerCase().includes(lowerQuery),
   );
 }
 
 // Função para substituir variáveis no template
 export function replaceTemplateVariables(
   content: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
 ): string {
   let result = content;
 

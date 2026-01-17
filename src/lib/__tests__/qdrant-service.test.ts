@@ -11,9 +11,12 @@ describe("QdrantService - validações sem rede", () => {
       timeout: 1000,
     });
 
-    (q as unknown as { collectionVectorSize?: number }).collectionVectorSize = 3;
+    (q as unknown as { collectionVectorSize?: number }).collectionVectorSize =
+      3;
 
-    await expect(q.search([1, 2], 5)).rejects.toThrow("Vector must have exactly 3 dimensions");
+    await expect(q.search([1, 2], 5)).rejects.toThrow(
+      "Vector must have exactly 3 dimensions",
+    );
   });
 
   it("deve rejeitar payloads inválidos no upsert", async () => {
@@ -24,7 +27,8 @@ describe("QdrantService - validações sem rede", () => {
       timeout: 1000,
     });
 
-    (q as unknown as { collectionVectorSize?: number }).collectionVectorSize = 4;
+    (q as unknown as { collectionVectorSize?: number }).collectionVectorSize =
+      4;
 
     const badPointMissingId = {
       vector: [1, 2, 3, 4],
@@ -44,10 +48,12 @@ describe("QdrantService - validações sem rede", () => {
     } as unknown as QdrantPoint;
 
     await expect(q.upsert([] as unknown as QdrantPoint[])).rejects.toThrow(
-      "Points must be a non-empty array"
+      "Points must be a non-empty array",
     );
     await expect(q.upsert([badPointMissingId])).rejects.toThrow(/missing id/i);
-    await expect(q.upsert([badPointNullPayload])).rejects.toThrow(/invalid payload/i);
+    await expect(q.upsert([badPointNullPayload])).rejects.toThrow(
+      /invalid payload/i,
+    );
     await expect(q.upsert([badPointWrongVector])).rejects.toThrow(/dimensions/);
   });
 });

@@ -18,7 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useKV } from "@/hooks/use-kv";
-import { FileText, Paperclip, Plus, TrendingDown, TrendingUp, X } from "lucide-react";
+import {
+  FileText,
+  Paperclip,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 // ✅ OTIMIZAÇÃO: Imports separados para melhor tree-shaking
@@ -63,7 +70,10 @@ export default function FinancialManagementAdvbox() {
 
     const thisMonthEntries = entriesList.filter((e) => {
       const entryDate = new Date(e.date);
-      return entryDate.getMonth() === thisMonth && entryDate.getFullYear() === thisYear;
+      return (
+        entryDate.getMonth() === thisMonth &&
+        entryDate.getFullYear() === thisYear
+      );
     });
 
     const thisWeekEntries = entriesList.filter((e) => {
@@ -95,14 +105,19 @@ export default function FinancialManagementAdvbox() {
   // Chart data for Revenue vs Expenses
   const chartData = useMemo(() => {
     const entriesList = entries || [];
-    const monthlyData: { [key: string]: { receitas: number; despesas: number } } = {};
+    const monthlyData: {
+      [key: string]: { receitas: number; despesas: number };
+    } = {};
 
     // Generate last 6 months
     const months: string[] = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
-      const monthKey = date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      const monthKey = date.toLocaleDateString("pt-BR", {
+        month: "short",
+        year: "2-digit",
+      });
       months.push(monthKey);
       monthlyData[monthKey] = { receitas: 0, despesas: 0 };
     }
@@ -165,12 +180,14 @@ export default function FinancialManagementAdvbox() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newAttachments: FileAttachment[] = Array.from(files).map((fileItem) => ({
-        id: crypto.randomUUID(),
-        name: fileItem.name,
-        size: fileItem.size,
-        type: fileItem.type,
-      }));
+      const newAttachments: FileAttachment[] = Array.from(files).map(
+        (fileItem) => ({
+          id: crypto.randomUUID(),
+          name: fileItem.name,
+          size: fileItem.size,
+          type: fileItem.type,
+        }),
+      );
       setAttachments((prev) => [...prev, ...newAttachments]);
       toast.success(`${files.length} arquivo(s) anexado(s)`);
     }
@@ -193,7 +210,9 @@ export default function FinancialManagementAdvbox() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-          <p className="text-sm text-muted-foreground mt-1">Controle de receitas e despesas</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Controle de receitas e despesas
+          </p>
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
@@ -205,7 +224,9 @@ export default function FinancialManagementAdvbox() {
           <DialogContent className="bg-card border-border">
             <DialogHeader>
               <DialogTitle>Novo Lançamento</DialogTitle>
-              <DialogDescription>Adicione uma nova receita ou despesa</DialogDescription>
+              <DialogDescription>
+                Adicione uma nova receita ou despesa
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -231,7 +252,9 @@ export default function FinancialManagementAdvbox() {
                   type="number"
                   placeholder="0,00"
                   value={newEntry.amount}
-                  onChange={(e) => setNewEntry({ ...newEntry, amount: e.target.value })}
+                  onChange={(e) =>
+                    setNewEntry({ ...newEntry, amount: e.target.value })
+                  }
                   className="bg-background border-border"
                 />
               </div>
@@ -240,7 +263,9 @@ export default function FinancialManagementAdvbox() {
                 <Input
                   placeholder="Ex: Honorários, Custas processuais..."
                   value={newEntry.category}
-                  onChange={(e) => setNewEntry({ ...newEntry, category: e.target.value })}
+                  onChange={(e) =>
+                    setNewEntry({ ...newEntry, category: e.target.value })
+                  }
                   className="bg-background border-border"
                 />
               </div>
@@ -249,7 +274,9 @@ export default function FinancialManagementAdvbox() {
                 <Input
                   placeholder="Descrição do lançamento"
                   value={newEntry.description}
-                  onChange={(e) => setNewEntry({ ...newEntry, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewEntry({ ...newEntry, description: e.target.value })
+                  }
                   className="bg-background border-border"
                 />
               </div>
@@ -258,7 +285,9 @@ export default function FinancialManagementAdvbox() {
                 <Input
                   type="date"
                   value={newEntry.date}
-                  onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })}
+                  onChange={(e) =>
+                    setNewEntry({ ...newEntry, date: e.target.value })
+                  }
                   className="bg-background border-border"
                 />
               </div>
@@ -295,9 +324,14 @@ export default function FinancialManagementAdvbox() {
                         className="flex items-center justify-between p-2 bg-muted rounded-lg border border-border"
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileText size={16} className="text-primary shrink-0" />
+                          <FileText
+                            size={16}
+                            className="text-primary shrink-0"
+                          />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate">{attachment.name}</p>
+                            <p className="text-sm truncate">
+                              {attachment.name}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {formatFileSize(attachment.size)}
                             </p>
@@ -323,7 +357,11 @@ export default function FinancialManagementAdvbox() {
                 <Button onClick={handleAddEntry} className="flex-1">
                   Adicionar
                 </Button>
-                <Button variant="outline" onClick={() => setShowDialog(false)} className="flex-1">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDialog(false)}
+                  className="flex-1"
+                >
                   Cancelar
                 </Button>
               </div>
@@ -337,7 +375,9 @@ export default function FinancialManagementAdvbox() {
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Valor previsto este mês</p>
+              <p className="text-sm text-muted-foreground">
+                Valor previsto este mês
+              </p>
               <div className="flex items-center gap-2">
                 <TrendingUp className="text-green-500" size={20} />
                 <span className="text-2xl font-bold text-foreground">
@@ -351,7 +391,9 @@ export default function FinancialManagementAdvbox() {
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">A receber esta semana</p>
+              <p className="text-sm text-muted-foreground">
+                A receber esta semana
+              </p>
               <div className="flex items-center gap-2">
                 <TrendingUp className="text-green-500" size={20} />
                 <span className="text-2xl font-bold text-foreground">
@@ -365,7 +407,9 @@ export default function FinancialManagementAdvbox() {
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">A pagar esta semana</p>
+              <p className="text-sm text-muted-foreground">
+                A pagar esta semana
+              </p>
               <div className="flex items-center gap-2">
                 <TrendingDown className="text-red-500" size={20} />
                 <span className="text-2xl font-bold text-foreground">
@@ -389,8 +433,15 @@ export default function FinancialManagementAdvbox() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" />
-                <XAxis dataKey="month" stroke="#6b7280" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                <YAxis stroke="#6b7280" tick={{ fill: "#6b7280", fontSize: 12 }} />
+                <XAxis
+                  dataKey="month"
+                  stroke="#6b7280"
+                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#6b7280"
+                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1e2130",
@@ -419,7 +470,9 @@ export default function FinancialManagementAdvbox() {
         <CardContent>
           <div className="space-y-2">
             {(entries || []).length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum lançamento cadastrado</p>
+              <p className="text-center text-muted-foreground py-8">
+                Nenhum lançamento cadastrado
+              </p>
             ) : (
               <div className="space-y-2">
                 {[...(entries || [])]
@@ -431,8 +484,12 @@ export default function FinancialManagementAdvbox() {
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary transition-colors"
                     >
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{entry.description || entry.category}</p>
-                        <p className="text-xs text-muted-foreground">{entry.category}</p>
+                        <p className="font-medium text-sm">
+                          {entry.description || entry.category}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.category}
+                        </p>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="text-xs text-muted-foreground">
@@ -440,10 +497,13 @@ export default function FinancialManagementAdvbox() {
                         </span>
                         <span
                           className={`font-semibold ${
-                            entry.type === "income" ? "text-green-500" : "text-red-500"
+                            entry.type === "income"
+                              ? "text-green-500"
+                              : "text-red-500"
                           }`}
                         >
-                          {entry.type === "income" ? "+" : "-"} {formatCurrency(entry.amount)}
+                          {entry.type === "income" ? "+" : "-"}{" "}
+                          {formatCurrency(entry.amount)}
                         </span>
                       </div>
                     </div>

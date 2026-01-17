@@ -4,7 +4,10 @@
  */
 
 import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
-import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
+import {
+  QdrantService,
+  type SearchResult as QdrantSearchResult,
+} from "@/lib/qdrant-service";
 import type { RevisaoContratualInput } from "./validators";
 
 const EMBEDDING_API_URL =
@@ -52,7 +55,12 @@ export class TemplateContratualRetriever {
     const qdrantUrl = process.env.QDRANT_URL;
     const qdrantKey = process.env.QDRANT_API_KEY;
 
-    if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
+    if (
+      qdrantUrl &&
+      qdrantKey &&
+      typeof qdrantUrl === "string" &&
+      typeof qdrantKey === "string"
+    ) {
       try {
         this.qdrantService = new QdrantService({
           url: qdrantUrl,
@@ -60,7 +68,10 @@ export class TemplateContratualRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
+        console.log("✅ Qdrant connected:", {
+          url: qdrantUrl,
+          collection: this.collectionName,
+        });
       } catch (error) {
         console.error("❌ Qdrant connection failed:", error);
       }
@@ -75,8 +86,14 @@ export class TemplateContratualRetriever {
     try {
       const embeddings = await this.generateEmbeddings(input.texto);
       const rawResults = await this.searchVectorDatabase(embeddings, input);
-      const rankedTemplates = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
-      const filteredTemplates = this.filterByTipo(rankedTemplates, input.tipoContrato || "todos");
+      const rankedTemplates = this.reRankResults(
+        rawResults,
+        input.relevanceThreshold || 0.7,
+      );
+      const filteredTemplates = this.filterByTipo(
+        rankedTemplates,
+        input.tipoContrato || "todos",
+      );
       const finalTemplates = filteredTemplates.slice(0, input.limit || 10);
 
       const executionTimeMs = Date.now() - startTime;
@@ -89,17 +106,20 @@ export class TemplateContratualRetriever {
         executionTimeMs,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorType = error instanceof Error ? error.name : "UnknownError";
 
       throw new Error(
         `Calling retrieval tool with query:\n\n${input.texto}\n\n` +
-          `raised the following error:\n\n${errorType}: ${errorMessage}`
+          `raised the following error:\n\n${errorType}: ${errorMessage}`,
       );
     }
   }
 
-  async searchFromRevisao(input: RevisaoContratualInput): Promise<SearchResult> {
+  async searchFromRevisao(
+    input: RevisaoContratualInput,
+  ): Promise<SearchResult> {
     return this.search({
       texto: input.contratoTexto.substring(0, 1000),
       tipoContrato: input.tipoContrato,
@@ -122,18 +142,21 @@ export class TemplateContratualRetriever {
         model: "text-embedding-004",
       });
 
-      const response = await fetch(`${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "models/text-embedding-004",
-          content: {
-            parts: [{ text }],
+      const response = await fetch(
+        `${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: {
+              parts: [{ text }],
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -142,7 +165,9 @@ export class TemplateContratualRetriever {
           statusText: response.statusText,
           body: errorBody,
         });
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -161,46 +186,63 @@ export class TemplateContratualRetriever {
 
       return embeddings;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real:", errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real:",
+        errorMessage,
+      );
       throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
 
   private async searchVectorDatabase(
     embeddings: number[],
-    input: TemplateSearchInput
+    input: TemplateSearchInput,
   ): Promise<TemplateContratual[]> {
     if (!this.qdrantService) {
       throw new Error("Qdrant não configurado");
     }
 
-    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    const qdrantResults = await this.qdrantService.search(
+      embeddings,
+      input.limit || 10,
+    );
     return this.mapQdrantResultsToTemplates(qdrantResults);
   }
 
-  private mapQdrantResultsToTemplates(results: QdrantSearchResult[]): TemplateContratual[] {
+  private mapQdrantResultsToTemplates(
+    results: QdrantSearchResult[],
+  ): TemplateContratual[] {
     return results.map((result) => ({
       titulo: (result.payload.titulo as string) || "Sem título",
       descricao: (result.payload.descricao as string) || "Sem descrição",
       relevancia: result.score,
       tipoContrato: (result.payload.tipoContrato as string) || "outro",
-      clausulasPadrao: (result.payload.clausulasPadrao as ClausulaPadrao[]) || [],
+      clausulasPadrao:
+        (result.payload.clausulasPadrao as ClausulaPadrao[]) || [],
       versao: (result.payload.versao as string) || "1.0",
       ultimaAtualizacao:
-        (result.payload.ultimaAtualizacao as string) || new Date().toISOString().split("T")[0],
+        (result.payload.ultimaAtualizacao as string) ||
+        new Date().toISOString().split("T")[0],
       fonte: result.payload.fonte as string | undefined,
       tags: (result.payload.tags as string[]) || [],
     }));
   }
 
-  private reRankResults(templates: TemplateContratual[], threshold: number): TemplateContratual[] {
+  private reRankResults(
+    templates: TemplateContratual[],
+    threshold: number,
+  ): TemplateContratual[] {
     return templates
       .filter((t) => t.relevancia >= threshold)
       .sort((a, b) => b.relevancia - a.relevancia);
   }
 
-  private filterByTipo(templates: TemplateContratual[], tipo: string): TemplateContratual[] {
+  private filterByTipo(
+    templates: TemplateContratual[],
+    tipo: string,
+  ): TemplateContratual[] {
     if (tipo === "todos" || tipo === "outro") {
       return templates;
     }
@@ -241,7 +283,9 @@ export function formatTemplates(templates: TemplateContratual[]): string {
       if (t.clausulasPadrao.length > 0) {
         lines.push(`Cláusulas principais:`);
         t.clausulasPadrao.slice(0, 3).forEach((c) => {
-          lines.push(`  - ${c.numero}. ${c.titulo}${c.obrigatoria ? " (obrigatória)" : ""}`);
+          lines.push(
+            `  - ${c.numero}. ${c.titulo}${c.obrigatoria ? " (obrigatória)" : ""}`,
+          );
         });
       }
 

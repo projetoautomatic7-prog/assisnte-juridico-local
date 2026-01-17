@@ -1,6 +1,12 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeftRight,
@@ -36,7 +42,7 @@ const RESUME_DELAY_MS = 1000;
 function calculateNextProgress(
   current: number,
   step: number,
-  max: number
+  max: number,
 ): { next: number; isComplete: boolean } {
   const next = Math.min(current + step, max);
   return { next, isComplete: next >= max };
@@ -53,10 +59,16 @@ export default function HumanAgentCollaboration({
   const [isHumanActive, setIsHumanActive] = useState(false);
 
   // Refs para controlar timers e evitar vazamentos de memória
-  const humanActivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const humanActivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const inactivityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+  const inactivityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
   const inactivitySecondsRef = useRef(0);
   const previousPhaseRef = useRef(phase);
   const onCompleteRef = useRef(onComplete);
@@ -90,7 +102,11 @@ export default function HumanAgentCollaboration({
       setProgress((prev) => {
         if (isCancelled) return prev;
 
-        const { next, isComplete } = calculateNextProgress(prev, PROGRESS_STEP, 100);
+        const { next, isComplete } = calculateNextProgress(
+          prev,
+          PROGRESS_STEP,
+          100,
+        );
 
         if (isComplete && !hasCalledComplete) {
           hasCalledComplete = true;
@@ -284,7 +300,10 @@ export default function HumanAgentCollaboration({
     }
   };
 
-  const remainingSeconds = Math.max(INACTIVITY_LIMIT_SECONDS - timeWithoutActivity, 0);
+  const remainingSeconds = Math.max(
+    INACTIVITY_LIMIT_SECONDS - timeWithoutActivity,
+    0,
+  );
 
   return (
     <Card className="border-primary/30">
@@ -294,11 +313,17 @@ export default function HumanAgentCollaboration({
             {getPhaseIcon()}
             <div>
               <CardTitle className="text-base">{getPhaseTitle()}</CardTitle>
-              <CardDescription className="mt-1">{getPhaseDescription()}</CardDescription>
+              <CardDescription className="mt-1">
+                {getPhaseDescription()}
+              </CardDescription>
             </div>
           </div>
           {phase === "agent_working" && (
-            <Button variant="outline" size="sm" onClick={handleHumanIntervention}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleHumanIntervention}
+            >
               <Pencil className="w-4 h-4 mr-2" />
               Intervir
             </Button>
@@ -316,7 +341,9 @@ export default function HumanAgentCollaboration({
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Progresso</span>
-            <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+            <span className="text-sm text-muted-foreground">
+              {Math.round(progress)}%
+            </span>
           </div>
           <Progress value={progress} />
         </div>
@@ -325,8 +352,8 @@ export default function HumanAgentCollaboration({
           <Alert>
             <Clock className="w-4 h-4" />
             <AlertDescription>
-              Sem atividade detectada há {timeWithoutActivity}s. O agente retomará automaticamente
-              em {remainingSeconds}s.
+              Sem atividade detectada há {timeWithoutActivity}s. O agente
+              retomará automaticamente em {remainingSeconds}s.
             </AlertDescription>
           </Alert>
         )}
@@ -335,7 +362,8 @@ export default function HumanAgentCollaboration({
           <Alert className="border-accent bg-accent/10">
             <Brain className="w-4 h-4 text-accent" />
             <AlertDescription>
-              Atividade humana detectada. O agente está em modo de espera colaborativa.
+              Atividade humana detectada. O agente está em modo de espera
+              colaborativa.
             </AlertDescription>
           </Alert>
         )}
@@ -366,7 +394,9 @@ export default function HumanAgentCollaboration({
           <div className="text-center">
             <User
               className={`w-8 h-8 mx-auto mb-2 ${
-                phase === "human_editing" ? "text-accent" : "text-muted-foreground"
+                phase === "human_editing"
+                  ? "text-accent"
+                  : "text-muted-foreground"
               }`}
             />
             <p className="text-xs font-medium">Você</p>
@@ -380,15 +410,15 @@ export default function HumanAgentCollaboration({
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              O agente detecta automaticamente quando você começa a editar e entra em modo de espera
-              colaborativa.
+              O agente detecta automaticamente quando você começa a editar e
+              entra em modo de espera colaborativa.
             </p>
           </div>
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              Após {INACTIVITY_LIMIT_SECONDS}s sem atividade humana, o agente retoma o trabalho
-              automaticamente.
+              Após {INACTIVITY_LIMIT_SECONDS}s sem atividade humana, o agente
+              retoma o trabalho automaticamente.
             </p>
           </div>
           <div className="flex items-start gap-2">

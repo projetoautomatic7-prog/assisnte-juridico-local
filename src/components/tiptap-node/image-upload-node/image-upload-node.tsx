@@ -63,7 +63,7 @@ export interface UploadOptions {
   upload: (
     file: File,
     onProgress: (event: { progress: number }) => void,
-    signal: AbortSignal
+    signal: AbortSignal,
   ) => Promise<string>;
   /**
    * Callback triggered when a file is uploaded successfully
@@ -100,7 +100,7 @@ function useFileUpload(options: UploadOptions) {
   const uploadFile = async (file: File): Promise<string | null> => {
     if (file.size > options.maxSize) {
       const error = new Error(
-        `File size exceeds maximum allowed (${options.maxSize / 1024 / 1024}MB)`
+        `File size exceeds maximum allowed (${options.maxSize / 1024 / 1024}MB)`,
       );
       options.onError?.(error);
       return null;
@@ -129,7 +129,7 @@ function useFileUpload(options: UploadOptions) {
         (event: { progress: number }) => {
           updateFileItem(fileId, { progress: event.progress });
         },
-        abortController.signal
+        abortController.signal,
       );
 
       if (!url) throw new Error("Upload failed: No URL returned");
@@ -144,7 +144,9 @@ function useFileUpload(options: UploadOptions) {
     } catch (error) {
       if (!abortController.signal.aborted) {
         updateFileItem(fileId, { status: "error", progress: 0 });
-        options.onError?.(error instanceof Error ? error : new Error("Upload failed"));
+        options.onError?.(
+          error instanceof Error ? error : new Error("Upload failed"),
+        );
       }
       return null;
     }
@@ -159,7 +161,9 @@ function useFileUpload(options: UploadOptions) {
     if (options.limit && files.length > options.limit) {
       return {
         valid: false,
-        error: new Error(`Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`),
+        error: new Error(
+          `Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`,
+        ),
       };
     }
 
@@ -286,7 +290,10 @@ interface ImageUploadDragAreaProps {
 /**
  * A component that creates a drag-and-drop area for image uploads
  */
-const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({ onFile, children }) => {
+const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({
+  onFile,
+  children,
+}) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -350,7 +357,10 @@ interface ImageUploadPreviewProps {
 /**
  * Component that displays a preview of an uploading file with progress
  */
-const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRemove }) => {
+const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({
+  fileItem,
+  onRemove,
+}) => {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -362,7 +372,10 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRem
   return (
     <div className="tiptap-image-upload-preview">
       {fileItem.status === "uploading" && (
-        <div className="tiptap-image-upload-progress" style={{ width: `${fileItem.progress}%` }} />
+        <div
+          className="tiptap-image-upload-progress"
+          style={{ width: `${fileItem.progress}%` }}
+        />
       )}
 
       <div className="tiptap-image-upload-preview-content">
@@ -371,7 +384,9 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRem
             <CloudUploadIcon />
           </div>
           <div className="tiptap-image-upload-details">
-            <span className="tiptap-image-upload-text">{fileItem.file.name}</span>
+            <span className="tiptap-image-upload-text">
+              {fileItem.file.name}
+            </span>
             <span className="tiptap-image-upload-subtext">
               {formatFileSize(fileItem.file.size)}
             </span>
@@ -379,7 +394,9 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRem
         </div>
         <div className="tiptap-image-upload-actions">
           {fileItem.status === "uploading" && (
-            <span className="tiptap-image-upload-progress-text">{fileItem.progress}%</span>
+            <span className="tiptap-image-upload-progress-text">
+              {fileItem.progress}%
+            </span>
           )}
           <Button
             type="button"
@@ -397,7 +414,10 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRem
   );
 };
 
-const DropZoneContent: React.FC<{ maxSize: number; limit: number }> = ({ maxSize, limit }) => (
+const DropZoneContent: React.FC<{ maxSize: number; limit: number }> = ({
+  maxSize,
+  limit,
+}) => (
   <>
     <div className="tiptap-image-upload-dropzone">
       <FileIcon />
@@ -412,7 +432,8 @@ const DropZoneContent: React.FC<{ maxSize: number; limit: number }> = ({ maxSize
         <em>Click to upload</em> or drag and drop
       </span>
       <span className="tiptap-image-upload-subtext">
-        Maximum {limit} file{limit === 1 ? "" : "s"}, {maxSize / 1024 / 1024}MB each.
+        Maximum {limit} file{limit === 1 ? "" : "s"}, {maxSize / 1024 / 1024}MB
+        each.
       </span>
     </div>
   </>
@@ -432,7 +453,8 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
     onError: extension.options.onError,
   };
 
-  const { fileItems, uploadFiles, removeFileItem, clearAllFiles } = useFileUpload(uploadOptions);
+  const { fileItems, uploadFiles, removeFileItem, clearAllFiles } =
+    useFileUpload(uploadOptions);
 
   const handleUpload = async (files: File[]) => {
     const urls = await uploadFiles(files);
@@ -442,7 +464,8 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
 
       if (isValidPosition(pos)) {
         const imageNodes = urls.map((url, index) => {
-          const filename = files[index]?.name.replace(/\.[^/.]+$/, "") || "unknown";
+          const filename =
+            files[index]?.name.replace(/\.[^/.]+$/, "") || "unknown";
           return {
             type: extension.options.type,
             attrs: {
@@ -485,7 +508,11 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const hasFiles = fileItems.length > 0;
 
   return (
-    <NodeViewWrapper className="tiptap-image-upload" tabIndex={0} onClick={handleClick}>
+    <NodeViewWrapper
+      className="tiptap-image-upload"
+      tabIndex={0}
+      onClick={handleClick}
+    >
       {!hasFiles && (
         <ImageUploadDragArea onFile={handleUpload}>
           <DropZoneContent maxSize={maxSize} limit={limit} />

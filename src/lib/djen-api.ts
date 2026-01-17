@@ -43,7 +43,15 @@ export interface DJENConfig {
   delayBetweenRequests?: number;
 }
 
-const DEFAULT_TRIBUNAIS = ["TST", "TRT3", "TJMG", "TRF1", "TJES", "TJSP", "STJ"];
+const DEFAULT_TRIBUNAIS = [
+  "TST",
+  "TRT3",
+  "TJMG",
+  "TRF1",
+  "TJES",
+  "TJSP",
+  "STJ",
+];
 const DEFAULT_TIMEOUT = 60000;
 const DEFAULT_DELAY = 1500;
 
@@ -52,7 +60,7 @@ export class DJENAPIError extends Error {
     message: string,
     public tribunal?: string,
     public statusCode?: number,
-    public originalError?: unknown
+    public originalError?: unknown,
   ) {
     super(message);
     this.name = "DJENAPIError";
@@ -62,18 +70,38 @@ export class DJENAPIError extends Error {
 // ===== Error handling helpers (reduces S3776 Cognitive Complexity) =====
 
 function createTimeoutError(timeout: number, tribunal: string): DJENAPIError {
-  return new DJENAPIError(`Timeout após ${timeout}ms aguardando resposta`, tribunal);
+  return new DJENAPIError(
+    `Timeout após ${timeout}ms aguardando resposta`,
+    tribunal,
+  );
 }
 
 function createNetworkError(error: Error, tribunal: string): DJENAPIError {
-  return new DJENAPIError(`Erro de rede: ${error.message}`, tribunal, undefined, error);
+  return new DJENAPIError(
+    `Erro de rede: ${error.message}`,
+    tribunal,
+    undefined,
+    error,
+  );
 }
 
-function createUnknownError(tribunal: string, originalError?: unknown): DJENAPIError {
-  return new DJENAPIError("Erro desconhecido ao consultar API", tribunal, undefined, originalError);
+function createUnknownError(
+  tribunal: string,
+  originalError?: unknown,
+): DJENAPIError {
+  return new DJENAPIError(
+    "Erro desconhecido ao consultar API",
+    tribunal,
+    undefined,
+    originalError,
+  );
 }
 
-function handleFetchError(error: unknown, tribunal: string, timeout: number): never {
+function handleFetchError(
+  error: unknown,
+  tribunal: string,
+  timeout: number,
+): never {
   if (error instanceof DJENAPIError) {
     throw error;
   }
@@ -141,7 +169,7 @@ type MatchType = "nome" | "oab" | "ambos";
 
 function determineMatchType(
   nomeMatch: boolean,
-  oabMatch: boolean
+  oabMatch: boolean,
 ): { matches: boolean; matchType?: MatchType } {
   if (nomeMatch && oabMatch) return { matches: true, matchType: "ambos" };
   if (nomeMatch) return { matches: true, matchType: "nome" };
@@ -151,7 +179,7 @@ function determineMatchType(
 
 function matchesSearchTerms(
   publicationText: string,
-  searchTerms: DJENConfig["searchTerms"]
+  searchTerms: DJENConfig["searchTerms"],
 ): { matches: boolean; matchType?: MatchType } {
   const normalizedText = normalizeText(publicationText);
 
@@ -173,17 +201,20 @@ function validateResponseStatus(response: Response, tribunal: string): void {
     throw new DJENAPIError(
       `Erro HTTP ${response.status}: ${response.statusText}`,
       tribunal,
-      response.status
+      response.status,
     );
   }
 }
 
-function validateResponseContentType(response: Response, tribunal: string): void {
+function validateResponseContentType(
+  response: Response,
+  tribunal: string,
+): void {
   const contentType = response.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
     throw new DJENAPIError(
       "Resposta não está em formato JSON. Verifique os cabeçalhos da requisição.",
-      tribunal
+      tribunal,
     );
   }
 }
@@ -193,7 +224,11 @@ function parseResponseData(data: unknown, tribunal: string): DJENPublication[] {
     return data as DJENPublication[];
   }
 
-  if (data && typeof data === "object" && Array.isArray((data as { items?: unknown }).items)) {
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray((data as { items?: unknown }).items)
+  ) {
     return (data as { items: DJENPublication[] }).items;
   }
 
@@ -207,7 +242,7 @@ function parseResponseData(data: unknown, tribunal: string): DJENPublication[] {
 
 async function consultarPublicacoesTribunal(
   params: DJENQueryParams,
-  timeout: number = DEFAULT_TIMEOUT
+  timeout: number = DEFAULT_TIMEOUT,
 ): Promise<DJENPublication[]> {
   const queryParams = new URLSearchParams();
   queryParams.append("siglaTribunal", params.tribunal);
@@ -262,7 +297,7 @@ function parsePublicationToResult(
   pub: DJENPublication,
   tribunal: string,
   data: string,
-  matchType: "nome" | "oab" | "ambos"
+  matchType: "nome" | "oab" | "ambos",
 ): DJENFilteredResult {
   return {
     tribunal,
@@ -294,7 +329,9 @@ interface OABParsedParams {
   ufOAB?: string;
 }
 
-function resolveOABParams(searchTerms: DJENConfig["searchTerms"]): OABParsedParams {
+function resolveOABParams(
+  searchTerms: DJENConfig["searchTerms"],
+): OABParsedParams {
   if (!searchTerms.numeroOAB) {
     return {};
   }
@@ -309,7 +346,7 @@ function filterPublicationsToResults(
   publicacoes: DJENPublication[],
   tribunal: string,
   queryDataInicio: string,
-  searchTerms: DJENConfig["searchTerms"]
+  searchTerms: DJENConfig["searchTerms"],
 ): DJENFilteredResult[] {
   const results: DJENFilteredResult[] = [];
 
@@ -318,7 +355,9 @@ function filterPublicationsToResults(
     const { matches, matchType } = matchesSearchTerms(pubText, searchTerms);
 
     if (matches && matchType) {
-      results.push(parsePublicationToResult(pub, tribunal, queryDataInicio, matchType));
+      results.push(
+        parsePublicationToResult(pub, tribunal, queryDataInicio, matchType),
+      );
     }
   }
 
@@ -328,7 +367,10 @@ function filterPublicationsToResults(
 /**
  * Handles error from tribunal query - extracted to reduce CC
  */
-function handleTribunalError(error: unknown, tribunal: string): { tribunal: string; erro: string } {
+function handleTribunalError(
+  error: unknown,
+  tribunal: string,
+): { tribunal: string; erro: string } {
   if (error instanceof DJENAPIError) {
     return { tribunal, erro: error.message };
   }
@@ -343,19 +385,22 @@ async function processTribunalQuery(
   queryParams: DJENQueryParams,
   searchTerms: DJENConfig["searchTerms"],
   timeout: number,
-  delayBetweenRequests: number
+  delayBetweenRequests: number,
 ): Promise<{
   results: DJENFilteredResult[];
   publicationsCount: number;
   error?: { tribunal: string; erro: string };
 }> {
   try {
-    const publicacoes = await consultarPublicacoesTribunal(queryParams, timeout);
+    const publicacoes = await consultarPublicacoesTribunal(
+      queryParams,
+      timeout,
+    );
     const results = filterPublicationsToResults(
       publicacoes,
       tribunal,
       queryParams.dataInicio,
-      searchTerms
+      searchTerms,
     );
 
     return {
@@ -388,7 +433,9 @@ export async function consultarDJEN(config: DJENConfig): Promise<{
   } = config;
 
   if (!searchTerms.nomeAdvogado && !searchTerms.numeroOAB) {
-    throw new Error("É necessário fornecer pelo menos um termo de busca (nome ou OAB)");
+    throw new Error(
+      "É necessário fornecer pelo menos um termo de busca (nome ou OAB)",
+    );
   }
 
   // Use extracted helpers to reduce cognitive complexity
@@ -414,7 +461,7 @@ export async function consultarDJEN(config: DJENConfig): Promise<{
       queryParams,
       searchTerms,
       timeout,
-      delayBetweenRequests
+      delayBetweenRequests,
     );
 
     resultados.push(...queryResult.results);
@@ -445,7 +492,11 @@ export function validarFormatoData(data: string): boolean {
 
   // Verifica se a data não foi ajustada (ex: 2025-04-31 vira 2025-05-01)
   const [year, month, day] = data.split("-").map(Number);
-  return date.getFullYear() === year && date.getMonth() + 1 === month && date.getDate() === day;
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() + 1 === month &&
+    date.getDate() === day
+  );
 }
 
 export function validarNumeroOAB(oab: string): boolean {

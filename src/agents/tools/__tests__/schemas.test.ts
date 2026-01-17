@@ -104,7 +104,9 @@ describe("DJEN Monitor Tool Schema", () => {
       dias_retroativos: 7,
     };
 
-    expect(() => DJENMonitorToolSchema.parse(invalid)).toThrow(/Formato OAB inválido/);
+    expect(() => DJENMonitorToolSchema.parse(invalid)).toThrow(
+      /Formato OAB inválido/,
+    );
   });
 
   test("rejeita OAB com UF minúscula", () => {
@@ -152,7 +154,7 @@ describe("Document Analysis Tool Schema", () => {
     };
 
     expect(() => DocumentAnalysisToolSchema.parse(invalid)).toThrow(
-      /Deve fornecer document_url ou document_text/
+      /Deve fornecer document_url ou document_text/,
     );
   });
 
@@ -343,7 +345,12 @@ describe("Tool Validation Helpers", () => {
   });
 
   test("ToolValidationError cria erro customizado", () => {
-    const error = new ToolValidationError("legal_research", "query", "Query muito curta", "x");
+    const error = new ToolValidationError(
+      "legal_research",
+      "query",
+      "Query muito curta",
+      "x",
+    );
 
     expect(error.toolName).toBe("legal_research");
     expect(error.field).toBe("query");

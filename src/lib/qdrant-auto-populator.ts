@@ -41,7 +41,11 @@ const kv = {
       return null;
     }
   },
-  async set(key: string, value: unknown, options?: { ex?: number }): Promise<void> {
+  async set(
+    key: string,
+    value: unknown,
+    options?: { ex?: number },
+  ): Promise<void> {
     try {
       await fetch("/api/kv", {
         method: "POST",
@@ -172,7 +176,7 @@ export class QdrantAutoPopulator {
     private readonly dataJud: DataJudService,
     private readonly temaExtractor: TemaExtractorService,
     private readonly embeddings: GeminiEmbeddingService,
-    config: Partial<AutoPopulatorConfig> = {}
+    config: Partial<AutoPopulatorConfig> = {},
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -180,7 +184,9 @@ export class QdrantAutoPopulator {
   /**
    * Popula Qdrant automaticamente a partir de uma intima��o
    */
-  async populateFromIntimacao(intimacao: Expediente): Promise<PopulationResult> {
+  async populateFromIntimacao(
+    intimacao: Expediente,
+  ): Promise<PopulationResult> {
     const startTime = Date.now();
 
     try {
@@ -188,16 +194,17 @@ export class QdrantAutoPopulator {
       console.log(`[AutoPopulator] Processo: ${intimacao.numeroProcesso}`);
 
       // 1. Extrair temas
-      const temas = await this.temaExtractor.extractTemasFromExpediente(intimacao);
+      const temas =
+        await this.temaExtractor.extractTemasFromExpediente(intimacao);
 
       if (temas.confidence < this.config.minConfidence) {
         throw new Error(
-          `Confian�a insuficiente para popular Qdrant: ${temas.confidence} < ${this.config.minConfidence}`
+          `Confian�a insuficiente para popular Qdrant: ${temas.confidence} < ${this.config.minConfidence}`,
         );
       }
 
       console.log(
-        `[AutoPopulator] ? Tema extra�do: ${temas.temaPrimario} (confidence: ${temas.confidence})`
+        `[AutoPopulator] ? Tema extra�do: ${temas.temaPrimario} (confidence: ${temas.confidence})`,
       );
 
       // 2. Buscar precedentes no DataJud (paralelo)
@@ -208,7 +215,7 @@ export class QdrantAutoPopulator {
             .searchPrecedentes(
               intimacao.tribunal || "TST",
               temas.temaPrimario,
-              this.config.maxPrecedents
+              this.config.maxPrecedents,
             )
             .catch(() => []);
 
@@ -218,9 +225,14 @@ export class QdrantAutoPopulator {
 
           precedentes = [...precedentesTema, ...precedentesProcesso];
 
-          console.log(`[AutoPopulator] ?? ${precedentes.length} precedentes encontrados`);
+          console.log(
+            `[AutoPopulator] ?? ${precedentes.length} precedentes encontrados`,
+          );
         } catch (error) {
-          console.warn("[AutoPopulator] ??  Falha ao buscar precedentes:", error);
+          console.warn(
+            "[AutoPopulator] ??  Falha ao buscar precedentes:",
+            error,
+          );
           // N�o falha a opera��o
         }
       }
@@ -232,10 +244,14 @@ export class QdrantAutoPopulator {
         classe: temas.temaPrimario,
         assunto: temas.temasSecundarios.join("; "),
         movimentacoes:
-          intimacao.conteudo?.substring(0, 3000) || intimacao.content?.substring(0, 3000) || "",
+          intimacao.conteudo?.substring(0, 3000) ||
+          intimacao.content?.substring(0, 3000) ||
+          "",
       });
 
-      console.log(`[AutoPopulator] ?? Embedding gerado: ${embeddingResult.embedding.length}d`);
+      console.log(
+        `[AutoPopulator] ?? Embedding gerado: ${embeddingResult.embedding.length}d`,
+      );
 
       // 4. Validar embedding
       const validation = this.validateEmbedding(embeddingResult.embedding, 768);
@@ -244,11 +260,16 @@ export class QdrantAutoPopulator {
       }
 
       console.log(
-        `[AutoPopulator] ? Embedding validado (confidence: ${validation.confidence.toFixed(3)})`
+        `[AutoPopulator] ? Embedding validado (confidence: ${validation.confidence.toFixed(3)})`,
       );
 
       // 5. Construir payload
-      const payload = this.buildPayload(intimacao, temas, precedentes, embeddingResult);
+      const payload = this.buildPayload(
+        intimacao,
+        temas,
+        precedentes,
+        embeddingResult,
+      );
 
       // 6. Inserir no Qdrant
       await this.qdrant.upsert([
@@ -263,7 +284,11 @@ export class QdrantAutoPopulator {
 
       // 7. Cache Redis (�ndice reverso)
       if (this.config.enableCache && intimacao.numeroProcesso) {
-        await this.createReverseIndex(intimacao.numeroProcesso, intimacao.id, temas.temaPrimario);
+        await this.createReverseIndex(
+          intimacao.numeroProcesso,
+          intimacao.id,
+          temas.temaPrimario,
+        );
       }
 
       return {
@@ -305,7 +330,9 @@ export class QdrantAutoPopulator {
   } | null> {
     try {
       // 1. Busca no cache Redis
-      const cachedId = await kv.get<string>(`qdrant:processo:${numeroProcesso}`);
+      const cachedId = await kv.get<string>(
+        `qdrant:processo:${numeroProcesso}`,
+      );
       if (cachedId) {
         console.log(`[AutoPopulator] ?? Cache hit: ${cachedId}`);
         // Buscar metadados do Qdrant se necess�rio
@@ -326,12 +353,18 @@ export class QdrantAutoPopulator {
       } as Record<string, unknown>);
 
       if (results.length > 0) {
-        console.log(`[AutoPopulator] ?? Documento encontrado no Qdrant: ${results[0].id}`);
+        console.log(
+          `[AutoPopulator] ?? Documento encontrado no Qdrant: ${results[0].id}`,
+        );
 
         // Atualiza cache
-        await kv.set(`qdrant:processo:${numeroProcesso}`, String(results[0].id), {
-          ex: 7 * 24 * 60 * 60,
-        });
+        await kv.set(
+          `qdrant:processo:${numeroProcesso}`,
+          String(results[0].id),
+          {
+            ex: 7 * 24 * 60 * 60,
+          },
+        );
 
         return { id: String(results[0].id) };
       }
@@ -348,7 +381,7 @@ export class QdrantAutoPopulator {
    */
   private validateEmbedding(
     embedding: number[],
-    expectedDims: number
+    expectedDims: number,
   ): {
     valid: boolean;
     issues: string[];
@@ -358,7 +391,9 @@ export class QdrantAutoPopulator {
 
     // 1. Validar dimens�es
     if (embedding.length !== expectedDims) {
-      issues.push(`Dimens�es incorretas: ${embedding.length} != ${expectedDims}`);
+      issues.push(
+        `Dimens�es incorretas: ${embedding.length} != ${expectedDims}`,
+      );
     }
 
     // 2. Validar valores NaN/Infinity
@@ -396,7 +431,7 @@ export class QdrantAutoPopulator {
     intimacao: Expediente,
     temas: TemaExtracao,
     precedentes: unknown[],
-    embeddingResult: { embedding: number[]; model: string }
+    embeddingResult: { embedding: number[]; model: string },
   ): LegalDocumentPayload {
     return {
       id: intimacao.id,
@@ -447,7 +482,8 @@ export class QdrantAutoPopulator {
       embedModel: embeddingResult.model,
       embedDimensions: embeddingResult.embedding.length,
       embedGeneratedAt: new Date().toISOString(),
-      embedConfidence: this.validateEmbedding(embeddingResult.embedding, 768).confidence,
+      embedConfidence: this.validateEmbedding(embeddingResult.embedding, 768)
+        .confidence,
 
       versao: 1,
       criadoEm: new Date().toISOString(),
@@ -458,7 +494,10 @@ export class QdrantAutoPopulator {
       // Atualmente usando valor padrão até implementação de multi-tenant
       escritorio: "default",
       textoCompleto: intimacao.conteudo || "",
-      entidadesNomeadas: [...temas.entidades.pessoas, ...temas.entidades.empresas],
+      entidadesNomeadas: [
+        ...temas.entidades.pessoas,
+        ...temas.entidades.empresas,
+      ],
       citacoesLegais: temas.entidades.leis,
     };
   }
@@ -469,16 +508,20 @@ export class QdrantAutoPopulator {
   private async createReverseIndex(
     numeroProcesso: string,
     qdrantId: string,
-    temaPrimario: string
+    temaPrimario: string,
   ): Promise<void> {
     try {
       // �ndice: processo -> qdrant_id
-      await kv.set(`qdrant:processo:${numeroProcesso}`, qdrantId, { ex: 7 * 24 * 60 * 60 });
+      await kv.set(`qdrant:processo:${numeroProcesso}`, qdrantId, {
+        ex: 7 * 24 * 60 * 60,
+      });
 
       // �ndice: tema -> [qdrant_ids]
       const temaKey = `qdrant:tema:${temaPrimario}`;
       const existingIds = (await kv.get<string[]>(temaKey)) || [];
-      await kv.set(temaKey, [...existingIds, qdrantId], { ex: 7 * 24 * 60 * 60 });
+      await kv.set(temaKey, [...existingIds, qdrantId], {
+        ex: 7 * 24 * 60 * 60,
+      });
 
       console.log(`[AutoPopulator] ???  �ndice reverso criado no Redis`);
     } catch (error) {

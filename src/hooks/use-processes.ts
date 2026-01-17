@@ -11,13 +11,17 @@ export function useProcesses() {
   const updateProcess = (processId: string, updates: Partial<Process>) => {
     setProcesses((current) =>
       (current || []).map((p) =>
-        p.id === processId ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
-      )
+        p.id === processId
+          ? { ...p, ...updates, updatedAt: new Date().toISOString() }
+          : p,
+      ),
     );
   };
 
   const deleteProcess = (processId: string) => {
-    setProcesses((current) => (current || []).filter((p) => p.id !== processId));
+    setProcesses((current) =>
+      (current || []).filter((p) => p.id !== processId),
+    );
   };
 
   const getProcessById = (processId: string) => {

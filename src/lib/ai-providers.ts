@@ -82,7 +82,8 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 
 // Azure AI Configuration (quando assinatura ativa)
 export const AZURE_AI_CONFIG = {
-  endpoint: "https://thiagobodevanveiga-1800-resource.cognitiveservices.azure.com/",
+  endpoint:
+    "https://thiagobodevanveiga-1800-resource.cognitiveservices.azure.com/",
   resourceGroup: "rg-thiagobodevanveiga-1800",
   resourceName: "thiagobodevanveiga-1800-resource",
   deployments: {
@@ -125,7 +126,7 @@ export const GITHUB_MODELS_CONFIG = {
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  config: Partial<RetryConfig> = {}
+  config: Partial<RetryConfig> = {},
 ): Promise<T> {
   const { maxRetries, initialDelay, backoffFactor, maxDelay } = {
     ...DEFAULT_RETRY_CONFIG,
@@ -155,7 +156,7 @@ export async function withRetry<T>(
       if (attempt < maxRetries) {
         console.warn(
           `[AI Provider] Tentativa ${attempt}/${maxRetries} falhou. ` +
-            `Retry em ${delay}ms. Erro: ${msg}`
+            `Retry em ${delay}ms. Erro: ${msg}`,
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay = Math.min(delay * backoffFactor, maxDelay);
@@ -170,7 +171,10 @@ export async function withRetry<T>(
  * Valida se uma string parece ser uma API key válida.
  * Verifica padrões comuns de chaves de API.
  */
-export function isValidApiKey(key: string | null | undefined, provider?: string): boolean {
+export function isValidApiKey(
+  key: string | null | undefined,
+  provider?: string,
+): boolean {
   if (!key || key.length < 10) return false;
 
   // Validações específicas por provedor
@@ -205,7 +209,8 @@ export function isValidApiKey(key: string | null | undefined, provider?: string)
  */
 export class GeminiClient {
   private readonly apiKey: string | null;
-  private readonly baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
+  private readonly baseUrl =
+    "https://generativelanguage.googleapis.com/v1beta/models";
   private readonly retryConfig: RetryConfig;
 
   /**
@@ -227,7 +232,8 @@ export class GeminiClient {
 
       const importMetaEnvKey =
         typeof import.meta !== "undefined" && import.meta.env
-          ? (import.meta.env.VITE_GEMINI_API_KEY ?? import.meta.env.VITE_GEMINI_API_KEY_BACKEND)
+          ? (import.meta.env.VITE_GEMINI_API_KEY ??
+            import.meta.env.VITE_GEMINI_API_KEY_BACKEND)
           : null;
 
       const envKey = processEnvKey || importMetaEnvKey;
@@ -273,12 +279,12 @@ export class GeminiClient {
   async chat(
     model: string,
     messages: AIChatMessage[],
-    options: { maxTokens?: number; temperature?: number } = {}
+    options: { maxTokens?: number; temperature?: number } = {},
   ): Promise<string> {
     if (!this.apiKey) {
       throw new Error(
         "Gemini API key não configurada. " +
-          "Configure uma das variáveis: VITE_GEMINI_API_KEY, VITE_GEMINI_API_KEY_BACKEND ou VITE_GOOGLE_API_KEY (deprecated)"
+          "Configure uma das variáveis: VITE_GEMINI_API_KEY, VITE_GEMINI_API_KEY_BACKEND ou VITE_GOOGLE_API_KEY (deprecated)",
       );
     }
 
@@ -290,7 +296,8 @@ export class GeminiClient {
         ? (import.meta.env.VITE_GEMINI_MODEL as string | undefined)
         : undefined);
 
-    const modelId = (model || envModel || "gemini-2.5-pro").trim() || "gemini-2.5-pro";
+    const modelId =
+      (model || envModel || "gemini-2.5-pro").trim() || "gemini-2.5-pro";
     const prompt = this.buildPromptFromMessages(messages);
 
     const url = `${this.baseUrl}/${modelId}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
@@ -317,7 +324,9 @@ export class GeminiClient {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText} ${errorText}`);
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText} ${errorText}`,
+        );
       }
 
       const data = (await response.json()) as {
@@ -364,7 +373,7 @@ export class GeminiClient {
           });
           return resp.ok;
         },
-        { maxRetries: 2, initialDelay: 500, maxDelay: 1500 }
+        { maxRetries: 2, initialDelay: 500, maxDelay: 1500 },
       );
 
       return ok;
@@ -387,16 +396,19 @@ export class HuggingFaceClient {
   private readonly baseUrl = HUGGINGFACE_CONFIG.baseUrl;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || (import.meta?.env?.VITE_HUGGINGFACE_API_KEY ?? "") || null;
+    this.apiKey =
+      apiKey || (import.meta?.env?.VITE_HUGGINGFACE_API_KEY ?? "") || null;
   }
 
   async chat(
     model: string,
     messages: AIChatMessage[],
-    options: { maxTokens?: number; temperature?: number } = {}
+    options: { maxTokens?: number; temperature?: number } = {},
   ): Promise<string> {
     const modelId =
-      HUGGINGFACE_CONFIG.models[model as keyof typeof HUGGINGFACE_CONFIG.models] || model;
+      HUGGINGFACE_CONFIG.models[
+        model as keyof typeof HUGGINGFACE_CONFIG.models
+      ] || model;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -448,14 +460,17 @@ export class HuggingFaceClient {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/microsoft/Phi-3-mini-4k-instruct`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inputs: "Hi",
-          parameters: { max_new_tokens: 1 },
-        }),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/microsoft/Phi-3-mini-4k-instruct`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inputs: "Hi",
+            parameters: { max_new_tokens: 1 },
+          }),
+        },
+      );
       // 503 = modelo carregando, mas endpoint existe
       return response.ok || response.status === 503;
     } catch {
@@ -495,14 +510,16 @@ export class GitHubModelsClient {
   async chat(
     model: string,
     messages: AIChatMessage[],
-    options: { maxTokens?: number; temperature?: number } = {}
+    options: { maxTokens?: number; temperature?: number } = {},
   ): Promise<string> {
     if (!this.apiKey) {
       throw new Error("GitHub Models token ausente (VITE_GITHUB_TOKEN)");
     }
 
     const modelId =
-      GITHUB_MODELS_CONFIG.models[model as keyof typeof GITHUB_MODELS_CONFIG.models] || model;
+      GITHUB_MODELS_CONFIG.models[
+        model as keyof typeof GITHUB_MODELS_CONFIG.models
+      ] || model;
 
     const doRequest = async () => {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -570,15 +587,18 @@ export class AzureOpenAIClient {
   async chat(
     deploymentOrAlias: string,
     messages: AIChatMessage[],
-    options: { maxTokens?: number; temperature?: number } = {}
+    options: { maxTokens?: number; temperature?: number } = {},
   ): Promise<string> {
     if (!this.apiKey) {
-      throw new Error("Azure OpenAI API key não configurada (VITE_AZURE_OPENAI_KEY)");
+      throw new Error(
+        "Azure OpenAI API key não configurada (VITE_AZURE_OPENAI_KEY)",
+      );
     }
 
     const deployments = AZURE_AI_CONFIG.deployments;
     const deployment =
-      deployments[deploymentOrAlias as keyof typeof deployments] || deploymentOrAlias;
+      deployments[deploymentOrAlias as keyof typeof deployments] ||
+      deploymentOrAlias;
 
     const url = `${this.endpoint}openai/deployments/${deployment}/chat/completions?api-version=${this.apiVersion}`;
 
@@ -612,9 +632,12 @@ export class AzureOpenAIClient {
     if (!this.apiKey) return false;
 
     try {
-      const response = await fetch(`${this.endpoint}openai/models?api-version=${this.apiVersion}`, {
-        headers: { "api-key": this.apiKey },
-      });
+      const response = await fetch(
+        `${this.endpoint}openai/models?api-version=${this.apiVersion}`,
+        {
+          headers: { "api-key": this.apiKey },
+        },
+      );
       return response.ok;
     } catch {
       return false;
@@ -663,7 +686,7 @@ export class UnifiedAIClient {
       provider?: AIModelConfig["provider"];
       maxTokens?: number;
       temperature?: number;
-    } = {}
+    } = {},
   ): Promise<{ content: string; provider: string; model: string }> {
     const requested = options.provider || this.preferredProvider;
 

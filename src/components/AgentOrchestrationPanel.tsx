@@ -9,7 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, AlertTriangle, BarChart3, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  RefreshCw,
+  XCircle,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getActiveEditorToolkit } from "@/lib/active-editor-toolkit";
@@ -25,7 +32,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function extractToolCalls(payload: unknown): Array<{ name: string; input: unknown }> {
+function extractToolCalls(
+  payload: unknown,
+): Array<{ name: string; input: unknown }> {
   if (!isRecord(payload)) return [];
 
   const candidates: unknown[] = [];
@@ -100,27 +109,56 @@ export default function AgentOrchestrationPanel() {
   const isFetchingRef = useRef(false);
 
   const agents = [
-    { id: "harvey", name: "Harvey Specter", icon: "👨‍⚖️", color: "text-purple-600" },
-    { id: "justine", name: "Mrs. Justin-e", icon: "🤖", color: "text-blue-600" },
-    { id: "monitor-djen", name: "Monitor DJEN", icon: "📰", color: "text-green-600" },
-    { id: "gestao-prazos", name: "Gestão Prazos", icon: "⏰", color: "text-orange-600" },
-    { id: "analise-risco", name: "Análise Risco", icon: "⚠️", color: "text-red-600" },
+    {
+      id: "harvey",
+      name: "Harvey Specter",
+      icon: "👨‍⚖️",
+      color: "text-purple-600",
+    },
+    {
+      id: "justine",
+      name: "Mrs. Justin-e",
+      icon: "🤖",
+      color: "text-blue-600",
+    },
+    {
+      id: "monitor-djen",
+      name: "Monitor DJEN",
+      icon: "📰",
+      color: "text-green-600",
+    },
+    {
+      id: "gestao-prazos",
+      name: "Gestão Prazos",
+      icon: "⏰",
+      color: "text-orange-600",
+    },
+    {
+      id: "analise-risco",
+      name: "Análise Risco",
+      icon: "⚠️",
+      color: "text-red-600",
+    },
   ];
 
   const fetchMetrics = useCallback(async (): Promise<void> => {
     if (isFetchingRef.current) return;
     try {
       isFetchingRef.current = true;
-      const response = await fetch("/api/observability?action=circuit-breakers");
+      const response = await fetch(
+        "/api/observability?action=circuit-breakers",
+      );
       if (!response.ok) {
         console.error(
-          `[AgentOrchestrationPanel] Falha ao buscar métricas: HTTP ${response.status} ${response.statusText}`
+          `[AgentOrchestrationPanel] Falha ao buscar métricas: HTTP ${response.status} ${response.statusText}`,
         );
         return;
       }
       const contentType = response.headers.get("content-type") ?? "";
       if (!contentType.includes("application/json")) {
-        console.error("[AgentOrchestrationPanel] Resposta não-JSON em /api/observability");
+        console.error(
+          "[AgentOrchestrationPanel] Resposta não-JSON em /api/observability",
+        );
         return;
       }
       const data = await response.json();
@@ -172,27 +210,37 @@ export default function AgentOrchestrationPanel() {
         const data = await response.json();
 
         const toolCalls = extractToolCalls(data?.result);
-        const editorToolCalls = toolCalls.filter((tc) => tc.name === "editor_tool");
+        const editorToolCalls = toolCalls.filter(
+          (tc) => tc.name === "editor_tool",
+        );
         if (editorToolCalls.length > 0) {
           const toolkit = getActiveEditorToolkit();
           if (!toolkit) {
-            toast.warning("Agente solicitou edição, mas nenhum editor está ativo no momento.");
+            toast.warning(
+              "Agente solicitou edição, mas nenhum editor está ativo no momento.",
+            );
           } else {
             try {
               toolkit.setActiveSelection?.({ from: 0, to: 0 });
               for (const call of editorToolCalls) {
                 const input = isRecord(call.input) ? call.input : {};
-                const action = typeof input.action === "string" ? input.action : "edit";
-                const result = await toolkit.executeTool({ toolName: action, input });
+                const action =
+                  typeof input.action === "string" ? input.action : "edit";
+                const result = await toolkit.executeTool({
+                  toolName: action,
+                  input,
+                });
                 if (result.hasError) {
-                  toast.error(`Falha ao aplicar alteração no editor: ${result.output}`);
+                  toast.error(
+                    `Falha ao aplicar alteração no editor: ${result.output}`,
+                  );
                 }
               }
               toast.success("Alterações do agente aplicadas no editor.");
             } catch (error) {
               console.error(
                 "[AgentOrchestrationPanel] Falha ao aplicar tool-calls no editor:",
-                error
+                error,
               );
               toast.error("Falha ao aplicar alterações do agente no editor.");
             } finally {
@@ -225,8 +273,13 @@ export default function AgentOrchestrationPanel() {
         toast.success(`${agentName} executado!`);
       }
     } catch (error) {
-      console.error("[AgentOrchestrationPanel] Erro ao executar agente:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao executar agente");
+      console.error(
+        "[AgentOrchestrationPanel] Erro ao executar agente:",
+        error,
+      );
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao executar agente",
+      );
     } finally {
       setLoading(false);
     }
@@ -275,8 +328,14 @@ export default function AgentOrchestrationPanel() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAutoRefresh((prev) => !prev)}>
-            <RefreshCw className={`h-4 w-4 ${autoRefresh ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAutoRefresh((prev) => !prev)}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${autoRefresh ? "animate-spin" : ""}`}
+            />
             {autoRefresh ? "Auto" : "Manual"}
           </Button>
           <Button onClick={fetchMetrics} size="sm">
@@ -308,7 +367,9 @@ export default function AgentOrchestrationPanel() {
                     disabled={loading}
                     className="w-full"
                   >
-                    {loading && selectedAgent === agent.id ? "Rodando..." : "Executar"}
+                    {loading && selectedAgent === agent.id
+                      ? "Rodando..."
+                      : "Executar"}
                   </Button>
                 </CardContent>
               </Card>
@@ -323,15 +384,21 @@ export default function AgentOrchestrationPanel() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div>
                     <p className="text-xs text-muted-foreground">Total</p>
-                    <p className="text-2xl font-bold">{metrics.summary.total}</p>
+                    <p className="text-2xl font-bold">
+                      {metrics.summary.total}
+                    </p>
                   </div>
                   <div className="text-green-600">
                     <p className="text-xs">OK</p>
-                    <p className="text-2xl font-bold">{metrics.summary.healthy}</p>
+                    <p className="text-2xl font-bold">
+                      {metrics.summary.healthy}
+                    </p>
                   </div>
                   <div className="text-yellow-600">
                     <p className="text-xs">Degradado</p>
-                    <p className="text-2xl font-bold">{metrics.summary.degraded}</p>
+                    <p className="text-2xl font-bold">
+                      {metrics.summary.degraded}
+                    </p>
                   </div>
                   <div className="text-red-600">
                     <p className="text-xs">Off</p>
@@ -348,7 +415,9 @@ export default function AgentOrchestrationPanel() {
                         <Badge className={getStateColor(breaker.state)}>
                           {getStateIcon(breaker.state)} {breaker.state}
                         </Badge>
-                        <span className="text-sm font-medium">{breaker.name}</span>
+                        <span className="text-sm font-medium">
+                          {breaker.name}
+                        </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
                         F:{breaker.failures} S:{breaker.successes}
@@ -377,7 +446,10 @@ export default function AgentOrchestrationPanel() {
                       key={`${trace.timestamp}-${trace.step}`}
                       className="p-2 border-l-2 border-primary bg-muted/30 text-xs"
                     >
-                      <Badge variant={getTraceVariant(trace.type)} className="mr-2">
+                      <Badge
+                        variant={getTraceVariant(trace.type)}
+                        className="mr-2"
+                      >
                         {trace.type}
                       </Badge>
                       {trace.content}
@@ -387,7 +459,9 @@ export default function AgentOrchestrationPanel() {
               </CardContent>
             </Card>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">Sem execuções recentes</div>
+            <div className="text-center py-12 text-muted-foreground">
+              Sem execuções recentes
+            </div>
           )}
         </TabsContent>
       </Tabs>

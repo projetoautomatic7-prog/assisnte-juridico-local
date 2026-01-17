@@ -18,7 +18,11 @@ import { StarterKit } from "@tiptap/starter-kit";
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
-import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/tiptap-ui-primitive/toolbar";
+import {
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSeparator,
+} from "@/components/tiptap-ui-primitive/toolbar";
 
 // --- Tiptap Node ---
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
@@ -41,7 +45,11 @@ import {
 } from "@/components/tiptap-ui/color-highlight-popover";
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
-import { LinkButton, LinkContent, LinkPopover } from "@/components/tiptap-ui/link-popover";
+import {
+  LinkButton,
+  LinkContent,
+  LinkPopover,
+} from "@/components/tiptap-ui/link-popover";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
@@ -53,12 +61,24 @@ import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon";
 import { LinkIcon } from "@/components/tiptap-icons/link-icon";
 
 // --- Lucide Icons para IA ---
-import { Bot, Expand, Loader2, Pilcrow, Sparkles, Wand2, Zap } from "lucide-react";
+import {
+  Bot,
+  Expand,
+  Loader2,
+  Pilcrow,
+  Sparkles,
+  Wand2,
+  Zap,
+} from "lucide-react";
 
 // --- shadcn/ui Components ---
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 
 // --- Hooks ---
@@ -94,7 +114,7 @@ interface TiptapEditorV2Props {
       onChunk: (chunk: string) => void;
       onComplete: () => void;
       onError: (error: Error) => void;
-    }
+    },
   ) => Promise<void>;
   readonly variables?: Record<string, string>;
   readonly onEditorReady?: (editor: ReturnType<typeof useEditor>) => void;
@@ -108,7 +128,8 @@ const AI_QUICK_COMMANDS = [
   {
     label: "Expandir",
     icon: Expand,
-    prompt: "Expanda e desenvolva o seguinte texto de forma mais detalhada e formal:",
+    prompt:
+      "Expanda e desenvolva o seguinte texto de forma mais detalhada e formal:",
   },
   {
     label: "Resumir",
@@ -135,7 +156,7 @@ function insertContentAtPosition(
   editor: ReturnType<typeof useEditor>,
   contentToInsert: string,
   from: number,
-  to: number
+  to: number,
 ): void {
   if (!editor) return;
   editor
@@ -150,18 +171,23 @@ function insertContentAtPosition(
 function getSelectedOrAllText(
   editor: ReturnType<typeof useEditor>,
   from: number,
-  to: number
+  to: number,
 ): string {
   if (!editor) return "";
   const hasSelection = from !== to;
-  return hasSelection ? editor.state.doc.textBetween(from, to, " ") : editor.getText();
+  return hasSelection
+    ? editor.state.doc.textBetween(from, to, " ")
+    : editor.getText();
 }
 
 function getAISuccessMessage(commandLabel: string): string {
   return `Texto processado com IA: ${commandLabel}`;
 }
 
-function getGenerateButtonText(isStreaming: boolean, hasStreamSupport: boolean): string {
+function getGenerateButtonText(
+  isStreaming: boolean,
+  hasStreamSupport: boolean,
+): string {
   if (isStreaming) return "Gerando...";
   return hasStreamSupport ? "Gerar com Streaming" : "Gerar Texto";
 }
@@ -308,7 +334,10 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-        <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
+        <ListDropdownMenu
+          types={["bulletList", "orderedList", "taskList"]}
+          portal={isMobile}
+        />
         <BlockquoteButton />
         <CodeBlockButton />
       </ToolbarGroup>
@@ -392,7 +421,11 @@ const MobileToolbarContent = ({
 
     <ToolbarSeparator />
 
-    {type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
+    {type === "highlighter" ? (
+      <ColorHighlightPopoverContent />
+    ) : (
+      <LinkContent />
+    )}
   </>
 );
 
@@ -414,7 +447,9 @@ export function TiptapEditorV2({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsBreakpoint();
   const { height } = useWindowSize();
-  const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">("main");
+  const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
+    "main",
+  );
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // AI State
@@ -549,7 +584,7 @@ export function TiptapEditorV2({
       });
       return result;
     },
-    [variables]
+    [variables],
   );
 
   // AI Streaming
@@ -592,13 +627,15 @@ export function TiptapEditorV2({
         setStreamingText("");
       }
     },
-    [editor, onAIStream, replaceVariables]
+    [editor, onAIStream, replaceVariables],
   );
 
   const handleAIGenerate = useCallback(async () => {
     if (!aiPrompt.trim() || !editor) return;
     const basePrompt = aiPrompt.trim();
-    const prompt = schemaAwareness ? `${schemaAwareness}\n\n${basePrompt}` : basePrompt;
+    const prompt = schemaAwareness
+      ? `${schemaAwareness}\n\n${basePrompt}`
+      : basePrompt;
 
     // Streaming
     if (onAIStream) {
@@ -647,7 +684,9 @@ export function TiptapEditorV2({
       }
 
       const basePrompt = `${command.prompt}\n\n"${selectedText}"`;
-      const fullPrompt = schemaAwareness ? `${schemaAwareness}\n\n${basePrompt}` : basePrompt;
+      const fullPrompt = schemaAwareness
+        ? `${schemaAwareness}\n\n${basePrompt}`
+        : basePrompt;
 
       if (onAIStream) {
         await runAIStreaming(fullPrompt);
@@ -674,7 +713,14 @@ export function TiptapEditorV2({
         setIsAILoading(false);
       }
     },
-    [editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables, schemaAwareness]
+    [
+      editor,
+      onAIGenerate,
+      onAIStream,
+      runAIStreaming,
+      replaceVariables,
+      schemaAwareness,
+    ],
   );
 
   const hasAI = !!(onAIGenerate || onAIStream);
@@ -723,7 +769,11 @@ export function TiptapEditorV2({
           )}
         </Toolbar>
 
-        <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="simple-editor-content"
+        />
 
         {/* Footer */}
         <div className="border-t bg-muted/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">

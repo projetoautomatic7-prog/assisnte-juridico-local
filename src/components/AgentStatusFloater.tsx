@@ -12,7 +12,7 @@ export default function AgentStatusFloater() {
   const [isVisible, setIsVisible] = useState(true);
 
   const activeAgents = agents.filter(
-    (a) => a.enabled && (a.status === "active" || a.status === "processing")
+    (a) => a.enabled && (a.status === "active" || a.status === "processing"),
   );
 
   const processingAgents = agents.filter((a) => a.currentTask !== undefined);
@@ -86,7 +86,8 @@ export default function AgentStatusFloater() {
                     <Zap className="w-4 h-4 text-accent animate-pulse" />
                     <p className="text-xs font-medium text-foreground">
                       {processingAgents.length} tarefa
-                      {processingAgents.length === 1 ? "" : "s"} em processamento
+                      {processingAgents.length === 1 ? "" : "s"} em
+                      processamento
                     </p>
                   </div>
                 </div>
@@ -103,7 +104,9 @@ export default function AgentStatusFloater() {
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {recentActivity.length > 0 ? (
                         recentActivity.map((log) => {
-                          const agent = agents.find((a) => a.id === log.agentId);
+                          const agent = agents.find(
+                            (a) => a.id === log.agentId,
+                          );
                           return (
                             <div
                               key={log.id}
@@ -114,12 +117,17 @@ export default function AgentStatusFloater() {
                                 <p className="font-medium text-foreground line-clamp-1">
                                   {agent?.name ?? "Agente desconhecido"}
                                 </p>
-                                <p className="text-muted-foreground line-clamp-1">{log.action}</p>
+                                <p className="text-muted-foreground line-clamp-1">
+                                  {log.action}
+                                </p>
                                 <p className="text-muted-foreground">
-                                  {new Date(log.timestamp).toLocaleTimeString("pt-BR", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
+                                  {new Date(log.timestamp).toLocaleTimeString(
+                                    "pt-BR",
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -134,7 +142,9 @@ export default function AgentStatusFloater() {
 
                     <div className="pt-2 border-t">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Agentes ativos</span>
+                        <span className="text-muted-foreground">
+                          Agentes ativos
+                        </span>
                         <Badge variant="secondary">
                           {enabledAgentsCount}/{agents.length}
                         </Badge>
@@ -146,7 +156,9 @@ export default function AgentStatusFloater() {
 
               {!isExpanded && (
                 <div className="flex items-center justify-between text-xs pt-2 border-t">
-                  <span className="text-muted-foreground">Clique para ver detalhes</span>
+                  <span className="text-muted-foreground">
+                    Clique para ver detalhes
+                  </span>
                   <Badge variant="secondary" className="text-xs">
                     {enabledAgentsCount} ativos
                   </Badge>

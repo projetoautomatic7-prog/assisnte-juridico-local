@@ -13,7 +13,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
@@ -22,13 +22,15 @@ export class ValidationError extends Error {
 
 const PERIODOS = ["mes-atual", "trimestre", "semestre", "ano"] as const;
 
-export function validateFinanceiroInput(data: Record<string, unknown>): FinanceiroInput {
+export function validateFinanceiroInput(
+  data: Record<string, unknown>,
+): FinanceiroInput {
   const periodo = (data.periodo as string) || "mes-atual";
   if (!PERIODOS.includes(periodo as (typeof PERIODOS)[number])) {
     throw new ValidationError(
       `Campo 'periodo' deve ser: ${PERIODOS.join(", ")}`,
       "periodo",
-      periodo
+      periodo,
     );
   }
 

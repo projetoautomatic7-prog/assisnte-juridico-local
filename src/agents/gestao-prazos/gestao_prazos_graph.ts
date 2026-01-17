@@ -13,7 +13,10 @@ import {
 import { validateGestaoPrazosInput, ValidationError } from "./validators";
 
 export class GestaoPrazosAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Gestão de Prazos
     return createInvokeAgentSpan(
       {
@@ -22,7 +25,9 @@ export class GestaoPrazosAgent extends LangGraphAgent {
         model: "prazo-calculator",
       },
       {
-        sessionId: (state.data?.sessionId as string) || `gestao_prazos_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `gestao_prazos_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -31,19 +36,35 @@ export class GestaoPrazosAgent extends LangGraphAgent {
       },
       async (span) => {
         try {
-          let current = updateState(state, { currentStep: "gestao-prazos:validate" });
+          let current = updateState(state, {
+            currentStep: "gestao-prazos:validate",
+          });
 
           // Step 0: Validate inputs
           const validatedInput = validateGestaoPrazosInput(state.data || {});
 
-          span?.setAttribute("prazos.tipo_processo", validatedInput.tipoProcesso);
-          span?.setAttribute("prazos.data_publicacao", validatedInput.dataPublicacao);
+          span?.setAttribute(
+            "prazos.tipo_processo",
+            validatedInput.tipoProcesso,
+          );
+          span?.setAttribute(
+            "prazos.data_publicacao",
+            validatedInput.dataPublicacao,
+          );
           span?.setAttribute("prazos.prazo_dias", validatedInput.prazoEmDias);
-          span?.setAttribute("prazos.considera_feriados", validatedInput.considerarFeriados);
-          span?.setAttribute("prazos.considera_recesso", validatedInput.considerarRecessoForense);
+          span?.setAttribute(
+            "prazos.considera_feriados",
+            validatedInput.considerarFeriados,
+          );
+          span?.setAttribute(
+            "prazos.considera_recesso",
+            validatedInput.considerarRecessoForense,
+          );
 
           // Step 1: Calculate deadline
-          current = updateState(current, { currentStep: "gestao-prazos:calculate" });
+          current = updateState(current, {
+            currentStep: "gestao-prazos:calculate",
+          });
 
           // Simular cálculo de prazo (incluindo dias úteis, feriados)
           await new Promise((resolve) => setTimeout(resolve, 30));
@@ -53,7 +74,9 @@ export class GestaoPrazosAgent extends LangGraphAgent {
 
           // Step 2: Analyze urgency
           const hoje = new Date();
-          const diffDias = Math.ceil((deadline.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+          const diffDias = Math.ceil(
+            (deadline.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+          );
           const isUrgente = diffDias <= 5 && diffDias >= 0;
           const isVencido = diffDias < 0;
 
@@ -85,7 +108,7 @@ export class GestaoPrazosAgent extends LangGraphAgent {
                 validatedInput.processNumber,
                 validatedInput.tipoProcesso,
                 deadline.toISOString(),
-                diffDias
+                diffDias,
               );
           } else if (isUrgente) {
             alertMessage =
@@ -94,7 +117,7 @@ export class GestaoPrazosAgent extends LangGraphAgent {
                 validatedInput.processNumber,
                 validatedInput.tipoProcesso,
                 deadline.toISOString(),
-                diffDias
+                diffDias,
               );
           }
 
@@ -107,20 +130,28 @@ export class GestaoPrazosAgent extends LangGraphAgent {
               diffDias,
               isUrgente,
               validatedInput.considerarFeriados || false,
-              validatedInput.considerarRecessoForense || false
+              validatedInput.considerarRecessoForense || false,
             ) + alertMessage;
 
           return this.addAgentMessage(current, summaryMessage);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Gestão de Prazos", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Gestão de Prazos",
+              error.field,
+              error.message,
+              error.receivedValue,
+            );
           } else {
             logStructuredError("Gestão de Prazos", errorType, errorMessage, {
               tipoProcesso: (state.data?.tipoProcesso as string) || undefined,
-              dataPublicacao: (state.data?.dataPublicacao as string) || undefined,
+              dataPublicacao:
+                (state.data?.dataPublicacao as string) || undefined,
               step: state.currentStep,
             });
           }
@@ -131,23 +162,27 @@ export class GestaoPrazosAgent extends LangGraphAgent {
           const fallbackMessage =
             error instanceof ValidationError
               ? formatErrorMessage(errorType, errorMessage, {
-                  tipoProcesso: (state.data?.tipoProcesso as string) || undefined,
-                  dataPublicacao: (state.data?.dataPublicacao as string) || undefined,
+                  tipoProcesso:
+                    (state.data?.tipoProcesso as string) || undefined,
+                  dataPublicacao:
+                    (state.data?.dataPublicacao as string) || undefined,
                   step: state.currentStep,
                 })
               : formatFallbackMessage(
                   (state.data?.tipoProcesso as string) || undefined,
-                  (state.data?.dataPublicacao as string) || undefined
+                  (state.data?.dataPublicacao as string) || undefined,
                 );
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 }
 
-export async function runGestaoPrazos(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runGestaoPrazos(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new GestaoPrazosAgent();
   const initialState: AgentState = {
     messages: [],

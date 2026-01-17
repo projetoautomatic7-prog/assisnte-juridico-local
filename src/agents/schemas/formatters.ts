@@ -30,7 +30,7 @@ ${output.acoes_recomendadas
 ${i + 1}. **${acao.acao}** (${formatBadge(acao.prioridade, `Prioridade ${acao.prioridade}`)})
    - 📅 Prazo: ${acao.prazo}
    - 📝 Fundamentação: ${acao.fundamentacao}
-`
+`,
   )
   .join("\n")}
 
@@ -43,7 +43,7 @@ ${
           (risco, i) => `
 ${i + 1}. **${risco.risco}** (${formatBadge(risco.severidade, `Severidade ${risco.severidade}`)}${risco.probabilidade ? ` | Probabilidade: ${risco.probabilidade}` : ""})
    - 🛡️ Mitigação: ${risco.mitigacao}
-`
+`,
         )
         .join("\n")
     : "_Nenhum risco crítico identificado_"
@@ -96,7 +96,9 @@ _Análise gerada com Structured Outputs para garantir consistência e qualidade.
 /**
  * Formata output de Redação de Petições
  */
-export function formatRedacaoPeticoesOutput(output: RedacaoPeticoesOutput): string {
+export function formatRedacaoPeticoesOutput(
+  output: RedacaoPeticoesOutput,
+): string {
   return `# 📄 ${output.tipo_documento.replace(/_/g, " ").toUpperCase()}
 
 ## 👥 Partes
@@ -120,7 +122,7 @@ ${output.fundamentacao
 ${i + 1}. **${f.artigo}** - ${f.lei}
    - ${f.aplicacao}
    ${f.ementa ? `- _Jurisprudência: ${f.ementa}_` : ""}
-`
+`,
   )
   .join("\n")}
 
@@ -181,7 +183,7 @@ ${output.precedentes_vinculantes
     (p, i) => `
 ${i + 1}. **${p.tipo.replace(/_/g, " ").toUpperCase()}** nº ${p.numero}
    - ${p.enunciado}
-`
+`,
   )
   .join("\n")}
 `
@@ -206,7 +208,7 @@ ${r.data_julgamento ? `**Data:** ${formatDate(r.data_julgamento)}` : ""}
 ${r.dispositivo ? `**Dispositivo:** ${r.dispositivo}` : ""}  
 ${r.tese_firmada ? `**Tese:** ${r.tese_firmada}` : ""}  
 ${r.link ? `[🔗 Ver julgado completo](${r.link})` : ""}
-`
+`,
         )
         .join("\n---\n")
     : "_Nenhum resultado encontrado para a consulta._"
@@ -228,7 +230,9 @@ _Pesquisa realizada com validação de relevância e estruturação automática.
 /**
  * Formata output de Análise Documental
  */
-export function formatAnaliseDocumentalOutput(output: AnaliseDocumentalOutput): string {
+export function formatAnaliseDocumentalOutput(
+  output: AnaliseDocumentalOutput,
+): string {
   const statusEmoji = {
     conforme: "✅",
     nao_conforme: "❌",
@@ -252,7 +256,7 @@ ${output.entidades_extraidas.pessoas
     (p) => `
 - **${p.nome}** ${p.cpf ? `(CPF: ${p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")})` : ""}
   - Papel: ${p.papel}
-`
+`,
   )
   .join("\n")}
 
@@ -263,7 +267,7 @@ ${output.entidades_extraidas.empresas
     (e) => `
 - **${e.razao_social}** ${e.cnpj ? `(CNPJ: ${e.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")})` : ""}
   ${e.papel ? `- Papel: ${e.papel}` : ""}
-`
+`,
   )
   .join("\n")}
 
@@ -273,7 +277,7 @@ ${output.entidades_extraidas.datas_importantes
   .map(
     (d) => `
 - **${formatDate(d.data)}:** ${d.evento}
-`
+`,
   )
   .join("\n")}
 
@@ -283,7 +287,7 @@ ${output.entidades_extraidas.valores_monetarios
   .map(
     (v) => `
 - **${formatCurrency(v.valor)}:** ${v.descricao}
-`
+`,
   )
   .join("\n")}
 
@@ -298,7 +302,7 @@ ${output.clausulas_criticas
 ${i + 1}. **${c.localizacao}** - ${c.tipo.replace(/_/g, " ").toUpperCase()}
    - ${c.clausula}
    - Observação: ${c.observacao}
-`
+`,
   )
   .join("\n")}
 `
@@ -399,7 +403,7 @@ ${
 }
 
 ${p.processo_link ? `[🔗 Ver processo](${p.processo_link})` : ""}
-`
+`,
   )
   .join("\n---\n")}
 `
@@ -419,7 +423,7 @@ ${output.resumo.proximos_prazos
 ${i + 1}. **${p.processo}**
    - Prazo: ${formatDate(p.prazo)}
    - Dias restantes: ${p.dias_restantes} dias úteis
-`
+`,
   )
   .join("\n")}
 `

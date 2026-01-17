@@ -15,7 +15,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
@@ -47,7 +47,11 @@ function validateLawyerOAB(lawyerOAB: unknown): void {
   if (!lawyerOAB) return;
 
   if (typeof lawyerOAB !== "string") {
-    throw new ValidationError("Campo 'lawyerOAB' deve ser uma string", "lawyerOAB", lawyerOAB);
+    throw new ValidationError(
+      "Campo 'lawyerOAB' deve ser uma string",
+      "lawyerOAB",
+      lawyerOAB,
+    );
   }
 
   const oabPattern = /^[A-Z]{2}\s+\d{3,7}$/;
@@ -55,7 +59,7 @@ function validateLawyerOAB(lawyerOAB: unknown): void {
     throw new ValidationError(
       "Campo 'lawyerOAB' deve estar no formato 'UF NUMERO' (ex: 'MG 184404')",
       "lawyerOAB",
-      lawyerOAB
+      lawyerOAB,
     );
   }
 }
@@ -65,32 +69,43 @@ function validateCourts(courts: unknown): void {
   if (!courts) return;
 
   if (!Array.isArray(courts)) {
-    throw new ValidationError("Campo 'courts' deve ser um array", "courts", courts);
+    throw new ValidationError(
+      "Campo 'courts' deve ser um array",
+      "courts",
+      courts,
+    );
   }
 
   if (courts.length === 0) {
-    throw new ValidationError("Campo 'courts' não pode ser um array vazio", "courts", courts);
+    throw new ValidationError(
+      "Campo 'courts' não pode ser um array vazio",
+      "courts",
+      courts,
+    );
   }
 
   const invalidCourts = courts.filter(
-    (c) => !VALID_COURTS.includes(c as (typeof VALID_COURTS)[number])
+    (c) => !VALID_COURTS.includes(c as (typeof VALID_COURTS)[number]),
   );
   if (invalidCourts.length > 0) {
     throw new ValidationError(
       `Tribunais inválidos: ${invalidCourts.join(", ")}. Valores aceitos: ${VALID_COURTS.join(", ")}`,
       "courts",
-      invalidCourts
+      invalidCourts,
     );
   }
 }
 
 // Helper: Validar intervalo de datas
-function validateDateRange(startDate: string | undefined, endDate: string | undefined): void {
+function validateDateRange(
+  startDate: string | undefined,
+  endDate: string | undefined,
+): void {
   if (startDate && !isValidDate(startDate)) {
     throw new ValidationError(
       `Data inválida: '${startDate}'. Use formato YYYY-MM-DD`,
       "startDate",
-      startDate
+      startDate,
     );
   }
 
@@ -98,7 +113,7 @@ function validateDateRange(startDate: string | undefined, endDate: string | unde
     throw new ValidationError(
       `Data inválida: '${endDate}'. Use formato YYYY-MM-DD`,
       "endDate",
-      endDate
+      endDate,
     );
   }
 
@@ -106,16 +121,21 @@ function validateDateRange(startDate: string | undefined, endDate: string | unde
     throw new ValidationError(
       `startDate (${startDate}) não pode ser posterior a endDate (${endDate})`,
       "startDate",
-      { startDate, endDate }
+      { startDate, endDate },
     );
   }
 }
 
-export function validateMonitorDJENInput(data: Record<string, unknown>): MonitorDJENInput {
+export function validateMonitorDJENInput(
+  data: Record<string, unknown>,
+): MonitorDJENInput {
   // Validar campos usando helpers
   validateLawyerOAB(data.lawyerOAB);
   validateCourts(data.courts);
-  validateDateRange(data.startDate as string | undefined, data.endDate as string | undefined);
+  validateDateRange(
+    data.startDate as string | undefined,
+    data.endDate as string | undefined,
+  );
 
   // Extrair valores validados
   const lawyerOAB = data.lawyerOAB as string | undefined;
@@ -129,7 +149,7 @@ export function validateMonitorDJENInput(data: Record<string, unknown>): Monitor
     throw new ValidationError(
       "Campo 'autoRegister' deve ser um boolean",
       "autoRegister",
-      autoRegister
+      autoRegister,
     );
   }
 

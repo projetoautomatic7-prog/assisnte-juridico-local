@@ -6,7 +6,9 @@ interface DJENLoadingCardProps {
   readonly compact?: boolean;
 }
 
-export function DJENLoadingCard({ compact = false }: Readonly<DJENLoadingCardProps>) {
+export function DJENLoadingCard({
+  compact = false,
+}: Readonly<DJENLoadingCardProps>) {
   return (
     <Card className={cn("card-glow-hover glassmorphic", compact && "h-fit")}>
       <CardHeader className="pb-2">

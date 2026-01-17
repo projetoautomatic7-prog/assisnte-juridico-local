@@ -65,8 +65,14 @@ export type BeforeSendMetricCallback = (
     tags?: MetricTags;
     timestamp: number;
   },
-  hint: MetricHint
-) => { name: string; type: string; value: number; unit?: MetricUnit; tags?: MetricTags } | null;
+  hint: MetricHint,
+) => {
+  name: string;
+  type: string;
+  value: number;
+  unit?: MetricUnit;
+  tags?: MetricTags;
+} | null;
 
 let beforeSendMetricCallback: BeforeSendMetricCallback | undefined;
 
@@ -98,7 +104,9 @@ let beforeSendMetricCallback: BeforeSendMetricCallback | undefined;
  * });
  * ```
  */
-export function setBeforeSendMetric(callback: BeforeSendMetricCallback | undefined): void {
+export function setBeforeSendMetric(
+  callback: BeforeSendMetricCallback | undefined,
+): void {
   beforeSendMetricCallback = callback;
 }
 
@@ -133,7 +141,7 @@ export function count(
   options?: {
     unit?: MetricUnit;
     tags?: MetricTags;
-  }
+  },
 ): void {
   const timestamp = Date.now();
   const scope = Sentry.getCurrentScope();
@@ -220,7 +228,7 @@ export function distribution(
   options?: {
     unit?: MetricUnit;
     tags?: MetricTags;
-  }
+  },
 ): void {
   const timestamp = Date.now();
   const scope = Sentry.getCurrentScope();
@@ -304,7 +312,7 @@ export function gauge(
   options?: {
     unit?: MetricUnit;
     tags?: MetricTags;
-  }
+  },
 ): void {
   const timestamp = Date.now();
   const scope = Sentry.getCurrentScope();
@@ -374,7 +382,7 @@ export async function measureDuration<T>(
   fn: () => Promise<T>,
   options?: {
     tags?: MetricTags;
-  }
+  },
 ): Promise<T> {
   const startTime = performance.now();
 
@@ -420,7 +428,10 @@ export async function measureDuration<T>(
  * }
  * ```
  */
-export function useMeasureRender(componentName: string, tags?: MetricTags): void {
+export function useMeasureRender(
+  componentName: string,
+  tags?: MetricTags,
+): void {
   React.useEffect(() => {
     const startTime = performance.now();
 
@@ -487,6 +498,8 @@ export const METRICS = {
   },
 } as const;
 
-export type CounterMetric = (typeof METRICS.COUNTERS)[keyof typeof METRICS.COUNTERS];
-export type DistributionMetric = (typeof METRICS.DISTRIBUTIONS)[keyof typeof METRICS.DISTRIBUTIONS];
+export type CounterMetric =
+  (typeof METRICS.COUNTERS)[keyof typeof METRICS.COUNTERS];
+export type DistributionMetric =
+  (typeof METRICS.DISTRIBUTIONS)[keyof typeof METRICS.DISTRIBUTIONS];
 export type GaugeMetric = (typeof METRICS.GAUGES)[keyof typeof METRICS.GAUGES];

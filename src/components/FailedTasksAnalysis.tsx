@@ -5,7 +5,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertTriangle,
@@ -59,7 +65,10 @@ const errorTypeLabels: Record<string, string> = {
   OTHER_ERROR: "❓ Erro desconhecido",
 };
 
-const errorTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const errorTypeIcons: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   GEMINI_MODEL_NOT_FOUND: AlertTriangle,
   TIMEOUT_ERROR: Clock,
   NETWORK_ERROR: Network,
@@ -112,7 +121,7 @@ export default function FailedTasksAnalysis() {
 
       const result = await response.json();
       toast.success(
-        `✅ ${result.stats.removed} tarefas removidas (${result.stats.failedBefore} → ${result.stats.failedAfter} falhas)`
+        `✅ ${result.stats.removed} tarefas removidas (${result.stats.failedBefore} → ${result.stats.failedAfter} falhas)`,
       );
 
       // Recarregar análise
@@ -120,7 +129,9 @@ export default function FailedTasksAnalysis() {
         fetchAnalysis();
       }, 500);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao limpar tarefas antigas");
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao limpar tarefas antigas",
+      );
     }
   };
 
@@ -140,7 +151,9 @@ export default function FailedTasksAnalysis() {
       <Card>
         <CardHeader>
           <CardTitle>Análise de Tarefas Falhadas</CardTitle>
-          <CardDescription className="text-destructive">{error}</CardDescription>
+          <CardDescription className="text-destructive">
+            {error}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -160,7 +173,9 @@ export default function FailedTasksAnalysis() {
             <CheckCircle className="w-5 h-5 text-green-500" />
             Nenhuma Tarefa Falhada
           </CardTitle>
-          <CardDescription>Todas as tarefas estão sendo processadas com sucesso!</CardDescription>
+          <CardDescription>
+            Todas as tarefas estão sendo processadas com sucesso!
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -177,8 +192,8 @@ export default function FailedTasksAnalysis() {
               Análise de Tarefas Falhadas
             </CardTitle>
             <CardDescription>
-              {data.summary.totalFailed} de {data.summary.totalInQueue} tarefas falharam (
-              {data.summary.failureRate})
+              {data.summary.totalFailed} de {data.summary.totalInQueue} tarefas
+              falharam ({data.summary.failureRate})
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -200,22 +215,36 @@ export default function FailedTasksAnalysis() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-3xl font-bold text-destructive">{data.summary.totalFailed}</p>
-              <p className="text-xs text-muted-foreground mt-1">Tarefas Falhadas</p>
+              <p className="text-3xl font-bold text-destructive">
+                {data.summary.totalFailed}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tarefas Falhadas
+              </p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted">
-              <p className="text-3xl font-bold text-foreground">{data.summary.failureRate}</p>
-              <p className="text-xs text-muted-foreground mt-1">Taxa de Falha</p>
+              <p className="text-3xl font-bold text-foreground">
+                {data.summary.failureRate}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Taxa de Falha
+              </p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted">
-              <p className="text-3xl font-bold text-foreground">{data.summary.uniqueErrorTypes}</p>
-              <p className="text-xs text-muted-foreground mt-1">Tipos de Erro</p>
+              <p className="text-3xl font-bold text-foreground">
+                {data.summary.uniqueErrorTypes}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tipos de Erro
+              </p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted">
               <p className="text-3xl font-bold text-foreground">
                 {data.errorGroups.length > 0 ? data.errorGroups[0].count : 0}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Erro Mais Comum</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Erro Mais Comum
+              </p>
             </div>
           </div>
         </CardContent>
@@ -252,8 +281,10 @@ export default function FailedTasksAnalysis() {
           <ScrollArea className="h-[400px]">
             <div className="space-y-3">
               {data.errorGroups.map((group) => {
-                const IconComponent = errorTypeIcons[group.errorType] || AlertTriangle;
-                const label = errorTypeLabels[group.errorType] || group.errorType;
+                const IconComponent =
+                  errorTypeIcons[group.errorType] || AlertTriangle;
+                const label =
+                  errorTypeLabels[group.errorType] || group.errorType;
 
                 return (
                   <div
@@ -268,7 +299,9 @@ export default function FailedTasksAnalysis() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="text-sm font-semibold">{label}</h4>
-                          <Badge variant="destructive">{group.count} ocorrências</Badge>
+                          <Badge variant="destructive">
+                            {group.count} ocorrências
+                          </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                           <span>Agentes: {group.affectedAgents.length}</span>
@@ -276,7 +309,10 @@ export default function FailedTasksAnalysis() {
                           <span>Tipos: {group.affectedTaskTypes.length}</span>
                           <span>•</span>
                           <span>
-                            Última: {new Date(group.lastOccurrence).toLocaleString("pt-BR")}
+                            Última:{" "}
+                            {new Date(group.lastOccurrence).toLocaleString(
+                              "pt-BR",
+                            )}
                           </span>
                         </div>
                       </div>
@@ -298,7 +334,10 @@ export default function FailedTasksAnalysis() {
                               {example.error.length > 150 && "..."}
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              {example.type} • {new Date(example.createdAt).toLocaleString("pt-BR")}
+                              {example.type} •{" "}
+                              {new Date(example.createdAt).toLocaleString(
+                                "pt-BR",
+                              )}
                             </p>
                           </div>
                         ))}

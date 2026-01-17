@@ -23,10 +23,21 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, X } from "@phosphor-icons/react";
-import { DollarSign, FileText, Filter, MoreVertical, Search, TrendingUp } from "lucide-react";
+import {
+  DollarSign,
+  FileText,
+  Filter,
+  MoreVertical,
+  Search,
+  TrendingUp,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -68,7 +79,14 @@ interface SortableCardProps {
 }
 
 function SortableCard({ card, onOpenDetails }: Readonly<SortableCardProps>) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: card.id,
   });
 
@@ -105,13 +123,19 @@ function SortableCard({ card, onOpenDetails }: Readonly<SortableCardProps>) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3 h-3 rounded-full ${getStatusColor(card.status)} shadow-lg`} />
+              <div
+                className={`w-3 h-3 rounded-full ${getStatusColor(card.status)} shadow-lg`}
+              />
               <span className="text-xs text-muted-foreground font-mono">
                 {card.numero.substring(0, 20)}...
               </span>
             </div>
-            <h4 className="font-bold text-sm mb-1 text-foreground">{card.autor}</h4>
-            <p className="text-xs text-muted-foreground font-medium">vs. {card.reu}</p>
+            <h4 className="font-bold text-sm mb-1 text-foreground">
+              {card.autor}
+            </h4>
+            <p className="text-xs text-muted-foreground font-medium">
+              vs. {card.reu}
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -127,7 +151,9 @@ function SortableCard({ card, onOpenDetails }: Readonly<SortableCardProps>) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="px-2 py-1 bg-primary/10 rounded-lg">
-              <span className="text-xs font-semibold text-primary">{card.tipo}</span>
+              <span className="text-xs font-semibold text-primary">
+                {card.tipo}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
@@ -135,11 +161,15 @@ function SortableCard({ card, onOpenDetails }: Readonly<SortableCardProps>) {
               <div className="p-1.5 bg-green-500/10 rounded-lg">
                 <DollarSign size={16} className="text-green-500" />
               </div>
-              <span className="font-bold text-sm text-foreground">{card.valor}</span>
+              <span className="font-bold text-sm text-foreground">
+                {card.valor}
+              </span>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded-lg">
               <TrendingUp size={14} className="text-green-500" />
-              <span className="text-xs font-bold text-green-500">{card.resultado}</span>
+              <span className="text-xs font-bold text-green-500">
+                {card.resultado}
+              </span>
             </div>
           </div>
         </div>
@@ -154,26 +184,36 @@ export default function ProcessCRMAdvbox() {
   const [selectedPhase, setSelectedPhase] = useState<string>("Administrativo");
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
-  const [selectedCard, setSelectedCard] = useState<ProcessCardData | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor),
+  );
+  const [selectedCard, setSelectedCard] = useState<ProcessCardData | null>(
+    null,
+  );
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [cardColumnOverrides, setCardColumnOverrides] = useState<Record<string, string>>({});
+  const [cardColumnOverrides, setCardColumnOverrides] = useState<
+    Record<string, string>
+  >({});
   const [processCards, setProcessCards] = useState<ProcessCardData[]>([]);
 
   // Helper function for status color
-  const getStatusColor = useCallback((status: string): "green" | "yellow" | "red" => {
-    switch (status) {
-      case "concluido":
-        return "green";
-      case "ativo":
-        return "yellow";
-      case "suspenso":
-      case "arquivado":
-        return "red";
-      default:
-        return "yellow";
-    }
-  }, []);
+  const getStatusColor = useCallback(
+    (status: string): "green" | "yellow" | "red" => {
+      switch (status) {
+        case "concluido":
+          return "green";
+        case "ativo":
+          return "yellow";
+        case "suspenso":
+        case "arquivado":
+          return "red";
+        default:
+          return "yellow";
+      }
+    },
+    [],
+  );
 
   // Compute process cards using useMemo instead of useEffect + setState
   const computedProcessCards = useMemo(() => {
@@ -186,7 +226,9 @@ export default function ProcessCRMAdvbox() {
       valor: p.valor ? p.valor.toString() : "A definir",
       resultado: p.fase || "Em análise",
       status: getStatusColor(p.status || "ativo"),
-      column: cardColumnOverrides[p.id] || KANBAN_COLUMNS[idx % KANBAN_COLUMNS.length],
+      column:
+        cardColumnOverrides[p.id] ||
+        KANBAN_COLUMNS[idx % KANBAN_COLUMNS.length],
       processo: p,
     }));
   }, [processes, getStatusColor, cardColumnOverrides]);
@@ -300,13 +342,21 @@ export default function ProcessCRMAdvbox() {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-5 h-5 text-primary"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM8 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H9a1 1 0 01-1-1V4zM15 3a1 1 0 00-1 1v12a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2z" />
                   </svg>
                 </div>
                 <div>
-                  <span className="text-2xl font-bold text-foreground">{processCards.length}</span>
-                  <span className="text-sm text-muted-foreground ml-2">Processos</span>
+                  <span className="text-2xl font-bold text-foreground">
+                    {processCards.length}
+                  </span>
+                  <span className="text-sm text-muted-foreground ml-2">
+                    Processos
+                  </span>
                 </div>
               </div>
               <div className="w-px h-8 bg-border/50" />
@@ -349,7 +399,9 @@ export default function ProcessCRMAdvbox() {
                     <div className="flex items-center justify-between p-4 bg-linear-to-r from-card/80 to-card rounded-t-2xl border border-border/50 shadow-lg backdrop-blur-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-linear-to-br from-primary to-accent rounded-full shadow-lg shadow-primary/30 animate-pulse"></div>
-                        <span className="font-bold text-sm text-foreground">{column}</span>
+                        <span className="font-bold text-sm text-foreground">
+                          {column}
+                        </span>
                       </div>
                       <Badge className="bg-primary/10 text-primary border-primary/20 font-bold">
                         {cards.length}
@@ -365,7 +417,11 @@ export default function ProcessCRMAdvbox() {
                   >
                     <div className="space-y-4 min-h-[300px] p-4 rounded-2xl bg-linear-to-br from-muted/10 via-muted/5 to-transparent border-2 border-dashed border-border/30 hover:border-primary/40 hover:bg-primary/5 transition-all">
                       {cards.map((card) => (
-                        <SortableCard key={card.id} card={card} onOpenDetails={handleOpenDetails} />
+                        <SortableCard
+                          key={card.id}
+                          card={card}
+                          onOpenDetails={handleOpenDetails}
+                        />
                       ))}
                       {cards.length === 0 && (
                         <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
@@ -386,7 +442,9 @@ export default function ProcessCRMAdvbox() {
             <DialogHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <DialogTitle className="text-xl">Detalhes do Processo</DialogTitle>
+                  <DialogTitle className="text-xl">
+                    Detalhes do Processo
+                  </DialogTitle>
                   <DialogDescription>{selectedCard?.numero}</DialogDescription>
                 </div>
                 <Button
@@ -411,55 +469,75 @@ export default function ProcessCRMAdvbox() {
                 <TabsContent value="info" className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Autor</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Autor
+                      </p>
                       <p className="text-base">{selectedCard.autor}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Réu</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Réu
+                      </p>
                       <p className="text-base">{selectedCard.reu}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Tipo de Ação</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Tipo de Ação
+                      </p>
                       <p className="text-base">{selectedCard.tipo}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Valor da Causa</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Valor da Causa
+                      </p>
                       <p className="text-base">{selectedCard.valor}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Resultado Provável
                       </p>
-                      <Badge variant="secondary">{selectedCard.resultado}</Badge>
+                      <Badge variant="secondary">
+                        {selectedCard.resultado}
+                      </Badge>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Status</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Status
+                      </p>
                       <div className="flex items-center gap-2">
                         <div
                           className={`w-3 h-3 rounded-full ${getStatusColor(selectedCard.status)}`}
                         ></div>
-                        <span className="capitalize">{selectedCard.status}</span>
+                        <span className="capitalize">
+                          {selectedCard.status}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {selectedCard.processo && (
                     <div className="space-y-2 border-t border-border pt-4">
-                      <p className="text-sm font-medium text-muted-foreground">Comarca</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Comarca
+                      </p>
                       <p className="text-base">
                         {selectedCard.processo.comarca || "Não informado"}
                       </p>
 
-                      <p className="text-sm font-medium text-muted-foreground mt-3">Vara</p>
-                      <p className="text-base">{selectedCard.processo.vara || "Não informado"}</p>
+                      <p className="text-sm font-medium text-muted-foreground mt-3">
+                        Vara
+                      </p>
+                      <p className="text-base">
+                        {selectedCard.processo.vara || "Não informado"}
+                      </p>
 
                       <p className="text-sm font-medium text-muted-foreground mt-3">
                         Data de Distribuição
                       </p>
                       <p className="text-base">
-                        {new Date(selectedCard.processo.dataDistribuicao).toLocaleDateString(
-                          "pt-BR"
-                        )}
+                        {new Date(
+                          selectedCard.processo.dataDistribuicao,
+                        ).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   )}
@@ -470,23 +548,27 @@ export default function ProcessCRMAdvbox() {
                     <div className="flex items-start gap-3">
                       <Calendar size={20} className="text-primary mt-1" />
                       <div className="flex-1">
-                        <p className="font-medium text-sm">Processo distribuído</p>
+                        <p className="font-medium text-sm">
+                          Processo distribuído
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {selectedCard.processo &&
-                            new Date(selectedCard.processo.dataDistribuicao).toLocaleDateString(
-                              "pt-BR"
-                            )}
+                            new Date(
+                              selectedCard.processo.dataDistribuicao,
+                            ).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <FileText size={20} className="text-primary mt-1" />
                       <div className="flex-1">
-                        <p className="font-medium text-sm">Última movimentação</p>
+                        <p className="font-medium text-sm">
+                          Última movimentação
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {selectedCard.processo &&
                             new Date(
-                              selectedCard.processo.dataUltimaMovimentacao
+                              selectedCard.processo.dataUltimaMovimentacao,
                             ).toLocaleDateString("pt-BR")}
                         </p>
                       </div>

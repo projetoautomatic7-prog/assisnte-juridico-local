@@ -1,10 +1,16 @@
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan, createChatSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createInvokeAgentSpan,
+  createChatSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 
 export class ComunicacaoClientesAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Comunicação com Clientes
     return createInvokeAgentSpan(
       {
@@ -14,7 +20,9 @@ export class ComunicacaoClientesAgent extends LangGraphAgent {
         temperature: 0.7,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `comunicacao_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `comunicacao_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -22,10 +30,13 @@ export class ComunicacaoClientesAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "comunicacao-clientes:start" });
+        let current = updateState(state, {
+          currentStep: "comunicacao-clientes:start",
+        });
 
         // Extrair dados da comunicação
-        const tipoMensagem = (state.data?.tipoMensagem as string) || "atualizacao";
+        const tipoMensagem =
+          (state.data?.tipoMensagem as string) || "atualizacao";
         const nomeCliente = (state.data?.nomeCliente as string) || "Cliente";
         const processoNumero = (state.data?.processoNumero as string) || "";
         const andamento = (state.data?.andamento as string) || "";
@@ -34,7 +45,10 @@ export class ComunicacaoClientesAgent extends LangGraphAgent {
         span?.setAttribute("comunicacao.tipo_mensagem", tipoMensagem);
         span?.setAttribute("comunicacao.cliente", nomeCliente);
         span?.setAttribute("comunicacao.processo", processoNumero);
-        span?.setAttribute("comunicacao.proximos_passos_count", proximosPassos.length);
+        span?.setAttribute(
+          "comunicacao.proximos_passos_count",
+          proximosPassos.length,
+        );
 
         // Usar LLM para gerar comunicação personalizada
         const mensagem = await createChatSpan(
@@ -88,12 +102,18 @@ Estamos acompanhando de perto todos os desdobramentos do caso e manteremos você
 Atenciosamente,
 Equipe Jurídica`;
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([textoGerado]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([textoGerado]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 200);
-            chatSpan?.setAttribute("comunicacao.message_length", textoGerado.length);
+            chatSpan?.setAttribute(
+              "comunicacao.message_length",
+              textoGerado.length,
+            );
 
             return textoGerado;
-          }
+          },
         );
 
         span?.setAttribute("comunicacao.message_length", mensagem.length);
@@ -114,15 +134,15 @@ Equipe Jurídica`;
 
         return this.addAgentMessage(
           current,
-          `Comunicação gerada para ${nomeCliente} (${mensagem.length} caracteres) - Aguardando aprovação`
+          `Comunicação gerada para ${nomeCliente} (${mensagem.length} caracteres) - Aguardando aprovação`,
         );
-      }
+      },
     );
   }
 }
 
 export async function runComunicacaoClientes(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new ComunicacaoClientesAgent();
   const initialState: AgentState = {

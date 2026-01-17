@@ -13,25 +13,31 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
   }
 }
 
-const TIPOS_CASO = ["trabalhista", "cível", "tributário", "penal", "consumidor"] as const;
+const TIPOS_CASO = [
+  "trabalhista",
+  "cível",
+  "tributário",
+  "penal",
+  "consumidor",
+] as const;
 const FASES = ["inicial", "instrução", "recursal", "execução"] as const;
 
 export function validateEstrategiaProcessualInput(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): EstrategiaProcessualInput {
   const tipoCaso = (data.tipoCaso as string) || "trabalhista";
   if (!TIPOS_CASO.includes(tipoCaso as (typeof TIPOS_CASO)[number])) {
     throw new ValidationError(
       `Campo 'tipoCaso' deve ser: ${TIPOS_CASO.join(", ")}`,
       "tipoCaso",
-      tipoCaso
+      tipoCaso,
     );
   }
 
@@ -40,16 +46,20 @@ export function validateEstrategiaProcessualInput(
     throw new ValidationError(
       `Campo 'faseProcessual' deve ser: ${FASES.join(", ")}`,
       "faseProcessual",
-      faseProcessual
+      faseProcessual,
     );
   }
 
   const objetivoCliente = data.objetivoCliente as string | undefined;
-  if (!objetivoCliente || typeof objetivoCliente !== "string" || objetivoCliente.length < 5) {
+  if (
+    !objetivoCliente ||
+    typeof objetivoCliente !== "string" ||
+    objetivoCliente.length < 5
+  ) {
     throw new ValidationError(
       "Campo 'objetivoCliente' é obrigatório (mínimo 5 caracteres)",
       "objetivoCliente",
-      objetivoCliente
+      objetivoCliente,
     );
   }
 

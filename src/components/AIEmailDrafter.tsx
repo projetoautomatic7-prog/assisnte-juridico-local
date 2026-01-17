@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -101,7 +107,9 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
       toast.success("Email rascunhado com sucesso!");
     } catch (error) {
       console.error("Erro ao rascunhar email:", error);
-      toast.error(error instanceof Error ? error.message : "Falha ao gerar rascunho");
+      toast.error(
+        error instanceof Error ? error.message : "Falha ao gerar rascunho",
+      );
     } finally {
       setIsDrafting(false);
     }
@@ -163,12 +171,17 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
         <Card className="glassmorphic">
           <CardHeader>
             <CardTitle>Informações do Email</CardTitle>
-            <CardDescription>Preencha os detalhes para gerar o rascunho</CardDescription>
+            <CardDescription>
+              Preencha os detalhes para gerar o rascunho
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Tipo de Email</Label>
-              <Select value={emailType} onValueChange={(value) => setEmailType(value as EmailType)}>
+              <Select
+                value={emailType}
+                onValueChange={(value) => setEmailType(value as EmailType)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo de email" />
                 </SelectTrigger>
@@ -218,7 +231,10 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
               disabled={isDrafting || !context.trim()}
               className="w-full button-gradient"
             >
-              <Sparkles size={20} className={isDrafting ? "animate-spin" : ""} />
+              <Sparkles
+                size={20}
+                className={isDrafting ? "animate-spin" : ""}
+              />
               {isDrafting ? "Gerando..." : "Gerar Rascunho"}
             </Button>
           </CardContent>
@@ -249,8 +265,14 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
                   <div className="space-y-4 pr-4">
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-muted-foreground font-semibold">ASSUNTO</p>
-                        <Button size="sm" variant="ghost" onClick={handleCopySubject}>
+                        <p className="text-xs text-muted-foreground font-semibold">
+                          ASSUNTO
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCopySubject}
+                        >
                           <Copy size={14} />
                         </Button>
                       </div>
@@ -262,7 +284,11 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
                         <p className="text-xs text-muted-foreground font-semibold">
                           CORPO DO EMAIL
                         </p>
-                        <Button size="sm" variant="ghost" onClick={handleCopyBody}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCopyBody}
+                        >
                           <Copy size={14} />
                         </Button>
                       </div>
@@ -310,24 +336,30 @@ Responda EXCLUSIVAMENTE com um JSON VÁLIDO (sem comentários, sem texto antes o
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-muted/30 rounded-lg">
-              <p className="font-semibold text-sm mb-2">📧 Atualização para Cliente</p>
+              <p className="font-semibold text-sm mb-2">
+                📧 Atualização para Cliente
+              </p>
               <p className="text-xs text-muted-foreground">
-                "Sentença favorável publicada hoje. Aguardando trânsito em julgado. Prazo recursal
-                de 15 dias para parte adversa."
+                "Sentença favorável publicada hoje. Aguardando trânsito em
+                julgado. Prazo recursal de 15 dias para parte adversa."
               </p>
             </div>
             <div className="p-4 bg-muted/30 rounded-lg">
-              <p className="font-semibold text-sm mb-2">🤝 Proposta de Acordo</p>
+              <p className="font-semibold text-sm mb-2">
+                🤝 Proposta de Acordo
+              </p>
               <p className="text-xs text-muted-foreground">
-                "Propor acordo extrajudicial de R$ 50.000 parcelados em 10x. Renúncia mútua de
-                honorários."
+                "Propor acordo extrajudicial de R$ 50.000 parcelados em 10x.
+                Renúncia mútua de honorários."
               </p>
             </div>
             <div className="p-4 bg-muted/30 rounded-lg">
-              <p className="font-semibold text-sm mb-2">📋 Solicitação de Documentos</p>
+              <p className="font-semibold text-sm mb-2">
+                📋 Solicitação de Documentos
+              </p>
               <p className="text-xs text-muted-foreground">
-                "Solicitar ao perito envio do laudo até 20/03. Processo em fase de prova pericial
-                técnica."
+                "Solicitar ao perito envio do laudo até 20/03. Processo em fase
+                de prova pericial técnica."
               </p>
             </div>
           </div>

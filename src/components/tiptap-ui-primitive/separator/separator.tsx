@@ -11,7 +11,8 @@ export interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Separator = forwardRef<HTMLDivElement, SeparatorProps>(
   ({ decorative, orientation = "vertical", className, ...divProps }, ref) => {
-    const ariaOrientation = orientation === "vertical" ? orientation : undefined;
+    const ariaOrientation =
+      orientation === "vertical" ? orientation : undefined;
     const semanticProps = decorative
       ? { role: "none" }
       : { "aria-orientation": ariaOrientation, role: "separator" };
@@ -25,7 +26,7 @@ export const Separator = forwardRef<HTMLDivElement, SeparatorProps>(
         ref={ref}
       />
     );
-  }
+  },
 );
 
 Separator.displayName = "Separator";

@@ -65,7 +65,11 @@ import "./professional-editor.scss";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { EDITOR_SLASH_COMMANDS, useEditorAI } from "@/hooks/use-editor-ai";
@@ -122,7 +126,7 @@ interface ProfessionalEditorProps {
       onChunk: (chunk: string) => void;
       onComplete: () => void;
       onError: (error: Error) => void;
-    }
+    },
   ) => Promise<void>;
   readonly variables?: Record<string, string>;
   readonly showCollaboration?: boolean;
@@ -150,7 +154,8 @@ const AI_QUICK_COMMANDS = [
   {
     label: "Revisar",
     icon: Sparkles,
-    prompt: "Revise e melhore a redação do seguinte texto mantendo o significado:",
+    prompt:
+      "Revise e melhore a redação do seguinte texto mantendo o significado:",
   },
   {
     label: "Formalizar",
@@ -213,7 +218,10 @@ export function ProfessionalEditor({
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
-  const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
+  const [slashMenuPosition, setSlashMenuPosition] = useState({
+    top: 0,
+    left: 0,
+  });
   const portalTarget = typeof document !== "undefined" ? document.body : null;
 
   // Hook de IA para editor
@@ -333,11 +341,35 @@ export function ProfessionalEditor({
     },
     heading: {
       options: [
-        { model: "paragraph", title: "Paragraph", class: "ck-heading_paragraph" },
-        { model: "heading1", view: "h1", title: "Heading 1", class: "ck-heading_heading1" },
-        { model: "heading2", view: "h2", title: "Heading 2", class: "ck-heading_heading2" },
-        { model: "heading3", view: "h3", title: "Heading 3", class: "ck-heading_heading3" },
-        { model: "heading4", view: "h4", title: "Heading 4", class: "ck-heading_heading4" },
+        {
+          model: "paragraph",
+          title: "Paragraph",
+          class: "ck-heading_paragraph",
+        },
+        {
+          model: "heading1",
+          view: "h1",
+          title: "Heading 1",
+          class: "ck-heading_heading1",
+        },
+        {
+          model: "heading2",
+          view: "h2",
+          title: "Heading 2",
+          class: "ck-heading_heading2",
+        },
+        {
+          model: "heading3",
+          view: "h3",
+          title: "Heading 3",
+          class: "ck-heading_heading3",
+        },
+        {
+          model: "heading4",
+          view: "h4",
+          title: "Heading 4",
+          class: "ck-heading_heading4",
+        },
       ],
     },
     link: {
@@ -415,7 +447,7 @@ export function ProfessionalEditor({
       });
       return result;
     },
-    [variables]
+    [variables],
   );
 
   const runAIStreaming = useCallback(
@@ -454,7 +486,7 @@ export function ProfessionalEditor({
         setIsAIActive(false);
       }
     },
-    [onAIStream, isUserTyping]
+    [onAIStream, isUserTyping],
   );
 
   const handleQuickAI = useCallback(
@@ -481,7 +513,7 @@ export function ProfessionalEditor({
         }
       }
     },
-    [onAIGenerate, onAIStream, replaceVariables, runAIStreaming]
+    [onAIGenerate, onAIStream, replaceVariables, runAIStreaming],
   );
 
   // ===========================
@@ -514,14 +546,18 @@ export function ProfessionalEditor({
             if (slashMatch) {
               const charsToDelete = slashMatch[0].length;
               // Mover para trás e deletar os caracteres do comando
-              const range = writer.createRange(position.getShiftedBy(-charsToDelete), position);
+              const range = writer.createRange(
+                position.getShiftedBy(-charsToDelete),
+                position,
+              );
               writer.remove(range);
             }
           }
         });
 
         const prompt =
-          customPrompt || `Gere conteúdo jurídico profissional para ${command.replace("/", "")}`;
+          customPrompt ||
+          `Gere conteúdo jurídico profissional para ${command.replace("/", "")}`;
         const contextWithoutSlash = plainText.replace(/\/[a-z-]*$/i, "").trim();
 
         const result = await executeCommand({
@@ -547,7 +583,7 @@ export function ProfessionalEditor({
         setIsAIActive(false);
       }
     },
-    [executeCommand, djenData, processData]
+    [executeCommand, djenData, processData],
   );
 
   const handleGenerateMinutaWithContext = useCallback(
@@ -581,7 +617,7 @@ export function ProfessionalEditor({
         setIsAIActive(false);
       }
     },
-    [generateMinuta, djenData, processData, documentType]
+    [generateMinuta, djenData, processData, documentType],
   );
 
   const calculateSlashMenuPosition = useCallback((rect: DOMRect | null) => {
@@ -626,7 +662,8 @@ export function ProfessionalEditor({
           const viewRange = selection.getFirstRange();
 
           if (viewRange) {
-            const domRange = editor.editing.view.domConverter.viewRangeToDom(viewRange);
+            const domRange =
+              editor.editing.view.domConverter.viewRangeToDom(viewRange);
             if (domRange) {
               const rect = domRange.getBoundingClientRect();
               setSlashMenuPosition(calculateSlashMenuPosition(rect));
@@ -648,14 +685,14 @@ export function ProfessionalEditor({
         setSlashFilter("");
       }
     },
-    [calculateSlashMenuPosition]
+    [calculateSlashMenuPosition],
   );
 
   // Filtrar comandos slash
   const filteredSlashCommands = EDITOR_SLASH_COMMANDS.filter(
     (cmd) =>
       cmd.command.toLowerCase().includes(slashFilter) ||
-      cmd.label.toLowerCase().includes(slashFilter)
+      cmd.label.toLowerCase().includes(slashFilter),
   );
 
   const handleAIGenerate = useCallback(async () => {
@@ -744,7 +781,12 @@ export function ProfessionalEditor({
                 <Button
                   className="w-full"
                   onClick={handleAIGenerate}
-                  disabled={!aiPrompt.trim() || isAILoading || isStreaming || !isEditorReady}
+                  disabled={
+                    !aiPrompt.trim() ||
+                    isAILoading ||
+                    isStreaming ||
+                    !isEditorReady
+                  }
                 >
                   {isAILoading || isStreaming ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -848,7 +890,7 @@ export function ProfessionalEditor({
               ))}
             </ScrollArea>
           </div>,
-          portalTarget
+          portalTarget,
         )}
 
       {/* CKEditor */}

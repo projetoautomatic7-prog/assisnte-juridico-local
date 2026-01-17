@@ -12,31 +12,41 @@ describe("validateHarveyInput", () => {
       const result = validateHarveyInput({
         task: "Analisar estratégia para ação trabalhista contra empresa X",
       });
-      expect(result.task).toBe("Analisar estratégia para ação trabalhista contra empresa X");
+      expect(result.task).toBe(
+        "Analisar estratégia para ação trabalhista contra empresa X",
+      );
     });
 
     it("deve rejeitar task ausente", () => {
       expect(() => validateHarveyInput({})).toThrow(ValidationError);
-      expect(() => validateHarveyInput({})).toThrow(/Campo 'task' é obrigatório/);
+      expect(() => validateHarveyInput({})).toThrow(
+        /Campo 'task' é obrigatório/,
+      );
     });
 
     it("deve rejeitar task não-string", () => {
       expect(() => validateHarveyInput({ task: 123 })).toThrow(ValidationError);
-      expect(() => validateHarveyInput({ task: 123 })).toThrow("Campo 'task' deve ser uma string");
+      expect(() => validateHarveyInput({ task: 123 })).toThrow(
+        "Campo 'task' deve ser uma string",
+      );
     });
 
     it("deve rejeitar task muito curta (< 10 caracteres)", () => {
-      expect(() => validateHarveyInput({ task: "curta" })).toThrow(ValidationError);
       expect(() => validateHarveyInput({ task: "curta" })).toThrow(
-        /deve ter pelo menos 10 caracteres/
+        ValidationError,
+      );
+      expect(() => validateHarveyInput({ task: "curta" })).toThrow(
+        /deve ter pelo menos 10 caracteres/,
       );
     });
 
     it("deve rejeitar task muito longa (> 2000 caracteres)", () => {
       const longTask = "a".repeat(2001);
-      expect(() => validateHarveyInput({ task: longTask })).toThrow(ValidationError);
       expect(() => validateHarveyInput({ task: longTask })).toThrow(
-        /não pode exceder 2000 caracteres/
+        ValidationError,
+      );
+      expect(() => validateHarveyInput({ task: longTask })).toThrow(
+        /não pode exceder 2000 caracteres/,
       );
     });
 
@@ -74,13 +84,13 @@ describe("validateHarveyInput", () => {
         validateHarveyInput({
           task: "Analisar estratégia processual",
           processNumber: 12345,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateHarveyInput({
           task: "Analisar estratégia processual",
           processNumber: 12345,
-        })
+        }),
       ).toThrow("Campo 'processNumber' deve ser uma string");
     });
   });
@@ -91,7 +101,9 @@ describe("validateHarveyInput", () => {
         task: "Analisar estratégia processual",
         context: "Caso envolve disputa trabalhista com rescisão indireta",
       });
-      expect(result.context).toBe("Caso envolve disputa trabalhista com rescisão indireta");
+      expect(result.context).toBe(
+        "Caso envolve disputa trabalhista com rescisão indireta",
+      );
     });
 
     it("deve aceitar input sem context", () => {
@@ -106,13 +118,13 @@ describe("validateHarveyInput", () => {
         validateHarveyInput({
           task: "Analisar estratégia processual",
           context: { info: "objeto" },
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateHarveyInput({
           task: "Analisar estratégia processual",
           context: { info: "objeto" },
-        })
+        }),
       ).toThrow("Campo 'context' deve ser uma string");
     });
 
@@ -122,13 +134,13 @@ describe("validateHarveyInput", () => {
         validateHarveyInput({
           task: "Analisar estratégia processual",
           context: longContext,
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateHarveyInput({
           task: "Analisar estratégia processual",
           context: longContext,
-        })
+        }),
       ).toThrow(/não pode exceder 5000 caracteres/);
     });
 
@@ -179,13 +191,13 @@ describe("validateHarveyInput", () => {
         validateHarveyInput({
           task: "Analisar estratégia processual",
           urgency: "critical",
-        })
+        }),
       ).toThrow(ValidationError);
       expect(() =>
         validateHarveyInput({
           task: "Analisar estratégia processual",
           urgency: "urgent",
-        })
+        }),
       ).toThrow(/Campo 'urgency' inválido/);
     });
   });

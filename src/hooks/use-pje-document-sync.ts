@@ -23,10 +23,17 @@ export interface PJeDocumentSync {
  * Hook para gerenciar sincronização de documentos PJe
  */
 export function usePJeDocumentSync(): PJeDocumentSync {
-  const [documentosSalvos, setDocumentosSalvos] = useKV<DocumentoPJe[]>("pje_documentos", []);
+  const [documentosSalvos, setDocumentosSalvos] = useKV<DocumentoPJe[]>(
+    "pje_documentos",
+    [],
+  );
 
-  const [documentosPendentes, setDocumentosPendentes] = useState<DocumentoPJe[]>([]);
-  const [documentosProcessados, setDocumentosProcessados] = useState<DocumentoPJe[]>([]);
+  const [documentosPendentes, setDocumentosPendentes] = useState<
+    DocumentoPJe[]
+  >([]);
+  const [documentosProcessados, setDocumentosProcessados] = useState<
+    DocumentoPJe[]
+  >([]);
   const [carregando, setCarregando] = useState(false);
   const [proximaSincronizacao, setProximaSincronizacao] = useState(0);
   const [extensaoAtivaNoTab, setExtensaoAtivaNoTab] = useState(false);
@@ -39,7 +46,10 @@ export function usePJeDocumentSync(): PJeDocumentSync {
 
   const hasChromeRuntimeApi = () => {
     // @ts-expect-error - chrome API types might be missing in web context
-    return typeof chrome !== "undefined" && Boolean(chrome.runtime && chrome.runtime.onMessage);
+    return (
+      typeof chrome !== "undefined" &&
+      Boolean(chrome.runtime && chrome.runtime.onMessage)
+    );
   };
 
   const queryActiveTabId = async (): Promise<number | null> => {
@@ -86,7 +96,7 @@ export function usePJeDocumentSync(): PJeDocumentSync {
           "[PJeDocumentSync] Novo documento recebido:",
           documento.tipo,
           "-",
-          documento.metadados?.numeroProcesso
+          documento.metadados?.numeroProcesso,
         );
 
         // Adiciona à lista de pendentes (deduplicado por ID)
@@ -98,7 +108,7 @@ export function usePJeDocumentSync(): PJeDocumentSync {
 
         // Toast de notificação
         toast.success(
-          `📄 ${documento.tipo.toUpperCase()} capturado: ${documento.metadados?.numeroProcesso || "N/A"}`
+          `📄 ${documento.tipo.toUpperCase()} capturado: ${documento.metadados?.numeroProcesso || "N/A"}`,
         );
       }
     };
@@ -140,7 +150,9 @@ export function usePJeDocumentSync(): PJeDocumentSync {
       const id = documento.id;
 
       // Atualizar lista de salvos
-      const novosDocumentos = documentosSalvos ? [...documentosSalvos, documento] : [documento];
+      const novosDocumentos = documentosSalvos
+        ? [...documentosSalvos, documento]
+        : [documento];
       setDocumentosSalvos(novosDocumentos);
 
       // Mover de pendentes para processados
@@ -155,7 +167,7 @@ export function usePJeDocumentSync(): PJeDocumentSync {
         () => {
           setDocumentosProcessados((prev) => prev.filter((d) => d.id !== id));
         },
-        5 * 60 * 1000
+        5 * 60 * 1000,
       );
 
       toast.success("✅ Documento salvo com sucesso");
@@ -249,8 +261,12 @@ export interface PJeDocumentWidgetState {
 }
 
 export function usePJeDocumentWidget(): PJeDocumentWidgetState {
-  const { documentosPendentes, documentosProcessados, extensaoAtivaNoTab, forcarSincronizacao } =
-    usePJeDocumentSync();
+  const {
+    documentosPendentes,
+    documentosProcessados,
+    extensaoAtivaNoTab,
+    forcarSincronizacao,
+  } = usePJeDocumentSync();
   const [visivel, setVisivel] = useState(false);
 
   return {

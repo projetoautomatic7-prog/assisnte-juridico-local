@@ -16,7 +16,11 @@ export function getRelativeDateDescription(dateStr: string): string {
  * Valida componentes numéricos de uma data no formato DD/MM/YYYY
  * Verifica se o dia é válido para o mês específico, incluindo anos bissextos
  */
-export function validateDateComponents(day: number, month: number, year: number): boolean {
+export function validateDateComponents(
+  day: number,
+  month: number,
+  year: number,
+): boolean {
   if (
     Number.isNaN(day) ||
     Number.isNaN(month) ||

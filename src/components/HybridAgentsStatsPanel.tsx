@@ -6,10 +6,24 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useHybridAgents } from "@/hooks/use-hybrid-agents";
-import { Activity, BarChart3, Clock, Cpu, RefreshCw, TrendingUp, Zap } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  Clock,
+  Cpu,
+  RefreshCw,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { useEffect } from "react";
 
 export function HybridAgentsStatsPanel() {
@@ -25,18 +39,24 @@ export function HybridAgentsStatsPanel() {
   }, [refreshStats]);
 
   const langGraphPercentage =
-    stats.totalExecutions > 0 ? (stats.langGraphExecutions / stats.totalExecutions) * 100 : 0;
+    stats.totalExecutions > 0
+      ? (stats.langGraphExecutions / stats.totalExecutions) * 100
+      : 0;
 
   const traditionalPercentage =
-    stats.totalExecutions > 0 ? (stats.traditionalExecutions / stats.totalExecutions) * 100 : 0;
+    stats.totalExecutions > 0
+      ? (stats.traditionalExecutions / stats.totalExecutions) * 100
+      : 0;
 
   const hybridPercentage =
-    stats.totalExecutions > 0 ? (stats.hybridExecutions / stats.totalExecutions) * 100 : 0;
+    stats.totalExecutions > 0
+      ? (stats.hybridExecutions / stats.totalExecutions) * 100
+      : 0;
 
   const successPercentage = stats.successRate * 100;
 
   const hybridAgentsCount = agents.filter(
-    (a: { hasHybridVersion: boolean }) => a.hasHybridVersion
+    (a: { hasHybridVersion: boolean }) => a.hasHybridVersion,
   ).length;
   const totalAgentsCount = agents.length;
 
@@ -86,7 +106,9 @@ export function HybridAgentsStatsPanel() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
-              <div className="text-2xl font-bold">{successPercentage.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">
+                {successPercentage.toFixed(1)}%
+              </div>
             </div>
             <Progress value={successPercentage} className="mt-2" />
           </CardContent>
@@ -95,7 +117,9 @@ export function HybridAgentsStatsPanel() {
         {/* Tempo Médio */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Tempo Médio</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Tempo Médio
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -122,7 +146,8 @@ export function HybridAgentsStatsPanel() {
               </div>
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {((hybridAgentsCount / totalAgentsCount) * 100).toFixed(0)}% dos agentes
+              {((hybridAgentsCount / totalAgentsCount) * 100).toFixed(0)}% dos
+              agentes
             </div>
           </CardContent>
         </Card>
@@ -147,7 +172,9 @@ export function HybridAgentsStatsPanel() {
                 <Badge variant="default" className="bg-blue-500">
                   LangGraph
                 </Badge>
-                <span className="text-sm font-medium">{stats.langGraphExecutions}</span>
+                <span className="text-sm font-medium">
+                  {stats.langGraphExecutions}
+                </span>
               </div>
               <span className="text-sm text-muted-foreground">
                 {langGraphPercentage.toFixed(1)}%
@@ -161,25 +188,37 @@ export function HybridAgentsStatsPanel() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">Tradicional</Badge>
-                <span className="text-sm font-medium">{stats.traditionalExecutions}</span>
+                <span className="text-sm font-medium">
+                  {stats.traditionalExecutions}
+                </span>
               </div>
               <span className="text-sm text-muted-foreground">
                 {traditionalPercentage.toFixed(1)}%
               </span>
             </div>
-            <Progress value={traditionalPercentage} className="h-2 bg-gray-100" />
+            <Progress
+              value={traditionalPercentage}
+              className="h-2 bg-gray-100"
+            />
           </div>
 
           {/* Híbrido */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="border-purple-500 text-purple-500">
+                <Badge
+                  variant="outline"
+                  className="border-purple-500 text-purple-500"
+                >
                   Híbrido
                 </Badge>
-                <span className="text-sm font-medium">{stats.hybridExecutions}</span>
+                <span className="text-sm font-medium">
+                  {stats.hybridExecutions}
+                </span>
               </div>
-              <span className="text-sm text-muted-foreground">{hybridPercentage.toFixed(1)}%</span>
+              <span className="text-sm text-muted-foreground">
+                {hybridPercentage.toFixed(1)}%
+              </span>
             </div>
             <Progress value={hybridPercentage} className="h-2 bg-purple-100" />
           </div>
@@ -191,7 +230,8 @@ export function HybridAgentsStatsPanel() {
         <CardHeader>
           <CardTitle>Agentes com Suporte LangGraph</CardTitle>
           <CardDescription>
-            {hybridAgentsCount} de {totalAgentsCount} agentes têm implementação híbrida
+            {hybridAgentsCount} de {totalAgentsCount} agentes têm implementação
+            híbrida
           </CardDescription>
         </CardHeader>
         <CardContent>

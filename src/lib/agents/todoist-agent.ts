@@ -38,7 +38,13 @@ interface TodoistEventData {
 type TodoistPriority = 1 | 2 | 3 | 4;
 
 interface InterpretedCommand {
-  action: "reschedule" | "delegate" | "complete" | "create_event" | "update_status" | "unknown";
+  action:
+    | "reschedule"
+    | "delegate"
+    | "complete"
+    | "create_event"
+    | "update_status"
+    | "unknown";
   parameters: {
     date?: string;
     assignee?: string;
@@ -90,7 +96,9 @@ export class TodoistAgent {
   private async handleItemUpdated(item: TodoistEventData) {
     // Se a data mudou, sincronizar com Google Calendar
     if (item.due) {
-      console.log(`📅 Data da tarefa ${item.id} atualizada para ${item.due.date}`);
+      console.log(
+        `📅 Data da tarefa ${item.id} atualizada para ${item.due.date}`,
+      );
 
       // Tenta encontrar evento correspondente no Calendar (pelo ID da tarefa na descrição ou título)
       // Como não temos link direto, vamos buscar eventos do dia
@@ -98,13 +106,17 @@ export class TodoistAgent {
         // Busca inteligente no Calendar usando filtros de data e número de processo
         // Estratégia: buscar eventos do dia com descrição contendo ID da tarefa
         const eventDate = new Date(item.due.date);
-        const timeRangeStart = new Date(eventDate.setHours(0, 0, 0, 0)).toISOString();
-        const timeRangeEnd = new Date(eventDate.setHours(23, 59, 59, 999)).toISOString();
+        const timeRangeStart = new Date(
+          eventDate.setHours(0, 0, 0, 0),
+        ).toISOString();
+        const timeRangeEnd = new Date(
+          eventDate.setHours(23, 59, 59, 999),
+        ).toISOString();
 
         // Filtrar eventos por período e conteúdo relacionado
         // Requer: googleCalendarService.searchEvents(timeRangeStart, timeRangeEnd, item.id)
         console.log(
-          `🔄 Sincronizando com Google Calendar (${timeRangeStart} - ${timeRangeEnd})...`
+          `🔄 Sincronizando com Google Calendar (${timeRangeStart} - ${timeRangeEnd})...`,
         );
       } catch (error) {
         console.error("Erro ao sincronizar com Calendar:", error);
@@ -119,7 +131,8 @@ export class TodoistAgent {
     console.log(`✅ Tarefa ${item.content} concluída!`);
 
     // Verificar se é uma tarefa de processo
-    const processMatch = /Processo\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/.exec(item.content);
+    const processMatch =
+      /Processo\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/.exec(item.content);
     if (processMatch) {
       const processNumber = processMatch[1];
       console.log(`🔄 Atualizando progresso do processo ${processNumber}...`);
@@ -131,8 +144,12 @@ export class TodoistAgent {
       if (typeof globalThis.window !== "undefined") {
         globalThis.window.dispatchEvent(
           new CustomEvent("process:task:completed", {
-            detail: { processNumber, taskId: item.id, taskContent: item.content },
-          })
+            detail: {
+              processNumber,
+              taskId: item.id,
+              taskContent: item.content,
+            },
+          }),
         );
       }
 
@@ -150,10 +167,16 @@ export class TodoistAgent {
     const text = comment.content;
 
     // Verificar se é um comando para o agente (ex: "@Harvey ...")
-    if (text.toLowerCase().includes("@harvey") || text.toLowerCase().includes("urgente:")) {
+    if (
+      text.toLowerCase().includes("@harvey") ||
+      text.toLowerCase().includes("urgente:")
+    ) {
       console.log(`🧠 Interpretando comando: "${text}"`);
 
-      const command = await this.interpretCommandWithAI(text, comment.item_id || comment.id);
+      const command = await this.interpretCommandWithAI(
+        text,
+        comment.item_id || comment.id,
+      );
       await this.executeCommand(command);
     }
   }
@@ -161,7 +184,10 @@ export class TodoistAgent {
   /**
    * Interpreta comandos via LLM (GPT-4)
    */
-  private async interpretCommandWithAI(text: string, taskId: string): Promise<InterpretedCommand> {
+  private async interpretCommandWithAI(
+    text: string,
+    taskId: string,
+  ): Promise<InterpretedCommand> {
     const prompt = `
       Você é um assistente jurídico inteligente (Harvey) integrado ao Todoist.
       Analise o seguinte comando do usuário e extraia a intenção e parâmetros.
@@ -243,7 +269,10 @@ export class TodoistAgent {
       case "update_status":
         if (command.parameters.taskId && command.parameters.priority) {
           // Validar prioridade (1-4)
-          const priority = Math.min(Math.max(command.parameters.priority, 1), 4) as TodoistPriority;
+          const priority = Math.min(
+            Math.max(command.parameters.priority, 1),
+            4,
+          ) as TodoistPriority;
           await updateLegalTask(command.parameters.taskId, {
             priority,
           });
@@ -280,7 +309,9 @@ export class TodoistAgent {
    */
   private async suggestNextSteps(processNumber: string) {
     try {
-      console.log(`💡 Gerando sugestões inteligentes para processo ${processNumber}...`);
+      console.log(
+        `💡 Gerando sugestões inteligentes para processo ${processNumber}...`,
+      );
 
       // Buscar histórico de tarefas do processo (simulado - em produção viria do banco)
       const taskHistory = await this.getProcessTaskHistory(processNumber);
@@ -336,7 +367,10 @@ Com base no histórico de tarefas concluídas, sugira as próximas 3 ações mai
 
       // ✅ Validar response antes de acessar propriedades
       if (!response || response.error) {
-        console.error("❌ Erro ao chamar Gemini:", response?.error || "Response undefined");
+        console.error(
+          "❌ Erro ao chamar Gemini:",
+          response?.error || "Response undefined",
+        );
         // Fallback para sugestão padrão
         return this.createDefaultSuggestion(processNumber);
       }
@@ -366,19 +400,26 @@ Com base no histórico de tarefas concluídas, sugira as próximas 3 ações mai
 
       // Criar tarefas no Todoist
       const tasksToCreate = suggestions.tasks.map(
-        (task: { content: string; description?: string; dueDate?: string; priority?: number }) => ({
+        (task: {
+          content: string;
+          description?: string;
+          dueDate?: string;
+          priority?: number;
+        }) => ({
           content: task.content,
           description: task.description || "",
           dueDate: task.dueDate || "tomorrow",
           priority: (task.priority || 2) as 1 | 2 | 3 | 4,
           labels: ["auto-generated", "ai-suggestion", "processo"],
-        })
+        }),
       );
 
       // Adicionar tarefas via Todoist API
       const createdTasks = await addLegalTasks(tasksToCreate);
 
-      console.log(`✅ ${createdTasks.length} tarefas criadas automaticamente pelo Gemini`);
+      console.log(
+        `✅ ${createdTasks.length} tarefas criadas automaticamente pelo Gemini`,
+      );
 
       return {
         success: true,
@@ -403,13 +444,19 @@ Com base no histórico de tarefas concluídas, sugira as próximas 3 ações mai
    *
    * Referência API: https://developer.todoist.com/rest/v2/#get-active-tasks
    */
-  private async getProcessTaskHistory(_processNumber: string): Promise<string[]> {
+  private async getProcessTaskHistory(
+    _processNumber: string,
+  ): Promise<string[]> {
     // Placeholder - em produção, buscar tarefas concluídas via API
     // const client = getTodoistClient();
     // const tasks = await client.getTasks({ filter: `${_processNumber} & completed` });
 
     // Por enquanto, retorna histórico simulado baseado em padrões comuns
-    return ["Protocolar contestação", "Juntar documentos", "Notificar cliente sobre andamento"];
+    return [
+      "Protocolar contestação",
+      "Juntar documentos",
+      "Notificar cliente sobre andamento",
+    ];
   }
 
   /**

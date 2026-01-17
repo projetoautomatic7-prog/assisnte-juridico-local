@@ -21,7 +21,7 @@ export function useExpedientes() {
     if (expediente.numeroProcesso) {
       const normalizedNum = normalizeProcessNumber(expediente.numeroProcesso);
       const processo = (processes || []).find(
-        (p) => normalizeProcessNumber(p.numeroCNJ) === normalizedNum
+        (p) => normalizeProcessNumber(p.numeroCNJ) === normalizedNum,
       );
       if (processo) {
         return { ...expediente, processId: processo.id };
@@ -56,7 +56,9 @@ export function useExpedientes() {
 
   const updateExpediente = (id: string, updates: Partial<Expediente>) => {
     setExpedientes(
-      expedientes.map((exp: Expediente) => (exp.id === id ? { ...exp, ...updates } : exp))
+      expedientes.map((exp: Expediente) =>
+        exp.id === id ? { ...exp, ...updates } : exp,
+      ),
     );
     triggerProcessSync();
   };
@@ -80,11 +82,14 @@ export function useExpedientes() {
     return expedientes.filter(
       (exp) =>
         exp.processId === processId ||
-        normalizeProcessNumber(exp.numeroProcesso) === normalizeProcessNumber(processo.numeroCNJ)
+        normalizeProcessNumber(exp.numeroProcesso) ===
+          normalizeProcessNumber(processo.numeroCNJ),
     );
   };
 
-  const expedientesNaoLidos = expedientes.filter((exp: Expediente) => !exp.lido);
+  const expedientesNaoLidos = expedientes.filter(
+    (exp: Expediente) => !exp.lido,
+  );
 
   return {
     expedientes,

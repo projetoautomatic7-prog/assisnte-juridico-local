@@ -90,7 +90,7 @@ describe("DJEN API - Integração", () => {
   beforeAll(() => {
     if (process.env.DISABLE_MOCKS !== "true") {
       throw new Error(
-        "Falha de Segurança: Este teste de API deve ser executado com DISABLE_MOCKS=true para conformidade ética."
+        "Falha de Segurança: Este teste de API deve ser executado com DISABLE_MOCKS=true para conformidade ética.",
       );
     }
   });
@@ -100,7 +100,7 @@ describe("DJEN API - Integração", () => {
       consultarDJEN({
         tribunais: ["TJSP"],
         searchTerms: {},
-      })
+      }),
     ).rejects.toThrow("É necessário fornecer pelo menos um termo de busca");
   });
 
@@ -126,7 +126,7 @@ describe("DJEN API - Integração", () => {
 
     if (resultado.erros.length > 0) {
       console.warn(
-        `⚠️ Falha em alguns tribunais (possível geobloqueio): ${resultado.erros.map((e) => e.tribunal).join(", ")}`
+        `⚠️ Falha em alguns tribunais (possível geobloqueio): ${resultado.erros.map((e) => e.tribunal).join(", ")}`,
       );
     }
 

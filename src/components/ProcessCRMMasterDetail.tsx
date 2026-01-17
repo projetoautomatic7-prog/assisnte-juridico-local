@@ -7,7 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useKV } from "@/hooks/use-kv";
 import { cn } from "@/lib/utils";
 import type { Expediente, Minuta, Process } from "@/types";
-import { FileText, Folder, FolderOpen, Mail, MoreVertical, Search, User } from "lucide-react";
+import {
+  FileText,
+  Folder,
+  FolderOpen,
+  Mail,
+  MoreVertical,
+  Search,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 
 const STATUS_COLORS: Record<Process["status"], string> = {
@@ -23,12 +31,16 @@ interface ProcessListItemProps {
   onClick: () => void;
 }
 
-function ProcessListItem({ process, isSelected, onClick }: ProcessListItemProps) {
+function ProcessListItem({
+  process,
+  isSelected,
+  onClick,
+}: ProcessListItemProps) {
   return (
     <div
       className={cn(
         "p-3 border-b cursor-pointer transition-colors hover:bg-muted/50",
-        isSelected && "bg-primary/10 border-l-4 border-l-primary"
+        isSelected && "bg-primary/10 border-l-4 border-l-primary",
       )}
       onClick={onClick}
     >
@@ -36,11 +48,18 @@ function ProcessListItem({ process, isSelected, onClick }: ProcessListItemProps)
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium text-sm truncate">{process.numeroCNJ}</span>
+            <span className="font-medium text-sm truncate">
+              {process.numeroCNJ}
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2">{process.titulo}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {process.titulo}
+          </p>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className={cn("text-xs", STATUS_COLORS[process.status])}>
+            <Badge
+              variant="outline"
+              className={cn("text-xs", STATUS_COLORS[process.status])}
+            >
               {process.status}
             </Badge>
             <Badge variant="secondary" className="text-xs">
@@ -59,7 +78,11 @@ interface ProcessDetailPanelProps {
   minutas: Minuta[];
 }
 
-function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPanelProps) {
+function ProcessDetailPanel({
+  process,
+  expedientes,
+  minutas,
+}: ProcessDetailPanelProps) {
   if (!process) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -75,7 +98,8 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
     (e) =>
       e.processId === process.id ||
       e.numeroProcesso === process.numeroCNJ ||
-      e.numeroProcesso?.replace(/\D/g, "") === process.numeroCNJ.replace(/\D/g, "")
+      e.numeroProcesso?.replace(/\D/g, "") ===
+        process.numeroCNJ.replace(/\D/g, ""),
   );
 
   const processMinutas = minutas.filter((m) => m.processId === process.id);
@@ -133,31 +157,49 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Informações do Processo</CardTitle>
+                    <CardTitle className="text-sm">
+                      Informações do Processo
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-muted-foreground">Comarca</label>
-                        <p className="text-sm font-medium">{process.comarca || "—"}</p>
+                        <label className="text-xs text-muted-foreground">
+                          Comarca
+                        </label>
+                        <p className="text-sm font-medium">
+                          {process.comarca || "—"}
+                        </p>
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">Vara</label>
-                        <p className="text-sm font-medium">{process.vara || "—"}</p>
+                        <label className="text-xs text-muted-foreground">
+                          Vara
+                        </label>
+                        <p className="text-sm font-medium">
+                          {process.vara || "—"}
+                        </p>
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">Data Distribuição</label>
+                        <label className="text-xs text-muted-foreground">
+                          Data Distribuição
+                        </label>
                         <p className="text-sm font-medium">
                           {process.dataDistribuicao
-                            ? new Date(process.dataDistribuicao).toLocaleDateString("pt-BR")
+                            ? new Date(
+                                process.dataDistribuicao,
+                              ).toLocaleDateString("pt-BR")
                             : "—"}
                         </p>
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">Última Movimentação</label>
+                        <label className="text-xs text-muted-foreground">
+                          Última Movimentação
+                        </label>
                         <p className="text-sm font-medium">
                           {process.dataUltimaMovimentacao
-                            ? new Date(process.dataUltimaMovimentacao).toLocaleDateString("pt-BR")
+                            ? new Date(
+                                process.dataUltimaMovimentacao,
+                              ).toLocaleDateString("pt-BR")
                             : "—"}
                         </p>
                       </div>
@@ -190,7 +232,9 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm font-medium">{process.autor || "Não identificado"}</p>
+                    <p className="text-sm font-medium">
+                      {process.autor || "Não identificado"}
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -202,7 +246,9 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm font-medium">{process.reu || "Não identificado"}</p>
+                    <p className="text-sm font-medium">
+                      {process.reu || "Não identificado"}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -221,12 +267,16 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-sm">{exp.tipo}</CardTitle>
+                            <CardTitle className="text-sm">
+                              {exp.tipo}
+                            </CardTitle>
                             <p className="text-xs text-muted-foreground mt-1">
                               {exp.data
                                 ? new Date(exp.data).toLocaleDateString("pt-BR")
                                 : exp.dataRecebimento
-                                  ? new Date(exp.dataRecebimento).toLocaleDateString("pt-BR")
+                                  ? new Date(
+                                      exp.dataRecebimento,
+                                    ).toLocaleDateString("pt-BR")
                                   : "—"}
                             </p>
                           </div>
@@ -237,7 +287,9 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                       </CardHeader>
                       {exp.teor && (
                         <CardContent>
-                          <p className="text-xs text-muted-foreground line-clamp-3">{exp.teor}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-3">
+                            {exp.teor}
+                          </p>
                         </CardContent>
                       )}
                     </Card>
@@ -259,9 +311,13 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-sm">{minuta.titulo}</CardTitle>
+                            <CardTitle className="text-sm">
+                              {minuta.titulo}
+                            </CardTitle>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(minuta.criadoEm).toLocaleDateString("pt-BR")}
+                              {new Date(minuta.criadoEm).toLocaleDateString(
+                                "pt-BR",
+                              )}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -269,7 +325,11 @@ function ProcessDetailPanel({ process, expedientes, minutas }: ProcessDetailPane
                               {minuta.tipo}
                             </Badge>
                             <Badge
-                              variant={minuta.status === "finalizada" ? "default" : "secondary"}
+                              variant={
+                                minuta.status === "finalizada"
+                                  ? "default"
+                                  : "secondary"
+                              }
                               className="text-xs"
                             >
                               {minuta.status}
@@ -294,9 +354,12 @@ export default function ProcessCRMMasterDetail() {
   const [expedientes] = useKV<Expediente[]>("expedientes", []);
   const [minutas] = useKV<Minuta[]>("minutas", []);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
+  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(
+    null,
+  );
 
-  const selectedProcess = processes?.find((p) => p.id === selectedProcessId) || null;
+  const selectedProcess =
+    processes?.find((p) => p.id === selectedProcessId) || null;
 
   const filteredProcesses = (processes || []).filter((p) => {
     if (!searchQuery) return true;

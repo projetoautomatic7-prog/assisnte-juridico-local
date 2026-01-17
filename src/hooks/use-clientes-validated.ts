@@ -43,7 +43,9 @@ export function useClientesValidated() {
       const validation = validateCliente(newCliente);
       if (!validation.isValid) {
         console.error("Valida��o de schema falhou:", validation.errors);
-        toast.error("Dados do cliente inv�lidos. Verifique os campos obrigat�rios.");
+        toast.error(
+          "Dados do cliente inv�lidos. Verifique os campos obrigat�rios.",
+        );
         return null;
       }
 
@@ -66,7 +68,7 @@ export function useClientesValidated() {
       toast.success("Cliente adicionado com sucesso!");
       return validation.data as Cliente;
     },
-    [setClientes]
+    [setClientes],
   );
 
   // Atualizar cliente com valida��o
@@ -112,12 +114,12 @@ export function useClientesValidated() {
             return updated;
           }
           return c;
-        })
+        }),
       );
 
       return updated;
     },
-    [setClientes]
+    [setClientes],
   );
 
   // Remover cliente
@@ -126,7 +128,7 @@ export function useClientesValidated() {
       setClientes((prev) => prev.filter((c) => c.id !== id));
       toast.success("Cliente removido!");
     },
-    [setClientes]
+    [setClientes],
   );
 
   // Buscar cliente por ID
@@ -134,7 +136,7 @@ export function useClientesValidated() {
     (id: string) => {
       return clientes.find((c) => c.id === id);
     },
-    [clientes]
+    [clientes],
   );
 
   // Buscar cliente por CPF/CNPJ
@@ -143,7 +145,7 @@ export function useClientesValidated() {
       const cleanSearch = cpfCnpj.replace(/\D/g, "");
       return clientes.find((c) => c.cpfCnpj.replace(/\D/g, "") === cleanSearch);
     },
-    [clientes]
+    [clientes],
   );
 
   // Buscar clientes por nome (busca parcial)
@@ -152,7 +154,7 @@ export function useClientesValidated() {
       const lowerQuery = query.toLowerCase();
       return clientes.filter((c) => c.nome.toLowerCase().includes(lowerQuery));
     },
-    [clientes]
+    [clientes],
   );
 
   return {

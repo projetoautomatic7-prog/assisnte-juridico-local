@@ -53,7 +53,13 @@ export function useWindowSize(): WindowSizeState {
     const vp = window.visualViewport;
     if (!vp) return;
 
-    const { width = 0, height = 0, offsetTop = 0, offsetLeft = 0, scale = 0 } = vp;
+    const {
+      width = 0,
+      height = 0,
+      offsetTop = 0,
+      offsetLeft = 0,
+      scale = 0,
+    } = vp;
 
     setWindowSize((prevState) => {
       if (

@@ -87,10 +87,16 @@ const AGENTS_API =
     ? import.meta.env.VITE_AGENTS_API_URL
     : "/api/agents";
 
-async function runTraditionalFlow(agentId: string, task: unknown): Promise<unknown> {
-  const taskData = (task as { data?: Record<string, unknown>; id?: string })?.data || {};
+async function runTraditionalFlow(
+  agentId: string,
+  task: unknown,
+): Promise<unknown> {
+  const taskData =
+    (task as { data?: Record<string, unknown>; id?: string })?.data || {};
   const message =
-    (taskData.description as string) || (taskData.message as string) || JSON.stringify(taskData);
+    (taskData.description as string) ||
+    (taskData.message as string) ||
+    JSON.stringify(taskData);
 
   const response = await fetch(AGENTS_API, {
     method: "POST",
@@ -114,7 +120,7 @@ async function runTraditionalFlow(agentId: string, task: unknown): Promise<unkno
 export async function executeHybridTask(
   agentId: string,
   task: unknown,
-  config?: Partial<HybridExecutionConfig>
+  config?: Partial<HybridExecutionConfig>,
 ): Promise<HybridExecutionResult> {
   const startTime = performance.now();
   const finalConfig: HybridExecutionConfig = {
@@ -125,11 +131,15 @@ export async function executeHybridTask(
     ...config,
   };
 
-  console.log(`[Hybrid] Executing task for ${agentId} with mode: ${finalConfig.coordinationMode}`);
+  console.log(
+    `[Hybrid] Executing task for ${agentId} with mode: ${finalConfig.coordinationMode}`,
+  );
 
   try {
     // 1. Traditional Flow (Genkit)
-    let traditionalResult: { completed: boolean; data?: unknown } = { completed: false };
+    let traditionalResult: { completed: boolean; data?: unknown } = {
+      completed: false,
+    };
 
     if (finalConfig.enableTraditional) {
       try {
@@ -146,14 +156,16 @@ export async function executeHybridTask(
     }
 
     // 2. LangGraph Flow (Mocked for now, or Placeholder)
-    let langGraphResult: { completed: boolean; data?: unknown } | undefined = undefined;
+    let langGraphResult: { completed: boolean; data?: unknown } | undefined =
+      undefined;
     if (hasHybridVersion(agentId) && finalConfig.enableLangGraph) {
       // Placeholder for future LangGraph implementation
       langGraphResult = { completed: true, data: task };
     }
 
     const result: HybridExecutionResult = {
-      success: traditionalResult.completed || (langGraphResult?.completed ?? false),
+      success:
+        traditionalResult.completed || (langGraphResult?.completed ?? false),
       mode: hasHybridVersion(agentId) ? "langgraph" : "traditional", // This logic might need adjustment based on what actually ran
       executionTime: performance.now() - startTime,
       langGraphResult,
@@ -240,7 +252,10 @@ export class HybridAgentOrchestrator {
     };
   }
 
-  async executeTask(agentId: string, task: unknown): Promise<HybridExecutionResult> {
+  async executeTask(
+    agentId: string,
+    task: unknown,
+  ): Promise<HybridExecutionResult> {
     return executeHybridTask(agentId, task, this.config);
   }
 

@@ -12,7 +12,9 @@ interface DashboardActionsProps {
   readonly onNavigate: (view: ViewType) => void;
 }
 
-export function DashboardActions({ onNavigate }: Readonly<DashboardActionsProps>) {
+export function DashboardActions({
+  onNavigate,
+}: Readonly<DashboardActionsProps>) {
   return (
     <Card className="bg-linear-to-br from-neutral-2 to-neutral-3 border-neutral-6">
       <CardHeader>

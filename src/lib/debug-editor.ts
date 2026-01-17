@@ -25,14 +25,17 @@ export function debugEditorStyles(selector = ".tiptap.ProseMirror") {
   while (parent && level < 8) {
     const parentStyles = globalThis.window.getComputedStyle(parent);
 
-    console.log(`Parent level ${level} (${parent.className || parent.nodeName}):`, {
-      opacity: parentStyles.opacity,
-      filter: parentStyles.filter,
-      backdropFilter: parentStyles.backdropFilter,
-      transform: parentStyles.transform,
-      zIndex: parentStyles.zIndex,
-      position: parentStyles.position,
-    });
+    console.log(
+      `Parent level ${level} (${parent.className || parent.nodeName}):`,
+      {
+        opacity: parentStyles.opacity,
+        filter: parentStyles.filter,
+        backdropFilter: parentStyles.backdropFilter,
+        transform: parentStyles.transform,
+        zIndex: parentStyles.zIndex,
+        position: parentStyles.position,
+      },
+    );
     parent = parent.parentElement;
     level++;
   }

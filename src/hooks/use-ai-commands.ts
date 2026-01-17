@@ -25,7 +25,10 @@ interface UseAICommandsReturn {
   continuar: (texto: string, onChunk: (chunk: string) => void) => Promise<void>;
   expandir: (texto: string, onChunk: (chunk: string) => void) => Promise<void>;
   revisar: (texto: string, onChunk: (chunk: string) => void) => Promise<void>;
-  formalizar: (texto: string, onChunk: (chunk: string) => void) => Promise<void>;
+  formalizar: (
+    texto: string,
+    onChunk: (chunk: string) => void,
+  ) => Promise<void>;
   isLoading: boolean;
   error: string | null;
   canRequest: boolean;
@@ -43,7 +46,8 @@ function buildApiUrl(path: string): string | null {
   const baseFromEnv = (() => {
     if (!API_BASE_URL) return "";
     if (API_BASE_URL.startsWith("http")) return API_BASE_URL;
-    if (API_BASE_URL.startsWith("/") && browserOrigin) return `${browserOrigin}${API_BASE_URL}`;
+    if (API_BASE_URL.startsWith("/") && browserOrigin)
+      return `${browserOrigin}${API_BASE_URL}`;
     return API_BASE_URL;
   })();
 
@@ -78,13 +82,14 @@ function parseSSELine(line: string): SSEEvent | null {
   }
 }
 
-async function readJsonSafely(response: Response): Promise<Record<string, unknown>> {
+async function readJsonSafely(
+  response: Response,
+): Promise<Record<string, unknown>> {
   try {
     const data = await response.json();
-    return (data && typeof data === "object" ? (data as Record<string, unknown>) : {}) as Record<
-      string,
-      unknown
-    >;
+    return (
+      data && typeof data === "object" ? (data as Record<string, unknown>) : {}
+    ) as Record<string, unknown>;
   } catch {
     return {};
   }
@@ -94,7 +99,7 @@ async function streamSSE(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   onChunk: (chunk: string) => void,
   onDone: () => void,
-  onError: (message: string) => void
+  onError: (message: string) => void,
 ): Promise<void> {
   const decoder = new TextDecoder();
   let buffer = "";
@@ -166,7 +171,7 @@ export function useAICommands(): UseAICommandsReturn {
     if (!statusUrl) {
       if (!warnedMissingBaseRef.current) {
         console.warn(
-          "[AI Commands] API base URL ausente ou inválida; pulando verificação de status."
+          "[AI Commands] API base URL ausente ou inválida; pulando verificação de status.",
         );
         warnedMissingBaseRef.current = true;
       }
@@ -186,11 +191,14 @@ export function useAICommands(): UseAICommandsReturn {
       setWaitTime(data.rateLimit.waitTime);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      if (errorMessage.includes("Failed to fetch") && API_BASE_URL.includes("localhost")) {
+      if (
+        errorMessage.includes("Failed to fetch") &&
+        API_BASE_URL.includes("localhost")
+      ) {
         console.warn(
           `[AI Commands] ⚠️ Falha de conexão com ${API_BASE_URL}.\n` +
             `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-            `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+            `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
         );
       }
       console.error("[useAICommands] Failed to check status:", err);
@@ -198,7 +206,11 @@ export function useAICommands(): UseAICommandsReturn {
   }, []);
 
   const executeCommand = useCallback(
-    async (command: AICommand, texto: string, onChunk: (chunk: string) => void): Promise<void> => {
+    async (
+      command: AICommand,
+      texto: string,
+      onChunk: (chunk: string) => void,
+    ): Promise<void> => {
       const commandUrl = buildApiUrl(`/api/ai/${command}`);
       if (!commandUrl) {
         const message =
@@ -229,7 +241,10 @@ export function useAICommands(): UseAICommandsReturn {
           const data = await readJsonSafely(response);
           setCanRequest(false);
           const wait = typeof data.waitTime === "number" ? data.waitTime : 2000;
-          const msg = typeof data.message === "string" ? data.message : "Rate limit exceeded";
+          const msg =
+            typeof data.message === "string"
+              ? data.message
+              : "Rate limit exceeded";
           setWaitTime(wait);
           setError(msg);
           throw new Error(msg);
@@ -237,7 +252,8 @@ export function useAICommands(): UseAICommandsReturn {
 
         if (!response.ok) {
           const data = await readJsonSafely(response);
-          const msgFromApi = typeof data.message === "string" ? data.message : "";
+          const msgFromApi =
+            typeof data.message === "string" ? data.message : "";
           const errorMsg = msgFromApi || `HTTP ${response.status}`;
           setError(errorMsg);
           throw new Error(errorMsg);
@@ -258,13 +274,14 @@ export function useAICommands(): UseAICommandsReturn {
           (message) => {
             setError(message);
             throw new Error(message);
-          }
+          },
         );
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
           return;
         }
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
         setError(errorMessage);
         throw err;
       } finally {
@@ -272,31 +289,31 @@ export function useAICommands(): UseAICommandsReturn {
         abortControllerRef.current = null;
       }
     },
-    []
+    [],
   );
 
   const continuar = useCallback(
     (texto: string, onChunk: (chunk: string) => void): Promise<void> =>
       executeCommand("continuar", texto, onChunk),
-    [executeCommand]
+    [executeCommand],
   );
 
   const expandir = useCallback(
     (texto: string, onChunk: (chunk: string) => void): Promise<void> =>
       executeCommand("expandir", texto, onChunk),
-    [executeCommand]
+    [executeCommand],
   );
 
   const revisar = useCallback(
     (texto: string, onChunk: (chunk: string) => void): Promise<void> =>
       executeCommand("revisar", texto, onChunk),
-    [executeCommand]
+    [executeCommand],
   );
 
   const formalizar = useCallback(
     (texto: string, onChunk: (chunk: string) => void): Promise<void> =>
       executeCommand("formalizar", texto, onChunk),
-    [executeCommand]
+    [executeCommand],
   );
 
   return {

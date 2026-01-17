@@ -1,7 +1,13 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,7 +44,10 @@ const TeamsIcon = ({ size = 20 }: { size?: number }) => (
 );
 
 // Componente para renderizar ícone do webhook por tipo
-function WebhookTypeIcon({ type, size = 20 }: Readonly<{ type: WebhookType; size?: number }>) {
+function WebhookTypeIcon({
+  type,
+  size = 20,
+}: Readonly<{ type: WebhookType; size?: number }>) {
   switch (type) {
     case "slack":
       return <MessageSquare size={size} />;
@@ -89,7 +98,10 @@ function WebhookListContent({
   return (
     <div className="space-y-3">
       {webhooks.map((webhook) => (
-        <div key={webhook.id} className="flex items-center justify-between rounded-lg border p-3">
+        <div
+          key={webhook.id}
+          className="flex items-center justify-between rounded-lg border p-3"
+        >
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-muted p-2">
               <WebhookTypeIcon type={webhook.type} size={20} />
@@ -211,11 +223,14 @@ export function WebhooksSettings() {
     setSavingWebhook(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notifications/webhook`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newWebhook, events: ["all"] }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/webhook`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...newWebhook, events: ["all"] }),
+        },
+      );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = (await response.json()) as { webhook?: WebhookConfig };
@@ -236,9 +251,12 @@ export function WebhooksSettings() {
   // Remover webhook
   const deleteWebhook = async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notifications/webhook/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/webhook/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       setWebhooks((prev) => prev.filter((w) => w.id !== id));
@@ -288,11 +306,15 @@ export function WebhooksSettings() {
               Webhooks (Slack/Discord/Teams)
             </CardTitle>
             <CardDescription className="mt-2">
-              Receba notificações em canais externos quando novas publicações ou eventos relevantes
-              forem encontrados
+              Receba notificações em canais externos quando novas publicações ou
+              eventos relevantes forem encontrados
             </CardDescription>
           </div>
-          <Button onClick={() => setShowAddForm(true)} disabled={showAddForm} size="sm">
+          <Button
+            onClick={() => setShowAddForm(true)}
+            disabled={showAddForm}
+            size="sm"
+          >
             <Plus size={16} />
             Adicionar
           </Button>
@@ -303,7 +325,9 @@ export function WebhooksSettings() {
         {showAddForm && (
           <Alert className="border-primary/50">
             <div className="space-y-4">
-              <AlertDescription className="font-medium">Adicionar novo webhook</AlertDescription>
+              <AlertDescription className="font-medium">
+                Adicionar novo webhook
+              </AlertDescription>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1">
                   <Label htmlFor="wh-name" className="text-xs">
@@ -327,7 +351,9 @@ export function WebhooksSettings() {
                   </Label>
                   <Select
                     value={newWebhook.type}
-                    onValueChange={(v: WebhookType) => setNewWebhook((p) => ({ ...p, type: v }))}
+                    onValueChange={(v: WebhookType) =>
+                      setNewWebhook((p) => ({ ...p, type: v }))
+                    }
                   >
                     <SelectTrigger id="wh-type">
                       <SelectValue placeholder="Selecione" />
@@ -378,11 +404,19 @@ export function WebhooksSettings() {
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddForm(false)}
+                >
                   Cancelar
                 </Button>
                 <Button size="sm" onClick={addWebhook} disabled={savingWebhook}>
-                  {savingWebhook ? <Loader2 className="animate-spin" size={16} /> : "Salvar"}
+                  {savingWebhook ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    "Salvar"
+                  )}
                 </Button>
               </div>
             </div>
@@ -402,8 +436,8 @@ export function WebhooksSettings() {
           <div className="flex items-start gap-2 rounded-md bg-yellow-500/10 p-3 text-xs text-yellow-600 dark:text-yellow-400">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <p>
-              Webhooks recebem dados sensíveis sobre processos. Certifique-se de que as URLs
-              configuradas são seguras e confiáveis.
+              Webhooks recebem dados sensíveis sobre processos. Certifique-se de
+              que as URLs configuradas são seguras e confiáveis.
             </p>
           </div>
         )}

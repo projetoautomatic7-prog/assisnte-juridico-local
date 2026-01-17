@@ -114,7 +114,9 @@ class AiToolkitImpl implements AiToolkit {
     };
 
     const allowedNodes = nodeNames
-      .map((name) => `${name}${tagHints[name] ? ` (use ${tagHints[name]})` : ""}`)
+      .map(
+        (name) => `${name}${tagHints[name] ? ` (use ${tagHints[name]})` : ""}`,
+      )
       .join(", ");
     const allowedMarks = markNames.join(", ") || "nenhuma marca adicional";
 
@@ -198,7 +200,9 @@ class AiToolkitImpl implements AiToolkit {
 
   private handleRead(input: unknown): ExecuteToolResult {
     const maybe = (
-      input && typeof input === "object" ? (input as Record<string, unknown>) : {}
+      input && typeof input === "object"
+        ? (input as Record<string, unknown>)
+        : {}
     ) as Record<string, unknown>;
     const from = maybe.from;
     const to = maybe.to;
@@ -222,9 +226,16 @@ class AiToolkitImpl implements AiToolkit {
     // Use activeSelection if set, otherwise editor selection
     const selection = this._activeSelection
       ? { from: this._activeSelection.from, to: this._activeSelection.to }
-      : { from: this.editor.state.selection.from, to: this.editor.state.selection.to };
+      : {
+          from: this.editor.state.selection.from,
+          to: this.editor.state.selection.to,
+        };
 
-    const text = this.editor.state.doc.textBetween(selection.from, selection.to, "\n");
+    const text = this.editor.state.doc.textBetween(
+      selection.from,
+      selection.to,
+      "\n",
+    );
 
     return {
       output: text,
@@ -236,7 +247,9 @@ class AiToolkitImpl implements AiToolkit {
 
   private handleEdit(input: unknown): ExecuteToolResult {
     const maybe = (
-      input && typeof input === "object" ? (input as Record<string, unknown>) : {}
+      input && typeof input === "object"
+        ? (input as Record<string, unknown>)
+        : {}
     ) as Record<string, unknown>;
     const content = maybe.content;
     const from = maybe.from;

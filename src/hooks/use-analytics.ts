@@ -44,7 +44,12 @@ export function useAnalytics() {
     });
   };
 
-  const trackAction = (action: string, category?: string, label?: string, value?: number) => {
+  const trackAction = (
+    action: string,
+    category?: string,
+    label?: string,
+    value?: number,
+  ) => {
     const event: AnalyticsEvent = {
       id: crypto.randomUUID(),
       type: "action",
@@ -99,8 +104,12 @@ export function useAnalytics() {
   const getAnalytics = () => {
     const eventsList = events || [];
     const now = Date.now();
-    const last24h = eventsList.filter((e) => now - e.timestamp < 24 * 60 * 60 * 1000);
-    const last7d = eventsList.filter((e) => now - e.timestamp < 7 * 24 * 60 * 60 * 1000);
+    const last24h = eventsList.filter(
+      (e) => now - e.timestamp < 24 * 60 * 60 * 1000,
+    );
+    const last7d = eventsList.filter(
+      (e) => now - e.timestamp < 7 * 24 * 60 * 60 * 1000,
+    );
 
     const pageViews = last24h.filter((e) => e.type === "pageview");
     const actions = last24h.filter((e) => e.type === "action");
@@ -113,8 +122,8 @@ export function useAnalytics() {
           acc[path] = (acc[path] || 0) + 1;
           return acc;
         },
-        {} as Record<string, number>
-      )
+        {} as Record<string, number>,
+      ),
     )
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
@@ -126,8 +135,8 @@ export function useAnalytics() {
           acc[action] = (acc[action] || 0) + 1;
           return acc;
         },
-        {} as Record<string, number>
-      )
+        {} as Record<string, number>,
+      ),
     )
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);

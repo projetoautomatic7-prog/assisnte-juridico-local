@@ -20,7 +20,12 @@ export interface PjeDocumentData {
   reuCPF?: string;
   comarca?: string;
   vara?: string;
-  tipoDocumento?: "certidao" | "mandado" | "expedicao" | "despacho" | "sentenca";
+  tipoDocumento?:
+    | "certidao"
+    | "mandado"
+    | "expedicao"
+    | "despacho"
+    | "sentenca";
   dataExpedicao?: string;
   conteudo: string;
 }
@@ -30,7 +35,7 @@ export interface PjeDocumentData {
  */
 export async function extractTextFromImage(
   imageFile: File | string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<string> {
   try {
     const result = await Tesseract.recognize(imageFile, "por", {
@@ -81,7 +86,8 @@ function parseDatas(text: string): string[] {
   const datas: string[] = [];
 
   // Formato: DD/MM/YYYY ou DD de MMMM de YYYY
-  const regex1 = /(\d{1,2})\s{0,3}(?:de\s{1,2})?(\w{3,12})\s{1,3}(?:de\s{1,2})?(\d{4})/gi;
+  const regex1 =
+    /(\d{1,2})\s{0,3}(?:de\s{1,2})?(\w{3,12})\s{1,3}(?:de\s{1,2})?(\d{4})/gi;
   const matches1 = text.matchAll(regex1);
 
   for (const match of matches1) {
@@ -125,7 +131,9 @@ function parseDatas(text: string): string[] {
   const matches2 = text.matchAll(regex2);
 
   for (const match of matches2) {
-    datas.push(`${match[1].padStart(2, "0")}/${match[2].padStart(2, "0")}/${match[3]}`);
+    datas.push(
+      `${match[1].padStart(2, "0")}/${match[2].padStart(2, "0")}/${match[3]}`,
+    );
   }
 
   return [...new Set(datas)]; // Remove duplicatas
@@ -134,7 +142,9 @@ function parseDatas(text: string): string[] {
 /**
  * Identifica tipo de documento
  */
-function identificarTipoDocumento(text: string): PjeDocumentData["tipoDocumento"] {
+function identificarTipoDocumento(
+  text: string,
+): PjeDocumentData["tipoDocumento"] {
   const textLower = text.toLowerCase();
 
   if (textLower.includes("certidão") || textLower.includes("certifico")) {
@@ -143,7 +153,10 @@ function identificarTipoDocumento(text: string): PjeDocumentData["tipoDocumento"
   if (textLower.includes("mandado")) {
     return "mandado";
   }
-  if (textLower.includes("expedição") || textLower.includes("expedição de certidão")) {
+  if (
+    textLower.includes("expedição") ||
+    textLower.includes("expedição de certidão")
+  ) {
     return "expedicao";
   }
   if (textLower.includes("despacho")) {
@@ -203,13 +216,17 @@ export function parsePjeDocument(ocrText: string): PjeDocumentData {
   }
 
   // Autor
-  const autorMatch = ocrText.match(/AUTOR[:.]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i);
+  const autorMatch = ocrText.match(
+    /AUTOR[:.]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i,
+  );
   if (autorMatch) {
     data.autor = autorMatch[1].trim();
   }
 
   // Réu
-  const reuMatch = ocrText.match(/R[ÉE]U[:]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i);
+  const reuMatch = ocrText.match(
+    /R[ÉE]U[:]\s{0,3}([A-Z\s]{3,100})(?:\s+CPF|$)/i,
+  );
   if (reuMatch) {
     data.reu = reuMatch[1].trim();
   }
@@ -253,7 +270,7 @@ export function pjeDocumentToProcess(doc: PjeDocumentData): Partial<Process> {
  */
 export function pjeDocumentToExpediente(
   doc: PjeDocumentData,
-  processId: string
+  processId: string,
 ): Partial<Expediente> {
   return {
     processId,
@@ -269,7 +286,7 @@ export function pjeDocumentToExpediente(
  */
 export async function processarImagemPJe(
   imageFile: File,
-  onProgress?: (stage: string, progress: number) => void
+  onProgress?: (stage: string, progress: number) => void,
 ): Promise<{
   processo: Partial<Process>;
   expediente: Partial<Expediente>;

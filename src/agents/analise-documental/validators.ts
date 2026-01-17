@@ -4,7 +4,13 @@
 
 export interface AnaliseDocumentalInput {
   documentoTexto: string;
-  tipoDocumento: "contrato" | "petição" | "sentença" | "decisão" | "procuração" | "genérico";
+  tipoDocumento:
+    | "contrato"
+    | "petição"
+    | "sentença"
+    | "decisão"
+    | "procuração"
+    | "genérico";
   extrairEntidades?: boolean;
   analisarRiscos?: boolean;
 }
@@ -13,7 +19,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public field: string,
-    public receivedValue: unknown
+    public receivedValue: unknown,
   ) {
     super(message);
     this.name = "ValidationError";
@@ -30,14 +36,14 @@ const TIPOS_DOCUMENTO_VALIDOS = [
 ] as const;
 
 export function validateAnaliseDocumentalInput(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): AnaliseDocumentalInput {
   const documentoTexto = data.documentoTexto as string | undefined;
   if (!documentoTexto) {
     throw new ValidationError(
       "Campo 'documentoTexto' é obrigatório",
       "documentoTexto",
-      documentoTexto
+      documentoTexto,
     );
   }
 
@@ -45,7 +51,7 @@ export function validateAnaliseDocumentalInput(
     throw new ValidationError(
       "Campo 'documentoTexto' deve ser uma string",
       "documentoTexto",
-      documentoTexto
+      documentoTexto,
     );
   }
 
@@ -53,18 +59,20 @@ export function validateAnaliseDocumentalInput(
     throw new ValidationError(
       "Campo 'documentoTexto' deve ter entre 50 e 100.000 caracteres",
       "documentoTexto",
-      documentoTexto.length
+      documentoTexto.length,
     );
   }
 
   const tipoDocumento = (data.tipoDocumento as string) || "genérico";
   if (
-    !TIPOS_DOCUMENTO_VALIDOS.includes(tipoDocumento as (typeof TIPOS_DOCUMENTO_VALIDOS)[number])
+    !TIPOS_DOCUMENTO_VALIDOS.includes(
+      tipoDocumento as (typeof TIPOS_DOCUMENTO_VALIDOS)[number],
+    )
   ) {
     throw new ValidationError(
       `Campo 'tipoDocumento' deve ser: ${TIPOS_DOCUMENTO_VALIDOS.join(", ")}`,
       "tipoDocumento",
-      tipoDocumento
+      tipoDocumento,
     );
   }
 

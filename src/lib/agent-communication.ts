@@ -9,7 +9,11 @@
 
 import type { Agent, AgentTask } from "./agents";
 
-export type AgentMessageType = "request" | "response" | "notification" | "alert";
+export type AgentMessageType =
+  | "request"
+  | "response"
+  | "notification"
+  | "alert";
 export type AgentMessagePriority = "low" | "medium" | "high" | "critical";
 
 export interface AgentMessage {
@@ -37,7 +41,10 @@ export interface SharedContext {
 class AgentCommunicationHub {
   private messages: AgentMessage[] = [];
   private readonly contexts: Map<string, SharedContext> = new Map();
-  private readonly subscribers: Map<string, Set<(message: AgentMessage) => void>> = new Map();
+  private readonly subscribers: Map<
+    string,
+    Set<(message: AgentMessage) => void>
+  > = new Map();
 
   /**
    * Envia uma mensagem de um agente para outro (ou broadcast)
@@ -74,7 +81,10 @@ class AgentCommunicationHub {
    * Inscreve um agente para receber mensagens destinadas a ele
    * Retorna função de unsubscribe
    */
-  subscribe(agentId: string, callback: (message: AgentMessage) => void): () => void {
+  subscribe(
+    agentId: string,
+    callback: (message: AgentMessage) => void,
+  ): () => void {
     if (!this.subscribers.has(agentId)) {
       this.subscribers.set(agentId, new Set());
     }
@@ -99,16 +109,20 @@ class AgentCommunicationHub {
    * - mensagens de broadcast
    */
   getMessages(agentId: string, limit: number = 50): AgentMessage[] {
-    return this.messages.filter((m) => m.toAgentId === agentId || !m.toAgentId).slice(-limit);
+    return this.messages
+      .filter((m) => m.toAgentId === agentId || !m.toAgentId)
+      .slice(-limit);
   }
 
   /**
    * Cria ou atualiza um contexto compartilhado
    * - mesma combinação (type + createdBy) é considerada "o mesmo contexto"
    */
-  setContext(context: Omit<SharedContext, "id" | "createdAt" | "updatedAt">): SharedContext {
+  setContext(
+    context: Omit<SharedContext, "id" | "createdAt" | "updatedAt">,
+  ): SharedContext {
     const existingContext = Array.from(this.contexts.values()).find(
-      (c) => c.type === context.type && c.createdBy === context.createdBy
+      (c) => c.type === context.type && c.createdBy === context.createdBy,
     );
 
     if (existingContext) {
@@ -141,14 +155,21 @@ class AgentCommunicationHub {
    */
   getContext(agentId: string, type?: string): SharedContext[] {
     return Array.from(this.contexts.values())
-      .filter((c) => c.accessibleBy.includes(agentId) || c.accessibleBy.includes("*"))
+      .filter(
+        (c) => c.accessibleBy.includes(agentId) || c.accessibleBy.includes("*"),
+      )
       .filter((c) => !type || c.type === type);
   }
 
   /**
    * Cria uma mensagem de "pedido de ajuda" entre agentes
    */
-  requestHelp(fromAgent: Agent, toAgentId: string, task: AgentTask, reason: string): AgentMessage {
+  requestHelp(
+    fromAgent: Agent,
+    toAgentId: string,
+    task: AgentTask,
+    reason: string,
+  ): AgentMessage {
     return this.sendMessage({
       fromAgentId: fromAgent.id,
       toAgentId,
@@ -170,7 +191,7 @@ class AgentCommunicationHub {
   broadcastAlert(
     fromAgentId: string,
     message: string,
-    data?: Record<string, unknown>
+    data?: Record<string, unknown>,
   ): AgentMessage {
     return this.sendMessage({
       fromAgentId,
@@ -188,7 +209,9 @@ class AgentCommunicationHub {
     const cutoffTime = Date.now() - olderThanHours * 60 * 60 * 1000;
 
     // Mensagens
-    this.messages = this.messages.filter((m) => new Date(m.timestamp).getTime() > cutoffTime);
+    this.messages = this.messages.filter(
+      (m) => new Date(m.timestamp).getTime() > cutoffTime,
+    );
 
     // Contextos
     Array.from(this.contexts.entries()).forEach(([id, context]) => {
@@ -238,7 +261,7 @@ export const communicationHub = new AgentCommunicationHub();
 export function notifyAgents(
   fromAgentId: string,
   message: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): void {
   communicationHub.sendMessage({
     fromAgentId,
@@ -256,7 +279,7 @@ export function shareContext(
   agentId: string,
   type: string,
   data: Record<string, unknown>,
-  accessibleBy: string[] = ["*"]
+  accessibleBy: string[] = ["*"],
 ): SharedContext {
   return communicationHub.setContext({
     type,

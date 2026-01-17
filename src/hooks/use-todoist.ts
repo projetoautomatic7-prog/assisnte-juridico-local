@@ -32,7 +32,11 @@ export function useTodoist() {
       .catch(() => setIsConfigured(false));
   }, []);
 
-  const loadTasks = async (params?: { projectId?: string; label?: string; filter?: string }) => {
+  const loadTasks = async (params?: {
+    projectId?: string;
+    label?: string;
+    filter?: string;
+  }) => {
     if (!isConfigured) return;
 
     setIsLoading(true);
@@ -41,7 +45,8 @@ export function useTodoist() {
       const data = await apiCall<{ tasks: Task[] }>("getTasks", params);
       setTasks(data.tasks);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao carregar tarefas";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar tarefas";
       setError(errorMessage);
       console.error("Erro ao carregar tarefas do Todoist:", err);
     } finally {
@@ -58,7 +63,8 @@ export function useTodoist() {
       const data = await apiCall<{ projects: Project[] }>("getProjects");
       setProjects(data.projects);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao carregar projetos";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar projetos";
       setError(errorMessage);
       console.error("Erro ao carregar projetos do Todoist:", err);
     } finally {
@@ -85,7 +91,8 @@ export function useTodoist() {
       setTasks((prev) => [...prev, data.task]);
       return data.task;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao adicionar tarefa";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao adicionar tarefa";
       setError(errorMessage);
       console.error("Erro ao adicionar tarefa no Todoist:", err);
       throw err;
@@ -102,11 +109,15 @@ export function useTodoist() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiCall<{ project: Project }>("createProject", { name, color });
+      const data = await apiCall<{ project: Project }>("createProject", {
+        name,
+        color,
+      });
       setProjects((prev) => [...prev, data.project]);
       return data.project;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao criar projeto";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao criar projeto";
       setError(errorMessage);
       console.error("Erro ao criar projeto no Todoist:", err);
       throw err;
@@ -126,7 +137,8 @@ export function useTodoist() {
       await apiCall("closeTask", { id: taskId });
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao completar tarefa";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao completar tarefa";
       setError(errorMessage);
       console.error("Erro ao completar tarefa no Todoist:", err);
       throw err;
@@ -143,7 +155,7 @@ export function useTodoist() {
       dueString?: string;
       priority?: number;
       labels?: string[];
-    }
+    },
   ) => {
     if (!isConfigured) {
       throw new Error("Todoist não está configurado");
@@ -152,11 +164,15 @@ export function useTodoist() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiCall<{ task: Task }>("updateTask", { id: taskId, ...params });
+      const data = await apiCall<{ task: Task }>("updateTask", {
+        id: taskId,
+        ...params,
+      });
       setTasks((prev) => prev.map((t) => (t.id === taskId ? data.task : t)));
       return data.task;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao atualizar tarefa";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao atualizar tarefa";
       setError(errorMessage);
       console.error("Erro ao atualizar tarefa no Todoist:", err);
       throw err;
@@ -176,7 +192,8 @@ export function useTodoist() {
       await apiCall("deleteTask", { id: taskId });
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao deletar tarefa";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao deletar tarefa";
       setError(errorMessage);
       console.error("Erro ao deletar tarefa no Todoist:", err);
       throw err;

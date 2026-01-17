@@ -17,7 +17,11 @@ import { StarterKit } from "@tiptap/starter-kit";
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
-import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/tiptap-ui-primitive/toolbar";
+import {
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSeparator,
+} from "@/components/tiptap-ui-primitive/toolbar";
 
 // --- Tiptap Node ---
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
@@ -40,7 +44,11 @@ import {
 } from "@/components/tiptap-ui/color-highlight-popover";
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
-import { LinkButton, LinkContent, LinkPopover } from "@/components/tiptap-ui/link-popover";
+import {
+  LinkButton,
+  LinkContent,
+  LinkPopover,
+} from "@/components/tiptap-ui/link-popover";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
@@ -89,7 +97,10 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-        <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
+        <ListDropdownMenu
+          types={["bulletList", "orderedList", "taskList"]}
+          portal={isMobile}
+        />
         <BlockquoteButton />
         <CodeBlockButton />
       </ToolbarGroup>
@@ -164,14 +175,20 @@ const MobileToolbarContent = ({
 
     <ToolbarSeparator />
 
-    {type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
+    {type === "highlighter" ? (
+      <ColorHighlightPopoverContent />
+    ) : (
+      <LinkContent />
+    )}
   </>
 );
 
 export function SimpleEditor() {
   const isMobile = useIsBreakpoint();
   const { height } = useWindowSize();
-  const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">("main");
+  const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
+    "main",
+  );
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
@@ -252,7 +269,11 @@ export function SimpleEditor() {
           )}
         </Toolbar>
 
-        <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="simple-editor-content"
+        />
       </EditorContext.Provider>
     </div>
   );

@@ -1,10 +1,16 @@
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { createInvokeAgentSpan, createChatSpan } from "@/lib/sentry-gemini-integration-v2";
+import {
+  createInvokeAgentSpan,
+  createChatSpan,
+} from "@/lib/sentry-gemini-integration-v2";
 
 export class OrganizacaoArquivosAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // ?? Instrumentar invoca��o do agente Organiza��o de Arquivos
     return createInvokeAgentSpan(
       {
@@ -14,7 +20,9 @@ export class OrganizacaoArquivosAgent extends LangGraphAgent {
         temperature: 0.3,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `organizacao_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) ||
+          `organizacao_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -22,10 +30,13 @@ export class OrganizacaoArquivosAgent extends LangGraphAgent {
         })),
       },
       async (span) => {
-        let current = updateState(state, { currentStep: "organizacao-arquivos:start" });
+        let current = updateState(state, {
+          currentStep: "organizacao-arquivos:start",
+        });
 
         // Extrair dados dos arquivos
-        const arquivos = (state.data?.arquivos as Array<{ nome: string; tipo: string }>) || [];
+        const arquivos =
+          (state.data?.arquivos as Array<{ nome: string; tipo: string }>) || [];
         const processoId = (state.data?.processoId as string) || "";
 
         span?.setAttribute("organizacao.arquivos_count", arquivos.length);
@@ -69,7 +80,8 @@ Crie uma estrutura de pastas l�gica:
                 },
                 {
                   nome: "02_Contratos",
-                  arquivos: arquivos.filter((a) => a.tipo === "contrato").length,
+                  arquivos: arquivos.filter((a) => a.tipo === "contrato")
+                    .length,
                 },
                 {
                   nome: "03_Decisoes",
@@ -78,7 +90,7 @@ Crie uma estrutura de pastas l�gica:
                 {
                   nome: "04_Outros",
                   arquivos: arquivos.filter(
-                    (a) => !["peti��o", "contrato", "decis�o"].includes(a.tipo)
+                    (a) => !["peti��o", "contrato", "decis�o"].includes(a.tipo),
                   ).length,
                 },
               ],
@@ -89,15 +101,24 @@ Crie uma estrutura de pastas l�gica:
               totalOrganizado: arquivos.length,
             };
 
-            chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([estrutura]));
+            chatSpan?.setAttribute(
+              "gen_ai.response.text",
+              JSON.stringify([estrutura]),
+            );
             chatSpan?.setAttribute("gen_ai.usage.total_tokens", 180);
 
             return estrutura;
-          }
+          },
         );
 
-        span?.setAttribute("organizacao.pastas_criadas", categorizacao.pastas.length);
-        span?.setAttribute("organizacao.total_organizado", categorizacao.totalOrganizado);
+        span?.setAttribute(
+          "organizacao.pastas_criadas",
+          categorizacao.pastas.length,
+        );
+        span?.setAttribute(
+          "organizacao.total_organizado",
+          categorizacao.totalOrganizado,
+        );
 
         current = updateState(current, {
           currentStep: "organizacao-arquivos:done",
@@ -113,15 +134,15 @@ Crie uma estrutura de pastas l�gica:
 
         return this.addAgentMessage(
           current,
-          `Organiza��o conclu�da: ${categorizacao.totalOrganizado} arquivo(s) em ${categorizacao.pastas.length} pasta(s)`
+          `Organiza��o conclu�da: ${categorizacao.totalOrganizado} arquivo(s) em ${categorizacao.pastas.length} pasta(s)`,
         );
-      }
+      },
     );
   }
 }
 
 export async function runOrganizacaoArquivos(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new OrganizacaoArquivosAgent();
   const initialState: AgentState = {

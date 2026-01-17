@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Mic, Sparkles, StopCircle, Upload } from "lucide-react";
 import { useRef, useState } from "react";
@@ -34,7 +40,8 @@ export default function AudioTranscription() {
   // Verifica suporte a Web Speech API
   const isSpeechSupported =
     typeof globalThis !== "undefined" &&
-    ("SpeechRecognition" in globalThis || "webkitSpeechRecognition" in globalThis);
+    ("SpeechRecognition" in globalThis ||
+      "webkitSpeechRecognition" in globalThis);
 
   const handleStartRecording = () => {
     if (!isSpeechSupported) {
@@ -50,7 +57,8 @@ export default function AudioTranscription() {
 
     const SpeechRecognitionClass =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (globalThis as any).SpeechRecognition || (globalThis as any).webkitSpeechRecognition;
+      (globalThis as any).SpeechRecognition ||
+      (globalThis as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognitionClass() as SpeechRecognition;
 
     recognition.lang = "pt-BR";
@@ -110,7 +118,7 @@ export default function AudioTranscription() {
 
     // Para arquivos de áudio, informamos que precisaria de um serviço de transcrição
     setError(
-      "Transcrição de arquivos de áudio requer integração com serviço de Speech-to-Text (ex: Google Cloud Speech, Azure Speech). Use a gravação em tempo real ou cole o texto manualmente."
+      "Transcrição de arquivos de áudio requer integração com serviço de Speech-to-Text (ex: Google Cloud Speech, Azure Speech). Use a gravação em tempo real ou cole o texto manualmente.",
     );
     toast.warning("Upload de arquivos ainda não implementado com API real");
   };
@@ -154,7 +162,8 @@ Responda APENAS com JSON válido, sem texto adicional.`,
       }
 
       const data = await response.json();
-      const content = data.response || data.choices?.[0]?.message?.content || "";
+      const content =
+        data.response || data.choices?.[0]?.message?.content || "";
 
       // Parse do JSON da resposta sem regex greedy
       const startIdx = content.indexOf("{");
@@ -192,9 +201,12 @@ Responda APENAS com JSON válido, sem texto adicional.`,
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Transcrição de Áudio</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Transcrição de Áudio
+        </h1>
         <p className="text-muted-foreground mt-1">
-          Transcreva audiências e reuniões com análise inteligente (IA Real - Gemini)
+          Transcreva audiências e reuniões com análise inteligente (IA Real -
+          Gemini)
         </p>
       </div>
 
@@ -209,8 +221,8 @@ Responda APENAS com JSON válido, sem texto adicional.`,
         <div className="flex items-center gap-2 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-700 dark:text-amber-400">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="text-sm">
-            Gravação em tempo real não disponível neste navegador. Cole o texto manualmente na área
-            de transcrição.
+            Gravação em tempo real não disponível neste navegador. Cole o texto
+            manualmente na área de transcrição.
           </p>
         </div>
       )}
@@ -239,7 +251,9 @@ Responda APENAS com JSON válido, sem texto adicional.`,
               <Button
                 size="lg"
                 variant={isRecording ? "destructive" : "default"}
-                onClick={isRecording ? handleStopRecording : handleStartRecording}
+                onClick={
+                  isRecording ? handleStopRecording : handleStartRecording
+                }
                 disabled={processing || !isSpeechSupported}
                 className="w-full"
               >
@@ -265,7 +279,12 @@ Responda APENAS com JSON válido, sem texto adicional.`,
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" asChild disabled={processing}>
+              <Button
+                variant="outline"
+                className="w-full"
+                asChild
+                disabled={processing}
+              >
                 <label htmlFor="audio-upload" className="cursor-pointer">
                   <Upload className="w-5 h-5 mr-2" />
                   Enviar Arquivo
@@ -289,13 +308,17 @@ Responda APENAS com JSON válido, sem texto adicional.`,
                 Transcrição
                 {transcription && <Badge variant="default">Gemini AI</Badge>}
               </CardTitle>
-              <CardDescription>Texto convertido do áudio ou colado manualmente</CardDescription>
+              <CardDescription>
+                Texto convertido do áudio ou colado manualmente
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {processing ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Sparkles className="w-16 h-16 text-accent animate-pulse mb-4" />
-                  <p className="text-lg font-medium text-foreground">Analisando com IA Gemini...</p>
+                  <p className="text-lg font-medium text-foreground">
+                    Analisando com IA Gemini...
+                  </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     Aguarde enquanto processamos o texto
                   </p>
@@ -327,7 +350,9 @@ Responda APENAS com JSON válido, sem texto adicional.`,
                     <Sparkles className="w-5 h-5 text-accent" />
                     Sumário Executivo
                   </CardTitle>
-                  <CardDescription>Resumo dos pontos principais</CardDescription>
+                  <CardDescription>
+                    Resumo dos pontos principais
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="p-4 bg-accent/10 border border-accent/20 rounded-lg">
@@ -342,7 +367,9 @@ Responda APENAS com JSON válido, sem texto adicional.`,
                     <Sparkles className="w-5 h-5 text-accent" />
                     Itens de Ação
                   </CardTitle>
-                  <CardDescription>Próximos passos identificados</CardDescription>
+                  <CardDescription>
+                    Próximos passos identificados
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">

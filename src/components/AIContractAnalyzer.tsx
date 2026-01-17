@@ -1,11 +1,23 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { geminiGenerateJSON } from "@/lib/gemini-client";
-import { AlertCircle, CheckCircle, FileText, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  FileText,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -66,7 +78,9 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
       toast.success("Contrato analisado com sucesso!");
     } catch (error) {
       console.error("Erro ao analisar contrato:", error);
-      toast.error(error instanceof Error ? error.message : "Falha ao analisar contrato");
+      toast.error(
+        error instanceof Error ? error.message : "Falha ao analisar contrato",
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -114,7 +128,9 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
         <Card className="glassmorphic">
           <CardHeader>
             <CardTitle>Texto do Contrato</CardTitle>
-            <CardDescription>Cole o contrato para análise de riscos</CardDescription>
+            <CardDescription>
+              Cole o contrato para análise de riscos
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
@@ -124,13 +140,18 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
               className="min-h-[500px] font-mono text-sm"
             />
             <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">{contractText.length} caracteres</p>
+              <p className="text-xs text-muted-foreground">
+                {contractText.length} caracteres
+              </p>
               <Button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing || !contractText.trim()}
                 className="button-gradient"
               >
-                <Sparkles size={20} className={isAnalyzing ? "animate-spin" : ""} />
+                <Sparkles
+                  size={20}
+                  className={isAnalyzing ? "animate-spin" : ""}
+                />
                 {isAnalyzing ? "Analisando..." : "Analisar Riscos"}
               </Button>
             </div>
@@ -154,8 +175,12 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
                 <CardContent className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Score de Risco</span>
-                      <span className={`text-2xl font-bold ${getRiskColor(analysis.riskLevel)}`}>
+                      <span className="text-sm font-medium">
+                        Score de Risco
+                      </span>
+                      <span
+                        className={`text-2xl font-bold ${getRiskColor(analysis.riskLevel)}`}
+                      >
                         {analysis.riskScore}/100
                       </span>
                     </div>
@@ -164,19 +189,30 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
 
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="p-3 bg-destructive/10 rounded-lg">
-                      <AlertCircle size={24} className="mx-auto mb-1 text-destructive" />
-                      <p className="text-2xl font-bold text-destructive">{analysis.risks.length}</p>
+                      <AlertCircle
+                        size={24}
+                        className="mx-auto mb-1 text-destructive"
+                      />
+                      <p className="text-2xl font-bold text-destructive">
+                        {analysis.risks.length}
+                      </p>
                       <p className="text-xs text-muted-foreground">Riscos</p>
                     </div>
                     <div className="p-3 bg-primary/10 rounded-lg">
-                      <CheckCircle size={24} className="mx-auto mb-1 text-primary" />
+                      <CheckCircle
+                        size={24}
+                        className="mx-auto mb-1 text-primary"
+                      />
                       <p className="text-2xl font-bold text-primary">
                         {analysis.protections.length}
                       </p>
                       <p className="text-xs text-muted-foreground">Proteções</p>
                     </div>
                     <div className="p-3 bg-secondary/10 rounded-lg">
-                      <FileText size={24} className="mx-auto mb-1 text-secondary" />
+                      <FileText
+                        size={24}
+                        className="mx-auto mb-1 text-secondary"
+                      />
                       <p className="text-2xl font-bold text-secondary">
                         {analysis.keyTerms.length}
                       </p>
@@ -205,7 +241,9 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
                                 key={risk}
                                 className="text-sm flex gap-2 p-2 bg-destructive/5 rounded"
                               >
-                                <span className="text-destructive shrink-0">•</span>
+                                <span className="text-destructive shrink-0">
+                                  •
+                                </span>
                                 <span>{risk}</span>
                               </li>
                             ))}
@@ -241,7 +279,10 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
                           </h3>
                           <ul className="space-y-2">
                             {analysis.recommendations.map((rec) => (
-                              <li key={rec} className="text-sm flex gap-2 p-2 bg-accent/5 rounded">
+                              <li
+                                key={rec}
+                                className="text-sm flex gap-2 p-2 bg-accent/5 rounded"
+                              >
                                 <span className="text-accent shrink-0">•</span>
                                 <span>{rec}</span>
                               </li>
@@ -262,7 +303,9 @@ Retorne EXATAMENTE um JSON válido (sem comentários, sem texto antes ou depois)
                                 key={clause}
                                 className="text-sm flex gap-2 p-2 bg-yellow-500/5 rounded"
                               >
-                                <span className="text-yellow-500 shrink-0">•</span>
+                                <span className="text-yellow-500 shrink-0">
+                                  •
+                                </span>
                                 <span>{clause}</span>
                               </li>
                             ))}

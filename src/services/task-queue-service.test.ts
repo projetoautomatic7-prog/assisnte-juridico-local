@@ -356,7 +356,11 @@ describe("task-queue-service", () => {
         retryCount: 1,
       };
 
-      const result = handleTaskResult(task, { success: false, error: "Test error" }, config);
+      const result = handleTaskResult(
+        task,
+        { success: false, error: "Test error" },
+        config,
+      );
 
       expect(result.action).toBe("retry");
       expect(result.updatedTask.status).toBe("queued");
@@ -376,7 +380,11 @@ describe("task-queue-service", () => {
         retryCount: 3,
       };
 
-      const result = handleTaskResult(task, { success: false, error: "Final error" }, config);
+      const result = handleTaskResult(
+        task,
+        { success: false, error: "Final error" },
+        config,
+      );
 
       expect(result.action).toBe("move_to_dlq");
       expect(result.updatedTask.status).toBe("failed");

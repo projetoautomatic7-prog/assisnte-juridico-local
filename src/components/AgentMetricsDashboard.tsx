@@ -9,11 +9,23 @@
  * - Detec��o de agentes degradados
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useAgentMetrics, type AgentStats } from "@/lib/agent-metrics";
-import { Activity, AlertTriangle, CheckCircle, TrendingUp, Zap } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 
 export function AgentMetricsDashboard() {
   const allStatsRaw = useAgentMetrics(); // Sem agentId = todos os agentes
@@ -34,8 +46,8 @@ export function AgentMetricsDashboard() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Os agentes ainda n�o processaram nenhuma tarefa. As m�tricas aparecer�o aqui assim que
-            houver atividade.
+            Os agentes ainda n�o processaram nenhuma tarefa. As m�tricas
+            aparecer�o aqui assim que houver atividade.
           </p>
         </CardContent>
       </Card>
@@ -43,10 +55,14 @@ export function AgentMetricsDashboard() {
   }
 
   // Classificar por total de execu��es (mais ativo primeiro)
-  const sortedStats = [...allStats].sort((a, b) => b.totalExecutions - a.totalExecutions);
+  const sortedStats = [...allStats].sort(
+    (a, b) => b.totalExecutions - a.totalExecutions,
+  );
 
   // Detectar agentes com problemas
-  const unhealthyAgents = sortedStats.filter((s) => s.errorRate > 10 || s.p95Latency > 5000);
+  const unhealthyAgents = sortedStats.filter(
+    (s) => s.errorRate > 10 || s.p95Latency > 5000,
+  );
 
   return (
     <div className="space-y-6">
@@ -54,12 +70,16 @@ export function AgentMetricsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Execu��es</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Execu��es
+            </CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {sortedStats.reduce((sum, s) => sum + s.totalExecutions, 0).toLocaleString()}
+              {sortedStats
+                .reduce((sum, s) => sum + s.totalExecutions, 0)
+                .toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">�ltima hora</p>
           </CardContent>
@@ -67,13 +87,18 @@ export function AgentMetricsDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Taxa de Sucesso
+            </CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {(
-                (sortedStats.reduce((sum, s) => sum + s.successfulExecutions, 0) /
+                (sortedStats.reduce(
+                  (sum, s) => sum + s.successfulExecutions,
+                  0,
+                ) /
                   sortedStats.reduce((sum, s) => sum + s.totalExecutions, 0)) *
                 100
               ).toFixed(1)}
@@ -85,13 +110,16 @@ export function AgentMetricsDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lat�ncia M�dia</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Lat�ncia M�dia
+            </CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {(
-                sortedStats.reduce((sum, s) => sum + s.averageLatency, 0) / sortedStats.length
+                sortedStats.reduce((sum, s) => sum + s.averageLatency, 0) /
+                sortedStats.length
               ).toFixed(0)}
               ms
             </div>
@@ -106,7 +134,10 @@ export function AgentMetricsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(sortedStats.reduce((sum, s) => sum + s.totalTokens, 0) / 1000).toFixed(1)}k
+              {(
+                sortedStats.reduce((sum, s) => sum + s.totalTokens, 0) / 1000
+              ).toFixed(1)}
+              k
             </div>
             <p className="text-xs text-muted-foreground">�ltima hora</p>
           </CardContent>
@@ -122,20 +153,28 @@ export function AgentMetricsDashboard() {
               Agentes com Problemas Detectados
             </CardTitle>
             <CardDescription className="text-red-600 dark:text-red-400">
-              {unhealthyAgents.length} agente(s) com alta lat�ncia ou taxa de erro elevada
+              {unhealthyAgents.length} agente(s) com alta lat�ncia ou taxa de
+              erro elevada
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {unhealthyAgents.map((agent) => (
-                <div key={agent.agentId} className="flex items-center justify-between">
+                <div
+                  key={agent.agentId}
+                  className="flex items-center justify-between"
+                >
                   <span className="font-medium">{agent.agentId}</span>
                   <div className="flex gap-2">
                     {agent.errorRate > 10 && (
-                      <Badge variant="destructive">Erro: {agent.errorRate.toFixed(1)}%</Badge>
+                      <Badge variant="destructive">
+                        Erro: {agent.errorRate.toFixed(1)}%
+                      </Badge>
                     )}
                     {agent.p95Latency > 5000 && (
-                      <Badge variant="destructive">P95: {agent.p95Latency}ms</Badge>
+                      <Badge variant="destructive">
+                        P95: {agent.p95Latency}ms
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -148,11 +187,15 @@ export function AgentMetricsDashboard() {
       {/* Cards individuais por agente */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sortedStats.map((stats) => {
-          const successRate = (stats.successfulExecutions / stats.totalExecutions) * 100;
+          const successRate =
+            (stats.successfulExecutions / stats.totalExecutions) * 100;
           const isHealthy = stats.errorRate < 10 && stats.p95Latency < 5000;
 
           return (
-            <Card key={stats.agentId} className={!isHealthy ? "border-yellow-500" : ""}>
+            <Card
+              key={stats.agentId}
+              className={!isHealthy ? "border-yellow-500" : ""}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{stats.agentId}</CardTitle>
@@ -163,7 +206,8 @@ export function AgentMetricsDashboard() {
                   )}
                 </div>
                 <CardDescription>
-                  {stats.totalExecutions} execu��es � {stats.throughput.toFixed(2)}/min
+                  {stats.totalExecutions} execu��es �{" "}
+                  {stats.throughput.toFixed(2)}/min
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -171,7 +215,9 @@ export function AgentMetricsDashboard() {
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span>Taxa de Sucesso</span>
-                    <span className="font-medium">{successRate.toFixed(1)}%</span>
+                    <span className="font-medium">
+                      {successRate.toFixed(1)}%
+                    </span>
                   </div>
                   <Progress value={successRate} className="h-2" />
                 </div>
@@ -180,15 +226,21 @@ export function AgentMetricsDashboard() {
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <div className="text-muted-foreground text-xs">M�dia</div>
-                    <div className="font-medium">{stats.averageLatency.toFixed(0)}ms</div>
+                    <div className="font-medium">
+                      {stats.averageLatency.toFixed(0)}ms
+                    </div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-xs">P95</div>
-                    <div className="font-medium">{stats.p95Latency.toFixed(0)}ms</div>
+                    <div className="font-medium">
+                      {stats.p95Latency.toFixed(0)}ms
+                    </div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-xs">P99</div>
-                    <div className="font-medium">{stats.p99Latency.toFixed(0)}ms</div>
+                    <div className="font-medium">
+                      {stats.p99Latency.toFixed(0)}ms
+                    </div>
                   </div>
                 </div>
 
@@ -196,7 +248,9 @@ export function AgentMetricsDashboard() {
                 <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t">
                   <div>
                     <div className="text-muted-foreground text-xs">Tokens</div>
-                    <div className="font-medium">{(stats.totalTokens / 1000).toFixed(1)}k</div>
+                    <div className="font-medium">
+                      {(stats.totalTokens / 1000).toFixed(1)}k
+                    </div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-xs">Erros</div>

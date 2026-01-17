@@ -4,11 +4,18 @@ import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { formatErrorMessage, formatFallbackMessage, formatPetitionResult } from "./templates";
+import {
+  formatErrorMessage,
+  formatFallbackMessage,
+  formatPetitionResult,
+} from "./templates";
 import { validateRedacaoPeticoesInput, ValidationError } from "./validators";
 
 export class RedacaoPeticoesAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente completo
     return createInvokeAgentSpan(
       {
@@ -18,7 +25,8 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
         temperature: 0.5,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `redacao_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `redacao_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -33,13 +41,16 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
           const validatedInput = validateRedacaoPeticoesInput(state.data || {});
 
           span?.setAttribute("gen_ai.petition.type", validatedInput.tipo);
-          span?.setAttribute("gen_ai.petition.details_length", validatedInput.detalhes.length);
+          span?.setAttribute(
+            "gen_ai.petition.details_length",
+            validatedInput.detalhes.length,
+          );
 
           // Step 1: Generate petition
           current = updateState(current, { currentStep: "redacao:generate" });
           const geminiResponse = await generatePeticao(
             validatedInput.tipo,
-            validatedInput.detalhes
+            validatedInput.detalhes,
           );
 
           if (geminiResponse.error) {
@@ -49,10 +60,13 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
           const draft = geminiResponse.text;
 
           span?.setAttribute("gen_ai.response.length", draft.length);
-          span?.setAttribute("gen_ai.response.model", geminiResponse.metadata?.model || "unknown");
+          span?.setAttribute(
+            "gen_ai.response.model",
+            geminiResponse.metadata?.model || "unknown",
+          );
           span?.setAttribute(
             "gen_ai.usage.total_tokens",
-            geminiResponse.metadata?.totalTokens || 0
+            geminiResponse.metadata?.totalTokens || 0,
           );
 
           current = updateState(current, {
@@ -68,16 +82,23 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
           const resultMessage = formatPetitionResult(
             validatedInput.tipo,
             draft.length,
-            geminiResponse.metadata?.totalTokens
+            geminiResponse.metadata?.totalTokens,
           );
 
           return this.addAgentMessage(current, resultMessage);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Redação Petições", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Redação Petições",
+              error.field,
+              error.message,
+              error.receivedValue,
+            );
           } else {
             logStructuredError("Redação Petições", errorType, errorMessage, {
               tipo: (state.data?.tipo as string) || undefined,
@@ -93,16 +114,20 @@ export class RedacaoPeticoesAgent extends LangGraphAgent {
               ? formatErrorMessage(errorType, errorMessage, {
                   tipo: (state.data?.tipo as string) || undefined,
                 })
-              : formatFallbackMessage((state.data?.tipo as string) || undefined);
+              : formatFallbackMessage(
+                  (state.data?.tipo as string) || undefined,
+                );
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 }
 
-export async function runRedacaoPeticoes(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runRedacaoPeticoes(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new RedacaoPeticoesAgent();
   const initialState: AgentState = {
     messages: [],

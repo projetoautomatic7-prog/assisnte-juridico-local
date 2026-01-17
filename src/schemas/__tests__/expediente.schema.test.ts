@@ -58,7 +58,14 @@ describe("expedienteSchema", () => {
   });
 
   it("should validate all tipo values", () => {
-    const tipos = ["intimacao", "despacho", "decisao", "sentenca", "acordao", "outro"];
+    const tipos = [
+      "intimacao",
+      "despacho",
+      "decisao",
+      "sentenca",
+      "acordao",
+      "outro",
+    ];
 
     tipos.forEach((tipo) => {
       const expediente = {
@@ -75,7 +82,13 @@ describe("expedienteSchema", () => {
   });
 
   it("should validate all status values", () => {
-    const statuses = ["pendente", "em-analise", "processado", "arquivado", "erro"];
+    const statuses = [
+      "pendente",
+      "em-analise",
+      "processado",
+      "arquivado",
+      "erro",
+    ];
 
     statuses.forEach((status) => {
       const expediente = {

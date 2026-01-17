@@ -14,7 +14,13 @@ const dynatrace = {
 // TYPES - Compatibilidade com Sentry SDK
 // ============================================================================
 
-export type SeverityLevel = "fatal" | "error" | "warning" | "log" | "info" | "debug";
+export type SeverityLevel =
+  | "fatal"
+  | "error"
+  | "warning"
+  | "log"
+  | "info"
+  | "debug";
 
 export interface Span {
   finish(): void;
@@ -28,7 +34,9 @@ export interface Span {
 export interface Scope {
   setTag(key: string, value: string | number): void;
   setContext(name: string, context: Record<string, unknown>): void;
-  setUser(user: { id?: string; email?: string; username?: string } | null): void;
+  setUser(
+    user: { id?: string; email?: string; username?: string } | null,
+  ): void;
   clear?(): void;
 }
 
@@ -36,7 +44,10 @@ export interface Scope {
 // CORE METHODS
 // ============================================================================
 
-export function captureException(error: Error | string, context?: Record<string, unknown>): void {
+export function captureException(
+  error: Error | string,
+  context?: Record<string, unknown>,
+): void {
   const errorObj = typeof error === "string" ? new Error(error) : error;
   dynatrace.captureError(errorObj, context);
 }
@@ -45,18 +56,27 @@ export function captureMessage(
   message: string,
   level?:
     | string
-    | { level?: SeverityLevel; tags?: Record<string, string>; extra?: Record<string, unknown> }
+    | {
+        level?: SeverityLevel;
+        tags?: Record<string, string>;
+        extra?: Record<string, unknown>;
+      },
 ): void {
   const logLevel = typeof level === "string" ? level : level?.level || "info";
   dynatrace.trackEvent("log", { message, level: logLevel });
 }
 
-export function setUser(user: { id?: string; email?: string; username?: string } | null): void {
+export function setUser(
+  user: { id?: string; email?: string; username?: string } | null,
+): void {
   if (!user) return;
   dynatrace.setUser(user.id || user.username || "unknown", user.email);
 }
 
-export function setContext(name: string, context: Record<string, unknown>): void {
+export function setContext(
+  name: string,
+  context: Record<string, unknown>,
+): void {
   Object.entries(context).forEach(([key, value]) => {
     dynatrace.trackEvent(`context.${name}`, { [key]: value });
   });
@@ -94,7 +114,7 @@ export function startTransaction(context: {
 
 export function startSpan(
   context: { name: string; op?: string; attributes?: Record<string, unknown> },
-  callback: (span: Span) => any
+  callback: (span: Span) => any,
 ): any {
   const endTrace = dynatrace.startTrace(context.name);
   const span: Span = {
@@ -128,7 +148,8 @@ export function startInactiveSpan(context: {
 export function withScope(callback: (scope: Scope) => void): void {
   const scope: Scope = {
     setTag: (key: string, value: string | number) => setTag(key, String(value)),
-    setContext: (name: string, context: Record<string, unknown>) => setContext(name, context),
+    setContext: (name: string, context: Record<string, unknown>) =>
+      setContext(name, context),
     setUser: (user) => setUser(user),
     clear: () => {},
   };
@@ -142,7 +163,8 @@ export function configureScope(callback: (scope: Scope) => void): void {
 export function getCurrentScope(): Scope {
   return {
     setTag: (key: string, value: string | number) => setTag(key, String(value)),
-    setContext: (name: string, context: Record<string, unknown>) => setContext(name, context),
+    setContext: (name: string, context: Record<string, unknown>) =>
+      setContext(name, context),
     setUser: (user) => setUser(user),
     clear: () => {},
   };

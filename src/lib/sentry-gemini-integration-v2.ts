@@ -26,7 +26,11 @@
  * @version 2.1.0 - Adicionado PII filtering para LGPD compliance
  */
 
-import { DEFAULT_PII_CONFIG, sanitizePII, type PIIFilterConfig } from "@/services/pii-filtering";
+import {
+  DEFAULT_PII_CONFIG,
+  sanitizePII,
+  type PIIFilterConfig,
+} from "@/services/pii-filtering";
 import type { SpanAttributes } from "@sentry/core";
 import * as Sentry from "@sentry/react";
 
@@ -153,7 +157,7 @@ let globalGeminiConfig: GeminiIntegrationOptions = {
  */
 function sanitizeSpanAttributes(
   attributes: Record<string, unknown>,
-  config: PIIFilterConfig
+  config: PIIFilterConfig,
 ): Record<string, unknown> {
   if (!config.enabled) {
     return attributes;
@@ -168,7 +172,10 @@ function sanitizeSpanAttributes(
   return sanitized;
 }
 
-function sanitizeAttributeValue(value: unknown, config: PIIFilterConfig): unknown {
+function sanitizeAttributeValue(
+  value: unknown,
+  config: PIIFilterConfig,
+): unknown {
   if (typeof value === "string") {
     return sanitizePII(value, config);
   }
@@ -207,7 +214,10 @@ function sanitizeSpan(span: any, config: PIIFilterConfig) {
   }
 }
 
-function sanitizeTransactionSpans(transaction: any, config: PIIFilterConfig): void {
+function sanitizeTransactionSpans(
+  transaction: any,
+  config: PIIFilterConfig,
+): void {
   const spans = transaction?.spans;
   if (!Array.isArray(spans)) return;
 
@@ -217,13 +227,19 @@ function sanitizeTransactionSpans(transaction: any, config: PIIFilterConfig): vo
   }
 }
 
-function sanitizeTransactionContexts(transaction: any, config: PIIFilterConfig): void {
+function sanitizeTransactionContexts(
+  transaction: any,
+  config: PIIFilterConfig,
+): void {
   const contexts = transaction?.contexts;
   if (!contexts || typeof contexts !== "object") return;
 
   for (const [contextName, contextData] of Object.entries(contexts)) {
     if (!contextData || typeof contextData !== "object") continue;
-    contexts[contextName] = sanitizeSpanAttributes(contextData as Record<string, unknown>, config);
+    contexts[contextName] = sanitizeSpanAttributes(
+      contextData as Record<string, unknown>,
+      config,
+    );
   }
 }
 
@@ -238,7 +254,7 @@ function sanitizeTransactionContexts(transaction: any, config: PIIFilterConfig):
  * ```
  */
 export function createAISanitizingBeforeSendTransaction(
-  config: PIIFilterConfig = DEFAULT_PII_CONFIG
+  config: PIIFilterConfig = DEFAULT_PII_CONFIG,
 ) {
   return (transaction: any) => {
     if (!config.enabled) {
@@ -254,7 +270,7 @@ export function createAISanitizingBeforeSendTransaction(
 
 function buildInvokeAgentAttributesForRecording(
   config: AIAgentConfig,
-  conversation: AIConversationMetadata
+  conversation: AIConversationMetadata,
 ): Record<string, unknown> {
   const attributes: Record<string, unknown> = {
     "gen_ai.operation.name": "invoke_agent",
@@ -275,7 +291,9 @@ function buildInvokeAgentAttributesForRecording(
   }
 
   if (conversation.messages) {
-    attributes["gen_ai.request.messages"] = JSON.stringify(conversation.messages);
+    attributes["gen_ai.request.messages"] = JSON.stringify(
+      conversation.messages,
+    );
   }
 
   return attributes;
@@ -283,7 +301,7 @@ function buildInvokeAgentAttributesForRecording(
 
 function buildInvokeAgentAttributesMinimal(
   config: AIAgentConfig,
-  conversation: AIConversationMetadata
+  conversation: AIConversationMetadata,
 ): Record<string, unknown> {
   return {
     "gen_ai.operation.name": "invoke_agent",
@@ -294,7 +312,10 @@ function buildInvokeAgentAttributesMinimal(
   };
 }
 
-function buildChatSpanAttributes(config: AIAgentConfig, messages: ChatMessage[]): SpanAttributes {
+function buildChatSpanAttributes(
+  config: AIAgentConfig,
+  messages: ChatMessage[],
+): SpanAttributes {
   const attributes: SpanAttributes = {
     "gen_ai.operation.name": "chat",
     "gen_ai.system": config.system,
@@ -344,7 +365,7 @@ function buildChatSpanAttributes(config: AIAgentConfig, messages: ChatMessage[])
 export async function createInvokeAgentSpan<T>(
   config: AIAgentConfig,
   conversation: AIConversationMetadata,
-  callback: (span: Sentry.Span | undefined) => Promise<T>
+  callback: (span: Sentry.Span | undefined) => Promise<T>,
 ): Promise<T> {
   // ✅ LGPD: Sanitiza atributos antes de criar span
   const piiConfig = globalGeminiConfig.piiFilterConfig || DEFAULT_PII_CONFIG;
@@ -353,7 +374,7 @@ export async function createInvokeAgentSpan<T>(
   const sanitizedAttributes = shouldRecord
     ? sanitizeSpanAttributes(
         buildInvokeAgentAttributesForRecording(config, conversation),
-        piiConfig
+        piiConfig,
       )
     : buildInvokeAgentAttributesMinimal(config, conversation);
 
@@ -380,12 +401,12 @@ export async function createInvokeAgentSpan<T>(
 
         span?.setAttribute(
           "error.type",
-          error instanceof Error ? error.constructor.name : "UnknownError"
+          error instanceof Error ? error.constructor.name : "UnknownError",
         );
 
         throw error;
       }
-    }
+    },
   );
 }
 
@@ -420,7 +441,7 @@ export async function createInvokeAgentSpan<T>(
 export async function createChatSpan<T>(
   config: AIAgentConfig,
   messages: ChatMessage[],
-  callback: (span: Sentry.Span | undefined) => Promise<T>
+  callback: (span: Sentry.Span | undefined) => Promise<T>,
 ): Promise<T> {
   return Sentry.startSpan(
     {
@@ -441,12 +462,12 @@ export async function createChatSpan<T>(
 
         span?.setAttribute(
           "error.type",
-          error instanceof Error ? error.constructor.name : "UnknownError"
+          error instanceof Error ? error.constructor.name : "UnknownError",
         );
 
         throw error;
       }
-    }
+    },
   );
 }
 
@@ -483,7 +504,7 @@ export async function createExecuteToolSpan<T>(
     toolInput?: string;
     toolDescription?: string;
   },
-  callback: (span: Sentry.Span | undefined) => Promise<T>
+  callback: (span: Sentry.Span | undefined) => Promise<T>,
 ): Promise<T> {
   return Sentry.startSpan(
     {
@@ -496,7 +517,9 @@ export async function createExecuteToolSpan<T>(
         "gen_ai.system": config.system,
         "gen_ai.request.model": config.model,
         ...(tool.toolInput && { "gen_ai.tool.input": tool.toolInput }),
-        ...(tool.toolDescription && { "gen_ai.tool.description": tool.toolDescription }),
+        ...(tool.toolDescription && {
+          "gen_ai.tool.description": tool.toolDescription,
+        }),
       },
     },
     async (span) => {
@@ -512,12 +535,12 @@ export async function createExecuteToolSpan<T>(
 
         span?.setAttribute(
           "error.type",
-          error instanceof Error ? error.constructor.name : "UnknownError"
+          error instanceof Error ? error.constructor.name : "UnknownError",
         );
 
         throw error;
       }
-    }
+    },
   );
 }
 
@@ -534,7 +557,10 @@ export async function createExecuteToolSpan<T>(
  * await createInvokeAgentSpan({ agentName: "Mrs. Justin-e", ... }, ...);
  * ```
  */
-export async function createHandoffSpan(fromAgent: string, toAgent: string): Promise<void> {
+export async function createHandoffSpan(
+  fromAgent: string,
+  toAgent: string,
+): Promise<void> {
   return Sentry.startSpan(
     {
       name: `handoff from ${fromAgent} to ${toAgent}`,
@@ -547,7 +573,7 @@ export async function createHandoffSpan(fromAgent: string, toAgent: string): Pro
     async (span) => {
       span?.setStatus({ code: 1, message: "ok" });
       // Handoff span apenas marca a transferência, não executa código
-    }
+    },
   );
 }
 
@@ -581,7 +607,7 @@ export function useAIInstrumentation() {
   const invokeAgent = async <T>(
     config: AIAgentConfig,
     conversation: AIConversationMetadata,
-    callback: (span: Sentry.Span | undefined) => Promise<T>
+    callback: (span: Sentry.Span | undefined) => Promise<T>,
   ): Promise<T> => {
     return createInvokeAgentSpan(config, conversation, callback);
   };
@@ -589,7 +615,7 @@ export function useAIInstrumentation() {
   const chat = async <T>(
     config: AIAgentConfig,
     messages: ChatMessage[],
-    callback: (span: Sentry.Span | undefined) => Promise<T>
+    callback: (span: Sentry.Span | undefined) => Promise<T>,
   ): Promise<T> => {
     return createChatSpan(config, messages, callback);
   };
@@ -602,7 +628,7 @@ export function useAIInstrumentation() {
       toolInput?: string;
       toolDescription?: string;
     },
-    callback: (span: Sentry.Span | undefined) => Promise<T>
+    callback: (span: Sentry.Span | undefined) => Promise<T>,
   ): Promise<T> => {
     return createExecuteToolSpan(config, tool, callback);
   };
@@ -664,7 +690,7 @@ export function getGeminiIntegrationForSentry(): Array<unknown> {
 
   // Por enquanto, retorna array vazio e usa spans manuais
   console.warn(
-    "[Sentry] googleGenAIIntegration não disponível no @sentry/react v10, usando spans manuais"
+    "[Sentry] googleGenAIIntegration não disponível no @sentry/react v10, usando spans manuais",
   );
   return [];
 }
@@ -680,7 +706,10 @@ export function getGeminiIntegrationForSentry(): Array<unknown> {
 export function initGeminiIntegration(options: GeminiIntegrationOptions = {}) {
   setGeminiIntegrationOptions(options);
 
-  console.log("[Sentry] Gemini Integration configurada (usando spans manuais)", options);
+  console.log(
+    "[Sentry] Gemini Integration configurada (usando spans manuais)",
+    options,
+  );
 
   return globalGeminiConfig;
 }

@@ -21,8 +21,12 @@ export function useProcessesValidated() {
     (
       processData: Omit<
         Process,
-        "id" | "createdAt" | "updatedAt" | "dataDistribuicao" | "dataUltimaMovimentacao"
-      >
+        | "id"
+        | "createdAt"
+        | "updatedAt"
+        | "dataDistribuicao"
+        | "dataUltimaMovimentacao"
+      >,
     ) => {
       const now = new Date().toISOString();
       const newProcess = {
@@ -37,7 +41,9 @@ export function useProcessesValidated() {
       const validation = validateProcess(newProcess);
       if (!validation.isValid) {
         console.error("Valida��o falhou:", validation.errors);
-        toast.error("Dados do processo inv�lidos. Verifique os campos obrigat�rios.");
+        toast.error(
+          "Dados do processo inv�lidos. Verifique os campos obrigat�rios.",
+        );
         return null;
       }
 
@@ -45,7 +51,7 @@ export function useProcessesValidated() {
       toast.success("Processo adicionado com sucesso!");
       return validation.data as Process;
     },
-    [setProcesses]
+    [setProcesses],
   );
 
   // Atualizar processo com valida��o
@@ -74,12 +80,12 @@ export function useProcessesValidated() {
             return updated;
           }
           return p;
-        })
+        }),
       );
 
       return updated;
     },
-    [setProcesses]
+    [setProcesses],
   );
 
   // Remover processo
@@ -88,7 +94,7 @@ export function useProcessesValidated() {
       setProcesses((prev) => prev.filter((p) => p.id !== id));
       toast.success("Processo removido!");
     },
-    [setProcesses]
+    [setProcesses],
   );
 
   // Buscar processo por ID
@@ -96,7 +102,7 @@ export function useProcessesValidated() {
     (id: string) => {
       return processes.find((p) => p.id === id);
     },
-    [processes]
+    [processes],
   );
 
   // Buscar processos por status
@@ -104,7 +110,7 @@ export function useProcessesValidated() {
     (status: Process["status"]) => {
       return processes.filter((p) => p.status === status);
     },
-    [processes]
+    [processes],
   );
 
   // Processos urgentes (com prazos pr�ximos)
@@ -117,7 +123,7 @@ export function useProcessesValidated() {
         if (prazo.concluido) return false;
         const deadline = new Date(prazo.dataFinal);
         return deadline <= in5Days && deadline >= now;
-      })
+      }),
     );
   }, [processes]);
 

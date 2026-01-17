@@ -89,7 +89,8 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   [PIIType.EMAIL]: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
 
   // Telefone: (11) 98765-4321, 11987654321, +55 11 98765-4321, 11 98765-4321
-  [PIIType.TELEFONE]: /(?:\+55\s{0,1})?(?:\(?\d{2}\)?\s{0,1})?\d{4,5}[\s-]{0,1}\d{4}\b/g,
+  [PIIType.TELEFONE]:
+    /(?:\+55\s{0,1})?(?:\(?\d{2}\)?\s{0,1})?\d{4,5}[\s-]{0,1}\d{4}\b/g,
 
   // Endereço: Rua/Av + nome + número
   [PIIType.ENDERECO]:
@@ -99,7 +100,8 @@ export const PII_PATTERNS: Record<PIIType, RegExp> = {
   [PIIType.CONTA_BANCARIA]: /(?:Ag|Agência|Conta|C\/C)[\s:]{0,3}\d{3,6}-?\d?/gi,
 
   // Cartão de crédito: 1234 5678 9012 3456
-  [PIIType.CARTAO_CREDITO]: /\b\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}\b/g,
+  [PIIType.CARTAO_CREDITO]:
+    /\b\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}[\s-]{0,1}\d{4}\b/g,
 
   // RG: 12.345.678-9 ou 123456789
   [PIIType.RG]: /\b\d{1,2}\.?\d{3}\.?\d{3}-?[0-9X]\b/g,
@@ -138,7 +140,10 @@ function maskValue(value: string, config: PIIFilterConfig): string {
 /**
  * Sanitiza texto removendo/mascarando PII
  */
-export function sanitizePII(text: string, config: PIIFilterConfig = DEFAULT_PII_CONFIG): string {
+export function sanitizePII(
+  text: string,
+  config: PIIFilterConfig = DEFAULT_PII_CONFIG,
+): string {
   if (!config.enabled) {
     return text;
   }
@@ -157,7 +162,9 @@ export function sanitizePII(text: string, config: PIIFilterConfig = DEFAULT_PII_
       sanitized = sanitized.replace(pattern, customReplacement);
     } else {
       // Mascaramento padrão
-      sanitized = sanitized.replace(pattern, (match) => maskValue(match, config));
+      sanitized = sanitized.replace(pattern, (match) =>
+        maskValue(match, config),
+      );
     }
   }
 
@@ -171,7 +178,10 @@ export function sanitizePII(text: string, config: PIIFilterConfig = DEFAULT_PII_
 /**
  * Sanitiza objeto recursivamente (para JSON/spans do Sentry)
  */
-export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_CONFIG): T {
+export function sanitizeObject<T>(
+  obj: T,
+  config: PIIFilterConfig = DEFAULT_PII_CONFIG,
+): T {
   if (!config.enabled) {
     return obj;
   }
@@ -213,7 +223,7 @@ export function sanitizeObject<T>(obj: T, config: PIIFilterConfig = DEFAULT_PII_
           (sep) =>
             keyLower.startsWith(k + sep) ||
             keyLower.endsWith(sep + k) ||
-            keyLower.includes(sep + k + sep)
+            keyLower.includes(sep + k + sep),
         );
       });
     };
@@ -361,7 +371,9 @@ export type MinimalSentryEvent = {
   extra?: unknown;
 };
 
-export function createPIIFilteredBeforeSend(config: PIIFilterConfig = DEFAULT_PII_CONFIG) {
+export function createPIIFilteredBeforeSend(
+  config: PIIFilterConfig = DEFAULT_PII_CONFIG,
+) {
   return (event: unknown): MinimalSentryEvent => {
     const _event = event as MinimalSentryEvent;
     if (!config.enabled) {

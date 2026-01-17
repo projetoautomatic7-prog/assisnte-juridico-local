@@ -37,7 +37,9 @@ describe("LangGraph agent stubs (smoke tests)", () => {
 
   test("Analise Documental runs and completes", async () => {
     const documentoTexto =
-      "Documento de exemplo com conteúdo suficiente para validar o agente. ".repeat(2);
+      "Documento de exemplo com conteúdo suficiente para validar o agente. ".repeat(
+        2,
+      );
     const result = await runAnaliseDocumental({
       documentoTexto,
       tipoDocumento: "genérico",

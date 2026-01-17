@@ -1,7 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckCircle, FlaskConical, Globe, Loader2, MessageSquare, Trash2 } from "lucide-react";
+import {
+  CheckCircle,
+  FlaskConical,
+  Globe,
+  Loader2,
+  MessageSquare,
+  Trash2,
+} from "lucide-react";
 
 // Microsoft Teams icon
 export const TeamsIcon = ({ size = 20 }: { size?: number }) => (
@@ -70,7 +77,8 @@ export function WebhookList({
         <Globe size={40} className="mx-auto mb-2 opacity-50" />
         <p className="text-sm">Nenhum webhook configurado</p>
         <p className="text-xs">
-          Configure webhooks para receber notificações no Slack, Discord ou Teams
+          Configure webhooks para receber notificações no Slack, Discord ou
+          Teams
         </p>
       </div>
     );
@@ -83,11 +91,13 @@ export function WebhookList({
           key={wh.id}
           className={cn(
             "flex items-center justify-between p-3 rounded-lg border",
-            wh.enabled ? "bg-card" : "bg-muted/50 opacity-70"
+            wh.enabled ? "bg-card" : "bg-muted/50 opacity-70",
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded bg-primary/10">{getWebhookIcon(wh.type)}</div>
+            <div className="p-2 rounded bg-primary/10">
+              {getWebhookIcon(wh.type)}
+            </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm">{wh.name}</span>
@@ -101,7 +111,9 @@ export function WebhookList({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate max-w-[220px]">{wh.url}</p>
+              <p className="text-xs text-muted-foreground truncate max-w-[220px]">
+                {wh.url}
+              </p>
             </div>
           </div>
           <div className="flex gap-1">

@@ -8,24 +8,27 @@ describe("TodoistClient - integração real", () => {
     expect(typeof isConfigured).toBe("boolean");
   });
 
-  it.runIf(isConfigured)("deve criar, atualizar e concluir tarefa real", async () => {
-    const projectName = `Teste Assistente Juridico ${Date.now()}`;
-    const project = await todoistClient.createProject(projectName);
+  it.runIf(isConfigured)(
+    "deve criar, atualizar e concluir tarefa real",
+    async () => {
+      const projectName = `Teste Assistente Juridico ${Date.now()}`;
+      const project = await todoistClient.createProject(projectName);
 
-    const task = await todoistClient.addTask({
-      content: "Tarefa de teste (integração real)",
-      projectId: project.id,
-    });
+      const task = await todoistClient.addTask({
+        content: "Tarefa de teste (integração real)",
+        projectId: project.id,
+      });
 
-    const updated = await todoistClient.updateTask(task.id, {
-      content: "Tarefa de teste (atualizada)",
-    });
+      const updated = await todoistClient.updateTask(task.id, {
+        content: "Tarefa de teste (atualizada)",
+      });
 
-    await todoistClient.completeTask(task.id);
-    await todoistClient.deleteTask(task.id);
+      await todoistClient.completeTask(task.id);
+      await todoistClient.deleteTask(task.id);
 
-    expect(project).toHaveProperty("id");
-    expect(task).toHaveProperty("id");
-    expect(updated).toHaveProperty("id");
-  });
+      expect(project).toHaveProperty("id");
+      expect(task).toHaveProperty("id");
+      expect(updated).toHaveProperty("id");
+    },
+  );
 });

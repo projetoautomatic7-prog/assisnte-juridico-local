@@ -64,7 +64,9 @@ describe("Agent Workflow Integration Tests", () => {
       expect(retriedTask.status).toBe("pending_retry");
       expect(retriedTask.retryCount).toBe(1);
       expect(retriedTask.nextRunAt).toBeDefined();
-      expect(new Date(retriedTask.nextRunAt!).getTime()).toBeGreaterThan(Date.now());
+      expect(new Date(retriedTask.nextRunAt!).getTime()).toBeGreaterThan(
+        Date.now(),
+      );
     });
 
     it("should fail task after max retries exceeded", () => {
@@ -290,7 +292,9 @@ describe("Agent Workflow Integration Tests", () => {
       };
 
       expect(task.atualizadoEm).toBeTruthy();
-      expect(new Date(task.atualizadoEm!).getTime()).toBeLessThanOrEqual(Date.now());
+      expect(new Date(task.atualizadoEm!).getTime()).toBeLessThanOrEqual(
+        Date.now(),
+      );
     });
   });
 
@@ -327,7 +331,9 @@ describe("Agent Workflow Integration Tests", () => {
       // Processing time may not always be tracked, so check if defined
       if (result.processingTimeMs !== undefined) {
         expect(result.processingTimeMs).toBeGreaterThan(0);
-        expect(result.processingTimeMs).toBeLessThanOrEqual(endTime - startTime + 100);
+        expect(result.processingTimeMs).toBeLessThanOrEqual(
+          endTime - startTime + 100,
+        );
       } else {
         // If not tracked, at least verify the task completed in reasonable time
         expect(endTime - startTime).toBeLessThan(30000); // 30 seconds max

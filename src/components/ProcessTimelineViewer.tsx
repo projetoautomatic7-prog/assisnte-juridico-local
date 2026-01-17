@@ -1,10 +1,23 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Process, ProcessEvent } from "@/types";
-import { Clock, Download, ExternalLink, FileText, Filter, Workflow } from "lucide-react";
+import {
+  Clock,
+  Download,
+  ExternalLink,
+  FileText,
+  Filter,
+  Workflow,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getEventBadgeStyle } from "@/lib/themes";
@@ -72,8 +85,11 @@ export default function ProcessTimelineViewer({
 }: ProcessTimelineViewerProps) {
   const orderedEvents = useMemo(
     () =>
-      [...events].sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()),
-    [events]
+      [...events].sort(
+        (a, b) =>
+          new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime(),
+      ),
+    [events],
   );
 
   const eventsByDay = useMemo(() => {
@@ -84,12 +100,12 @@ export default function ProcessTimelineViewer({
       groups[key].push(ev);
     }
     return Object.entries(groups).sort(
-      (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
+      (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime(),
     );
   }, [orderedEvents]);
 
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>(
-    initialEventId || orderedEvents[0]?.id
+    initialEventId || orderedEvents[0]?.id,
   );
 
   const selectedEvent = orderedEvents.find((ev) => ev.id === selectedEventId);
@@ -109,14 +125,18 @@ export default function ProcessTimelineViewer({
 
       e.preventDefault();
 
-      const currentIndex = orderedEvents.findIndex((ev) => ev.id === selectedEventId);
+      const currentIndex = orderedEvents.findIndex(
+        (ev) => ev.id === selectedEventId,
+      );
       if (currentIndex === -1) return;
 
       let newIndex: number;
       if (e.key === "ArrowUp") {
-        newIndex = currentIndex > 0 ? currentIndex - 1 : orderedEvents.length - 1;
+        newIndex =
+          currentIndex > 0 ? currentIndex - 1 : orderedEvents.length - 1;
       } else {
-        newIndex = currentIndex < orderedEvents.length - 1 ? currentIndex + 1 : 0;
+        newIndex =
+          currentIndex < orderedEvents.length - 1 ? currentIndex + 1 : 0;
       }
 
       setSelectedEventId(orderedEvents[newIndex]?.id);
@@ -129,7 +149,10 @@ export default function ProcessTimelineViewer({
   // Auto-scroll para evento selecionado
   useEffect(() => {
     if (selectedEventRef.current) {
-      selectedEventRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      selectedEventRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
   }, [selectedEventId]);
 
@@ -285,7 +308,9 @@ export default function ProcessTimelineViewer({
                     >
                       <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/40">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-medium">{selectedEvent.titulo}</span>
+                          <span className="text-sm font-medium">
+                            {selectedEvent.titulo}
+                          </span>
                           <span className="text-[11px] text-muted-foreground">
                             {formatDate(selectedEvent.dataHora)} •{" "}
                             {formatTime(selectedEvent.dataHora)}
@@ -293,7 +318,11 @@ export default function ProcessTimelineViewer({
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <a href={selectedEvent.documentoUrl} target="_blank" rel="noreferrer">
+                            <a
+                              href={selectedEvent.documentoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               <ExternalLink className="h-4 w-4 mr-1" />
                               Abrir em nova aba
                             </a>
@@ -328,10 +357,12 @@ export default function ProcessTimelineViewer({
                         <FileText className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Nenhum documento selecionado</p>
+                        <p className="text-sm font-medium">
+                          Nenhum documento selecionado
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Escolha uma movimentação na linha do tempo ao lado para visualizar o
-                          documento correspondente.
+                          Escolha uma movimentação na linha do tempo ao lado
+                          para visualizar o documento correspondente.
                         </p>
                       </div>
                     </motion.div>
@@ -362,22 +393,26 @@ export default function ProcessTimelineViewer({
                             <strong>Título:</strong> {selectedEvent.titulo}
                           </p>
                           <p>
-                            <strong>Data/Hora:</strong> {formatDate(selectedEvent.dataHora)} às{" "}
+                            <strong>Data/Hora:</strong>{" "}
+                            {formatDate(selectedEvent.dataHora)} às{" "}
                             {formatTime(selectedEvent.dataHora)}
                           </p>
                           {selectedEvent.tipo && (
                             <p>
-                              <strong>Tipo:</strong> {getTipoBadge(selectedEvent.tipo).label}
+                              <strong>Tipo:</strong>{" "}
+                              {getTipoBadge(selectedEvent.tipo).label}
                             </p>
                           )}
                           {selectedEvent.descricao && (
                             <p>
-                              <strong>Descrição:</strong> {selectedEvent.descricao}
+                              <strong>Descrição:</strong>{" "}
+                              {selectedEvent.descricao}
                             </p>
                           )}
                           {selectedEvent.tribunal && (
                             <p>
-                              <strong>Tribunal:</strong> {selectedEvent.tribunal}
+                              <strong>Tribunal:</strong>{" "}
+                              {selectedEvent.tribunal}
                             </p>
                           )}
                           {selectedEvent.orgao && (
@@ -387,7 +422,8 @@ export default function ProcessTimelineViewer({
                           )}
                           {selectedEvent.source && (
                             <p>
-                              <strong>Fonte:</strong> {selectedEvent.source.toUpperCase()}
+                              <strong>Fonte:</strong>{" "}
+                              {selectedEvent.source.toUpperCase()}
                             </p>
                           )}
                           {selectedEvent.documentoUrl && (
@@ -418,9 +454,12 @@ export default function ProcessTimelineViewer({
                           <FileText className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">Nenhuma movimentação selecionada</p>
+                          <p className="text-sm font-medium">
+                            Nenhuma movimentação selecionada
+                          </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Selecione uma movimentação na linha do tempo para ver os detalhes.
+                            Selecione uma movimentação na linha do tempo para
+                            ver os detalhes.
                           </p>
                         </div>
                       </motion.div>

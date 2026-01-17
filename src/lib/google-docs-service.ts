@@ -28,7 +28,7 @@ async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries = MAX_RETRIES,
   baseDelay = BASE_RETRY_DELAY,
-  context = "operation"
+  context = "operation",
 ): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -36,7 +36,10 @@ async function retryWithBackoff<T>(
     } catch (error) {
       const isLastAttempt = i === maxRetries - 1;
       if (isLastAttempt) {
-        console.error(`[GoogleDocs] Failed ${context} after ${maxRetries} attempts`, error);
+        console.error(
+          `[GoogleDocs] Failed ${context} after ${maxRetries} attempts`,
+          error,
+        );
         throw error;
       }
 
@@ -45,7 +48,7 @@ async function retryWithBackoff<T>(
         `[GoogleDocs] ${context} failed (attempt ${
           i + 1
         }/${maxRetries}), retrying in ${delay}ms...`,
-        error
+        error,
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -83,7 +86,10 @@ class GoogleDocsService {
       this.tokenExpiry = expiry;
       const data = { token, expiry };
       localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(data));
-      debug("Token saved to localStorage", { expiresIn, expiry: new Date(expiry).toISOString() });
+      debug("Token saved to localStorage", {
+        expiresIn,
+        expiry: new Date(expiry).toISOString(),
+      });
     } catch (error) {
       debugError("Failed to save token to localStorage", error);
     }
@@ -94,7 +100,10 @@ class GoogleDocsService {
       const saved = localStorage.getItem(TOKEN_STORAGE_KEY);
       if (!saved) return;
 
-      const { token, expiry } = JSON.parse(saved) as { token: string; expiry: number };
+      const { token, expiry } = JSON.parse(saved) as {
+        token: string;
+        expiry: number;
+      };
 
       // Verificar se token ainda é válido (com margem de 5 minutos)
       const now = Date.now();
@@ -162,7 +171,8 @@ class GoogleDocsService {
 
     // Segurança para SSR / Vercel serverless
     if (globalThis.window === undefined || document === undefined) {
-      this.lastError = "Google Docs Service só pode ser inicializado no browser.";
+      this.lastError =
+        "Google Docs Service só pode ser inicializado no browser.";
       debugError(this.lastError);
       throw new Error(this.lastError);
     }
@@ -176,7 +186,9 @@ class GoogleDocsService {
       typeof (globalThis as any).jest !== "undefined";
 
     if (isTestEnv) {
-      debug("⚠️ Test environment detected - skipping real Google Docs initialization");
+      debug(
+        "⚠️ Test environment detected - skipping real Google Docs initialization",
+      );
       // Marcar como inicializado para testes
       this.gapiInited = true;
       this.gisInited = true;
@@ -250,11 +262,14 @@ class GoogleDocsService {
       }
 
       const gapiWindow = globalThis.window as unknown as { gapi?: GapiGlobal };
-      const googleWindow = globalThis.window as unknown as { google?: GoogleGisGlobal };
+      const googleWindow = globalThis.window as unknown as {
+        google?: GoogleGisGlobal;
+      };
 
       // ✅ CORREÇÃO: Verificar se scripts estão REALMENTE prontos para uso
       // Não basta ter os scripts no DOM, precisamos garantir que gapi e google.accounts estão disponíveis
-      const scriptsReady = gapiWindow.gapi && googleWindow.google?.accounts?.oauth2;
+      const scriptsReady =
+        gapiWindow.gapi && googleWindow.google?.accounts?.oauth2;
 
       if (scriptsReady) {
         debug("Scripts already loaded and ready");
@@ -284,7 +299,11 @@ class GoogleDocsService {
 
       const loadGis = () => {
         // Se já existe o script GIS no DOM, aguardar ele ficar disponível
-        if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
+        if (
+          document.querySelector(
+            'script[src*="accounts.google.com/gsi/client"]',
+          )
+        ) {
           debug("GIS script already exists in DOM, waiting for it to load...");
           checkAndResolve();
           return;
@@ -305,7 +324,9 @@ class GoogleDocsService {
         gisScript.onerror = () => {
           clearTimeout(timeout);
           // Não rejeitar, apenas logar aviso para não quebrar a app se estiver offline
-          debugError("Failed to load Google Identity Services script (offline or blocked)");
+          debugError(
+            "Failed to load Google Identity Services script (offline or blocked)",
+          );
           // Resolvemos para permitir que o app continue (funcionalidades GIS falharão graciosamente depois)
           resolve();
         };
@@ -376,7 +397,10 @@ class GoogleDocsService {
 
           const clientInit = (
             gapiWindow.gapi?.client as {
-              init?: (opts: { apiKey: string; discoveryDocs: string[] }) => Promise<void>;
+              init?: (opts: {
+                apiKey: string;
+                discoveryDocs: string[];
+              }) => Promise<void>;
             }
           )?.init;
 
@@ -412,7 +436,9 @@ class GoogleDocsService {
   private initializeGis(): void {
     debug("Initializing Google Identity Services for Docs...");
 
-    const google = (globalThis.window as unknown as { google?: GoogleGisGlobal })?.google;
+    const google = (
+      globalThis.window as unknown as { google?: GoogleGisGlobal }
+    )?.google;
     if (!google?.accounts?.oauth2) {
       this.lastError = "Google Identity Services não disponível (Docs)";
       debugError(this.lastError);
@@ -450,7 +476,8 @@ class GoogleDocsService {
     // CRÍTICO: NÃO fazer await aqui - bloqueia o popup
     // Inicialize ANTES de chamar authenticate() no componente
     if (!this.gapiInited || !this.gisInited) {
-      this.lastError = "Google Docs não inicializado. Chame initialize() antes de authenticate().";
+      this.lastError =
+        "Google Docs não inicializado. Chame initialize() antes de authenticate().";
       debugError(this.lastError);
       return false;
     }
@@ -464,7 +491,8 @@ class GoogleDocsService {
     return new Promise((resolve) => {
       // timeout de 60s para evitar ficar preso se o popup for bloqueado
       const timeout = setTimeout(() => {
-        this.lastError = "Timeout na autenticação do Docs (60s) - popup pode ter sido bloqueado";
+        this.lastError =
+          "Timeout na autenticação do Docs (60s) - popup pode ter sido bloqueado";
         debugError(this.lastError);
         resolve(false);
       }, 60000);
@@ -497,13 +525,18 @@ class GoogleDocsService {
         if (this.accessToken && gapiWindow.gapi?.client) {
           try {
             (
-              gapiWindow.gapi.client as { setToken?: (token: { access_token: string }) => void }
+              gapiWindow.gapi.client as {
+                setToken?: (token: { access_token: string }) => void;
+              }
             ).setToken?.({
               access_token: this.accessToken,
             });
             debug("gapi client token set from Docs GIS access_token");
           } catch (err) {
-            debugError("Failed to set gapi client token for Docs (non-fatal)", err);
+            debugError(
+              "Failed to set gapi client token for Docs (non-fatal)",
+              err,
+            );
           }
         }
 
@@ -528,7 +561,9 @@ class GoogleDocsService {
     });
   }
 
-  async createDocument(minuta: Minuta): Promise<{ docId: string; url: string } | null> {
+  async createDocument(
+    minuta: Minuta,
+  ): Promise<{ docId: string; url: string } | null> {
     debug("Creating Docs document from minuta...", { titulo: minuta.titulo });
 
     if (!GOOGLE_DOCS_CONFIGURED) {
@@ -568,7 +603,7 @@ class GoogleDocsService {
         },
         MAX_RETRIES,
         BASE_RETRY_DELAY,
-        "createDocument"
+        "createDocument",
       );
 
       const docId = createResponse.result?.documentId;
@@ -598,8 +633,14 @@ class GoogleDocsService {
     }
   }
 
-  async updateDocumentContent(docId: string, content: string): Promise<boolean> {
-    debug("Updating Docs document content...", { docId, length: content.length });
+  async updateDocumentContent(
+    docId: string,
+    content: string,
+  ): Promise<boolean> {
+    debug("Updating Docs document content...", {
+      docId,
+      length: content.length,
+    });
 
     if (!GOOGLE_DOCS_CONFIGURED) {
       this.lastError =
@@ -636,11 +677,14 @@ class GoogleDocsService {
       // Primeiro, obter tamanho do documento para limpar conteúdo existente
       const docResponse = await this.getDocumentMetadata(docId);
       const endIndex =
-        docResponse?.body?.content?.[docResponse.body.content.length - 1]?.endIndex ?? 1;
+        docResponse?.body?.content?.[docResponse.body.content.length - 1]
+          ?.endIndex ?? 1;
 
       // Estratégia melhorada: deletar conteúdo antigo e inserir novo
       const requests: Array<{
-        deleteContentRange?: { range: { startIndex: number; endIndex: number } };
+        deleteContentRange?: {
+          range: { startIndex: number; endIndex: number };
+        };
         insertText?: { location: { index: number }; text: string };
       }> = [];
 
@@ -679,7 +723,7 @@ class GoogleDocsService {
         },
         MAX_RETRIES,
         BASE_RETRY_DELAY,
-        "updateDocumentContent"
+        "updateDocumentContent",
       );
 
       debug("Docs document content updated successfully");
@@ -693,7 +737,9 @@ class GoogleDocsService {
     }
   }
 
-  private async getDocumentMetadata(docId: string): Promise<DocsDocument | null> {
+  private async getDocumentMetadata(
+    docId: string,
+  ): Promise<DocsDocument | null> {
     try {
       const gapiWindow = globalThis.window as unknown as { gapi?: GapiGlobal };
       const docsApi = (gapiWindow.gapi?.client as { docs?: DocsClient }).docs;
@@ -753,7 +799,7 @@ class GoogleDocsService {
         },
         MAX_RETRIES,
         BASE_RETRY_DELAY,
-        "getDocumentContent"
+        "getDocumentContent",
       );
 
       const doc = response.result;
@@ -762,11 +808,13 @@ class GoogleDocsService {
       if (doc?.body?.content) {
         doc.body.content.forEach((element: DocumentElement) => {
           if (element.paragraph?.elements) {
-            element.paragraph.elements.forEach((paragraphElement: ParagraphElement) => {
-              if (paragraphElement.textRun?.content) {
-                text += paragraphElement.textRun.content;
-              }
-            });
+            element.paragraph.elements.forEach(
+              (paragraphElement: ParagraphElement) => {
+                if (paragraphElement.textRun?.content) {
+                  text += paragraphElement.textRun.content;
+                }
+              },
+            );
           }
         });
       }
@@ -827,7 +875,9 @@ class GoogleDocsService {
   revokeAccess(): void {
     debug("Revoking Docs access...");
     if (this.accessToken) {
-      const google = (globalThis.window as unknown as { google?: GoogleGisGlobal })?.google;
+      const google = (
+        globalThis.window as unknown as { google?: GoogleGisGlobal }
+      )?.google;
       try {
         google?.accounts.oauth2.revoke(this.accessToken);
         debug("Docs access revoked");

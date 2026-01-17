@@ -19,7 +19,8 @@ export default function FluentAnimationsShowcase() {
             Animações Fluent Motion
           </h1>
           <p className="text-muted-foreground">
-            Sistema completo de animações suaves e sofisticadas inspirado no Windows 11
+            Sistema completo de animações suaves e sofisticadas inspirado no
+            Windows 11
           </p>
         </div>
       </FluentMotion>
@@ -99,7 +100,9 @@ export default function FluentAnimationsShowcase() {
               {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                 <FluentStaggerItem key={item}>
                   <div className="windows-card p-4 text-center reveal-hover">
-                    <div className="text-2xl font-bold text-primary">{item}</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {item}
+                    </div>
                     <div className="text-xs text-muted-foreground">Item</div>
                   </div>
                 </FluentStaggerItem>
@@ -122,7 +125,9 @@ export default function FluentAnimationsShowcase() {
               </FluentHover>
               <div className="windows-card p-4 text-center reveal-hover cursor-pointer">
                 <p className="font-medium">Reveal Effect</p>
-                <p className="text-xs text-muted-foreground">Windows 11 signature</p>
+                <p className="text-xs text-muted-foreground">
+                  Windows 11 signature
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -160,10 +165,13 @@ export default function FluentAnimationsShowcase() {
         <Card className="windows-card border-primary/20">
           <CardContent className="p-6">
             <div className="text-center space-y-4">
-              <h3 className="text-xl font-semibold">Sistema Completo Implementado</h3>
+              <h3 className="text-xl font-semibold">
+                Sistema Completo Implementado
+              </h3>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Todas as animações seguem as diretrizes de Fluent Motion do Windows 11, com curvas
-                de easing personalizadas, durações otimizadas e suporte para redução de movimento
+                Todas as animações seguem as diretrizes de Fluent Motion do
+                Windows 11, com curvas de easing personalizadas, durações
+                otimizadas e suporte para redução de movimento
                 (prefers-reduced-motion).
               </p>
               <div className="flex gap-4 justify-center pt-4">

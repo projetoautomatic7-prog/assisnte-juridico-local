@@ -11,7 +11,11 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useExpedientes } from "@/hooks/use-expedientes";
 import { useKV } from "@/hooks/use-kv";
@@ -123,9 +127,14 @@ function generateId(): string {
   return `notif-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterProps>) {
+export function NotificationCenter({
+  onNavigate,
+}: Readonly<NotificationCenterProps>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useKV<Notification[]>("notifications", []);
+  const [notifications, setNotifications] = useKV<Notification[]>(
+    "notifications",
+    [],
+  );
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const prevCountRef = useRef(0);
   const { expedientes } = useExpedientes(); // ✅ Expedientes reais para notificações
@@ -163,25 +172,27 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
       };
 
       setNotifications(
-        (current) => [newNotification, ...(current || [])].slice(0, 100) // limite de 100 últimas
+        (current) => [newNotification, ...(current || [])].slice(0, 100), // limite de 100 últimas
       );
     },
-    [setNotifications]
+    [setNotifications],
   );
 
   // Marcar como lida
   const markAsRead = useCallback(
     (id: string) => {
       setNotifications((current) =>
-        (current || []).map((n) => (n.id === id ? { ...n, read: true } : n))
+        (current || []).map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
     },
-    [setNotifications]
+    [setNotifications],
   );
 
   // Marcar todas como lidas
   const markAllAsRead = useCallback(() => {
-    setNotifications((current) => (current || []).map((n) => ({ ...n, read: true })));
+    setNotifications((current) =>
+      (current || []).map((n) => ({ ...n, read: true })),
+    );
     setHasNewNotifications(false);
   }, [setNotifications]);
 
@@ -190,7 +201,7 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
     (id: string) => {
       setNotifications((current) => (current || []).filter((n) => n.id !== id));
     },
-    [setNotifications]
+    [setNotifications],
   );
 
   // Limpar todas
@@ -215,9 +226,13 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
   useEffect(() => {
     const currentCount = expedientes?.length || 0;
 
-    if (currentCount > prevExpedientesCountRef.current && prevExpedientesCountRef.current > 0) {
+    if (
+      currentCount > prevExpedientesCountRef.current &&
+      prevExpedientesCountRef.current > 0
+    ) {
       const novosExpedientes =
-        expedientes?.slice(0, currentCount - prevExpedientesCountRef.current) || [];
+        expedientes?.slice(0, currentCount - prevExpedientesCountRef.current) ||
+        [];
 
       novosExpedientes.forEach((exp: Expediente) => {
         addNotification({
@@ -258,7 +273,11 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
           variant="ghost"
           size="icon"
           className="relative"
-          title={unreadCount > 0 ? `${unreadCount} notificação(ões) não lida(s)` : "Notificações"}
+          title={
+            unreadCount > 0
+              ? `${unreadCount} notificação(ões) não lida(s)`
+              : "Notificações"
+          }
         >
           {hasNewNotifications || unreadCount > 0 ? (
             <BellRing className="w-5 h-5 animate-pulse" />
@@ -281,7 +300,12 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
           <h3 className="font-semibold">Notificações</h3>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-7">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs h-7"
+              >
                 Marcar como lidas
               </Button>
             )}
@@ -306,20 +330,26 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-20" />
               <p className="text-sm">Nenhuma notificação</p>
               <p className="text-xs mt-1 opacity-70">
-                Você será notificado sobre prazos, intimações e tarefas dos agentes.
+                Você será notificado sobre prazos, intimações e tarefas dos
+                agentes.
               </p>
             </div>
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => {
-                const config = notificationConfig[notification.type] || notificationConfig.sistema;
+                const config =
+                  notificationConfig[notification.type] ||
+                  notificationConfig.sistema;
 
                 let relativeTime = "";
                 try {
-                  relativeTime = formatDistanceToNow(new Date(notification.createdAt), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  });
+                  relativeTime = formatDistanceToNow(
+                    new Date(notification.createdAt),
+                    {
+                      addSuffix: true,
+                      locale: ptBR,
+                    },
+                  );
                 } catch {
                   relativeTime = "";
                 }
@@ -358,7 +388,9 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
                         {notification.message}
                       </p>
                       {relativeTime && (
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">{relativeTime}</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          {relativeTime}
+                        </p>
                       )}
                     </div>
 
@@ -383,7 +415,8 @@ export function NotificationCenter({ onNavigate }: Readonly<NotificationCenterPr
         {(notifications?.length || 0) > 0 && (
           <div className="px-4 py-2 border-t bg-muted/30">
             <p className="text-xs text-center text-muted-foreground">
-              {notifications?.length} notificação(ões) • {unreadCount} não lida(s)
+              {notifications?.length} notificação(ões) • {unreadCount} não
+              lida(s)
             </p>
           </div>
         )}

@@ -50,7 +50,7 @@ export function useAutoMinuta() {
         task.type === "DRAFT_PETITION" &&
         task.status === "completed" &&
         task.result?.data?.draft &&
-        !processedTasksRef.current.has(task.id)
+        !processedTasksRef.current.has(task.id),
     );
 
     if (petitionTasks.length === 0) return;
@@ -77,7 +77,7 @@ export function useAutoMinuta() {
       setMinutas((current) => [...(current || []), ...newMinutas]);
       localStorage.setItem(
         "processed-petition-tasks",
-        JSON.stringify([...processedTasksRef.current])
+        JSON.stringify([...processedTasksRef.current]),
       );
       setProcessedTasksCount(processedTasksRef.current.size);
     }
@@ -86,11 +86,13 @@ export function useAutoMinuta() {
   const stats = useMemo(
     () => ({
       minutasTotal: minutas?.length || 0,
-      minutasPendentesRevisao: minutas?.filter((m) => m.status === "pendente-revisao").length || 0,
-      minutasCriadasPorAgente: minutas?.filter((m) => m.criadoPorAgente).length || 0,
+      minutasPendentesRevisao:
+        minutas?.filter((m) => m.status === "pendente-revisao").length || 0,
+      minutasCriadasPorAgente:
+        minutas?.filter((m) => m.criadoPorAgente).length || 0,
       processedTasksCount,
     }),
-    [minutas?.length, processedTasksCount]
+    [minutas?.length, processedTasksCount],
   );
 
   return stats;

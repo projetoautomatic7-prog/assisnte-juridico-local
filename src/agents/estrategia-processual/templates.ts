@@ -2,7 +2,11 @@
  * Templates para Estratégia Processual
  */
 
-export function formatStrategyResult(tipo: string, fase: string, acoes: number): string {
+export function formatStrategyResult(
+  tipo: string,
+  fase: string,
+  acoes: number,
+): string {
   return `
 ⚖️ **Estratégia Processual Definida**
 
@@ -14,7 +18,10 @@ export function formatStrategyResult(tipo: string, fase: string, acoes: number):
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro na definição de estratégia: ${errorMessage}`;
 }
 

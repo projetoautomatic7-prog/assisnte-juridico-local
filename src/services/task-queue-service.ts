@@ -52,14 +52,17 @@ const DEFAULT_CONFIG: TaskQueueConfig = {
  */
 export function calculateRetryDelay(
   retryCount: number,
-  config: TaskQueueConfig = DEFAULT_CONFIG
+  config: TaskQueueConfig = DEFAULT_CONFIG,
 ): number {
   if (!config.exponentialBackoff) {
     return config.retryDelayMs;
   }
 
   // 2^retryCount * baseDelay, com limite máximo
-  const delay = Math.min(config.retryDelayMs * Math.pow(2, retryCount), config.maxRetryDelayMs);
+  const delay = Math.min(
+    config.retryDelayMs * Math.pow(2, retryCount),
+    config.maxRetryDelayMs,
+  );
 
   // Adiciona jitter de ±20% para evitar thundering herd
   const jitter = delay * 0.2 * (Math.random() - 0.5);
@@ -72,7 +75,7 @@ export function calculateRetryDelay(
  */
 export function canRetryTask(
   task: TaskWithRetry,
-  config: TaskQueueConfig = DEFAULT_CONFIG
+  config: TaskQueueConfig = DEFAULT_CONFIG,
 ): boolean {
   return task.retryCount < config.maxRetries;
 }
@@ -95,7 +98,7 @@ export function isTaskReadyForRetry(task: TaskWithRetry): boolean {
 export function prepareTaskForRetry(
   task: TaskWithRetry,
   error: string,
-  config: TaskQueueConfig = DEFAULT_CONFIG
+  config: TaskQueueConfig = DEFAULT_CONFIG,
 ): TaskWithRetry {
   const retryCount = task.retryCount + 1;
 
@@ -127,7 +130,10 @@ export function prepareTaskForRetry(
 /**
  * Move tarefa para Dead Letter Queue
  */
-export function moveTaskToDLQ(task: TaskWithRetry, finalError: string): DeadLetterTask {
+export function moveTaskToDLQ(
+  task: TaskWithRetry,
+  finalError: string,
+): DeadLetterTask {
   // Sentry error: tarefa movida para DLQ após todos os retries
   Sentry.captureException(new Error(`Task moved to DLQ: ${finalError}`), {
     level: "warning",
@@ -160,7 +166,9 @@ export function moveTaskToDLQ(task: TaskWithRetry, finalError: string): DeadLett
  * Filtra tarefas prontas para execução
  */
 export function getReadyTasks(queue: TaskWithRetry[]): TaskWithRetry[] {
-  return queue.filter((task) => task.status === "queued" && isTaskReadyForRetry(task));
+  return queue.filter(
+    (task) => task.status === "queued" && isTaskReadyForRetry(task),
+  );
 }
 
 /**
@@ -168,9 +176,11 @@ export function getReadyTasks(queue: TaskWithRetry[]): TaskWithRetry[] {
  */
 export function getFailedTasks(
   queue: TaskWithRetry[],
-  config: TaskQueueConfig = DEFAULT_CONFIG
+  config: TaskQueueConfig = DEFAULT_CONFIG,
 ): TaskWithRetry[] {
-  return queue.filter((task) => task.status === "failed" && task.retryCount >= config.maxRetries);
+  return queue.filter(
+    (task) => task.status === "failed" && task.retryCount >= config.maxRetries,
+  );
 }
 
 /**
@@ -179,7 +189,7 @@ export function getFailedTasks(
 export function handleTaskResult(
   task: TaskWithRetry,
   result: { success: boolean; error?: string },
-  config: TaskQueueConfig = DEFAULT_CONFIG
+  config: TaskQueueConfig = DEFAULT_CONFIG,
 ): {
   action: "complete" | "retry" | "move_to_dlq";
   updatedTask: TaskWithRetry | DeadLetterTask;
@@ -241,7 +251,10 @@ export interface QueueMetrics {
 /**
  * Calcula métricas da fila e envia para Sentry
  */
-export function calculateQueueMetrics(queue: TaskWithRetry[], dlq: DeadLetterTask[]): QueueMetrics {
+export function calculateQueueMetrics(
+  queue: TaskWithRetry[],
+  dlq: DeadLetterTask[],
+): QueueMetrics {
   const total = queue.length;
   const queued = queue.filter((t) => t.status === "queued").length;
   const processing = queue.filter((t) => t.status === "processing").length;

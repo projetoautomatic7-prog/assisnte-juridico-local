@@ -27,7 +27,7 @@ declare global {
     trustedTypes?: {
       createPolicy: (
         policyName: string,
-        rules: Partial<FullTrustedTypePolicy>
+        rules: Partial<FullTrustedTypePolicy>,
       ) => FullTrustedTypePolicy;
       isHTML?: (value: unknown) => value is TrustedHTML;
     };
@@ -36,7 +36,8 @@ declare global {
 
 // Estado - usando tipo union para aceitar políticas parciais
 let defaultPolicy: FullTrustedTypePolicy | null = null;
-let sanitizerPolicy: Pick<FullTrustedTypePolicy, "name" | "createHTML"> | null = null;
+let sanitizerPolicy: Pick<FullTrustedTypePolicy, "name" | "createHTML"> | null =
+  null;
 
 // Lista de domínios permitidos para scripts
 const ALLOWED_SCRIPT_ORIGINS = [
@@ -165,7 +166,10 @@ function sanitizeAttribute(element: Element, attr: Attr): void {
   }
 
   // Verifica valores de href/src perigosos
-  if ((attrName === "href" || attrName === "src") && isDangerousUrlValue(attr.value)) {
+  if (
+    (attrName === "href" || attrName === "src") &&
+    isDangerousUrlValue(attr.value)
+  ) {
     element.removeAttribute(attr.name);
     return;
   }
@@ -232,14 +236,16 @@ function sanitizeHTML(html: string): string {
 function matchesWildcardOrigin(
   parsedOrigin: string,
   parsedHref: string,
-  allowedPattern: string
+  allowedPattern: string,
 ): boolean {
   if (allowedPattern.includes("*")) {
     const pattern = allowedPattern.replace("*", "[^/]+");
     const regex = new RegExp(`^${pattern}$`);
     return regex.test(parsedOrigin);
   }
-  return parsedOrigin === allowedPattern || parsedHref.startsWith(allowedPattern);
+  return (
+    parsedOrigin === allowedPattern || parsedHref.startsWith(allowedPattern)
+  );
 }
 
 /**
@@ -256,7 +262,7 @@ function validateScriptURL(url: string): boolean {
 
     // Verifica contra lista de origens permitidas
     return ALLOWED_SCRIPT_ORIGINS.some((allowed) =>
-      matchesWildcardOrigin(parsed.origin, parsed.href, allowed)
+      matchesWildcardOrigin(parsed.origin, parsed.href, allowed),
     );
   } catch {
     return false;
@@ -278,7 +284,10 @@ export function initTrustedTypes(): void {
       createHTML: (input: string) => {
         // Log para debugging em dev
         if (import.meta.env.DEV) {
-          console.warn("🔒 Trusted Types (default): createHTML chamado", input.substring(0, 100));
+          console.warn(
+            "🔒 Trusted Types (default): createHTML chamado",
+            input.substring(0, 100),
+          );
         }
         // Sanitiza input
         return sanitizeHTML(input);
@@ -298,9 +307,12 @@ export function initTrustedTypes(): void {
     });
 
     // Política para sanitização de HTML do usuário
-    sanitizerPolicy = globalThis.window.trustedTypes!.createPolicy("sanitizer", {
-      createHTML: (input: string) => sanitizeHTML(input),
-    });
+    sanitizerPolicy = globalThis.window.trustedTypes!.createPolicy(
+      "sanitizer",
+      {
+        createHTML: (input: string) => sanitizeHTML(input),
+      },
+    );
 
     // Política para o React (innerHTML interno)
     globalThis.window.trustedTypes!.createPolicy("react", {
@@ -311,7 +323,10 @@ export function initTrustedTypes(): void {
     globalThis.window.trustedTypes!.createPolicy("gtm", {
       createScript: (input: string) => input,
       createScriptURL: (input: string) => {
-        if (input.includes("googletagmanager.com") || input.includes("google-analytics.com")) {
+        if (
+          input.includes("googletagmanager.com") ||
+          input.includes("google-analytics.com")
+        ) {
           return input;
         }
         return "about:blank";
@@ -321,7 +336,10 @@ export function initTrustedTypes(): void {
     // Política para Sentry
     globalThis.window.trustedTypes!.createPolicy("sentry", {
       createScriptURL: (input: string) => {
-        if (input.includes("sentry.io") || input.includes("browser.sentry-cdn.com")) {
+        if (
+          input.includes("sentry.io") ||
+          input.includes("browser.sentry-cdn.com")
+        ) {
           return input;
         }
         return "about:blank";
@@ -329,7 +347,7 @@ export function initTrustedTypes(): void {
     });
 
     console.log(
-      "✅ Trusted Types inicializado com políticas: default, sanitizer, react, gtm, sentry"
+      "✅ Trusted Types inicializado com políticas: default, sanitizer, react, gtm, sentry",
     );
   } catch (error) {
     console.error("❌ Falha ao inicializar Trusted Types:", error);
@@ -406,6 +424,9 @@ export function getDefaultPolicy(): FullTrustedTypePolicy | null {
 /**
  * Retorna a política de sanitização (para uso avançado)
  */
-export function getSanitizerPolicy(): Pick<FullTrustedTypePolicy, "name" | "createHTML"> | null {
+export function getSanitizerPolicy(): Pick<
+  FullTrustedTypePolicy,
+  "name" | "createHTML"
+> | null {
   return sanitizerPolicy;
 }

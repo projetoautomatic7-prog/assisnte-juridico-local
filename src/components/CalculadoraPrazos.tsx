@@ -28,10 +28,11 @@ import { toast } from "sonner";
 // Helper: retorna placeholder para SelectValue de expediente (S3358)
 function getExpedientePlaceholder(
   selectedProcessId: string | null,
-  expedientesCount: number
+  expedientesCount: number,
 ): string {
   if (!selectedProcessId) return "Selecione primeiro um processo";
-  if (expedientesCount === 0) return "Nenhuma intimação vinculada a este processo";
+  if (expedientesCount === 0)
+    return "Nenhuma intimação vinculada a este processo";
   return "Selecione uma intimação";
 }
 
@@ -55,7 +56,9 @@ export default function CalculadoraPrazos() {
   const [selectedProcessId, setSelectedProcessId] = useState<string>("");
   const [selectedExpedienteId, setSelectedExpedienteId] = useState<string>("");
 
-  const [dataInicio, setDataInicio] = useState(new Date().toISOString().split("T")[0]);
+  const [dataInicio, setDataInicio] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [diasCorridos, setDiasCorridos] = useState("15");
   const [tipoPrazo, setTipoPrazo] = useState<"cpc" | "clt">("cpc");
   const [descricao, setDescricao] = useState("");
@@ -65,12 +68,15 @@ export default function CalculadoraPrazos() {
 
   const processosAtivos = useMemo(
     () => (processes || []).filter((p) => p.status === "ativo"),
-    [processes]
+    [processes],
   );
 
   const expedientesDoProcesso = useMemo(
-    () => (expedientes || []).filter((e) => e.processId === selectedProcessId && !e.arquivado),
-    [expedientes, selectedProcessId]
+    () =>
+      (expedientes || []).filter(
+        (e) => e.processId === selectedProcessId && !e.arquivado,
+      ),
+    [expedientes, selectedProcessId],
   );
 
   const handleCalcular = () => {
@@ -85,7 +91,9 @@ export default function CalculadoraPrazos() {
     }
 
     const dataFinal =
-      tipoPrazo === "cpc" ? calcularPrazoCPC(inicio, dias) : calcularPrazoCLT(inicio, dias);
+      tipoPrazo === "cpc"
+        ? calcularPrazoCPC(inicio, dias)
+        : calcularPrazoCLT(inicio, dias);
 
     setResultado(dataFinal);
   };
@@ -181,7 +189,9 @@ export default function CalculadoraPrazos() {
 
     setProcesses((current) => {
       const processesList = current || [];
-      const processIndex = processesList.findIndex((p) => p.id === selectedProcessId);
+      const processIndex = processesList.findIndex(
+        (p) => p.id === selectedProcessId,
+      );
 
       if (processIndex === -1) {
         toast.error("Processo não encontrado");
@@ -218,10 +228,12 @@ export default function CalculadoraPrazos() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Calculadora de Prazos</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+          Calculadora de Prazos
+        </h1>
         <p className="text-muted-foreground">
-          Calcule prazos processuais com base nas intimações recebidas nos expedientes e salve
-          diretamente no Acervo.
+          Calcule prazos processuais com base nas intimações recebidas nos
+          expedientes e salve diretamente no Acervo.
         </p>
       </div>
 
@@ -239,7 +251,10 @@ export default function CalculadoraPrazos() {
                 tooltip="Selecione o processo do Acervo ao qual o prazo será vinculado."
                 required
               />
-              <Select value={selectedProcessId} onValueChange={handleSelecionarProcesso}>
+              <Select
+                value={selectedProcessId}
+                onValueChange={handleSelecionarProcesso}
+              >
                 <SelectTrigger id="processo">
                   <SelectValue placeholder="Selecione um processo" />
                 </SelectTrigger>
@@ -267,20 +282,23 @@ export default function CalculadoraPrazos() {
               <Select
                 value={selectedExpedienteId}
                 onValueChange={handleSelecionarExpediente}
-                disabled={!selectedProcessId || expedientesDoProcesso.length === 0}
+                disabled={
+                  !selectedProcessId || expedientesDoProcesso.length === 0
+                }
               >
                 <SelectTrigger id="expediente">
                   <SelectValue
                     placeholder={getExpedientePlaceholder(
                       selectedProcessId,
-                      expedientesDoProcesso.length
+                      expedientesDoProcesso.length,
                     )}
                   />
                 </SelectTrigger>
                 <SelectContent>
                   {expedientesDoProcesso.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.titulo || e.tipo || "Intimação"} • {formatExpedienteDate(e)}
+                      {e.titulo || e.tipo || "Intimação"} •{" "}
+                      {formatExpedienteDate(e)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -325,7 +343,10 @@ export default function CalculadoraPrazos() {
                 tooltip="CPC: conta apenas dias úteis. CLT: conta dias corridos incluindo finais de semana."
                 required
               />
-              <Select value={tipoPrazo} onValueChange={(v) => setTipoPrazo(v as "cpc" | "clt")}>
+              <Select
+                value={tipoPrazo}
+                onValueChange={(v) => setTipoPrazo(v as "cpc" | "clt")}
+              >
                 <SelectTrigger id="tipoPrazo">
                   <SelectValue />
                 </SelectTrigger>
@@ -338,7 +359,9 @@ export default function CalculadoraPrazos() {
 
             <Alert>
               <Info size={16} />
-              <AlertDescription className="text-xs">{prazoDescription}</AlertDescription>
+              <AlertDescription className="text-xs">
+                {prazoDescription}
+              </AlertDescription>
             </Alert>
 
             <Button onClick={handleCalcular} className="w-full">
@@ -353,7 +376,9 @@ export default function CalculadoraPrazos() {
                   <p className="text-2xl font-bold">
                     {formatarData(format(resultado, "yyyy-MM-dd"))}
                   </p>
-                  <p className="text-sm text-muted-foreground">{format(resultado, "dd/MM/yyyy")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(resultado, "dd/MM/yyyy")}
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-2 pt-2 border-t">
@@ -393,7 +418,9 @@ export default function CalculadoraPrazos() {
                 >
                   <div className="flex flex-col gap-0.5">
                     <p className="text-sm font-medium">{feriado.nome}</p>
-                    <p className="text-xs text-muted-foreground">{formatarData(feriado.data)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatarData(feriado.data)}
+                    </p>
                   </div>
                   <Badge variant="outline">{feriado.tipo}</Badge>
                 </div>

@@ -35,14 +35,18 @@ import { FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 const TRIBUNAIS = getTribunaisDisponiveis().filter((t) =>
-  ["tjsp", "tjrj", "tjmg", "trf1", "trf2", "trf3", "trf4", "tst"].includes(t.value)
+  ["tjsp", "tjrj", "tjmg", "trf1", "trf2", "trf3", "trf4", "tst"].includes(
+    t.value,
+  ),
 );
 
 export default function DatajudChecklist() {
   const [cnjNumber, setCnjNumber] = useState("");
   const [tribunal, setTribunal] = useState("tjsp");
   const [isLoading, setIsLoading] = useState(false);
-  const [processoData, setProcessoData] = useState<DatajudProcesso | null>(null);
+  const [processoData, setProcessoData] = useState<DatajudProcesso | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -59,14 +63,16 @@ export default function DatajudChecklist() {
     }
 
     if (!validarNumeroCNJ(cnjNumber)) {
-      setError("Formato de número CNJ inválido. Use: NNNNNNN-DD.AAAA.J.TR.OOOO");
+      setError(
+        "Formato de número CNJ inválido. Use: NNNNNNN-DD.AAAA.J.TR.OOOO",
+      );
       toast.error("Formato de número CNJ inválido");
       return;
     }
 
     if (!apiKeyConfigured) {
       setError(
-        "API Key do DataJud não configurada. Configure VITE_DATAJUD_API_KEY no arquivo .env"
+        "API Key do DataJud não configurada. Configure VITE_DATAJUD_API_KEY no arquivo .env",
       );
       toast.error("Configure a API Key do DataJud");
       return;
@@ -86,7 +92,8 @@ export default function DatajudChecklist() {
       setProcessoData(processo);
       toast.success("Processo encontrado com sucesso!");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao buscar processo.";
+      const message =
+        err instanceof Error ? err.message : "Erro ao buscar processo.";
       setError(message);
       toast.error(message);
       console.error("Erro ao consultar DataJud:", err);
@@ -104,7 +111,10 @@ export default function DatajudChecklist() {
     try {
       const recentMovements = processoData.movimentos
         .slice(0, 15)
-        .map((m) => `${m.nome} - ${new Date(m.dataHora).toLocaleDateString("pt-BR")}`)
+        .map(
+          (m) =>
+            `${m.nome} - ${new Date(m.dataHora).toLocaleDateString("pt-BR")}`,
+        )
         .join("\n");
 
       const promptText = `Você é um assistente jurídico especializado em análise de processos. Analise os dados do processo abaixo e forneça:
@@ -129,7 +139,8 @@ Mantenha a resposta objetiva e profissional.`;
       setAnalysis(analysisText);
       toast.success("Análise concluída!");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao analisar processo.";
+      const message =
+        err instanceof Error ? err.message : "Erro ao analisar processo.";
       setAnalysisError(message);
       toast.error(message);
     } finally {
@@ -169,7 +180,11 @@ Mantenha a resposta objetiva e profissional.`;
 
                 <div className="space-y-2">
                   <Label htmlFor="tribunal">Tribunal</Label>
-                  <Select value={tribunal} onValueChange={setTribunal} disabled={isLoading}>
+                  <Select
+                    value={tribunal}
+                    onValueChange={setTribunal}
+                    disabled={isLoading}
+                  >
                     <SelectTrigger id="tribunal">
                       <SelectValue />
                     </SelectTrigger>
@@ -181,7 +196,9 @@ Mantenha a resposta objetiva e profissional.`;
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">Selecione o tribunal de origem</p>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione o tribunal de origem
+                  </p>
                 </div>
               </div>
 
@@ -205,8 +222,8 @@ Mantenha a resposta objetiva e profissional.`;
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                API Key do DataJud não configurada. Configure VITE_DATAJUD_API_KEY no arquivo .env
-                para usar este recurso.
+                API Key do DataJud não configurada. Configure
+                VITE_DATAJUD_API_KEY no arquivo .env para usar este recurso.
                 <br />
                 <a
                   href="https://www.cnj.jus.br/sistemas/datajud/api-publica/"
@@ -250,7 +267,9 @@ Mantenha a resposta objetiva e profissional.`;
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {processoData.orgaoJulgador && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Órgão Julgador</p>
+                      <p className="text-xs text-muted-foreground">
+                        Órgão Julgador
+                      </p>
                       <p className="text-sm font-medium text-foreground">
                         {processoData.orgaoJulgador.nome}
                       </p>
@@ -258,9 +277,13 @@ Mantenha a resposta objetiva e profissional.`;
                   )}
                   {processoData.dataAjuizamento && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Data de Ajuizamento</p>
+                      <p className="text-xs text-muted-foreground">
+                        Data de Ajuizamento
+                      </p>
                       <p className="text-sm font-medium text-foreground">
-                        {new Date(processoData.dataAjuizamento).toLocaleDateString("pt-BR")}
+                        {new Date(
+                          processoData.dataAjuizamento,
+                        ).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   )}
@@ -268,7 +291,9 @@ Mantenha a resposta objetiva e profissional.`;
 
                 {processoData.assuntos && processoData.assuntos.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs text-muted-foreground mb-2">Assuntos</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Assuntos
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {processoData.assuntos.map((assunto) => (
                         <Badge key={assunto.codigo} variant="secondary">
@@ -310,7 +335,9 @@ Mantenha a resposta objetiva e profissional.`;
                 <Card className="p-6 bg-linear-to-br from-accent/5 to-primary/5">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-6 h-6 text-accent" />
-                    <h3 className="text-lg font-bold text-foreground">Análise da IA</h3>
+                    <h3 className="text-lg font-bold text-foreground">
+                      Análise da IA
+                    </h3>
                   </div>
                   <div className="prose prose-sm max-w-none">
                     <pre className="whitespace-pre-wrap text-sm text-foreground font-sans bg-background/50 p-4 rounded-lg">
@@ -333,15 +360,23 @@ Mantenha a resposta objetiva e profissional.`;
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <FileText className="w-6 h-6 text-primary" />
-                    <h3 className="text-lg font-bold text-foreground">Últimos Andamentos</h3>
+                    <h3 className="text-lg font-bold text-foreground">
+                      Últimos Andamentos
+                    </h3>
                   </div>
-                  <Badge variant="outline">{processoData.movimentos.length} movimento(s)</Badge>
+                  <Badge variant="outline">
+                    {processoData.movimentos.length} movimento(s)
+                  </Badge>
                 </div>
 
                 <div className="space-y-3">
                   {processoData.movimentos
                     .slice()
-                    .sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+                    .sort(
+                      (a, b) =>
+                        new Date(b.dataHora).getTime() -
+                        new Date(a.dataHora).getTime(),
+                    )
                     .slice(0, 10)
                     .map((movimento, index) => (
                       <div
@@ -354,11 +389,15 @@ Mantenha a resposta objetiva e profissional.`;
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{movimento.nome}</p>
+                          <p className="text-sm font-semibold text-foreground">
+                            {movimento.nome}
+                          </p>
                           <div className="flex items-center gap-2 mt-1">
                             <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                             <p className="text-xs text-muted-foreground">
-                              {new Date(movimento.dataHora).toLocaleString("pt-BR")}
+                              {new Date(movimento.dataHora).toLocaleString(
+                                "pt-BR",
+                              )}
                             </p>
                           </div>
                         </div>
@@ -368,8 +407,8 @@ Mantenha a resposta objetiva e profissional.`;
 
                 {processoData.movimentos.length > 10 && (
                   <p className="text-xs text-muted-foreground text-center mt-4">
-                    Mostrando os 10 andamentos mais recentes de {processoData.movimentos.length}{" "}
-                    total
+                    Mostrando os 10 andamentos mais recentes de{" "}
+                    {processoData.movimentos.length} total
                   </p>
                 )}
               </Card>

@@ -30,7 +30,10 @@ export interface NodeBackgroundOptions {
 /**
  * Determines the target color for toggle operations
  */
-function getToggleColor(targets: NodeWithPos[], inputColor: string): string | null {
+function getToggleColor(
+  targets: NodeWithPos[],
+  inputColor: string,
+): string | null {
   if (targets.length === 0) return null;
 
   for (const target of targets) {
@@ -103,11 +106,17 @@ export const NodeBackground = Extension.create<NodeBackgroundOptions>({
      * Generic command executor for background color operations
      */
     const executeBackgroundCommand = (
-      getTargetColor: (targets: NodeWithPos[], inputColor?: string) => string | null
+      getTargetColor: (
+        targets: NodeWithPos[],
+        inputColor?: string,
+      ) => string | null,
     ) => {
       return (inputColor?: string) =>
         ({ state, tr }: { state: EditorState; tr: Transaction }) => {
-          const targets = getSelectedNodesOfType(state.selection, this.options.types);
+          const targets = getSelectedNodesOfType(
+            state.selection,
+            this.options.types,
+          );
 
           if (targets.length === 0) return false;
 
@@ -121,7 +130,9 @@ export const NodeBackground = Extension.create<NodeBackgroundOptions>({
       /**
        * Set background color to specific value
        */
-      setNodeBackgroundColor: executeBackgroundCommand((_, inputColor) => inputColor || null),
+      setNodeBackgroundColor: executeBackgroundCommand(
+        (_, inputColor) => inputColor || null,
+      ),
 
       /**
        * Remove background color
@@ -131,8 +142,8 @@ export const NodeBackground = Extension.create<NodeBackgroundOptions>({
       /**
        * Toggle background color (set if different/missing, unset if all have it)
        */
-      toggleNodeBackgroundColor: executeBackgroundCommand((targets, inputColor) =>
-        getToggleColor(targets, inputColor || "")
+      toggleNodeBackgroundColor: executeBackgroundCommand(
+        (targets, inputColor) => getToggleColor(targets, inputColor || ""),
       ),
     };
   },

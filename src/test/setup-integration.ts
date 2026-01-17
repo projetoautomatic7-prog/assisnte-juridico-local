@@ -21,7 +21,10 @@ if (!process.env.DATABASE_URL) {
 
 // Logging para debug
 console.log("🧪 Setup de Testes de Integração REAIS");
-console.log("📊 Banco de dados:", process.env.DATABASE_URL?.split("@")[1] || "configurado");
+console.log(
+  "📊 Banco de dados:",
+  process.env.DATABASE_URL?.split("@")[1] || "configurado",
+);
 console.log("⚠️  ATENÇÃO: Usando dados REAIS (sem mocks)");
 
 // Configuração global para testes

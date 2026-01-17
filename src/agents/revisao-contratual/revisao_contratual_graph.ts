@@ -7,11 +7,18 @@ import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { formatErrorMessage, formatFallbackMessage, formatReviewResult } from "./templates";
+import {
+  formatErrorMessage,
+  formatFallbackMessage,
+  formatReviewResult,
+} from "./templates";
 import { validateRevisaoContratualInput, ValidationError } from "./validators";
 
 export class RevisaoContratualAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     // 🔍 Instrumentar invocação do agente Revisão Contratual
     return createInvokeAgentSpan(
       {
@@ -21,7 +28,8 @@ export class RevisaoContratualAgent extends LangGraphAgent {
         temperature: 0.2,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `revisao_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `revisao_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -30,16 +38,31 @@ export class RevisaoContratualAgent extends LangGraphAgent {
       },
       async (span) => {
         try {
-          let current = updateState(state, { currentStep: "revisao-contratual:validate" });
+          let current = updateState(state, {
+            currentStep: "revisao-contratual:validate",
+          });
 
           // Step 0: Validate inputs
-          const validatedInput = validateRevisaoContratualInput(state.data || {});
+          const validatedInput = validateRevisaoContratualInput(
+            state.data || {},
+          );
 
-          span?.setAttribute("revisao.tipo_contrato", validatedInput.tipoContrato);
-          span?.setAttribute("revisao.texto_length", validatedInput.contratoTexto.length);
-          span?.setAttribute("revisao.partes_count", validatedInput.partes?.length || 0);
+          span?.setAttribute(
+            "revisao.tipo_contrato",
+            validatedInput.tipoContrato,
+          );
+          span?.setAttribute(
+            "revisao.texto_length",
+            validatedInput.contratoTexto.length,
+          );
+          span?.setAttribute(
+            "revisao.partes_count",
+            validatedInput.partes?.length || 0,
+          );
 
-          current = updateState(current, { currentStep: "revisao-contratual:extract" });
+          current = updateState(current, {
+            currentStep: "revisao-contratual:extract",
+          });
 
           // 1. Usar tool para extrair cláusulas do contrato
           const clausulas = await createExecuteToolSpan(
@@ -81,11 +104,17 @@ export class RevisaoContratualAgent extends LangGraphAgent {
                 },
               ];
 
-              toolSpan?.setAttribute("gen_ai.tool.output", JSON.stringify(clausulasExtraidas));
-              toolSpan?.setAttribute("contract.clauses_extracted", clausulasExtraidas.length);
+              toolSpan?.setAttribute(
+                "gen_ai.tool.output",
+                JSON.stringify(clausulasExtraidas),
+              );
+              toolSpan?.setAttribute(
+                "contract.clauses_extracted",
+                clausulasExtraidas.length,
+              );
 
               return clausulasExtraidas;
-            }
+            },
           );
 
           span?.setAttribute("revisao.clausulas_count", clausulas.length);
@@ -126,14 +155,16 @@ Identifique:
                   clausula: "7.3",
                   tipo: "ambiguidade",
                   severidade: "média",
-                  descricao: 'Termo "qualquer das partes" sem especificar condições',
+                  descricao:
+                    'Termo "qualquer das partes" sem especificar condições',
                   sugestao: "Especificar motivos e prazos para rescisão",
                 },
                 {
                   clausula: "10.2",
                   tipo: "abusiva",
                   severidade: "alta",
-                  descricao: "Multa de 20% pode ser considerada excessiva (CDC Art. 51)",
+                  descricao:
+                    "Multa de 20% pode ser considerada excessiva (CDC Art. 51)",
                   sugestao: "Reduzir para 10% ou valor razoável",
                 },
               ];
@@ -141,20 +172,29 @@ Identifique:
               const resultado = {
                 problemas,
                 totalProblemas: problemas.length,
-                problemasAlta: problemas.filter((p) => p.severidade === "alta").length,
+                problemasAlta: problemas.filter((p) => p.severidade === "alta")
+                  .length,
                 recomendacao:
-                  problemas.length > 2 ? "Renegociar contrato" : "Ajustes pontuais suficientes",
+                  problemas.length > 2
+                    ? "Renegociar contrato"
+                    : "Ajustes pontuais suficientes",
               };
 
-              chatSpan?.setAttribute("gen_ai.response.text", JSON.stringify([resultado]));
+              chatSpan?.setAttribute(
+                "gen_ai.response.text",
+                JSON.stringify([resultado]),
+              );
               chatSpan?.setAttribute("gen_ai.usage.total_tokens", 300);
 
               return resultado;
-            }
+            },
           );
 
           span?.setAttribute("revisao.problemas_count", analise.totalProblemas);
-          span?.setAttribute("revisao.problemas_alta_severidade", analise.problemasAlta);
+          span?.setAttribute(
+            "revisao.problemas_alta_severidade",
+            analise.problemasAlta,
+          );
           span?.setAttribute("revisao.recomendacao", analise.recomendacao);
 
           current = updateState(current, {
@@ -173,20 +213,22 @@ Identifique:
             validatedInput.tipoContrato,
             clausulas.length,
             analise.totalProblemas,
-            validatedInput.contratoTexto.length
+            validatedInput.contratoTexto.length,
           );
 
           return this.addAgentMessage(current, resultMessage);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
             logValidationError(
               "Revisão Contratual",
               error.field,
               error.message,
-              error.receivedValue
+              error.receivedValue,
             );
           } else {
             logStructuredError("Revisão Contratual", errorType, errorMessage, {
@@ -201,19 +243,22 @@ Identifique:
           const fallbackMessage =
             error instanceof ValidationError
               ? formatErrorMessage(errorType, errorMessage, {
-                  tipoContrato: (state.data?.tipoContrato as string) || undefined,
+                  tipoContrato:
+                    (state.data?.tipoContrato as string) || undefined,
                 })
-              : formatFallbackMessage((state.data?.tipoContrato as string) || undefined);
+              : formatFallbackMessage(
+                  (state.data?.tipoContrato as string) || undefined,
+                );
 
           return this.addAgentMessage(state, fallbackMessage);
         }
-      }
+      },
     );
   }
 }
 
 export async function runRevisaoContratual(
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
 ): Promise<AgentState> {
   const agent = new RevisaoContratualAgent();
   const initialState: AgentState = {

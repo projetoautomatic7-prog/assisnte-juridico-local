@@ -1,6 +1,12 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Search, Sparkles, User } from "lucide-react";
@@ -120,12 +126,15 @@ export default function KnowledgeBase() {
     } catch (err: unknown) {
       console.error("Erro ao consultar base de conhecimento:", err);
 
-      const message = err instanceof Error ? err.message : "Erro desconhecido ao consultar IA.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erro desconhecido ao consultar IA.";
 
       setError(
         message.includes("Erro na API")
           ? "Falha ao contatar o serviço de IA. Tente novamente em alguns instantes."
-          : message
+          : message,
       );
 
       toast.error("Erro ao consultar base de conhecimento");
@@ -144,7 +153,9 @@ export default function KnowledgeBase() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Base de Conhecimento (RAG)</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Base de Conhecimento (RAG)
+        </h1>
         <p className="text-muted-foreground mt-1">
           Sistema inteligente de recuperação e consulta de documentos
         </p>
@@ -155,7 +166,9 @@ export default function KnowledgeBase() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Documentos Indexados</CardTitle>
-            <CardDescription>Biblioteca do escritório (visual demonstrativo)</CardDescription>
+            <CardDescription>
+              Biblioteca do escritório (visual demonstrativo)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -204,7 +217,12 @@ export default function KnowledgeBase() {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full mt-4" type="button" disabled>
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                type="button"
+                disabled
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Documento (em breve)
               </Button>
@@ -229,25 +247,31 @@ export default function KnowledgeBase() {
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <BookOpen className="w-16 h-16 text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium text-foreground">Como posso ajudar?</p>
+                    <p className="text-lg font-medium text-foreground">
+                      Como posso ajudar?
+                    </p>
                     <p className="text-sm text-muted-foreground mt-2 max-w-md">
-                      Pergunte sobre precedentes, modelos de petições, estratégias processuais ou
-                      qualquer conteúdo jurídico relevante.
+                      Pergunte sobre precedentes, modelos de petições,
+                      estratégias processuais ou qualquer conteúdo jurídico
+                      relevante.
                     </p>
                     <div className="mt-6 space-y-2 w-full max-w-md">
-                      <p className="text-xs text-muted-foreground text-left">Exemplos:</p>
+                      <p className="text-xs text-muted-foreground text-left">
+                        Exemplos:
+                      </p>
                       <Button
                         type="button"
                         variant="outline"
                         className="w-full justify-start text-left h-auto py-2 px-3"
                         onClick={() =>
                           void handleQuery(
-                            "Quais são os principais precedentes sobre horas extras?"
+                            "Quais são os principais precedentes sobre horas extras?",
                           )
                         }
                       >
                         <span className="text-sm">
-                          Quais são os principais precedentes sobre horas extras?
+                          Quais são os principais precedentes sobre horas
+                          extras?
                         </span>
                       </Button>
                       <Button
@@ -255,7 +279,9 @@ export default function KnowledgeBase() {
                         variant="outline"
                         className="w-full justify-start text-left h-auto py-2 px-3"
                         onClick={() =>
-                          void handleQuery("Modelo de petição para reclamação trabalhista")
+                          void handleQuery(
+                            "Modelo de petição para reclamação trabalhista",
+                          )
                         }
                       >
                         <span className="text-sm">
@@ -270,7 +296,9 @@ export default function KnowledgeBase() {
                       <div
                         key={message.id}
                         className={`flex gap-3 ${
-                          message.role === "user" ? "justify-end" : "justify-start"
+                          message.role === "user"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
                         {message.role === "assistant" && (
@@ -285,7 +313,9 @@ export default function KnowledgeBase() {
                               : "bg-muted"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                          </p>
                         </div>
                         {message.role === "user" && (
                           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
@@ -313,7 +343,9 @@ export default function KnowledgeBase() {
               {error && (
                 <div className="mb-3">
                   <Alert variant="destructive">
-                    <AlertDescription className="text-xs">{error}</AlertDescription>
+                    <AlertDescription className="text-xs">
+                      {error}
+                    </AlertDescription>
                   </Alert>
                 </div>
               )}

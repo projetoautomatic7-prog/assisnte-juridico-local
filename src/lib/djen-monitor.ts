@@ -33,7 +33,12 @@
  * ```
  */
 
-import type { AgentId, AgentTask, TarefaSistemaTipo, TaskPriority } from "@/lib/agents";
+import type {
+  AgentId,
+  AgentTask,
+  TarefaSistemaTipo,
+  TaskPriority,
+} from "@/lib/agents";
 import { getEnv } from "@/lib/env-helper.js";
 
 // ============================================================================
@@ -214,7 +219,9 @@ async function getRedis(): Promise<import("@upstash/redis").Redis> {
   const token = getEnv("UPSTASH_REDIS_REST_TOKEN");
 
   if (!url || !token) {
-    throw new Error("UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN são obrigatórios");
+    throw new Error(
+      "UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN são obrigatórios",
+    );
   }
 
   _redisClient = new Redis({
@@ -235,7 +242,9 @@ async function getRedis(): Promise<import("@upstash/redis").Redis> {
 export async function getMonitoredLawyers(): Promise<MonitoredLawyer[]> {
   try {
     const redis = await getRedis();
-    const raw = await redis.get<MonitoredLawyer[] | string>(DJEN_REDIS_KEYS.LAWYERS);
+    const raw = await redis.get<MonitoredLawyer[] | string>(
+      DJEN_REDIS_KEYS.LAWYERS,
+    );
 
     if (!raw) return [];
 
@@ -251,7 +260,9 @@ export async function getMonitoredLawyers(): Promise<MonitoredLawyer[]> {
 /**
  * Atualiza lista de advogados monitorados
  */
-export async function setMonitoredLawyers(lawyers: MonitoredLawyer[]): Promise<void> {
+export async function setMonitoredLawyers(
+  lawyers: MonitoredLawyer[],
+): Promise<void> {
   const redis = await getRedis();
   await redis.set(DJEN_REDIS_KEYS.LAWYERS, JSON.stringify(lawyers));
 }
@@ -259,10 +270,12 @@ export async function setMonitoredLawyers(lawyers: MonitoredLawyer[]): Promise<v
 /**
  * Adiciona um advogado à lista de monitoramento
  */
-export async function addMonitoredLawyer(lawyer: MonitoredLawyer): Promise<void> {
+export async function addMonitoredLawyer(
+  lawyer: MonitoredLawyer,
+): Promise<void> {
   const lawyers = await getMonitoredLawyers();
   const existingIndex = lawyers.findIndex(
-    (l) => l.id === lawyer.id || l.numeroOAB === lawyer.numeroOAB
+    (l) => l.id === lawyer.id || l.numeroOAB === lawyer.numeroOAB,
   );
 
   if (existingIndex >= 0) {
@@ -299,7 +312,7 @@ function buildDJENQueryParams(
     tribunal?: string;
     pagina?: number;
     itensPorPagina?: number;
-  }
+  },
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -365,12 +378,14 @@ function normalizeRawDJENItem(item: RawDJENItem): NormalizedDJENPublication {
     tipoComunicacao: item.tipoComunicacao,
     orgao: item.nomeOrgao,
     numeroProcesso: item.numeroprocessocommascara || item.numero_processo,
-    dataDisponibilizacao: item.datadisponibilizacao || item.data_disponibilizacao || "",
+    dataDisponibilizacao:
+      item.datadisponibilizacao || item.data_disponibilizacao || "",
     dataPublicacao: item.dataPublicacao,
     texto: item.texto,
     meio: item.meiocompleto || item.meio,
     link: item.link,
-    hash: item.hash || `${item.siglaTribunal}-${item.id}-${item.numero_processo}`,
+    hash:
+      item.hash || `${item.siglaTribunal}-${item.id}-${item.numero_processo}`,
     destinatarios: item.destinatarios,
     advogados: item.destinatarioadvogados?.map((d) => d.advogado),
   };
@@ -392,7 +407,7 @@ export async function fetchDJENForOAB(
     tribunal?: string;
     pagina?: number;
     itensPorPagina?: number;
-  } = {}
+  } = {},
 ): Promise<NormalizedDJENPublication[]> {
   const baseUrl = "https://comunicaapi.pje.jus.br/api/v1/comunicacao";
   const params = buildDJENQueryParams(numeroOAB, ufOAB, options);
@@ -468,7 +483,7 @@ export async function markPublicationAsSeen(pubHash: string): Promise<void> {
  */
 export async function savePublication(
   pub: NormalizedDJENPublication,
-  lawyer: MonitoredLawyer
+  lawyer: MonitoredLawyer,
 ): Promise<void> {
   const redis = await getRedis();
   const key = `${DJEN_REDIS_KEYS.PUB_PREFIX}${pub.id}`;
@@ -484,14 +499,16 @@ export async function savePublication(
         ufOAB: lawyer.ufOAB,
       },
       savedAt: new Date().toISOString(),
-    })
+    }),
   );
 }
 
 /**
  * Recupera uma publicação salva
  */
-export async function getPublication(pubId: string): Promise<NormalizedDJENPublication | null> {
+export async function getPublication(
+  pubId: string,
+): Promise<NormalizedDJENPublication | null> {
   try {
     const redis = await getRedis();
     const key = `${DJEN_REDIS_KEYS.PUB_PREFIX}${pubId}`;
@@ -514,7 +531,7 @@ export async function getPublication(pubId: string): Promise<NormalizedDJENPubli
  */
 export function buildDJENTaskFromPublication(
   pub: NormalizedDJENPublication,
-  lawyer: MonitoredLawyer
+  lawyer: MonitoredLawyer,
 ): AgentTask {
   const now = new Date().toISOString();
 
@@ -615,10 +632,11 @@ export async function getQueueLength(): Promise<number> {
 async function processPublicationInSync(
   pub: NormalizedDJENPublication,
   lawyer: MonitoredLawyer,
-  result: DJENMonitorResult
+  result: DJENMonitorResult,
 ): Promise<boolean> {
   // Contagem por tribunal
-  result.porTribunal[pub.tribunal] = (result.porTribunal[pub.tribunal] || 0) + 1;
+  result.porTribunal[pub.tribunal] =
+    (result.porTribunal[pub.tribunal] || 0) + 1;
 
   // Verificar dedupe
   const alreadySeen = await isPublicationSeen(pub.hash);
@@ -640,7 +658,9 @@ async function processPublicationInSync(
   await enqueueAgentTask(task);
   result.tasksCriadas++;
 
-  console.log(`[DJEN Monitor] Nova publicação processada: ${pub.tribunal} - ${pub.numeroProcesso}`);
+  console.log(
+    `[DJEN Monitor] Nova publicação processada: ${pub.tribunal} - ${pub.numeroProcesso}`,
+  );
   return true;
 }
 
@@ -669,7 +689,7 @@ export async function syncDJENForLawyer(
   options: {
     dataInicio?: string;
     dataFim?: string;
-  } = {}
+  } = {},
 ): Promise<DJENMonitorResult> {
   const result = createEmptyMonitorResult();
 
@@ -685,7 +705,8 @@ export async function syncDJENForLawyer(
       await processPublicationInSync(pub, lawyer, result);
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : "Erro desconhecido";
+    const errorMsg =
+      error instanceof Error ? error.message : "Erro desconhecido";
     result.errors.push(errorMsg);
     console.error(`[DJEN Monitor] Erro ao sincronizar ${lawyer.nome}:`, error);
   }
@@ -716,7 +737,7 @@ const DEFAULT_LAWYER: MonitoredLawyer = {
 async function processLawyerInDailyMonitor(
   lawyer: MonitoredLawyer,
   results: Record<string, DJENMonitorResult>,
-  isLast: boolean
+  isLast: boolean,
 ): Promise<{ novas: number; tasks: number }> {
   if (!lawyer.ativo) {
     console.log(`[DJEN Monitor] Advogado desativado: ${lawyer.nome}`);
@@ -725,14 +746,14 @@ async function processLawyerInDailyMonitor(
 
   try {
     console.log(
-      `[DJEN Monitor] Processando ${lawyer.nome} (OAB ${lawyer.ufOAB} ${lawyer.numeroOAB})`
+      `[DJEN Monitor] Processando ${lawyer.nome} (OAB ${lawyer.ufOAB} ${lawyer.numeroOAB})`,
     );
 
     const result = await syncDJENForLawyer(lawyer);
     results[lawyer.id] = result;
 
     console.log(
-      `[DJEN Monitor] ${lawyer.nome}: ${result.novasPublicacoes} novas de ${result.totalPublicacoes} total`
+      `[DJEN Monitor] ${lawyer.nome}: ${result.novasPublicacoes} novas de ${result.totalPublicacoes} total`,
     );
 
     // Delay entre advogados para evitar rate limit
@@ -744,7 +765,9 @@ async function processLawyerInDailyMonitor(
   } catch (error) {
     console.error(`[DJEN Monitor] Erro ao processar ${lawyer.nome}:`, error);
     results[lawyer.id] = createEmptyMonitorResult();
-    results[lawyer.id].errors.push(error instanceof Error ? error.message : "Erro desconhecido");
+    results[lawyer.id].errors.push(
+      error instanceof Error ? error.message : "Erro desconhecido",
+    );
     return { novas: 0, tasks: 0 };
   }
 }
@@ -788,7 +811,7 @@ export async function runDJENDailyMonitor(): Promise<DJENDailyMonitorResult> {
     const { novas, tasks } = await processLawyerInDailyMonitor(
       lawyers[i],
       results,
-      i === lawyers.length - 1
+      i === lawyers.length - 1,
     );
     totalNovas += novas;
     totalTasks += tasks;
@@ -797,7 +820,7 @@ export async function runDJENDailyMonitor(): Promise<DJENDailyMonitorResult> {
   await updateLastCheckTimestamp(timestamp);
 
   console.log(
-    `[DJEN Monitor] Concluído: ${totalNovas} novas publicações, ${totalTasks} tarefas criadas`
+    `[DJEN Monitor] Concluído: ${totalNovas} novas publicações, ${totalTasks} tarefas criadas`,
   );
 
   return {
@@ -868,7 +891,7 @@ function parseSSELine(line: string): string | null {
  */
 async function processStreamingResponse(
   response: Response,
-  onStream: (chunk: string) => void
+  onStream: (chunk: string) => void,
 ): Promise<string> {
   if (!response.body) {
     throw new Error("Response body is null");
@@ -902,7 +925,7 @@ async function processStreamingResponse(
 async function callAIWithStreaming(
   messages: Array<{ role: string; content: string }>,
   model: string,
-  onStream: (chunk: string) => void
+  onStream: (chunk: string) => void,
 ): Promise<string> {
   const response = await fetch("/api/llm-stream", {
     method: "POST",
@@ -939,7 +962,7 @@ export async function analyzePublicationWithAI(
     provider?: "gemini" | "azure" | "github";
     /** Modelo específico (default: gemini-2.5-pro) */
     model?: string;
-  } = {}
+  } = {},
 ): Promise<string> {
   const { aiClient } = await import("@/lib/ai-providers");
 
@@ -959,7 +982,7 @@ export async function analyzePublicationWithAI(
     return callAIWithStreaming(
       messages as Array<{ role: string; content: string }>,
       model,
-      options.onStream
+      options.onStream,
     );
   }
 

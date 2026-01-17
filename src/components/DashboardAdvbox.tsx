@@ -156,18 +156,24 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
     const processesList = processes || [];
     const year = selectedMonth.getFullYear();
     const month = selectedMonth.getMonth();
-    const map: Record<number, { count: number; urgente: boolean; descricoes: string[] }> = {};
+    const map: Record<
+      number,
+      { count: number; urgente: boolean; descricoes: string[] }
+    > = {};
 
     processesList.forEach((process) => {
       if (process.prazos && Array.isArray(process.prazos)) {
         process.prazos.forEach((prazo) => {
           if (prazo.concluido) return;
           const dataFinal = new Date(prazo.dataFinal);
-          if (dataFinal.getFullYear() === year && dataFinal.getMonth() === month) {
+          if (
+            dataFinal.getFullYear() === year &&
+            dataFinal.getMonth() === month
+          ) {
             const day = dataFinal.getDate();
             const hoje = new Date();
             const diasRestantes = Math.ceil(
-              (dataFinal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
+              (dataFinal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
             );
             const urgente = diasRestantes <= 5 && diasRestantes >= 0;
 
@@ -176,7 +182,9 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
             }
             map[day].count++;
             if (urgente) map[day].urgente = true;
-            map[day].descricoes.push(`${prazo.descricao || "Prazo"} - ${process.titulo}`);
+            map[day].descricoes.push(
+              `${prazo.descricao || "Prazo"} - ${process.titulo}`,
+            );
           }
         });
       }
@@ -185,11 +193,15 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
   }, [processes, selectedMonth]);
 
   const nextMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
+    setSelectedMonth(
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1),
+    );
   };
 
   const prevMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
+    setSelectedMonth(
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1),
+    );
   };
 
   const today = new Date();
@@ -239,7 +251,9 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                 <p className="text-4xl font-bold text-foreground mb-1 bg-linear-to-r from-foreground to-foreground/80 bg-clip-text">
                   {stats.tarefasFinalizadas}
                 </p>
-                <p className="text-sm text-muted-foreground font-medium">Tarefas finalizadas</p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Tarefas finalizadas
+                </p>
               </div>
             </div>
           </CardContent>
@@ -253,8 +267,12 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                 <Clock size={32} className="text-yellow-500" />
               </div>
               <div className="flex-1">
-                <p className="text-4xl font-bold text-foreground mb-1">{stats.tarefasPendentes}</p>
-                <p className="text-sm text-muted-foreground font-medium">Tarefas pendentes</p>
+                <p className="text-4xl font-bold text-foreground mb-1">
+                  {stats.tarefasPendentes}
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Tarefas pendentes
+                </p>
               </div>
             </div>
           </CardContent>
@@ -268,8 +286,12 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                 <Trophy size={32} className="text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-4xl font-bold text-foreground mb-1">{stats.pontosAcumulados}</p>
-                <p className="text-sm text-muted-foreground font-medium">Pontos acumulados</p>
+                <p className="text-4xl font-bold text-foreground mb-1">
+                  {stats.pontosAcumulados}
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Pontos acumulados
+                </p>
               </div>
             </div>
           </CardContent>
@@ -301,7 +323,12 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                     className="h-8 w-8 hover:bg-primary/10 rounded-lg"
                     aria-label="Alternar visualização"
                   >
-                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
                       <path d="M2 2h4v4H2V2zm6 0h6v4H8V2zM2 8h4v6H2V8zm6 0h6v6H8V8z" />
                     </svg>
                   </Button>
@@ -313,16 +340,48 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                 <ResponsiveContainer width="99%" height="100%" minHeight={300}>
                   <LineChart data={performanceData}>
                     <defs>
-                      <linearGradient id="colorEste" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#52b788" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#52b788" stopOpacity={0} />
+                      <linearGradient
+                        id="colorEste"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#52b788"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#52b788"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
-                      <linearGradient id="colorMetas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#48cae4" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#48cae4" stopOpacity={0} />
+                      <linearGradient
+                        id="colorMetas"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#48cae4"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#48cae4"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" strokeOpacity={0.5} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#2a2d3e"
+                      strokeOpacity={0.5}
+                    />
                     <XAxis
                       dataKey="month"
                       stroke="#6b7280"
@@ -454,7 +513,10 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
             <CardContent className="pt-4">
               <div className="grid grid-cols-7 gap-2 mb-3">
                 {["D", "S", "T", "Q", "Q", "S", "S"].map((day) => (
-                  <div key={day} className="text-center text-xs text-primary/70 font-bold">
+                  <div
+                    key={day}
+                    className="text-center text-xs text-primary/70 font-bold"
+                  >
                     {day}
                   </div>
                 ))}
@@ -495,7 +557,7 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                     day === null
                       ? `empty-${index}`
                       : `day-${selectedMonth.getFullYear()}-${String(
-                          selectedMonth.getMonth() + 1
+                          selectedMonth.getMonth() + 1,
                         ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
                   return (
@@ -508,7 +570,9 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                       {temPrazo && (
                         <span
                           className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] flex items-center justify-center rounded-full ${
-                            prazoUrgente ? "bg-red-500 text-white" : "bg-yellow-500 text-black"
+                            prazoUrgente
+                              ? "bg-red-500 text-white"
+                              : "bg-yellow-500 text-black"
                           }`}
                         >
                           {prazoInfo.count}
@@ -527,7 +591,9 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
       <Card className="bg-linear-to-br from-card via-card to-card/80 border-border/50 shadow-xl rounded-2xl overflow-hidden">
         <CardHeader className="border-b border-border/50 bg-linear-to-r from-card/50 to-transparent">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-foreground">COMPROMISSOS</CardTitle>
+            <CardTitle className="text-lg font-bold text-foreground">
+              COMPROMISSOS
+            </CardTitle>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -557,7 +623,10 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                 <FileText size={16} className="mr-2" />
                 Intimações
               </Button>
-              <Badge variant="secondary" className="text-xs rounded-lg px-3 py-1">
+              <Badge
+                variant="secondary"
+                className="text-xs rounded-lg px-3 py-1"
+              >
                 Não lidas
               </Badge>
             </div>
@@ -581,7 +650,9 @@ function DashboardAdvbox({ onNavigate: _onNavigate }: DashboardAdvboxProps) {
                         <div className="p-1.5 bg-primary/10 rounded-lg">
                           <FileText size={16} className="text-primary" />
                         </div>
-                        <span className="text-sm font-semibold text-foreground">{item.tipo}</span>
+                        <span className="text-sm font-semibold text-foreground">
+                          {item.tipo}
+                        </span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {item.parte1} x {item.parte2}

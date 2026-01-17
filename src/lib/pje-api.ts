@@ -101,7 +101,7 @@ export class PJeAPIError extends Error {
     message: string,
     public readonly statusCode?: number,
     public readonly tribunal?: string,
-    public readonly originalError?: unknown
+    public readonly originalError?: unknown,
   ) {
     super(message);
     this.name = "PJeAPIError";
@@ -120,7 +120,7 @@ export function isPJeEnabled(config?: PJeConfig): boolean {
  */
 export async function consultarPublicacoesPJe(
   params: PublicationSearchParams,
-  config?: PJeConfig
+  config?: PJeConfig,
 ): Promise<UnifiedPublication[]> {
   const publications: UnifiedPublication[] = [];
 
@@ -153,7 +153,9 @@ export async function consultarPublicacoesPJe(
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch PJe publications: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch PJe publications: ${response.statusText}`,
+        );
       }
 
       const data = await response.json();

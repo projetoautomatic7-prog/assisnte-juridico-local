@@ -23,7 +23,10 @@ export function normalizeProcessNumber(numero: string | undefined): string {
  * @example
  * processNumbersMatch("1234567-89.2024", "12345678920240000") // true
  */
-export function processNumbersMatch(num1: string | undefined, num2: string | undefined): boolean {
+export function processNumbersMatch(
+  num1: string | undefined,
+  num2: string | undefined,
+): boolean {
   if (!num1 || !num2) return false;
   return normalizeProcessNumber(num1) === normalizeProcessNumber(num2);
 }

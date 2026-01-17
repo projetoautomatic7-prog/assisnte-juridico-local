@@ -100,7 +100,9 @@ export class AutoPilotDjenPrazosMinutas {
       autoCreateMinutas: true,
       syncToGoogleCalendar: true,
       defaultMinutaTipo: "Manifestação Simples",
-      logCallback: config.logCallback ?? ((msg, level) => console[level](`[AutoPilot] ${msg}`)),
+      logCallback:
+        config.logCallback ??
+        ((msg, level) => console[level](`[AutoPilot] ${msg}`)),
       ...config,
     };
 
@@ -128,7 +130,7 @@ export class AutoPilotDjenPrazosMinutas {
    * (Agente de Gestão de Prazos via IA)
    */
   private async analyzeIntimationWithGemini(
-    pub: DJENFilteredResult
+    pub: DJENFilteredResult,
   ): Promise<IntimationAnalysisResult | null> {
     const prompt = `Você é um assistente jurídico especializado em prazos processuais e análise de intimações do DJEN (Diário de Justiça Eletrônico Nacional).
 
@@ -185,7 +187,7 @@ ${pub.teor}`;
         `Gemini falhou ao analisar intimação (${pub.tribunal} - ${pub.tipo}): ${
           response.error || "texto vazio"
         }`,
-        "warn"
+        "warn",
       );
       return null;
     }
@@ -225,7 +227,7 @@ ${pub.teor}`;
         `Falha ao parsear JSON do Gemini (intimação): ${
           err instanceof Error ? err.message : String(err)
         }`,
-        "error"
+        "error",
       );
       return null;
     }
@@ -236,7 +238,7 @@ ${pub.teor}`;
    */
   private async createDeadlineFromAnalysisResult(
     analysis: IntimationAnalysisResult,
-    title: string
+    title: string,
   ): Promise<void> {
     if (!this.config.autoCreateDeadlines) return;
     if (!analysis.deadline?.endDate) return;
@@ -248,13 +250,13 @@ ${pub.teor}`;
       title,
       currentAppointments,
       this.config.setAppointments,
-      this.config.syncToGoogleCalendar
+      this.config.syncToGoogleCalendar,
     );
 
     if (!result.success) {
       this.log(
         `Falha ao criar prazo para "${title}": ${result.error || "motivo desconhecido"}`,
-        "warn"
+        "warn",
       );
       return;
     }
@@ -263,7 +265,7 @@ ${pub.teor}`;
     this.log(
       `Prazo criado com sucesso para "${title}" ` +
         `(localId=${result.localAppointmentId}, googleId=${result.googleEventId || "—"})`,
-      "info"
+      "info",
     );
   }
 
@@ -272,7 +274,7 @@ ${pub.teor}`;
    */
   private async createMinutaFromPublication(
     pub: DJENFilteredResult,
-    analysis: IntimationAnalysisResult | null
+    analysis: IntimationAnalysisResult | null,
   ): Promise<void> {
     if (!this.config.autoCreateMinutas) return;
 
@@ -327,7 +329,7 @@ ${pub.teor}
         `Falha ao gerar minuta automática para ${pub.tribunal} - ${pub.tipo}: ${
           result.errors.join(" | ") || "motivo desconhecido"
         }`,
-        "warn"
+        "warn",
       );
       return;
     }
@@ -337,20 +339,25 @@ ${pub.teor}
       `Minuta criada com sucesso (Docs: ${
         result.docsUrl || "—"
       }, CalendarEvent: ${result.calendarEventId || "—"})`,
-      "info"
+      "info",
     );
   }
 
   /**
    * Callback chamado pelo DJENMonitorAgent quando encontra novas publicações
    */
-  private async handleNewPublications(publicacoes: DJENFilteredResult[]): Promise<void> {
+  private async handleNewPublications(
+    publicacoes: DJENFilteredResult[],
+  ): Promise<void> {
     if (!publicacoes || publicacoes.length === 0) {
       this.log("Execução DJEN sem publicações relevantes", "info");
       return;
     }
 
-    this.log(`Processando ${publicacoes.length} publicação(ões) do DJEN...`, "info");
+    this.log(
+      `Processando ${publicacoes.length} publicação(ões) do DJEN...`,
+      "info",
+    );
 
     for (const pub of publicacoes) {
       try {
@@ -374,7 +381,7 @@ ${pub.teor}
           `Erro ao processar publicação (${pub.tribunal} - ${pub.tipo}): ${
             err instanceof Error ? err.message : String(err)
           }`,
-          "error"
+          "error",
         );
       }
     }
@@ -459,7 +466,7 @@ ${pub.teor}
  * Factory helper para criar o Auto-Pilot já pronto
  */
 export function criarAutoPilotDjenPrazosMinutas(
-  config: AutoPilotConfig
+  config: AutoPilotConfig,
 ): AutoPilotDjenPrazosMinutas {
   return new AutoPilotDjenPrazosMinutas(config);
 }

@@ -35,7 +35,9 @@ const SIDEBAR_WIDTH = "w-80"; // 320px (20 * 16px = 320px in Tailwind)
 export function AcervoPJe() {
   const [processes] = useKV<Process[]>("processes", []);
   const [processEvents] = useKV<ProcessEvent[]>("processEvents", []);
-  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
+  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
@@ -51,7 +53,7 @@ export function AcervoPJe() {
           p.numeroCNJ.toLowerCase().includes(query) ||
           p.titulo.toLowerCase().includes(query) ||
           p.autor.toLowerCase().includes(query) ||
-          p.reu.toLowerCase().includes(query)
+          p.reu.toLowerCase().includes(query),
       );
     }
 
@@ -74,14 +76,15 @@ export function AcervoPJe() {
     // Ordenar por data de última movimentação (mais recente primeiro)
     return filtered.sort(
       (a, b) =>
-        new Date(b.dataUltimaMovimentacao).getTime() - new Date(a.dataUltimaMovimentacao).getTime()
+        new Date(b.dataUltimaMovimentacao).getTime() -
+        new Date(a.dataUltimaMovimentacao).getTime(),
     );
   }, [processes, searchQuery, activeFilter]);
 
   // Processo selecionado
   const selectedProcess = useMemo(
     () => processes.find((p) => p.id === selectedProcessId),
-    [processes, selectedProcessId]
+    [processes, selectedProcessId],
   );
 
   // Eventos do processo selecionado
@@ -90,9 +93,12 @@ export function AcervoPJe() {
       selectedProcessId
         ? processEvents
             .filter((e) => e.processId === selectedProcessId)
-            .sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime(),
+            )
         : [],
-    [processEvents, selectedProcessId]
+    [processEvents, selectedProcessId],
   );
 
   // Verificar se processo tem prazo urgente
@@ -103,7 +109,12 @@ export function AcervoPJe() {
   return (
     <div className="flex h-full gap-4">
       {/* Sidebar - Lista de Processos */}
-      <div className={cn(SIDEBAR_WIDTH, "flex flex-col border-r border-border bg-card/50")}>
+      <div
+        className={cn(
+          SIDEBAR_WIDTH,
+          "flex flex-col border-r border-border bg-card/50",
+        )}
+      >
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2 mb-2">
@@ -113,7 +124,9 @@ export function AcervoPJe() {
               {filteredProcesses.length}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">Gestão de processos em tempo real</p>
+          <p className="text-xs text-muted-foreground">
+            Gestão de processos em tempo real
+          </p>
         </div>
 
         {/* Busca */}
@@ -166,7 +179,9 @@ export function AcervoPJe() {
               <div className="text-center py-12 px-4">
                 <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery ? "Nenhum processo encontrado" : "Nenhum processo no acervo"}
+                  {searchQuery
+                    ? "Nenhum processo encontrado"
+                    : "Nenhum processo no acervo"}
                 </p>
               </div>
             ) : (
@@ -183,7 +198,7 @@ export function AcervoPJe() {
                       "hover:bg-accent/50 hover:border-primary/30",
                       isSelected
                         ? "bg-primary/10 border-primary shadow-sm"
-                        : "bg-card border-border"
+                        : "bg-card border-border",
                     )}
                   >
                     <div className="flex items-start gap-2 mb-2">
@@ -205,7 +220,9 @@ export function AcervoPJe() {
                             </Badge>
                           )}
                         </div>
-                        <h3 className="font-medium text-sm truncate">{process.titulo}</h3>
+                        <h3 className="font-medium text-sm truncate">
+                          {process.titulo}
+                        </h3>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground font-mono mb-1">
@@ -213,11 +230,12 @@ export function AcervoPJe() {
                     </p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{process.autor}</span>
-                      {process.expedientesCount && process.expedientesCount > 0 && (
-                        <Badge variant="secondary" className="text-xs h-5">
-                          {process.expedientesCount} exp.
-                        </Badge>
-                      )}
+                      {process.expedientesCount &&
+                        process.expedientesCount > 0 && (
+                          <Badge variant="secondary" className="text-xs h-5">
+                            {process.expedientesCount} exp.
+                          </Badge>
+                        )}
                     </div>
                   </button>
                 );
@@ -230,7 +248,10 @@ export function AcervoPJe() {
       {/* Painel Principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {selectedProcess ? (
-          <ProcessTimelineViewer process={selectedProcess} events={selectedProcessEvents} />
+          <ProcessTimelineViewer
+            process={selectedProcess}
+            events={selectedProcessEvents}
+          />
         ) : (
           <Card className="flex-1 flex items-center justify-center bg-muted/5 border-dashed">
             <CardContent className="text-center py-12">
@@ -238,16 +259,22 @@ export function AcervoPJe() {
                 className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4"
                 weight="duotone"
               />
-              <h3 className="text-lg font-semibold mb-2">Selecione um processo</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Selecione um processo
+              </h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Escolha um processo na lista ao lado para visualizar sua linha do tempo, eventos e
-                documentos
+                Escolha um processo na lista ao lado para visualizar sua linha
+                do tempo, eventos e documentos
               </p>
               <Separator className="my-6" />
               <div className="grid grid-cols-3 gap-4 text-left max-w-md mx-auto">
                 <div>
-                  <div className="text-2xl font-bold text-primary">{processes.length}</div>
-                  <div className="text-xs text-muted-foreground">Total de processos</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {processes.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Total de processos
+                  </div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-600">
@@ -259,7 +286,9 @@ export function AcervoPJe() {
                   <div className="text-2xl font-bold text-red-600">
                     {
                       processes.filter((p) =>
-                        p.prazos.some((prazo) => prazo.urgente && !prazo.concluido)
+                        p.prazos.some(
+                          (prazo) => prazo.urgente && !prazo.concluido,
+                        ),
                       ).length
                     }
                   </div>

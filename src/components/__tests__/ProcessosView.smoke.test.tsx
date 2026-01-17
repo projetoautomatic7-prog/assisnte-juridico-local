@@ -11,7 +11,9 @@ const renderWithProviders = (ui: React.ReactElement) => {
       queries: { retry: false },
     },
   });
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
 };
 
 describe("ProcessosView smoke", () => {
@@ -32,11 +34,17 @@ describe("ProcessosView smoke", () => {
     expect(prazos.length).toBeGreaterThan(0);
 
     // Controls
-    expect(await screen.findByPlaceholderText(/Buscar processos/i)).toBeDefined();
+    expect(
+      await screen.findByPlaceholderText(/Buscar processos/i),
+    ).toBeDefined();
 
     // Toggle buttons
-    const gridBtn = await screen.findByRole("button", { name: /Visualização em grade/i });
-    const listBtn = await screen.findByRole("button", { name: /Visualização em lista/i });
+    const gridBtn = await screen.findByRole("button", {
+      name: /Visualização em grade/i,
+    });
+    const listBtn = await screen.findByRole("button", {
+      name: /Visualização em lista/i,
+    });
     fireEvent.click(listBtn);
     fireEvent.click(gridBtn);
   });

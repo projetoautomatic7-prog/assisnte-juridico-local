@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { cn, handleImageUpload, isMac, MAC_SYMBOLS, MAX_FILE_SIZE, SR_ONLY } from "./tiptap-utils";
+import {
+  cn,
+  handleImageUpload,
+  isMac,
+  MAC_SYMBOLS,
+  MAX_FILE_SIZE,
+  SR_ONLY,
+} from "./tiptap-utils";
 
 describe("tiptap-utils", () => {
   describe("cn (className utility)", () => {
@@ -153,7 +160,9 @@ describe("tiptap-utils", () => {
 
     it("handles very large file gracefully", async () => {
       const oversizedBuffer = new Uint8Array(6 * 1024 * 1024);
-      const hugeFile = new File([oversizedBuffer], "huge.jpg", { type: "image/jpeg" });
+      const hugeFile = new File([oversizedBuffer], "huge.jpg", {
+        type: "image/jpeg",
+      });
 
       const progressValues: number[] = [];
       const onProgress = (value: number) => {

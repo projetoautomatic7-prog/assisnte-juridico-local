@@ -7,7 +7,7 @@ describe("TodoistAgent - comportamento mínimo", () => {
       todoistAgent.processWebhookEvent({
         event_name: "unknown:event",
         event_data: { id: "1", content: "Evento desconhecido" },
-      })
+      }),
     ).resolves.toBeUndefined();
   });
 });

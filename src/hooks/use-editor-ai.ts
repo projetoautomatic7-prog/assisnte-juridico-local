@@ -112,12 +112,16 @@ export function useEditorAI() {
         if (error instanceof Error && error.name === "AbortError") {
           return { success: false, error: "Operação cancelada" };
         }
-        const message = error instanceof Error ? error.message : "Erro desconhecido";
-        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+        const message =
+          error instanceof Error ? error.message : "Erro desconhecido";
+        if (
+          message.includes("Failed to fetch") &&
+          API_BASE.includes("localhost")
+        ) {
           console.warn(
             `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
               `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
           );
         }
         toast.error(`Erro ao gerar minuta: ${message}`);
@@ -126,7 +130,7 @@ export function useEditorAI() {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Executar slash command
@@ -158,12 +162,16 @@ export function useEditorAI() {
         if (error instanceof Error && error.name === "AbortError") {
           return { success: false, error: "Operação cancelada" };
         }
-        const message = error instanceof Error ? error.message : "Erro desconhecido";
-        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+        const message =
+          error instanceof Error ? error.message : "Erro desconhecido";
+        if (
+          message.includes("Failed to fetch") &&
+          API_BASE.includes("localhost")
+        ) {
           console.warn(
             `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
               `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
           );
         }
         toast.error(`Erro: ${message}`);
@@ -172,12 +180,15 @@ export function useEditorAI() {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Analisar publicações DJEN
   const analyzeDJEN = useCallback(
-    async (publications: DJENPublication[], processNumber?: string): Promise<EditorAIResult> => {
+    async (
+      publications: DJENPublication[],
+      processNumber?: string,
+    ): Promise<EditorAIResult> => {
       setIsLoading(true);
 
       try {
@@ -198,12 +209,16 @@ export function useEditorAI() {
           content: data.analysis,
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Erro desconhecido";
-        if (message.includes("Failed to fetch") && API_BASE.includes("localhost")) {
+        const message =
+          error instanceof Error ? error.message : "Erro desconhecido";
+        if (
+          message.includes("Failed to fetch") &&
+          API_BASE.includes("localhost")
+        ) {
           console.warn(
             `[Editor AI] ⚠️ Falha de conexão com ${API_BASE}.\n` +
               `Se você está rodando em ambiente Cloud (Replit/Vercel), 'localhost' não funcionará.\n` +
-              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`
+              `Configure VITE_API_BASE_URL no .env com a URL pública do backend.`,
           );
         }
         toast.error(`Erro ao analisar DJEN: ${message}`);
@@ -212,7 +227,7 @@ export function useEditorAI() {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Cancelar operação em andamento
@@ -232,16 +247,18 @@ export function useEditorAI() {
       }
       return null;
     },
-    []
+    [],
   );
 
   // Lista de comandos para autocomplete
   const getCommandSuggestions = useCallback(
     (prefix: string): SlashCommand[] => {
       const normalizedPrefix = prefix.toLowerCase().replace("/", "");
-      return commands.filter((cmd) => cmd.command.toLowerCase().includes(normalizedPrefix));
+      return commands.filter((cmd) =>
+        cmd.command.toLowerCase().includes(normalizedPrefix),
+      );
     },
-    [commands]
+    [commands],
   );
 
   return {

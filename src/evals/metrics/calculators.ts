@@ -21,7 +21,10 @@
  *
  * @returns número entre 0-1 (0% a 100% de precisão)
  */
-export async function calculateAccuracy(actual: unknown, expected: unknown): Promise<number> {
+export async function calculateAccuracy(
+  actual: unknown,
+  expected: unknown,
+): Promise<number> {
   if (typeof actual !== "object" || typeof expected !== "object") {
     return actual === expected ? 1.0 : 0.0;
   }
@@ -44,7 +47,10 @@ export async function calculateAccuracy(actual: unknown, expected: unknown): Pro
     // Comparar valores
     if (isMatch(actualValue, expectedValue)) {
       matches++;
-    } else if (typeof expectedValue === "string" && typeof actualValue === "string") {
+    } else if (
+      typeof expectedValue === "string" &&
+      typeof actualValue === "string"
+    ) {
       // Comparação fuzzy para strings (permite pequenas diferenças)
       const similarity = calculateStringSimilarity(actualValue, expectedValue);
       if (similarity > 0.8) {
@@ -68,7 +74,10 @@ function isMatch(actual: unknown, expected: unknown): boolean {
   if (actual === expected) return true;
 
   // Ambos null/undefined
-  if ((actual === null || actual === undefined) && (expected === null || expected === undefined)) {
+  if (
+    (actual === null || actual === undefined) &&
+    (expected === null || expected === undefined)
+  ) {
     return true;
   }
 
@@ -130,7 +139,7 @@ function levenshteinDistance(s1: string, s2: string): number {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
           matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
+          matrix[i - 1][j] + 1, // deletion
         );
       }
     }
@@ -176,7 +185,10 @@ function calculateArraySimilarity(arr1: unknown[], arr2: unknown[]): number {
  *
  * @returns número entre 0-1 (0% a 100% de relevância)
  */
-export async function calculateRelevance(actual: unknown, expected: unknown): Promise<number> {
+export async function calculateRelevance(
+  actual: unknown,
+  expected: unknown,
+): Promise<number> {
   // Converter para strings
   const actualStr = JSON.stringify(actual).toLowerCase();
   const expectedStr = JSON.stringify(expected).toLowerCase();
@@ -226,7 +238,10 @@ export async function calculateRelevance(actual: unknown, expected: unknown): Pr
  *
  * @returns número entre 0-1 (0% a 100% de completude)
  */
-export async function calculateCompleteness(actual: unknown, expected: unknown): Promise<number> {
+export async function calculateCompleteness(
+  actual: unknown,
+  expected: unknown,
+): Promise<number> {
   if (typeof expected !== "object" || expected === null) {
     return actual !== null && actual !== undefined ? 1.0 : 0.0;
   }
@@ -273,7 +288,7 @@ export async function calculateCompleteness(actual: unknown, expected: unknown):
  */
 export async function calculateAllMetrics(
   actual: unknown,
-  expected: unknown
+  expected: unknown,
 ): Promise<{
   accuracy: number;
   relevance: number;
@@ -312,7 +327,7 @@ export function metricsPass(
     accuracy: 0.85,
     relevance: 0.9,
     completeness: 0.95,
-  }
+  },
 ): boolean {
   return (
     metrics.accuracy >= thresholds.accuracy &&

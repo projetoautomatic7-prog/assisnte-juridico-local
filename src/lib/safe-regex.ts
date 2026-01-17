@@ -78,7 +78,9 @@ export function extractAllCNJ(text: string): string[] {
  * Parse partes do processo (autor vs réu)
  * Detecta padrões "X vs Y", "X x Y", "X v. Y"
  */
-export function parsePartes(text: string): { autor: string; reu: string } | null {
+export function parsePartes(
+  text: string,
+): { autor: string; reu: string } | null {
   // Usar split ao invés de regex complexo - limitar espaços
   const parts = text.split(/\s{1,2}(?:vs?\.?|x)\s{1,2}/i);
 
@@ -110,7 +112,7 @@ export function extractTemplateVariables(content: string): string[] {
  */
 export function replaceTemplateVariables(
   content: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
 ): string {
   let result = content;
 

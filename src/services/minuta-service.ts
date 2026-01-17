@@ -19,9 +19,22 @@ export const MinutaSchema = z.object({
   id: z.string().uuid(),
   titulo: z.string().min(1, "Título é obrigatório"),
   processId: z.string().optional(),
-  tipo: z.enum(["peticao", "contrato", "parecer", "recurso", "procuracao", "outro"]),
+  tipo: z.enum([
+    "peticao",
+    "contrato",
+    "parecer",
+    "recurso",
+    "procuracao",
+    "outro",
+  ]),
   conteudo: z.string().min(1, "Conteúdo é obrigatório"),
-  status: z.enum(["rascunho", "em-revisao", "pendente-revisao", "finalizada", "arquivada"]),
+  status: z.enum([
+    "rascunho",
+    "em-revisao",
+    "pendente-revisao",
+    "finalizada",
+    "arquivada",
+  ]),
   criadoEm: z.string().datetime(),
   atualizadoEm: z.string().datetime(),
   autor: z.string().min(1),
@@ -113,7 +126,9 @@ export function createMinuta(input: MinutaInput): Minuta {
   const result = MinutaSchema.safeParse(minuta);
 
   if (!result.success) {
-    const errors = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+    const errors = result.error.issues
+      .map((e) => `${e.path.join(".")}: ${e.message}`)
+      .join(", ");
     throw new Error(`Minuta inválida: ${errors}`);
   }
 
@@ -164,7 +179,7 @@ export function createMinutaFromAgentTask(task: {
  */
 export function updateMinuta(
   existing: Minuta,
-  updates: Partial<Omit<Minuta, "id" | "criadoEm">>
+  updates: Partial<Omit<Minuta, "id" | "criadoEm">>,
 ): Minuta {
   const updated: Minuta = {
     ...existing,
@@ -176,7 +191,9 @@ export function updateMinuta(
   const result = MinutaSchema.safeParse(updated);
 
   if (!result.success) {
-    const errors = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+    const errors = result.error.issues
+      .map((e) => `${e.path.join(".")}: ${e.message}`)
+      .join(", ");
     throw new Error(`Minuta inválida: ${errors}`);
   }
 

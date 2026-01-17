@@ -6,7 +6,7 @@ export function formatFinancialResult(
   receitas: number,
   despesas: number,
   lucro: number,
-  margem: number
+  margem: number,
 ): string {
   return `
 💰 **Análise Financeira Completa**
@@ -20,7 +20,10 @@ ${lucro >= 0 ? "✅ **Resultado positivo**" : "⚠️ **Atenção ao fluxo de ca
 `.trim();
 }
 
-export function formatErrorMessage(errorType: string, errorMessage: string): string {
+export function formatErrorMessage(
+  errorType: string,
+  errorMessage: string,
+): string {
   return `⚠️ Erro na análise financeira: ${errorMessage}`;
 }
 

@@ -50,7 +50,13 @@ export const AgentTaskTypeEnum = z.enum([
   "compliance_check",
 ]);
 
-export const TaskPriorityEnum = z.enum(["low", "medium", "high", "urgent", "critical"]);
+export const TaskPriorityEnum = z.enum([
+  "low",
+  "medium",
+  "high",
+  "urgent",
+  "critical",
+]);
 
 export const TaskStatusEnum = z.enum([
   "queued",
@@ -146,8 +152,12 @@ export const agentSchema = z.object({
   id: z.string().min(1, "ID do agente � obrigat�rio"),
   name: z.string().min(1, "Nome do agente � obrigat�rio"),
   type: AgentTypeEnum,
-  description: z.string().min(10, "Descri��o deve ter pelo menos 10 caracteres"),
-  capabilities: z.array(AgentCapabilityEnum).min(1, "Agente deve ter pelo menos 1 capacidade"),
+  description: z
+    .string()
+    .min(10, "Descri��o deve ter pelo menos 10 caracteres"),
+  capabilities: z
+    .array(AgentCapabilityEnum)
+    .min(1, "Agente deve ter pelo menos 1 capacidade"),
   active: z.boolean(),
   status: AgentStatusEnum.default("idle"),
 

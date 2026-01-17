@@ -47,7 +47,8 @@ export type CacheTTLType = keyof typeof CACHE_TTL;
 
 export class AgentCache {
   private redis: Redis | null = null;
-  private readonly memoryCache: Map<string, MemoryCacheEntry<unknown>> = new Map();
+  private readonly memoryCache: Map<string, MemoryCacheEntry<unknown>> =
+    new Map();
   private readonly defaultTtl: number;
   private readonly prefix: string;
   private stats: Omit<CacheStats, "size" | "hitRate" | "usingRedis">;
@@ -71,11 +72,16 @@ export class AgentCache {
         this.redis = new Redis({ url, token });
         console.log("[AgentCache] Redis inicializado com sucesso");
       } catch (error) {
-        console.warn("[AgentCache] Falha ao inicializar Redis, usando cache em memória", error);
+        console.warn(
+          "[AgentCache] Falha ao inicializar Redis, usando cache em memória",
+          error,
+        );
         this.redis = null;
       }
     } else {
-      console.log("[AgentCache] Redis não configurado, usando cache em memória");
+      console.log(
+        "[AgentCache] Redis não configurado, usando cache em memória",
+      );
     }
   }
 
@@ -123,7 +129,9 @@ export class AgentCache {
         return null;
       }
 
-      const entry = this.memoryCache.get(fullKey) as MemoryCacheEntry<T> | undefined;
+      const entry = this.memoryCache.get(fullKey) as
+        | MemoryCacheEntry<T>
+        | undefined;
       if (entry) {
         if (entry.expiresAt > Date.now()) {
           this.stats.hits++;
@@ -182,7 +190,10 @@ export class AgentCache {
         const pattern = `${this.prefix}*`;
 
         do {
-          const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
+          const result = await this.redis.scan(cursor, {
+            match: pattern,
+            count: 100,
+          });
           cursor = Number(result[0]);
           const keys = result[1];
 
@@ -192,7 +203,7 @@ export class AgentCache {
         } while (cursor !== 0);
       } else {
         const keysToDelete = Array.from(this.memoryCache.keys()).filter((key) =>
-          key.startsWith(this.prefix)
+          key.startsWith(this.prefix),
         );
         for (const key of keysToDelete) {
           this.memoryCache.delete(key);
@@ -214,7 +225,10 @@ export class AgentCache {
         const pattern = `${fullPrefix}*`;
 
         do {
-          const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
+          const result = await this.redis.scan(cursor, {
+            match: pattern,
+            count: 100,
+          });
           cursor = Number(result[0]);
           const keys = result[1];
 
@@ -225,7 +239,7 @@ export class AgentCache {
         } while (cursor !== 0);
       } else {
         const keysToDelete = Array.from(this.memoryCache.keys()).filter((key) =>
-          key.startsWith(fullPrefix)
+          key.startsWith(fullPrefix),
         );
         for (const key of keysToDelete) {
           this.memoryCache.delete(key);
@@ -233,10 +247,15 @@ export class AgentCache {
         }
       }
 
-      console.log(`[AgentCache] Invalidadas ${deletedCount} chaves com prefixo: ${agentPrefix}`);
+      console.log(
+        `[AgentCache] Invalidadas ${deletedCount} chaves com prefixo: ${agentPrefix}`,
+      );
       return deletedCount;
     } catch (error) {
-      console.error("[AgentCache] Erro ao invalidar por prefixo", { agentPrefix, error });
+      console.error("[AgentCache] Erro ao invalidar por prefixo", {
+        agentPrefix,
+        error,
+      });
       return 0;
     }
   }
@@ -293,11 +312,18 @@ export class AgentCachePresets {
     });
   }
 
-  async getAgentResponse<T>(agentName: string, hash: string): Promise<T | null> {
+  async getAgentResponse<T>(
+    agentName: string,
+    hash: string,
+  ): Promise<T | null> {
     return this.agentResponseCache.get<T>(`${agentName}:${hash}`);
   }
 
-  async setAgentResponse<T>(agentName: string, hash: string, value: T): Promise<void> {
+  async setAgentResponse<T>(
+    agentName: string,
+    hash: string,
+    value: T,
+  ): Promise<void> {
     await this.agentResponseCache.set(`${agentName}:${hash}`, value);
   }
 
@@ -375,7 +401,7 @@ export async function cachedAgentCall<T>(
   agentName: string,
   input: string,
   operation: () => Promise<T>,
-  ttlType: CacheTTLType = "AGENT_RESPONSE"
+  ttlType: CacheTTLType = "AGENT_RESPONSE",
 ): Promise<T> {
   const cache = getDefaultAgentCache();
   const hash = createHashKey(input);

@@ -22,7 +22,7 @@ export function generateSearchQueryPrompt(
   tema: string,
   tribunal: string,
   dataInicio?: string,
-  dataFim?: string
+  dataFim?: string,
 ): string {
   return `
 **PESQUISA JURISPRUDENCIAL:**
@@ -48,7 +48,7 @@ export function formatErrorMessage(
     tema?: string;
     tribunal?: string;
     step?: string;
-  }
+  },
 ): string {
   return `
 ⚠️ **Erro na pesquisa jurisprudencial**

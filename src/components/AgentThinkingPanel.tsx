@@ -8,7 +8,13 @@
  */
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bot,
@@ -137,7 +143,9 @@ export default function AgentThinkingPanel() {
       <Card>
         <CardHeader>
           <CardTitle>Pensamento dos Agentes</CardTitle>
-          <CardDescription className="text-destructive">{error}</CardDescription>
+          <CardDescription className="text-destructive">
+            {error}
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -148,7 +156,9 @@ export default function AgentThinkingPanel() {
       <Card>
         <CardHeader>
           <CardTitle>Pensamento dos Agentes</CardTitle>
-          <CardDescription>Nenhuma tarefa em processamento no momento</CardDescription>
+          <CardDescription>
+            Nenhuma tarefa em processamento no momento
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
@@ -169,7 +179,10 @@ export default function AgentThinkingPanel() {
         </CardTitle>
         <CardDescription>
           {data.activeTasks.length}{" "}
-          {data.activeTasks.length === 1 ? "agente trabalhando" : "agentes trabalhando"} agora
+          {data.activeTasks.length === 1
+            ? "agente trabalhando"
+            : "agentes trabalhando"}{" "}
+          agora
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -178,7 +191,8 @@ export default function AgentThinkingPanel() {
             {data.activeTasks.map((task) => {
               const IconComponent = taskIcons[task.taskType] || Bot;
               const taskLabel = taskTypeLabels[task.taskType] || task.taskType;
-              const stageLabel = stageLabels[task.currentStage] || task.currentStage;
+              const stageLabel =
+                stageLabels[task.currentStage] || task.currentStage;
 
               return (
                 <div
@@ -192,7 +206,9 @@ export default function AgentThinkingPanel() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-sm font-semibold text-foreground">{task.agentName}</h4>
+                        <h4 className="text-sm font-semibold text-foreground">
+                          {task.agentName}
+                        </h4>
                         <Badge variant="default" className="text-xs">
                           {taskLabel}
                         </Badge>
@@ -202,7 +218,9 @@ export default function AgentThinkingPanel() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{stageLabel}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {stageLabel}
+                      </p>
                     </div>
                   </div>
 
@@ -226,8 +244,12 @@ export default function AgentThinkingPanel() {
                         <div className="flex-1">
                           <span className="font-medium">Tarefa:</span>{" "}
                           <span className="text-muted-foreground">
-                            {String(task.currentDetails.descricao).substring(0, 100)}
-                            {String(task.currentDetails.descricao).length > 100 && "..."}
+                            {String(task.currentDetails.descricao).substring(
+                              0,
+                              100,
+                            )}
+                            {String(task.currentDetails.descricao).length >
+                              100 && "..."}
                           </span>
                         </div>
                       </div>
@@ -253,17 +275,23 @@ export default function AgentThinkingPanel() {
                     {/* Tokens e tempo */}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       {task.currentDetails.tokensUsados && (
-                        <span>📊 {String(task.currentDetails.tokensUsados)} tokens</span>
+                        <span>
+                          📊 {String(task.currentDetails.tokensUsados)} tokens
+                        </span>
                       )}
                       {task.currentDetails.tempoProcessamento && (
-                        <span>⏱️ {String(task.currentDetails.tempoProcessamento)}</span>
+                        <span>
+                          ⏱️ {String(task.currentDetails.tempoProcessamento)}
+                        </span>
                       )}
                     </div>
 
                     {/* Timeline de pensamento */}
                     {task.thinking.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-border/50">
-                        <p className="text-xs font-medium mb-2">Etapas concluídas:</p>
+                        <p className="text-xs font-medium mb-2">
+                          Etapas concluídas:
+                        </p>
                         <div className="space-y-1">
                           {task.thinking.map((log, idx) => {
                             const isLast = idx === task.thinking.length - 1;
@@ -271,17 +299,25 @@ export default function AgentThinkingPanel() {
                               <div
                                 key={log.id}
                                 className={`flex items-center gap-2 text-xs ${
-                                  isLast ? "text-purple-600 font-medium" : "text-muted-foreground"
+                                  isLast
+                                    ? "text-purple-600 font-medium"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 <div
                                   className={`w-1.5 h-1.5 rounded-full ${
-                                    isLast ? "bg-purple-500" : "bg-muted-foreground/50"
+                                    isLast
+                                      ? "bg-purple-500"
+                                      : "bg-muted-foreground/50"
                                   }`}
                                 />
-                                <span>{stageLabels[log.stage] || log.stage}</span>
+                                <span>
+                                  {stageLabels[log.stage] || log.stage}
+                                </span>
                                 <span className="text-xs opacity-50">
-                                  {new Date(log.timestamp).toLocaleTimeString("pt-BR")}
+                                  {new Date(log.timestamp).toLocaleTimeString(
+                                    "pt-BR",
+                                  )}
                                 </span>
                               </div>
                             );

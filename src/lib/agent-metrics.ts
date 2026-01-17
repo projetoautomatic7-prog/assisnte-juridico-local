@@ -52,7 +52,9 @@ class AgentMetricsCollector {
 
     // Remove m�tricas antigas (fora da janela de tempo)
     const cutoffTime = Date.now() - this.metricsWindowMs;
-    const filteredMetrics = agentMetrics.filter((m) => m.timestamp > cutoffTime);
+    const filteredMetrics = agentMetrics.filter(
+      (m) => m.timestamp > cutoffTime,
+    );
 
     // Limita ao m�ximo de m�tricas por agente
     if (filteredMetrics.length > this.maxMetricsPerAgent) {
@@ -81,14 +83,19 @@ class AgentMetricsCollector {
     const averageLatency = totalDuration / totalExecutions;
 
     // Calcula percentis de lat�ncia
-    const sortedDurations = agentMetrics.map((m) => m.duration).sort((a, b) => a - b);
+    const sortedDurations = agentMetrics
+      .map((m) => m.duration)
+      .sort((a, b) => a - b);
     const p95Index = Math.floor(sortedDurations.length * 0.95);
     const p99Index = Math.floor(sortedDurations.length * 0.99);
     const p95Latency = sortedDurations[p95Index] || 0;
     const p99Latency = sortedDurations[p99Index] || 0;
 
     // Calcula total de tokens
-    const totalTokens = agentMetrics.reduce((sum, m) => sum + (m.tokensUsed || 0), 0);
+    const totalTokens = agentMetrics.reduce(
+      (sum, m) => sum + (m.tokensUsed || 0),
+      0,
+    );
 
     // Calcula throughput (execu��es por minuto)
     const oldestTimestamp = Math.min(...agentMetrics.map((m) => m.timestamp));
@@ -137,7 +144,7 @@ class AgentMetricsCollector {
     thresholds: {
       maxLatencyMs?: number;
       maxErrorRate?: number;
-    } = {}
+    } = {},
   ): AgentStats[] {
     const { maxLatencyMs = 5000, maxErrorRate = 10 } = thresholds;
 
@@ -186,7 +193,8 @@ class AgentMetricsCollector {
 
     return {
       "agent.total_executions": stats.totalExecutions,
-      "agent.success_rate": (stats.successfulExecutions / stats.totalExecutions) * 100 || 0,
+      "agent.success_rate":
+        (stats.successfulExecutions / stats.totalExecutions) * 100 || 0,
       "agent.error_rate": stats.errorRate,
       "agent.avg_latency_ms": stats.averageLatency,
       "agent.p95_latency_ms": stats.p95Latency,
@@ -214,7 +222,7 @@ if (typeof setInterval !== "undefined") {
     () => {
       metricsCollector.cleanup();
     },
-    5 * 60 * 1000
+    5 * 60 * 1000,
   );
 }
 
@@ -242,7 +250,10 @@ export function useAgentMetrics(agentId?: string) {
 /**
  * Middleware para tracking autom�tico de m�tricas
  */
-export function withMetrics<T extends (...args: any[]) => Promise<any>>(agentId: string, fn: T): T {
+export function withMetrics<T extends (...args: any[]) => Promise<any>>(
+  agentId: string,
+  fn: T,
+): T {
   return (async (...args: Parameters<T>) => {
     const startTime = Date.now();
     let success = true;

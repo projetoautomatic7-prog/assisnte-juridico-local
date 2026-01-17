@@ -34,7 +34,8 @@ describe("ThemeToggle", () => {
     try {
       if (typeof window.localStorage !== "undefined") {
         window.localStorage.setItem("__test__", "ok");
-        localStorageFunctional = window.localStorage.getItem("__test__") === "ok";
+        localStorageFunctional =
+          window.localStorage.getItem("__test__") === "ok";
       }
     } catch (_err) {
       localStorageFunctional = false;

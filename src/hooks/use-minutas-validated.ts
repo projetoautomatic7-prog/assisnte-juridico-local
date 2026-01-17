@@ -5,7 +5,10 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { useKV } from "./use-kv";
-import { validateMinuta, type MinutaValidated as _MinutaValidated } from "@/schemas/process.schema";
+import {
+  validateMinuta,
+  type MinutaValidated as _MinutaValidated,
+} from "@/schemas/process.schema";
 
 // Tipo Minuta (compatível com o sistema existente)
 export interface Minuta {
@@ -14,7 +17,12 @@ export interface Minuta {
   processId?: string;
   tipo: "peticao" | "contrato" | "parecer" | "recurso" | "procuracao" | "outro";
   conteudo: string;
-  status: "rascunho" | "em-revisao" | "pendente-revisao" | "finalizada" | "arquivada";
+  status:
+    | "rascunho"
+    | "em-revisao"
+    | "pendente-revisao"
+    | "finalizada"
+    | "arquivada";
   criadoEm: string;
   atualizadoEm: string;
   autor: string;
@@ -44,7 +52,9 @@ export function useMinutasValidated() {
       const validation = validateMinuta(newMinuta);
       if (!validation.isValid) {
         console.error("Validação falhou:", validation.errors);
-        toast.error("Dados da minuta inválidos. Verifique os campos obrigatórios.");
+        toast.error(
+          "Dados da minuta inválidos. Verifique os campos obrigatórios.",
+        );
         return null;
       }
 
@@ -52,7 +62,7 @@ export function useMinutasValidated() {
       toast.success("Minuta criada com sucesso!");
       return validation.data as Minuta;
     },
-    [setMinutas]
+    [setMinutas],
   );
 
   // Atualizar minuta com validação
@@ -81,12 +91,12 @@ export function useMinutasValidated() {
             return updated;
           }
           return m;
-        })
+        }),
       );
 
       return updated;
     },
-    [setMinutas]
+    [setMinutas],
   );
 
   // Remover minuta
@@ -95,7 +105,7 @@ export function useMinutasValidated() {
       setMinutas((prev) => prev.filter((m) => m.id !== id));
       toast.success("Minuta removida!");
     },
-    [setMinutas]
+    [setMinutas],
   );
 
   // Buscar minuta por ID
@@ -103,7 +113,7 @@ export function useMinutasValidated() {
     (id: string) => {
       return minutas.find((m) => m.id === id);
     },
-    [minutas]
+    [minutas],
   );
 
   // Buscar minutas por processo
@@ -111,7 +121,7 @@ export function useMinutasValidated() {
     (processId: string) => {
       return minutas.filter((m) => m.processId === processId);
     },
-    [minutas]
+    [minutas],
   );
 
   // Buscar minutas por status
@@ -119,7 +129,7 @@ export function useMinutasValidated() {
     (status: Minuta["status"]) => {
       return minutas.filter((m) => m.status === status);
     },
-    [minutas]
+    [minutas],
   );
 
   // Minutas pendentes de revisão
@@ -137,7 +147,7 @@ export function useMinutasValidated() {
     (tipo: Minuta["tipo"]) => {
       return minutas.filter((m) => m.tipo === tipo);
     },
-    [minutas]
+    [minutas],
   );
 
   // Atualizar status da minuta (workflow)
@@ -145,7 +155,7 @@ export function useMinutasValidated() {
     (id: string, status: Minuta["status"]) => {
       return updateMinuta(id, { status });
     },
-    [updateMinuta]
+    [updateMinuta],
   );
 
   return {

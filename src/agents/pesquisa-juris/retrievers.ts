@@ -4,7 +4,10 @@
  */
 
 import { getGeminiApiKey, isGeminiConfigured } from "@/lib/gemini-config";
-import { QdrantService, type SearchResult as QdrantSearchResult } from "@/lib/qdrant-service";
+import {
+  QdrantService,
+  type SearchResult as QdrantSearchResult,
+} from "@/lib/qdrant-service";
 import type { PesquisaJurisInput } from "./validators";
 
 const EMBEDDING_API_URL =
@@ -52,7 +55,12 @@ export class JurisprudenceRetriever {
     const qdrantUrl = process.env.QDRANT_URL;
     const qdrantKey = process.env.QDRANT_API_KEY;
 
-    if (qdrantUrl && qdrantKey && typeof qdrantUrl === "string" && typeof qdrantKey === "string") {
+    if (
+      qdrantUrl &&
+      qdrantKey &&
+      typeof qdrantUrl === "string" &&
+      typeof qdrantKey === "string"
+    ) {
       try {
         this.qdrantService = new QdrantService({
           url: qdrantUrl,
@@ -60,7 +68,10 @@ export class JurisprudenceRetriever {
           collectionName: this.collectionName,
           timeout: 30000,
         });
-        console.log("✅ Qdrant connected:", { url: qdrantUrl, collection: this.collectionName });
+        console.log("✅ Qdrant connected:", {
+          url: qdrantUrl,
+          collection: this.collectionName,
+        });
       } catch (error) {
         console.error("❌ Qdrant connection failed:", error);
       }
@@ -78,7 +89,8 @@ export class JurisprudenceRetriever {
    * @throws {Error} Se embeddings falharem
    */
   async search(input: PesquisaJurisInput): Promise<SearchResult> {
-    const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+    const nowMs = () =>
+      typeof performance !== "undefined" ? performance.now() : Date.now();
     const startTime = nowMs();
 
     try {
@@ -89,12 +101,15 @@ export class JurisprudenceRetriever {
       const rawResults = await this.searchVectorDatabase(embeddings, input);
 
       // 3. Re-ranking: filtrar por relevância e ordenar
-      const rankedPrecedentes = this.reRankResults(rawResults, input.relevanceThreshold || 0.7);
+      const rankedPrecedentes = this.reRankResults(
+        rawResults,
+        input.relevanceThreshold || 0.7,
+      );
 
       // 4. Filtrar por tribunal se especificado
       const filteredPrecedentes = this.filterByTribunal(
         rankedPrecedentes,
-        input.tribunal || "todos"
+        input.tribunal || "todos",
       );
 
       // 5. Limitar resultados
@@ -112,13 +127,14 @@ export class JurisprudenceRetriever {
         executionTimeMs,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorType = error instanceof Error ? error.name : "UnknownError";
 
       // Estruturar erro seguindo padrão Google
       throw new Error(
         `Calling retrieval tool with query:\n\n${input.tema}\n\n` +
-          `raised the following error:\n\n${errorType}: ${errorMessage}`
+          `raised the following error:\n\n${errorType}: ${errorMessage}`,
       );
     }
   }
@@ -142,18 +158,21 @@ export class JurisprudenceRetriever {
         model: "text-embedding-004",
       });
 
-      const response = await fetch(`${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "models/text-embedding-004",
-          content: {
-            parts: [{ text }],
+      const response = await fetch(
+        `${EMBEDDING_API_URL}?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: {
+              parts: [{ text }],
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -162,7 +181,9 @@ export class JurisprudenceRetriever {
           statusText: response.statusText,
           body: errorBody,
         });
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Gemini API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -181,14 +202,18 @@ export class JurisprudenceRetriever {
 
       if (embeddings.length !== EMBEDDING_DIMENSION) {
         console.warn(
-          `⚠️ [Embeddings] Dimensão inesperada: ${embeddings.length} (esperado: ${EMBEDDING_DIMENSION})`
+          `⚠️ [Embeddings] Dimensão inesperada: ${embeddings.length} (esperado: ${EMBEDDING_DIMENSION})`,
         );
       }
 
       return embeddings;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ [Embeddings] Falha ao gerar embedding real:", errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        "❌ [Embeddings] Falha ao gerar embedding real:",
+        errorMessage,
+      );
       throw new Error(`Falha ao gerar embedding real: ${errorMessage}`);
     }
   }
@@ -199,26 +224,33 @@ export class JurisprudenceRetriever {
    */
   private async searchVectorDatabase(
     embeddings: number[],
-    input: PesquisaJurisInput
+    input: PesquisaJurisInput,
   ): Promise<Precedente[]> {
     if (!this.qdrantService) {
       throw new Error("Qdrant não configurado");
     }
 
-    const qdrantResults = await this.qdrantService.search(embeddings, input.limit || 10);
+    const qdrantResults = await this.qdrantService.search(
+      embeddings,
+      input.limit || 10,
+    );
     return this.mapQdrantResultsToPrecedentes(qdrantResults);
   }
 
   /**
    * Mapeia resultados do Qdrant para interface Precedente
    */
-  private mapQdrantResultsToPrecedentes(results: QdrantSearchResult[]): Precedente[] {
+  private mapQdrantResultsToPrecedentes(
+    results: QdrantSearchResult[],
+  ): Precedente[] {
     return results.map((result) => ({
       titulo: (result.payload.titulo as string) || "Sem título",
       ementa: (result.payload.ementa as string) || "Sem ementa",
       relevancia: result.score,
       tribunal: (result.payload.tribunal as string) || "Desconhecido",
-      data: (result.payload.data as string) || new Date().toISOString().split("T")[0],
+      data:
+        (result.payload.data as string) ||
+        new Date().toISOString().split("T")[0],
       numeroProcesso: result.payload.numeroProcesso as string | undefined,
       relator: result.payload.relator as string | undefined,
       tags: (result.payload.tags as string[]) || [],
@@ -229,7 +261,10 @@ export class JurisprudenceRetriever {
    * Re-ranking: filtra e ordena por relevância
    * Baseado em compressor.compress_documents() do Google
    */
-  private reRankResults(precedentes: Precedente[], threshold: number): Precedente[] {
+  private reRankResults(
+    precedentes: Precedente[],
+    threshold: number,
+  ): Precedente[] {
     return precedentes
       .filter((p) => p.relevancia >= threshold)
       .sort((a, b) => b.relevancia - a.relevancia);
@@ -238,7 +273,10 @@ export class JurisprudenceRetriever {
   /**
    * Filtra precedentes por tribunal
    */
-  private filterByTribunal(precedentes: Precedente[], tribunal: string): Precedente[] {
+  private filterByTribunal(
+    precedentes: Precedente[],
+    tribunal: string,
+  ): Precedente[] {
     if (tribunal === "todos") {
       return precedentes;
     }

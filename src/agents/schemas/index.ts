@@ -29,10 +29,15 @@ export const HarveyOutputSchema = z.object({
     .array(
       z.object({
         acao: z.string().describe("Descrição da ação recomendada"),
-        prazo: z.enum(["imediato", "curto_prazo", "medio_prazo", "longo_prazo"]),
+        prazo: z.enum([
+          "imediato",
+          "curto_prazo",
+          "medio_prazo",
+          "longo_prazo",
+        ]),
         prioridade: z.enum(["alta", "media", "baixa"]),
         fundamentacao: z.string().describe("Justificativa legal/estratégica"),
-      })
+      }),
     )
     .min(1)
     .describe("Lista de ações estratégicas"),
@@ -44,13 +49,16 @@ export const HarveyOutputSchema = z.object({
         severidade: z.enum(["alta", "media", "baixa"]),
         probabilidade: z.enum(["alta", "media", "baixa"]).optional(),
         mitigacao: z.string().describe("Estratégia de mitigação"),
-      })
+      }),
     )
     .describe("Riscos do caso"),
 
   prazo_processual: z.string().optional().describe("Prazo crítico se houver"),
 
-  fundamentacao_legal: z.array(z.string()).min(1).describe("Base legal da estratégia"),
+  fundamentacao_legal: z
+    .array(z.string())
+    .min(1)
+    .describe("Base legal da estratégia"),
 
   custo_estimado: z
     .object({
@@ -62,7 +70,10 @@ export const HarveyOutputSchema = z.object({
     .optional()
     .describe("Estimativa de custos"),
 
-  proximos_passos: z.array(z.string()).min(1).describe("Checklist de próximas ações"),
+  proximos_passos: z
+    .array(z.string())
+    .min(1)
+    .describe("Checklist de próximas ações"),
 
   observacoes_adicionais: z.string().optional(),
 });
@@ -76,15 +87,21 @@ export type HarveyOutput = z.infer<typeof HarveyOutputSchema>;
 /**
  * Valida e parseia output estruturado de um agente
  */
-export function validateAgentOutput<T extends z.ZodType>(schema: T, output: unknown): z.infer<T> {
+export function validateAgentOutput<T extends z.ZodType>(
+  schema: T,
+  output: unknown,
+): z.infer<T> {
   try {
     return schema.parse(output);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("❌ Validation Error:", JSON.stringify(error.errors, null, 2));
+      console.error(
+        "❌ Validation Error:",
+        JSON.stringify(error.errors, null, 2),
+      );
       throw new StructuredOutputValidationError(
         "Falha na validação do output estruturado",
-        error.errors
+        error.errors,
       );
     }
     throw error;
@@ -96,7 +113,7 @@ export function validateAgentOutput<T extends z.ZodType>(schema: T, output: unkn
  */
 export function safeParseAgentOutput<T extends z.ZodType>(
   schema: T,
-  output: unknown
+  output: unknown,
 ): { success: true; data: z.infer<T> } | { success: false; error: z.ZodError } {
   const result = schema.safeParse(output);
   return result;
@@ -108,7 +125,7 @@ export function safeParseAgentOutput<T extends z.ZodType>(
 export class StructuredOutputValidationError extends Error {
   constructor(
     message: string,
-    public validationErrors: z.ZodIssue[]
+    public validationErrors: z.ZodIssue[],
   ) {
     super(message);
     this.name = "StructuredOutputValidationError";
@@ -131,7 +148,10 @@ export class StructuredOutputValidationError extends Error {
 // ----------------------------------------------------------------------------
 
 export const RedacaoPeticoesOutputSchema = z.object({
-  peticao_completa: z.string().min(500).describe("Petição formatada e completa em Markdown"),
+  peticao_completa: z
+    .string()
+    .min(500)
+    .describe("Petição formatada e completa em Markdown"),
 
   tipo_documento: z.enum([
     "peticao_inicial",
@@ -160,7 +180,7 @@ export const RedacaoPeticoesOutputSchema = z.object({
         lei: z.string().describe("Ex: Código Civil"),
         ementa: z.string().optional().describe("Jurisprudência se houver"),
         aplicacao: z.string().describe("Como se aplica ao caso"),
-      })
+      }),
     )
     .min(1),
 
@@ -168,7 +188,9 @@ export const RedacaoPeticoesOutputSchema = z.object({
 
   valor_causa: z.number().positive().optional(),
 
-  documentos_anexos: z.array(z.string()).describe("Lista de documentos a anexar"),
+  documentos_anexos: z
+    .array(z.string())
+    .describe("Lista de documentos a anexar"),
 
   formatacao_adequada: z.boolean().describe("Verificação de formatação"),
 
@@ -199,13 +221,16 @@ export const PesquisaJurisOutputSchema = z.object({
         dispositivo: z.string().optional().describe("Parte dispositiva"),
         tese_firmada: z.string().optional(),
         link: z.string().url().optional(),
-      })
+      }),
     )
     .min(0)
     .max(20)
     .describe("Jurisprudências encontradas"),
 
-  analise_consolidada: z.string().min(100).describe("Análise dos julgados encontrados"),
+  analise_consolidada: z
+    .string()
+    .min(100)
+    .describe("Análise dos julgados encontrados"),
 
   tendencia_jurisprudencial: z
     .enum(["favoravel", "desfavoravel", "dividida", "sem_precedentes"])
@@ -214,14 +239,20 @@ export const PesquisaJurisOutputSchema = z.object({
   precedentes_vinculantes: z
     .array(
       z.object({
-        tipo: z.enum(["sumula_vinculante", "tema_repercussao_geral", "tema_recursos_repetitivos"]),
+        tipo: z.enum([
+          "sumula_vinculante",
+          "tema_repercussao_geral",
+          "tema_recursos_repetitivos",
+        ]),
         numero: z.string(),
         enunciado: z.string(),
-      })
+      }),
     )
     .optional(),
 
-  recomendacao_uso: z.string().describe("Como usar essas jurisprudências no caso"),
+  recomendacao_uso: z
+    .string()
+    .describe("Como usar essas jurisprudências no caso"),
 });
 
 export type PesquisaJurisOutput = z.infer<typeof PesquisaJurisOutputSchema>;
@@ -231,7 +262,10 @@ export type PesquisaJurisOutput = z.infer<typeof PesquisaJurisOutputSchema>;
 // ----------------------------------------------------------------------------
 
 export const AnaliseDocumentalOutputSchema = z.object({
-  resumo_executivo: z.string().min(100).describe("Resumo do documento analisado"),
+  resumo_executivo: z
+    .string()
+    .min(100)
+    .describe("Resumo do documento analisado"),
 
   tipo_documento: z.enum([
     "contrato",
@@ -252,7 +286,7 @@ export const AnaliseDocumentalOutputSchema = z.object({
           .regex(/^\d{11}$/)
           .optional(),
         papel: z.string().describe("Ex: Contratante, Testemunha"),
-      })
+      }),
     ),
     empresas: z.array(
       z.object({
@@ -262,27 +296,27 @@ export const AnaliseDocumentalOutputSchema = z.object({
           .regex(/^\d{14}$/)
           .optional(),
         papel: z.string().optional(),
-      })
+      }),
     ),
     datas_importantes: z.array(
       z.object({
         data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         evento: z.string().describe("Ex: Assinatura, Vencimento"),
-      })
+      }),
     ),
     valores_monetarios: z.array(
       z.object({
         valor: z.number(),
         moeda: z.string().default("BRL"),
         descricao: z.string(),
-      })
+      }),
     ),
     processos_citados: z
       .array(
         z.object({
           numero: z.string(),
           tribunal: z.string().optional(),
-        })
+        }),
       )
       .optional(),
   }),
@@ -291,9 +325,15 @@ export const AnaliseDocumentalOutputSchema = z.object({
     z.object({
       clausula: z.string(),
       localizacao: z.string().describe("Ex: Cláusula 5ª"),
-      tipo: z.enum(["risco_alto", "risco_medio", "risco_baixo", "favoravel", "neutro"]),
+      tipo: z.enum([
+        "risco_alto",
+        "risco_medio",
+        "risco_baixo",
+        "favoravel",
+        "neutro",
+      ]),
       observacao: z.string(),
-    })
+    }),
   ),
 
   conformidade_legal: z.object({
@@ -302,14 +342,20 @@ export const AnaliseDocumentalOutputSchema = z.object({
     recomendacoes: z.array(z.string()).describe("Ajustes sugeridos"),
   }),
 
-  documentos_faltantes: z.array(z.string()).describe("Documentos que deveriam estar presentes"),
+  documentos_faltantes: z
+    .array(z.string())
+    .describe("Documentos que deveriam estar presentes"),
 
-  pontos_atencao: z.array(z.string()).describe("Itens que merecem atenção especial"),
+  pontos_atencao: z
+    .array(z.string())
+    .describe("Itens que merecem atenção especial"),
 
   proxima_acao: z.string().describe("O que fazer com este documento"),
 });
 
-export type AnaliseDocumentalOutput = z.infer<typeof AnaliseDocumentalOutputSchema>;
+export type AnaliseDocumentalOutput = z.infer<
+  typeof AnaliseDocumentalOutputSchema
+>;
 
 // ----------------------------------------------------------------------------
 // Monitor DJEN
@@ -338,7 +384,7 @@ export const MonitorDJENOutputSchema = z.object({
         dias_uteis_restantes: z.number().optional(),
         urgente: z.boolean().describe("Se prazo <= 5 dias úteis"),
         tribunal: z.string().optional(),
-      })
+      }),
     )
     .describe("Publicações encontradas"),
 
@@ -350,7 +396,7 @@ export const MonitorDJENOutputSchema = z.object({
         processo: z.string(),
         prazo: z.string(),
         dias_restantes: z.number(),
-      })
+      }),
     ),
   }),
 
@@ -389,11 +435,12 @@ export function getAgentSchema(agentId: string): z.ZodType | undefined {
  */
 export function parseStructuredOutput<T extends z.ZodType>(
   schema: T,
-  rawOutput: string | object
+  rawOutput: string | object,
 ): z.infer<T> {
   try {
     // Se for string, tenta parsear como JSON
-    const parsed = typeof rawOutput === "string" ? JSON.parse(rawOutput) : rawOutput;
+    const parsed =
+      typeof rawOutput === "string" ? JSON.parse(rawOutput) : rawOutput;
 
     // Valida com o schema
     return validateAgentOutput(schema, parsed);

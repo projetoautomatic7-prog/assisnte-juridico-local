@@ -16,7 +16,11 @@ vi.mock("../../lib/gemini-service", async (importOriginal) => {
 // Mock dos templates para evitar dependência do arquivo real
 vi.mock("@/lib/document-templates", () => ({
   documentTemplates: [
-    { id: "template-teste", nome: "Teste", conteudo: "MODELO DE TESTE: {{variavel}}" },
+    {
+      id: "template-teste",
+      nome: "Teste",
+      conteudo: "MODELO DE TESTE: {{variavel}}",
+    },
   ],
 }));
 
@@ -31,7 +35,9 @@ describe("Redação Agent - System Instruction Validation", () => {
       text: "Minuta de petição inicial gerada com sucesso...",
       metadata: { model: "gemini-2.5-pro" },
     };
-    const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
+    const callGeminiSpy = vi
+      .mocked(GeminiService.callGemini)
+      .mockResolvedValue(mockResponse);
 
     const input = {
       tipo: "Petição Inicial",
@@ -60,7 +66,9 @@ describe("Redação Agent - System Instruction Validation", () => {
       text: "Minuta baseada no template...",
       metadata: { model: "gemini-2.5-pro" },
     };
-    const callGeminiSpy = vi.mocked(GeminiService.callGemini).mockResolvedValue(mockResponse);
+    const callGeminiSpy = vi
+      .mocked(GeminiService.callGemini)
+      .mockResolvedValue(mockResponse);
 
     const input = {
       tipo: "Petição",

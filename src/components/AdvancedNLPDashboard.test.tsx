@@ -28,7 +28,9 @@ describe("AdvancedNLPDashboard", () => {
       const user = userEvent.setup();
       render(<AdvancedNLPDashboard />);
 
-      const textarea = screen.getByPlaceholderText(/cole aqui o texto do documento jurídico/i);
+      const textarea = screen.getByPlaceholderText(
+        /cole aqui o texto do documento jurídico/i,
+      );
 
       // Type only whitespace
       await user.type(textarea, "   ");
@@ -45,7 +47,9 @@ describe("AdvancedNLPDashboard", () => {
       const user = userEvent.setup();
       render(<AdvancedNLPDashboard />);
 
-      const textarea = screen.getByPlaceholderText(/cole aqui o texto do documento jurídico/i);
+      const textarea = screen.getByPlaceholderText(
+        /cole aqui o texto do documento jurídico/i,
+      );
 
       await user.type(textarea, "Texto de teste válido para análise");
 
@@ -62,35 +66,59 @@ describe("AdvancedNLPDashboard", () => {
     it("should render the dashboard header", () => {
       render(<AdvancedNLPDashboard />);
 
-      expect(screen.getByText("Processamento NLP Avançado")).toBeInTheDocument();
       expect(
-        screen.getByText(/pipeline de análise de linguagem natural para documentos jurídicos/i)
+        screen.getByText("Processamento NLP Avançado"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /pipeline de análise de linguagem natural para documentos jurídicos/i,
+        ),
       ).toBeInTheDocument();
     });
 
     it("should render all action buttons", () => {
       render(<AdvancedNLPDashboard />);
 
-      expect(screen.getByRole("button", { name: /análise completa/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /extrair entidades/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /analisar sentimento/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /classificar/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /extrair info/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /análise completa/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /extrair entidades/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /analisar sentimento/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /classificar/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /extrair info/i }),
+      ).toBeInTheDocument();
     });
 
     it("should render all tabs", () => {
       render(<AdvancedNLPDashboard />);
 
-      expect(screen.getByRole("tab", { name: /entidades/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /sentimento/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /classificação/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /extração/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /entidades/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /sentimento/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /classificação/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /extração/i }),
+      ).toBeInTheDocument();
     });
 
     it("should show empty state messages when no results", () => {
       render(<AdvancedNLPDashboard />);
 
-      expect(screen.getByText("Nenhuma entidade extraída ainda")).toBeInTheDocument();
+      expect(
+        screen.getByText("Nenhuma entidade extraída ainda"),
+      ).toBeInTheDocument();
     });
   });
 });

@@ -48,7 +48,7 @@ export interface FeatureFlag {
 export function addFeatureFlag(
   name: string,
   value: FeatureFlagValue,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): void {
   const scope = Sentry.getCurrentScope();
 
@@ -169,7 +169,10 @@ import React from "react";
  * }
  * ```
  */
-export function trackLaunchDarklyFlag(name: string, value: FeatureFlagValue): void {
+export function trackLaunchDarklyFlag(
+  name: string,
+  value: FeatureFlagValue,
+): void {
   addFeatureFlag(name, value, { provider: "LaunchDarkly" });
 }
 
@@ -236,7 +239,7 @@ export function trackUnleashFlag(name: string, value: boolean): void {
 export function withFeatureFlag<T extends (...args: any[]) => any>(
   flagName: string,
   flagValue: FeatureFlagValue,
-  fn: T
+  fn: T,
 ): T {
   return ((...args: Parameters<T>): ReturnType<T> => {
     addFeatureFlag(flagName, flagValue);
@@ -270,4 +273,5 @@ export const FEATURE_FLAGS = {
   MAX_PROCESSES_LIMIT: "max-processes-limit",
 } as const;
 
-export type FeatureFlagName = (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS];
+export type FeatureFlagName =
+  (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS];

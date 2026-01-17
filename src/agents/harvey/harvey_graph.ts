@@ -4,11 +4,18 @@ import { logStructuredError, logValidationError } from "../base/agent_logger";
 import type { AgentState } from "../base/agent_state";
 import { updateState } from "../base/agent_state";
 import { LangGraphAgent } from "../base/langgraph_agent";
-import { formatErrorMessage, generateAnalysisPrompt, HARVEY_SYSTEM_PROMPT } from "./templates";
+import {
+  formatErrorMessage,
+  generateAnalysisPrompt,
+  HARVEY_SYSTEM_PROMPT,
+} from "./templates";
 import { validateHarveyInput, ValidationError } from "./validators";
 
 export class HarveyAgent extends LangGraphAgent {
-  protected async run(state: AgentState, _signal: AbortSignal): Promise<AgentState> {
+  protected async run(
+    state: AgentState,
+    _signal: AbortSignal,
+  ): Promise<AgentState> {
     return createInvokeAgentSpan(
       {
         agentName: "Harvey Specter",
@@ -17,7 +24,8 @@ export class HarveyAgent extends LangGraphAgent {
         temperature: 0.7,
       },
       {
-        sessionId: (state.data?.sessionId as string) || `harvey_session_${Date.now()}`,
+        sessionId:
+          (state.data?.sessionId as string) || `harvey_session_${Date.now()}`,
         turn: state.retryCount + 1,
         messages: state.messages.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -31,13 +39,22 @@ export class HarveyAgent extends LangGraphAgent {
           // 1. Validação de inputs
           const validatedInput = validateHarveyInput(state.data || {});
 
-          span?.setAttribute("harvey.task", validatedInput.task.substring(0, 100));
-          span?.setAttribute("harvey.urgency", validatedInput.urgency || "medium");
+          span?.setAttribute(
+            "harvey.task",
+            validatedInput.task.substring(0, 100),
+          );
+          span?.setAttribute(
+            "harvey.urgency",
+            validatedInput.urgency || "medium",
+          );
 
           // 2. Análise (Generation)
           current = updateState(current, { currentStep: "harvey:analyze" });
 
-          const userPrompt = generateAnalysisPrompt(validatedInput.task, validatedInput.urgency);
+          const userPrompt = generateAnalysisPrompt(
+            validatedInput.task,
+            validatedInput.urgency,
+          );
 
           const response = await callGemini(userPrompt, {
             temperature: 0.7,
@@ -64,11 +81,18 @@ export class HarveyAgent extends LangGraphAgent {
           span?.setStatus({ code: 1, message: "ok" });
           return this.addAgentMessage(current, result);
         } catch (error) {
-          const errorType = error instanceof Error ? error.name : "UnknownError";
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorType =
+            error instanceof Error ? error.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           if (error instanceof ValidationError) {
-            logValidationError("Harvey Specter", error.field, error.message, error.receivedValue);
+            logValidationError(
+              "Harvey Specter",
+              error.field,
+              error.message,
+              error.receivedValue,
+            );
           } else {
             logStructuredError("Harvey Specter", errorType, errorMessage, {
               task: (state.data?.task as string) || undefined,
@@ -89,15 +113,17 @@ export class HarveyAgent extends LangGraphAgent {
               completed: false,
               error: errorMessage,
             }),
-            errorMsg
+            errorMsg,
           );
         }
-      }
+      },
     );
   }
 }
 
-export async function runHarvey(data: Record<string, unknown> = {}): Promise<AgentState> {
+export async function runHarvey(
+  data: Record<string, unknown> = {},
+): Promise<AgentState> {
   const agent = new HarveyAgent();
   const initialState: AgentState = {
     messages: [],
