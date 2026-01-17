@@ -39,6 +39,12 @@ npm run dev:with-api -- --host 0.0.0.0 --port 5000
 
 ### 🔄 Se Precisar Reiniciar
 
+**Método Rápido (RECOMENDADO):**
+```bash
+./start-dev.sh
+```
+
+**Método Manual:**
 ```bash
 # 1. Parar o servidor atual
 # Ctrl+C no terminal
@@ -46,6 +52,15 @@ npm run dev:with-api -- --host 0.0.0.0 --port 5000
 # 2. Reiniciar
 npm run dev:with-api -- --host 0.0.0.0 --port 5000
 ```
+
+### ⚠️ Importante: Erro 503
+
+Se você ver o erro "503 Service Unavailable", significa que o servidor parou. Isso pode acontecer se:
+- O terminal foi fechado
+- Ocorreu um erro no servidor
+- O processo foi interrompido
+
+**Solução:** Execute `./start-dev.sh` para reiniciar tudo automaticamente.
 
 ### 📝 Notas Importantes
 
