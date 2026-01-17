@@ -8,6 +8,7 @@
 |----------|--------|-----------|
 | `/api/lawyers` | ✅ 200 | Lista de advogados |
 | `/api/djen/publicacoes` | ✅ 200 | Publicações DJEN |
+| `/api/djen/trigger-manual` | ✅ 200 | Trigger manual DJEN |
 | `/api/llm-stream` | ✅ 200 | Streaming LLM (SSE) |
 | `/api/observability` | ✅ 200 | Health checks |
 | `/api/expedientes` | ✅ 200 | Gestão expedientes |

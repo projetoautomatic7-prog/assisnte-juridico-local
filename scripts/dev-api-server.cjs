@@ -242,6 +242,16 @@ const server = http.createServer((req, res) => {
       });
     }
 
+    // DJEN Trigger Manual Mock
+    if (method === "POST" && pathname === "/api/djen/trigger-manual") {
+      return sendJson(200, {
+        success: true,
+        message: "Sincronização manual iniciada",
+        jobId: `job-${Date.now()}`,
+        status: "processing"
+      });
+    }
+
     // LLM Stream Mock
     if (method === "POST" && pathname === "/api/llm-stream") {
       res.writeHead(200, {
