@@ -19,6 +19,7 @@ RUN cd backend && npm ci --legacy-peer-deps
 # Copiar apenas o necessário para o build do backend
 COPY tsconfig.paths.json ./tsconfig.paths.json
 COPY backend ./backend
+COPY api ./api
 COPY lib/ai ./lib/ai
 
 # Build do backend (gera /app/backend/dist/** incluindo /app/backend/dist/lib/ai)
