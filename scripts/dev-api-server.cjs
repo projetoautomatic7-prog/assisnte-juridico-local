@@ -257,11 +257,22 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*"
       });
       
-      const message = body.message || "Olá! Como posso ajudar?";
-      const words = message.split(" ");
+      const { messages } = body;
+      const userMessage = messages?.[messages.length - 1]?.content || "Olá!";
+      
+      // Resposta mock do Harvey Specter
+      const responses = {
+        "oi": "Olá! Sou Harvey Specter, seu assistente jurídico IA. Como posso ajudá-lo com seus processos hoje?",
+        "ola": "Olá! Estou aqui para auxiliá-lo. Em que posso ser útil?",
+        "default": `Entendi sua pergunta sobre "${userMessage}". Sou um mock de desenvolvimento. Para respostas reais de IA, configure GEMINI_API_KEY no backend em produção.`
+      };
+      
+      const responseText = responses[userMessage.toLowerCase()] || responses.default;
+      const words = responseText.split(" ");
       
       let i = 0;
       const interval = setInterval(() => {
@@ -273,7 +284,13 @@ const server = http.createServer((req, res) => {
           res.end();
           clearInterval(interval);
         }
-      }, 100);
+      }, 50); // Mais rápido: 50ms
+      
+      // Cleanup se conexão fechar
+      req.on('close', () => {
+        clearInterval(interval);
+        res.end();
+      });
       
       return;
     }
