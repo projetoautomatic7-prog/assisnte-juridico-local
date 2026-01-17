@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS minutas (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   titulo TEXT NOT NULL,
   process_id TEXT,
   tipo TEXT NOT NULL,
@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS minutas (
   agente_id TEXT,
   template_id TEXT,
   expediente_id TEXT,
-  variaveis OBJECT(DYNAMIC)
+  variaveis JSONB
 );
 
 CREATE TABLE IF NOT EXISTS expedientes (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     numero_processo TEXT,
     tribunal TEXT,
     tipo TEXT,

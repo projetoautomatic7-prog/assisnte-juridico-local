@@ -1,6 +1,10 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { AGENTS } from "./agents-registry";
+import { InMemoryMemoryStore, SimpleAgent } from "./core-agent";
+import { HttpLlmClient } from "./http-llm-client";
+import { AGENT_TOOLS, GlobalToolContext } from "./tools";
 
 // Evita múltiplas inicializações em funções paralelas
 if (getApps().length === 0) {
@@ -99,6 +103,48 @@ async function completeTask(taskId: string, payload: { result?: unknown; error?:
   await batch.commit();
 }
 
+async function processQueueItem() {
+  const task = await dequeueTask();
+  if (!task) return null;
+
+  try {
+    const persona = AGENTS[task.agentId];
+    if (!persona) {
+      throw new Error(`Agente '${task.agentId}' não encontrado.`);
+    }
+
+    const llm = new HttpLlmClient({
+       baseUrl: process.env.LLM_PROXY_URL || "https://assistente-juridico-github.vercel.app/api/llm-proxy",
+    });
+
+    const ctx: GlobalToolContext = {
+      baseUrl: process.env.APP_BASE_URL || "https://assistente-juridico-github.vercel.app",
+      evolutionApiUrl: process.env.EVOLUTION_API_URL || "",
+      evolutionApiKey: process.env.EVOLUTION_API_KEY || "",
+    };
+
+    const agent = new SimpleAgent({
+      llm,
+      tools: AGENT_TOOLS,
+      persona,
+      toolContext: ctx,
+      sessionId: `task-${task.id}`,
+      memoryStore: InMemoryMemoryStore,
+    });
+
+    // Use task data as prompt context
+    const prompt = JSON.stringify(task.data);
+    const result = await agent.run(prompt);
+
+    await completeTask(task.id, { result });
+    return { taskId: task.id, status: "completed", result };
+
+  } catch (error: any) {
+    await completeTask(task.id, { error: error.message });
+    return { taskId: task.id, status: "failed", error: error.message };
+  }
+}
+
 async function getStatus() {
   const db = getFirestore();
   const [queuedSnap, completedSnap, agentsSnap] = await Promise.all([
@@ -139,7 +185,8 @@ async function listData() {
   };
 }
 
-export const agents = onRequest(async (req, res) => {
+export const agents = onRequest({ cors: true, memory: "512Mi", timeoutSeconds: 300 }, async (req, res) => {
+  // Configuração CORS manual já é feita pelo onRequest({ cors: true }), mas mantemos headers explícitos se necessário para consistência
   withCors(res);
 
   if (req.method === "OPTIONS") {
@@ -187,6 +234,18 @@ export const agents = onRequest(async (req, res) => {
       }
       await completeTask(taskId, { result, error });
       res.status(200).json({ ok: true, taskId });
+      return;
+    }
+
+    // CORREÇÃO: Implementação de process-queue
+    if (req.method === "POST" && action === "process-queue") {
+      // Processa uma tarefa da fila
+      const result = await processQueueItem();
+      if (result) {
+        res.status(200).json({ ok: true, processed: 1, result });
+      } else {
+        res.status(200).json({ ok: true, processed: 0, message: "Fila vazia" });
+      }
       return;
     }
 

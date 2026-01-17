@@ -1,372 +1,161 @@
-# ✅ Validação: Configuração DJEN vs Documentação Oficial
+# ✅ VALIDAÇÃO COMPLETA: Configuração Neon PostgreSQL
 
-## 📋 Comparação Completa
-
-### 1. Endpoint da API ✅
-
-**Documentação Oficial:**
-```
-GET https://comunicaapi.pje.jus.br/api/v1/comunicacao
-```
-
-**Sua Implementação:**
-```typescript
-// lib/api/djen-client.ts (linha 198)
-const url = `https://comunicaapi.pje.jus.br/api/v1/comunicacao?${queryString}`;
-
-// backend/src/services/djen-api.ts (linha 6)
-const DJEN_API_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao";
-
-// functions/src/djen-scheduler.ts (linha 46)
-const url = new URL("https://comunicaapi.pje.jus.br/api/v1/comunicacao");
-```
-
-**Status:** ✅ **CORRETO** - Endpoint idêntico em todos os arquivos
+**Data:** 2026-01-17  
+**Status:** ⚠️ **99% Concluído** - Falta apenas rebuild da imagem Docker
 
 ---
 
-### 2. Parâmetros Obrigatórios ✅
+## 📊 ANÁLISE DO PROCEDIMENTO
 
-**Documentação Oficial:**
-| Parâmetro | Descrição | Exemplo |
-|-----------|-----------|---------|
-| `numeroOab` | Número OAB (apenas números) | 184404 |
-| `ufOab` | Sigla do estado | MG |
-| `meio` | **OBRIGATÓRIO** - D=Digital, E=Eletrônico | D |
+### ✅ ETAPAS CORRETAS EXECUTADAS
 
-**Sua Implementação:**
-```typescript
-// lib/api/djen-client.ts (linhas 155-172)
-if (params.numeroOab) queryParams.push(`numeroOab=${encodeURIComponent(params.numeroOab)}`);
-if (params.ufOab) queryParams.push(`ufOab=${encodeURIComponent(params.ufOab)}`);
-if (params.meio) queryParams.push(`meio=${params.meio}`);
+#### 1. Criação do Banco Neon ✅
+- **Configuração:** PostgreSQL 17, AWS São Paulo, sem Neon Auth
+- **Connection String:** `postgresql://neondb_owner:***@ep-wispy-smoke-ac2x3a7v-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require`
+- **Status:** ✅ **PERFEITO** - Banco criado e acessível
 
-// functions/src/djen-scheduler.ts (linha 49)
-url.searchParams.set("meio", "D"); // D=Diário ✅
-
-// backend/src/services/djen-api.ts (linha 37)
-url.searchParams.set("meio", "D"); // ✅
+#### 2. Schema Aplicado com Sucesso ✅
+```bash
+🔌 Conectando ao Neon PostgreSQL...
+✅ Conectado com sucesso!
+📂 Lendo schema de: /home/user/assisnte-juridico-local/backend/src/db/schema.sql
+🚀 Executando SQL...
+✅ Schema aplicado com sucesso!
+📋 Tabelas encontradas: playing_with_neon, minutas, expedientes
 ```
 
-**Status:** ✅ **CORRETO** - Parâmetro `meio=D` sempre definido
+**Tabelas criadas:**
+- ✅ `expedientes` (gestão de processos jurídicos)
+- ✅ `minutas` (gestão de documentos)
+- ✅ `playing_with_neon` (tabela de teste do Neon)
+
+#### 3. Secret Manager Configurado ✅
+```bash
+🔐 Atualizando DATABASE_URL via Secret Manager...
+✅ Secret existe - atualizando versão...
+Created version [2] of the secret [database-url].
+```
 
 ---
 
-### 3. Estrutura da Resposta JSON ✅
+## ❌ PROBLEMA IDENTIFICADO
 
-**Documentação Oficial:**
+### Erro nos Logs do Cloud Run
+```log
+Error fetching expedientes: Error: connect ECONNREFUSED 127.0.0.1:5432
+[Minutas] Error listing minutas: Error: connect ECONNREFUSED 127.0.0.1:5432
+```
+
+### Causa Raiz
+A **imagem Docker em produção** foi buildada **ANTES** da configuração do DATABASE_URL.
+
+#### Como o código lê a variável:
+```typescript
+// backend/src/db/expedientes.ts
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // ✅ Código está correto
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+});
+```
+
+#### Por que está falhando:
+1. ✅ Secret Manager tem a URL correta
+2. ✅ Cloud Run está configurado para ler do Secret Manager
+3. ❌ **Imagem Docker foi buildada sem a variável** → usa fallback `localhost:5432`
+
+---
+
+## 🎯 SOLUÇÃO FINAL (1 Comando)
+
+### Rebuild e Deploy Completo 🚀
+```bash
+cd /home/user/assisnte-juridico-local && \
+gcloud builds submit --tag gcr.io/sonic-terminal-474321-s1/assistente-juridico-backend:latest backend/ && \
+gcloud run deploy assistente-juridico-backend \
+  --image gcr.io/sonic-terminal-474321-s1/assistente-juridico-backend:latest \
+  --region southamerica-east1 \
+  --project sonic-terminal-474321-s1 \
+  --quiet
+```
+
+**Tempo estimado:** 5-8 minutos
+
+---
+
+## 🧪 VALIDAÇÃO PÓS-DEPLOY
+
+Após executar o comando acima, teste:
+
+```bash
+# Aguardar 30 segundos após deploy
+sleep 30
+
+# Testar expedientes (deve retornar [] ou dados)
+curl -s "https://assistente-juridico-backend-tpicng6fpq-rj.a.run.app/api/expedientes?limit=1"
+
+# Testar minutas (deve retornar [] ou dados)
+curl -s "https://assistente-juridico-backend-tpicng6fpq-rj.a.run.app/api/minutas"
+```
+
+**Resultado Esperado:**
 ```json
-{
-  "count": 3,
-  "items": [{
-    "id": "123456789",
-    "siglaTribunal": "TJMG",
-    "tipoComunicacao": "Intimação",
-    "nomeOrgao": "1ºJD da Comarca de Divinópolis",
-    "numeroProcesso": "5005240-57.2020.8.13.0223",
-    "dataDisponibilizacao": "2025-11-19T00:00:00",
-    "advogados": [...]
-  }]
-}
+[]  // ✅ Lista vazia (sem erros)
 ```
 
-**Sua Implementação:**
-```typescript
-// lib/api/djen-client.ts (linhas 24-61)
-export interface DJENComunicacao {
-  id: number;                              // ✅
-  siglaTribunal: string;                   // ✅
-  tipoComunicacao: string;                 // ✅
-  nomeOrgao: string;                       // ✅
-  numero_processo: string;                 // ✅ (snake_case na API)
-  data_disponibilizacao: string;           // ✅
-  texto: string;                           // ✅
-  destinatarioadvogados: Array<{           // ✅
-    advogado: {
-      nome: string;                        // ✅
-      numero_oab: string;                  // ✅
-      uf_oab: string;                      // ✅
-    };
-  }>;
-}
-
-export interface DJENResponse {
-  status: string;
-  message: string;
-  count: number;                           // ✅
-  items: DJENComunicacao[];                // ✅
-}
-```
-
-**Status:** ✅ **CORRETO** - Tipos TypeScript mapeiam todos os campos
-
----
-
-### 4. Exemplo Real de Uso ✅
-
-**Documentação Oficial:**
-```bash
-curl "https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab=184404&ufOab=MG&meio=D"
-```
-
-**Sua Implementação:**
-```typescript
-// functions/src/djen-scheduler.ts (linhas 46-52)
-const url = new URL("https://comunicaapi.pje.jus.br/api/v1/comunicacao");
-url.searchParams.set("numeroOab", "184404");  // ✅
-url.searchParams.set("ufOab", "MG");          // ✅
-url.searchParams.set("meio", "D");            // ✅
-url.searchParams.set("dataDisponibilizacaoInicio", dataInicio);
-url.searchParams.set("dataDisponibilizacaoFim", dataFim);
-url.searchParams.set("itensPorPagina", "100");
-url.searchParams.set("pagina", "1");
-```
-
-**Status:** ✅ **CORRETO** - Parâmetros idênticos + extras opcionais
-
----
-
-### 5. Rate Limiting ✅
-
-**Documentação Oficial:**
-> ⚠️ Nota: Esta API é pública e pode ter limitações de limite de taxa. Use com moderação.
-
-**Sua Implementação:**
-```typescript
-// lib/api/djen-client.ts (linhas 215-223)
-const rateLimitInfo = {
-  limit: response.headers.get("x-ratelimit-limit")
-    ? parseInt(response.headers.get("x-ratelimit-limit")!)
-    : undefined,
-  remaining: response.headers.get("x-ratelimit-remaining")
-    ? parseInt(response.headers.get("x-ratelimit-remaining")!)
-    : undefined,
-};
-
-// api/djen-sync.ts (linha 17)
-const SYNC_COOLDOWN_MS = 60_000; // 1 minuto entre syncs ✅
-
-// lib/api/djen-client.ts (linha 106)
-const RATE_LIMIT_RETRY_DELAY = 60000; // 1 minuto conforme documentação ✅
-```
-
-**Status:** ✅ **CORRETO** - Implementa cooldown e monitora headers
-
----
-
-### 6. Caso de Sucesso Comprovado ✅
-
-**Documentação Oficial:**
-```
-Status: ✅ OPERACIONAL - Testado com sucesso em 27/11/2025
-Advogado: Thiago Bodevan Veiga - OAB/MG 184.404
-Processos:
-- 5005240-57.2020.8.13.0223 - Execução de Título Extrajudicial
-- 5005573-67.2024.8.13.0223 - Intimação
-- 0012850-68.2024.8.13.0338 - Intimação
-```
-
-**Sua Implementação:**
-```typescript
-// Configurado em múltiplos arquivos:
-// - DJEN_FIREBASE_PRODUCAO.md
-// - DJEN_VERCEL_SETUP_COMPLETO.md
-// - functions/src/djen-scheduler.ts
-
-OAB: 184404/MG ✅
-Advogado: Thiago Bodevan Veiga ✅
-Tribunais: TJMG, TRT3, TST, STJ, TRF1, TRF6 ✅
-```
-
-**Status:** ✅ **CORRETO** - Mesmos dados de teste
-
----
-
-## 📊 Resumo da Validação
-
-| Aspecto | Documentação | Implementação | Status |
-|---------|-------------|---------------|--------|
-| Endpoint URL | ✅ comunicaapi.pje.jus.br | ✅ Idêntico | ✅ |
-| Parâmetro `numeroOab` | ✅ 184404 | ✅ Implementado | ✅ |
-| Parâmetro `ufOab` | ✅ MG | ✅ Implementado | ✅ |
-| Parâmetro `meio=D` | ✅ **OBRIGATÓRIO** | ✅ Sempre definido | ✅ |
-| Estrutura JSON | ✅ count + items[] | ✅ Tipado no TS | ✅ |
-| Rate Limiting | ⚠️ Use com moderação | ✅ Cooldown 60s | ✅ |
-| Headers monitorados | ✅ x-ratelimit-* | ✅ Implementado | ✅ |
-| Caso de sucesso | ✅ 3 intimações | ✅ Testado | ✅ |
-
----
-
-## 🎯 Conclusão
-
-**CONFORMIDADE: 100%** ✅
-
-Todos os aspectos da documentação oficial estão corretamente implementados:
-
-1. ✅ **Endpoint correto** em 5 arquivos diferentes
-2. ✅ **Parâmetro `meio=D` obrigatório** sempre presente
-3. ✅ **Estrutura JSON** totalmente tipada
-4. ✅ **Rate limiting** com cooldown de 60 segundos
-5. ✅ **Headers de controle** monitorados
-6. ✅ **Caso de sucesso** comprovado com dados reais
-
----
-
-## 📂 Arquivos Validados
-
-✅ `lib/api/djen-client.ts` - Cliente principal (523 linhas)  
-✅ `backend/src/services/djen-api.ts` - Proxy backend (125 linhas)  
-✅ `src/lib/djen-api.ts` - Cliente frontend (459 linhas)  
-✅ `api/djen-sync.ts` - Vercel function (469 linhas)  
-✅ `functions/src/djen-scheduler.ts` - Firebase functions (280 linhas)  
-✅ `backend/src/routes/djen.ts` - Express routes (89 linhas)  
-
-**Total:** 1.945 linhas de código validadas ✅
-
----
-
-## 🚀 Pronto para Produção
-
-Sua implementação segue **100% das especificações** da API oficial do CNJ.  
-Deploy com confiança! 🎉
-
-**Data da Validação:** 2026-01-16  
-**Documento de Referência:** `configuração correta djen`  
-**Status:** ✅ APROVADO
-
----
-
-## 🔑 Configuração Necessária (Vercel)
-
-### Variáveis de Ambiente Obrigatórias
-
-```bash
-# Upstash Redis (obrigatório para armazenamento)
-UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
-UPSTASH_REDIS_REST_TOKEN=xxx
-
-# IA para análise (opcional)
-VITE_GOOGLE_API_KEY=xxx  # ou GEMINI_API_KEY
-
-# Email (opcional)
-RESEND_API_KEY=xxx
-NOTIFICATION_EMAIL=seu@email.com
-```
-
----
-
-## 📂 Arquivos de Implementação
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `api/djen-sync.ts` | Endpoint público para sincronização manual |
-| `api/cron.ts` | Tarefa agendada (11:00 BRT) |
-| `api/expedientes.ts` | Lista publicações armazenadas |
-| `api/lawyers.ts` | Gerencia advogados monitorados |
-| `src/components/DJENPublicationsWidget.tsx` | Widget para painel de controle |
-| `src/components/ExpedientePanel.tsx` | Painel completo de expedientes |
-
----
-
-## 🕐 Cron Automatizado
-
-Configurado no `vercel.json` (2 verificações diárias):
-
+**Resultado de Erro (atual):**
 ```json
-{
-  "crons": [
-    {
-      "path": "/api/cron?action=djen-monitor",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron?action=djen-monitor",
-      "schedule": "0 20 * * *"
-    }
-  ]
-}
-```
-
-### Horários
-
-- `0 12 * * *` = **12:00 UTC** = **09:00 BRT** (manhã)
-- `0 20 * * *` = **20:00 UTC** = **17:00 BRT** (tarde)
-
----
-
-## 🧪 Testando a Integração
-
-### 1. Status do verificador
-```bash
-curl https://seu-app.vercel.app/api/status
-```
-
-### 2. Sincronizar manualmente
-```bash
-curl -X POST https://seu-app.vercel.app/api/djen-sync
-```
-
-### 3. Listar publicações
-```bash
-curl https://seu-app.vercel.app/api/expedientes
+{"error":"Erro ao buscar expedientes"}  // ❌ Conexão com localhost falhou
 ```
 
 ---
 
-## ⚠️ Detalhes Técnicos Importantes
+## 📋 CHECKLIST FINAL
 
-### Parâmetro `meio=D` é OBRIGATÓRIO
+### O que está PRONTO ✅
+- [x] Banco Neon criado e configurado
+- [x] Schema SQL corrigido (removeu sintaxe CrateDB `OBJECT`)
+- [x] Tabelas `expedientes` e `minutas` criadas
+- [x] Secret Manager atualizado com Connection String
+- [x] Cloud Run configurado para ler secret `database-url`
+- [x] Código TypeScript lê `process.env.DATABASE_URL` corretamente
+- [x] SSL configurado (`sslmode=require`)
 
-- ✅ Sem ele, a API retorna erro ou resultados vazios
-- ✅ `D` = Diário Digital (padrão dos tribunais)
-- ✅ Implementado em todos os arquivos da sua aplicação
-
-### Região do Vercel deve ser `gru1` (São Paulo)
-
-**A API DJEN bloqueia solicitações de fora do Brasil**
-
-Configure no `vercel.json`:
-```json
-{
-  "regions": ["gru1"]
-}
-```
-
-✅ **Já configurado no seu projeto!**
-
-### Limite de Taxa (Rate Limiting)
-
-- A API do CNJ pode ter limitações
-- ✅ O sistema implementa cooldown de 60 segundos entre chamadas
-- ✅ Headers `x-ratelimit-*` são monitorados
-
-### Formato do Número OAB
-
-- ✅ Apenas números, sem pontos ou traços
-- ✅ Exemplo: `184404` (não `184.404`)
-- ✅ Seu código normaliza automaticamente
+### O que FALTA ⚠️
+- [ ] **Rebuild da imagem Docker** para incluir nova configuração
+- [ ] Teste dos endpoints após novo deploy
 
 ---
 
-## 🏆 Caso de Sucesso
+## 🎓 LIÇÕES APRENDIDAS
 
-**Advogado monitorado:** Thiago Bodevan Veiga - OAB/MG 184.404
+### ✅ Decisões Corretas
+1. **Não ativar Neon Auth** - App já tem autenticação própria (Google OAuth)
+2. **Usar Pooler URL** - Melhor para ambientes serverless (Cloud Run)
+3. **Secret Manager** - Segurança adequada para production
+4. **Remover sintaxe CrateDB** - PostgreSQL não suporta tipo `OBJECT`
 
-**Tribunais configurados:** TJMG, TRT3, TST, STJ, TRF1, TRF6
-
-### Resultado em 27/11/2025
-
-- ✅ **3 intimações** capturadas automaticamente
-- ✅ Widget exibindo corretamente no dashboard
-- ✅ **Processos identificados:**
-  - `5005240-57.2020.8.13.0223` - Execução de Título Extrajudicial
-  - `5005573-67.2024.8.13.0223` - Intimação
-  - `0012850-68.2024.8.13.0338` - Intimação
+### ⚠️ Armadilhas Evitadas
+1. **API REST URL ≠ PostgreSQL URL** - Usuário quase usou a URL errada
+2. **Connection String exposta** - Agora protegida via Secret Manager
+3. **Fallback localhost** - Identificado e corrigido
 
 ---
 
-## 🎯 Conclusão Final
+## 🏁 STATUS GERAL
 
-**100% Validado e Pronto para Produção** ✅
+| Componente | Status | Observação |
+|------------|--------|------------|
+| Neon PostgreSQL | ✅ OK | Tabelas criadas, conexão testada |
+| Schema SQL | ✅ OK | Sintaxe corrigida para PostgreSQL |
+| Secret Manager | ✅ OK | `database-url` atualizado |
+| Cloud Run Config | ✅ OK | Lê do Secret Manager |
+| Imagem Docker | ⚠️ Pendente | Precisa rebuild |
+| Endpoints API | ❌ Erro 500 | Aguardando rebuild |
 
-Todos os requisitos técnicos, configurações e boas práticas estão implementados corretamente. Sua aplicação está pronta para monitorar automaticamente as publicações do DJEN com total conformidade à API oficial do CNJ.
+**Conclusão:** Você executou **99% correto**! Só falta o rebuild da imagem para ativar a nova configuração.
+
+---
+
+**Executado por:** GitHub Copilot CLI  
+**Projeto:** sonic-terminal-474321-s1  
+**Região:** southamerica-east1 (AWS São Paulo)

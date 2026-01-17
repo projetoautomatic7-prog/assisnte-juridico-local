@@ -7,6 +7,7 @@ import { petitionFlow } from '../../../lib/ai/petition-flow.js';
 import { researchFlow } from '../../../lib/ai/research-flow.js';
 import { riskAnalysisFlow } from '../../../lib/ai/risk-flow.js';
 import { strategyFlow } from '../../../lib/ai/strategy-flow.js';
+import { agentQueueProcessor } from '../services/agent-queue-processor.js';
 
 const router = Router();
 
@@ -180,6 +181,33 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // POST endpoint para execução de agentes
-router.post('/', agentsHandler);
+router.post('/', async (req: Request, res: Response) => {
+  const { action } = req.query;
+
+  // Handle process-queue action (Cron/Cloud Scheduler)
+  if (action === 'process-queue') {
+    const authHeader = req.headers.authorization;
+    const cronSecret = process.env.CRON_SECRET;
+    
+    // Auth check: Must have Bearer token matching CRON_SECRET or be in dev mode
+    const isAuth = (cronSecret && authHeader === `Bearer ${cronSecret}`) || 
+                   (!cronSecret && process.env.NODE_ENV === 'development');
+
+    if (!isAuth) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const result = await agentQueueProcessor.processQueue();
+      return res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error('[Agents Queue] Error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Fallback to standard agent execution handler
+  return agentsHandler(req, res);
+});
 
 export default router;
