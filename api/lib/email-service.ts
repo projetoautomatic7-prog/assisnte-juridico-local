@@ -1,33 +1,20 @@
-// NOTA: Este arquivo usa stub temporário até instalar a dependência Resend
-// Para ativar emails de produção:
-// 1. Instalar: npm install resend
-// 2. Descomentar: import { Resend } from 'resend';
-// 3. Remover stub abaixo e usar: const resend = new Resend(process.env.RESEND_API_KEY!);
-// 4. Configurar .env: RESEND_API_KEY=re_your_api_key
-// import { Resend } from 'resend';
+import { Resend } from "resend";
 
-// Stub temporário até instalar resend
-type ResendResponse = {
-  data?: { id: string };
-  error?: { message: string };
-};
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const resend = {
-  emails: {
-    send: async (_options: any): Promise<ResendResponse> => {
-      console.warn("RESEND_API_KEY não configurada ou dependência resend não instalada");
-      return {
-        error: { message: "Resend não configurado. Instale com: npm install resend" },
-      };
-    },
-  },
-};
+// Inicializa o cliente Resend apenas se a chave estiver configurada
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+// Email padrão para envio (configurável via variável de ambiente ou hardcoded para testes)
+// Para testes, o Resend só permite enviar de 'onboarding@resend.dev' para o email verificado
+const DEFAULT_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
 export interface EmailOptions {
   to: string | string[];
   subject: string;
   html: string;
   text?: string;
+  from?: string; // Permite override do remetente
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
@@ -40,11 +27,25 @@ export interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY não configurada no Vercel");
+    if (!resend) {
+      console.warn("RESEND_API_KEY não configurada. Email não enviado.");
+      return {
+        success: false,
+        error: "RESEND_API_KEY não configurada",
+        messageId: null,
+      };
     }
 
-    const response = await resend.emails.send(options);
+    const { to, subject, html, text, from = DEFAULT_FROM, ...rest } = options;
+
+    const response = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>?/gm, ""), // Fallback text from HTML if not provided
+      ...rest,
+    });
 
     if (response.error) {
       console.error("Erro ao enviar email:", response.error);

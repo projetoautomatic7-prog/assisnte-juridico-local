@@ -48,7 +48,7 @@ function logError(message: string) {
 }
 
 // Load environment variables
-const envPath = path.resolve(__dirname, "../../.env.local");
+const envPath = path.resolve(process.cwd(), ".env.local");
 logInfo(`Loading env from: ${envPath}`);
 dotenv.config({ path: envPath });
 dotenv.config(); // Fallback to default .env if needed

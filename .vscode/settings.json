@@ -57,15 +57,55 @@
   "jupyter.askForKernelRestart": true,
   "jupyter.askForLargeDataFrames": true,
   "jupyter.completionTriggerCharacters": {
-    "bash": ["$", "{"],
-    "java": [".", "@", "#"],
-    "javascript": [".", "\"", "'", "/", "@"],
-    "python": [".", "%", "'", "\""],
-    "julia": ["."],
-    "r": ["[", "(", ",", "$", "@", "\"", "'"],
-    "rust": [".", ":"],
-    "scala": ["."],
-    "typescript": [".", "\"", "'", "/", "@", "<"]
+    "bash": [
+      "$",
+      "{"
+    ],
+    "java": [
+      ".",
+      "@",
+      "#"
+    ],
+    "javascript": [
+      ".",
+      "\"",
+      "'",
+      "/",
+      "@"
+    ],
+    "python": [
+      ".",
+      "%",
+      "'",
+      "\""
+    ],
+    "julia": [
+      "."
+    ],
+    "r": [
+      "[",
+      "(",
+      ",",
+      "$",
+      "@",
+      "\"",
+      "'"
+    ],
+    "rust": [
+      ".",
+      ":"
+    ],
+    "scala": [
+      "."
+    ],
+    "typescript": [
+      ".",
+      "\"",
+      "'",
+      "/",
+      "@",
+      "<"
+    ]
   },
   "jupyter.debugJustMyCode": true,
   "jupyter.debugpyDistPath": "",
@@ -215,13 +255,23 @@
   // ========================================
   // 🎨 TAILWIND CSS
   // ========================================
-  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]],
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ]
+  ],
   "tailwindCSS.emmetCompletions": true,
   // ========================================
   // ✅ ESLINT
   // ========================================
   "eslint.enable": true,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
   "eslint.format.enable": true,
   "eslint.workingDirectories": [
     {
@@ -308,7 +358,9 @@
     "pwsh": {
       "path": "/usr/local/bin/pwsh",
       "icon": "terminal-powershell",
-      "args": ["-NoLogo"]
+      "args": [
+        "-NoLogo"
+      ]
     },
     "sh": {
       "path": "/bin/sh"
@@ -328,7 +380,13 @@
   "editor.guides.bracketPairs": true,
   // IntelliSense
   "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*test.py"],
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "*test.py"
+  ],
   "python.testing.pytestEnabled": false,
   "python.testing.unittestEnabled": true,
   "chat.tools.terminal.autoReplyToPrompts": true,
@@ -552,7 +610,10 @@
       ]
     },
     "assistente-jur-dico-principalrepli/.vscode/mcp.json: chroma": {
-      "allowedModels": ["copilot/auto", "copilot/gpt-5.2"]
+      "allowedModels": [
+        "copilot/auto",
+        "copilot/gpt-5.2"
+      ]
     },
     "https-github.com-portprojetoautomacao-debug-assistente-jur-dico-principalrepli.git2/.cursor/mcp.json: chroma": {
       "allowedModels": [
@@ -857,7 +918,11 @@
   "react-native.android.env.simulator": {},
   "react-native.android.envFile.device": "",
   "react-native.android.envFile.simulator": "",
-  "react-native.android.logCatArguments": ["*:S", "ReactNative:V", "ReactNativeJS:V"],
+  "react-native.android.logCatArguments": [
+    "*:S",
+    "ReactNative:V",
+    "ReactNativeJS:V"
+  ],
   "react-native.android.runArguments.device": [],
   "react-native.android.runArguments.simulator": [],
   "react-native.expo.dependencies": {
@@ -905,9 +970,15 @@
   "remote.SSH.logLevel": "debug",
   // Configurações adicionais de estabilidade
   "remote.extensionKind": {
-    "ms-azuretools.vscode-docker": ["ui"],
-    "GitHub.copilot": ["ui"],
-    "GitHub.copilot-chat": ["ui"]
+    "ms-azuretools.vscode-docker": [
+      "ui"
+    ],
+    "GitHub.copilot": [
+      "ui"
+    ],
+    "GitHub.copilot-chat": [
+      "ui"
+    ]
   },
   "remote.portsAttributes": {
     "3000": {
@@ -926,7 +997,9 @@
   "powershell.buttons.showPanelMovementButtons": true,
   "powershell.startAsLoginShell.linux": true,
   "powershell.integratedConsole.showOnStartup": true,
-  "powershell.powerShellAdditionalExePaths": ["/usr/local/bin/pwsh"],
+  "powershell.powerShellAdditionalExePaths": [
+    "/usr/local/bin/pwsh"
+  ],
   "powershell.developer.editorServicesWaitForDebugger": false,
   "powershell.trace.server": "messages",
   "IDX.agenticWorkspace": true,
@@ -960,5 +1033,5 @@
   "geminicodeassist.codeGenerationPaneViewEnabled": true,
   "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
   "geminicodeassist.updateChannel": "Insiders",
-  "geminicodeassist.agent.additionalTrustedCertificates": ""
+  "geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyDbH8QXGjtqt592whwdKb2PSQFggUQy5nY"
 }

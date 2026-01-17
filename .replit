@@ -1,11 +1,25 @@
-modules = ["go-1.21", "web", "nodejs-20", "bash", "postgresql-16"]
+modules = ["go-1.21", "web", "nodejs-22", "bash", "postgresql-16"]
 
 [agent]
 expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["systemdUkify", "lsof", "file", "tree", "glib", "nss", "nspr", "atk", "cups", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "xorg.libX11", "xorg.libXext", "pango", "cairo", "expat", "alsa-lib", "at-spi2-atk", "at-spi2-core", "gtk3", "dbus", "mesa", "libxkbcommon", "libdrm", "playwright-driver"]
+packages = [
+  "systemdUkify", "lsof", "file", "tree", 
+  # Playwright core dependencies
+  "glib", "nss", "nspr", "atk", "cups", 
+  "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXfixes", "xorg.libXrandr", 
+  "xorg.libxcb", "xorg.libX11", "xorg.libXext", "xorg.libXrender", "xorg.libXi",
+  "xorg.libXcursor", "xorg.libxshmfence",
+  "pango", "cairo", "expat", "alsa-lib", 
+  "at-spi2-atk", "at-spi2-core", "gtk3", "dbus", "mesa", 
+  "libxkbcommon", "libdrm", "playwright-driver",
+  # Additional Playwright dependencies
+  "freetype", "fontconfig", "gdk-pixbuf",
+  # Gemini CLI clipboard dependencies
+  "xsel", "xclip"
+]
 
 [workflows]
 runButton = "Project"

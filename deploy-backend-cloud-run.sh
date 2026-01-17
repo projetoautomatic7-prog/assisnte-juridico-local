@@ -69,8 +69,8 @@ echo "3️⃣ Fazendo deploy do backend..."
 echo "   (Isso pode levar 5-10 minutos...)"
 echo ""
 
-# 1. Build da imagem usando o arquivo específico (gcloud run deploy não aceita --dockerfile diretamente com source)
-gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME" --dockerfile "$REPO_ROOT/Dockerfile.backend" "$REPO_ROOT"
+# 1. Build da imagem usando o Dockerfile da raiz
+gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME" .
 
 # 2. Deploy no Cloud Run a partir da imagem gerada
 gcloud run deploy "$SERVICE_NAME" \
@@ -85,7 +85,6 @@ gcloud run deploy "$SERVICE_NAME" \
   --timeout 300 \
   --port 8080 \
   --set-env-vars "NODE_ENV=production" \
-  --set-env-vars "PORT=8080" \
   --set-env-vars "GEMINI_API_KEY=${GEMINI_API_KEY}" \
   --set-env-vars "GEMINI_MODEL=${GEMINI_MODEL}" \
   --set-env-vars "FRONTEND_URL=${FRONTEND_URL}" \
@@ -93,6 +92,10 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-env-vars "DJEN_OAB_UF=${DJEN_OAB_UF}" \
   --set-env-vars "DJEN_ADVOGADO_NOME=${DJEN_ADVOGADO_NOME}" \
   --set-env-vars "DJEN_SCHEDULER_ENABLED=${DJEN_SCHEDULER_ENABLED}" \
+  --set-env-vars "VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}" \
+  --set-env-vars "SENTRY_DSN=${SENTRY_DSN:-$VITE_SENTRY_DSN}" \
+  --set-env-vars "VITE_OTLP_ENDPOINT=${VITE_OTLP_ENDPOINT:-}" \
+  --set-env-vars "OTLP_ENDPOINT=${OTLP_ENDPOINT:-$VITE_OTLP_ENDPOINT}" \
   --quiet
 
 echo ""

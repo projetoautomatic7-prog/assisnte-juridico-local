@@ -168,6 +168,7 @@
     "react-router-dom": "^7.1.1",
     "recharts": "^2.15.1",
     "redis": "^5.10.0",
+    "resend": "^6.7.0",
     "serve": "^14.2.4",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",

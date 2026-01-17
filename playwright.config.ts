@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import fs from "node:fs";
 
-const PORT = process.env.PORT || "5173";
+const PORT = process.env.PORT || "5000";
 const BASE_URL = process.env.BASE_URL || `http://127.0.0.1:${PORT}`;
 const USE_PROD = process.env.USE_PROD_BASE_URL === "true";
 const IS_CI = process.env.CI === "true" || !!process.env.GITHUB_ACTIONS;
@@ -50,6 +50,7 @@ export default defineConfig({
         // Configurar proxy do Vite para apontar as /api para a API local de testes
         env: {
           ...(process.env || {}),
+          PORT,
           DISABLE_API_PROXY: "false",
           VITE_API_TARGET:
             process.env.VITE_API_TARGET || `http://127.0.0.1:${process.env.DEV_API_PORT || 5252}`,

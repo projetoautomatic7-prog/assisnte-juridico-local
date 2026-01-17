@@ -3,12 +3,17 @@ import { Router } from "express";
 const router = Router();
 
 const QDRANT_DEFAULT_COLLECTION = process.env.QDRANT_COLLECTION_NAME || "legal_docs";
-const QDRANT_URL = process.env.QDRANT_URL || "";
-const QDRANT_API_KEY = process.env.QDRANT_API_KEY || "";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
+function getQdrantConfig() {
+  const url = process.env.QDRANT_URL || "";
+  const apiKey = process.env.QDRANT_API_KEY || "";
+  return { url, apiKey };
+}
+
 function assertQdrantConfigured() {
-  if (!QDRANT_URL || !QDRANT_API_KEY) {
+  const { url, apiKey } = getQdrantConfig();
+  if (!url || !apiKey) {
     throw new Error("QDRANT_URL ou QDRANT_API_KEY não configurado");
   }
 }
@@ -50,6 +55,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 router.post("/search", async (req, res) => {
   try {
     assertQdrantConfigured();
+    const { url: QDRANT_URL, apiKey: QDRANT_API_KEY } = getQdrantConfig();
 
     const { query, vector, limit, filter, collectionName } = req.body as {
       query?: string;
@@ -99,6 +105,7 @@ router.post("/search", async (req, res) => {
 router.post("/upsert", async (req, res) => {
   try {
     assertQdrantConfigured();
+    const { url: QDRANT_URL, apiKey: QDRANT_API_KEY } = getQdrantConfig();
 
     const { points, content, metadata, id, collectionName } = req.body as {
       points?: Array<{ id: string | number; vector: number[]; payload: Record<string, unknown> }>;

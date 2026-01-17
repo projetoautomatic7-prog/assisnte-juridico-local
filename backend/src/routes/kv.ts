@@ -3,20 +3,28 @@ import { Router } from "express";
 
 const router = Router();
 
-// Redis configuration
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-
+// Redis configuration - Lazy initialization
 let redis: Redis | null = null;
+let isRedisInitialized = false;
 
-if (redisUrl && redisToken) {
-  redis = new Redis({
-    url: redisUrl,
-    token: redisToken,
-  });
-  console.log("[KV] Redis configured");
-} else {
-  console.warn("[KV] Redis not configured, using in-memory store");
+function getRedisClient(): Redis | null {
+  if (isRedisInitialized) return redis;
+
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+
+  if (redisUrl && redisToken) {
+    redis = new Redis({
+      url: redisUrl,
+      token: redisToken,
+    });
+    console.log("[KV] Redis configured");
+  } else {
+    console.warn("[KV] Redis not configured, using in-memory store");
+  }
+
+  isRedisInitialized = true;
+  return redis;
 }
 
 // In-memory fallback
@@ -38,11 +46,12 @@ memoryStore.set("monitored-lawyers", DEFAULT_LAWYERS);
 
 router.get("/:key", async (req, res) => {
   const { key } = req.params;
+  const redisClient = getRedisClient();
 
   try {
     let value;
-    if (redis) {
-      value = await redis.get(key);
+    if (redisClient) {
+      value = await redisClient.get(key);
     } else {
       value = memoryStore.get(key);
     }
@@ -51,25 +60,27 @@ router.get("/:key", async (req, res) => {
     res.json({
       key,
       value: value || null,
-      source: redis ? "redis" : "memory",
+      source: redisClient ? "redis" : "memory",
     });
   } catch (error) {
-    console.error("[KV] Get Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    const err = error as Error;
+    console.error(`[KV] Get Error for key '${key}':`, err.message, err.stack);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
 router.post("/:key", async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;
+  const redisClient = getRedisClient();
 
   if (value === undefined) {
     return res.status(400).json({ error: "Value required" });
   }
 
   try {
-    if (redis) {
-      await redis.set(key, value);
+    if (redisClient) {
+      await redisClient.set(key, value);
     } else {
       memoryStore.set(key, value);
     }
@@ -78,25 +89,28 @@ router.post("/:key", async (req, res) => {
       success: true,
       key,
       stored: true,
-      source: redis ? "redis" : "memory",
+      source: redisClient ? "redis" : "memory",
     });
   } catch (error) {
-    console.error("[KV] Set Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    const err = error as Error;
+    console.error(`[KV] Set Error for key '${key}':`, err.message);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
 // Support query param style (GET /api/kv?key=...)
 router.get("/", async (req, res) => {
   const key = req.query.key as string;
+  const redisClient = getRedisClient();
+
   if (!key) {
     return res.status(400).json({ error: "Key required" });
   }
 
   try {
     let value;
-    if (redis) {
-      value = await redis.get(key);
+    if (redisClient) {
+      value = await redisClient.get(key);
     } else {
       value = memoryStore.get(key);
     }
@@ -104,25 +118,27 @@ router.get("/", async (req, res) => {
     res.json({
       key,
       value: value || null,
-      source: redis ? "redis" : "memory",
+      source: redisClient ? "redis" : "memory",
     });
   } catch (error) {
-    console.error("[KV] Get Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    const err = error as Error;
+    console.error(`[KV] Get Error for key '${key}':`, err.message, err.stack);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
 // Support POST /api/kv with body { key, value }
 router.post("/", async (req, res) => {
   const { key, value, action, keys, entries } = req.body;
+  const redisClient = getRedisClient();
 
   try {
     // Batch Get
     if (action === "batch-get" && Array.isArray(keys)) {
       const values: Record<string, unknown> = {};
       for (const k of keys) {
-        if (redis) {
-          values[k] = await redis.get(k);
+        if (redisClient) {
+          values[k] = await redisClient.get(k);
         } else {
           values[k] = memoryStore.get(k);
         }
@@ -133,8 +149,8 @@ router.post("/", async (req, res) => {
     // Batch Set
     if (action === "batch-set" && Array.isArray(entries)) {
       for (const entry of entries) {
-        if (redis) {
-          await redis.set(entry.key, entry.value);
+        if (redisClient) {
+          await redisClient.set(entry.key, entry.value);
         } else {
           memoryStore.set(entry.key, entry.value);
         }
@@ -144,8 +160,8 @@ router.post("/", async (req, res) => {
 
     // Simple Set
     if (key && value !== undefined) {
-      if (redis) {
-        await redis.set(key, value);
+      if (redisClient) {
+        await redisClient.set(key, value);
       } else {
         memoryStore.set(key, value);
       }
@@ -154,8 +170,9 @@ router.post("/", async (req, res) => {
 
     res.status(400).json({ error: "Invalid request" });
   } catch (error) {
-    console.error("[KV] Post Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    const err = error as Error;
+    console.error(`[KV] Post Error:`, err.message);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
