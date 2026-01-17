@@ -13,7 +13,9 @@ export interface ActiveEditorToolkitExecuteResult {
 }
 
 export interface ActiveEditorToolkit {
-  executeTool(options: ActiveEditorToolkitExecuteOptions): Promise<ActiveEditorToolkitExecuteResult>;
+  executeTool(
+    options: ActiveEditorToolkitExecuteOptions
+  ): Promise<ActiveEditorToolkitExecuteResult>;
   setActiveSelection?: (selection: { from: number; to: number } | null) => void;
   getHtmlSchemaAwareness?: () => string;
 }
@@ -38,4 +40,3 @@ export function clearActiveEditorToolkit(toolkit?: ActiveEditorToolkit): void {
     activeEditorToolkit = null;
   }
 }
-

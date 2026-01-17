@@ -190,7 +190,10 @@ export default function AgentOrchestrationPanel() {
               }
               toast.success("Alterações do agente aplicadas no editor.");
             } catch (error) {
-              console.error("[AgentOrchestrationPanel] Falha ao aplicar tool-calls no editor:", error);
+              console.error(
+                "[AgentOrchestrationPanel] Falha ao aplicar tool-calls no editor:",
+                error
+              );
               toast.error("Falha ao aplicar alterações do agente no editor.");
             } finally {
               toolkit.setActiveSelection?.(null);

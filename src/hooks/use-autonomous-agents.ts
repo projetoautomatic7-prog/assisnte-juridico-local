@@ -87,8 +87,7 @@ function sortTasksByPriority(tasks: Array<AgentTask>): Array<AgentTask> {
 const AGENTS_DATA_VERSION = 7;
 const EXPECTED_AGENT_COUNT = initializeAgents().length;
 
-const AGENTS_API =
-  import.meta.env.VITE_AGENTS_API_URL || "/api/agents";
+const AGENTS_API = import.meta.env.VITE_AGENTS_API_URL || "/api/agents";
 
 async function fetchAgentsData() {
   const res = await fetch(`${AGENTS_API}?action=list`).catch(() => null);
@@ -170,18 +169,21 @@ export function useAutonomousAgents() {
     return () => clearInterval(interval);
   }, [fetchServerData]);
 
-  const logActivity = useCallback((agentId: string, action: string, result: ActivityResult = "success") => {
-    setActivityLog((current) => {
-      const log = {
-        id: crypto.randomUUID(),
-        agentId,
-        timestamp: new Date().toISOString(),
-        action,
-        result,
-      };
-      return [log, ...(current || [])].slice(0, 100);
-    });
-  }, []);
+  const logActivity = useCallback(
+    (agentId: string, action: string, result: ActivityResult = "success") => {
+      setActivityLog((current) => {
+        const log = {
+          id: crypto.randomUUID(),
+          agentId,
+          timestamp: new Date().toISOString(),
+          action,
+          result,
+        };
+        return [log, ...(current || [])].slice(0, 100);
+      });
+    },
+    []
+  );
 
   const processNextTask = useCallback(
     async (agent: Agent) => {

@@ -624,7 +624,15 @@ export function TiptapEditorV2({
     } finally {
       setIsAILoading(false);
     }
-  }, [aiPrompt, editor, onAIGenerate, onAIStream, runAIStreaming, replaceVariables, schemaAwareness]);
+  }, [
+    aiPrompt,
+    editor,
+    onAIGenerate,
+    onAIStream,
+    runAIStreaming,
+    replaceVariables,
+    schemaAwareness,
+  ]);
 
   const handleQuickAI = useCallback(
     async (command: (typeof AI_QUICK_COMMANDS)[number]) => {

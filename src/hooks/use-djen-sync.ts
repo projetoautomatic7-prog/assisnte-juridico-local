@@ -18,7 +18,9 @@ export function useDJENSync() {
 
   const executeSync = async (): Promise<SyncResult> => {
     const baseUrl =
-      typeof import.meta.env.VITE_API_BASE_URL === "string" ? import.meta.env.VITE_API_BASE_URL : "";
+      typeof import.meta.env.VITE_API_BASE_URL === "string"
+        ? import.meta.env.VITE_API_BASE_URL
+        : "";
     const triggerUrl =
       typeof import.meta.env.VITE_DJEN_TRIGGER_URL === "string"
         ? import.meta.env.VITE_DJEN_TRIGGER_URL

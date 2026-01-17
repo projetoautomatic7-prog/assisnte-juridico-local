@@ -90,9 +90,7 @@ const AGENTS_API =
 async function runTraditionalFlow(agentId: string, task: unknown): Promise<unknown> {
   const taskData = (task as { data?: Record<string, unknown>; id?: string })?.data || {};
   const message =
-    (taskData.description as string) ||
-    (taskData.message as string) ||
-    JSON.stringify(taskData);
+    (taskData.description as string) || (taskData.message as string) || JSON.stringify(taskData);
 
   const response = await fetch(AGENTS_API, {
     method: "POST",
@@ -132,7 +130,7 @@ export async function executeHybridTask(
   try {
     // 1. Traditional Flow (Genkit)
     let traditionalResult: { completed: boolean; data?: unknown } = { completed: false };
-    
+
     if (finalConfig.enableTraditional) {
       try {
         const flowResult = await runTraditionalFlow(agentId, task);
@@ -150,8 +148,8 @@ export async function executeHybridTask(
     // 2. LangGraph Flow (Mocked for now, or Placeholder)
     let langGraphResult: { completed: boolean; data?: unknown } | undefined = undefined;
     if (hasHybridVersion(agentId) && finalConfig.enableLangGraph) {
-         // Placeholder for future LangGraph implementation
-         langGraphResult = { completed: true, data: task }; 
+      // Placeholder for future LangGraph implementation
+      langGraphResult = { completed: true, data: task };
     }
 
     const result: HybridExecutionResult = {

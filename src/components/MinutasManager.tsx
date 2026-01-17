@@ -118,7 +118,7 @@ export default function MinutasManager() {
     onComplete?: () => void;
     onError?: (error: string) => void;
   }>({});
-  
+
   // Toolkit de IA para o editor
   const aiToolkitRef = useRef<AiToolkit | null>(null);
   useEffect(() => {
@@ -170,10 +170,10 @@ export default function MinutasManager() {
             tipo: type || "peticao",
             status: "rascunho",
             autor: "Agente IA",
-            criadoPorAgente: true
+            criadoPorAgente: true,
           });
-          setMinutas(current => [...(current || []), novaMinuta]);
-          
+          setMinutas((current) => [...(current || []), novaMinuta]);
+
           // Abrir automaticamente a nova minuta
           setEditingMinuta(novaMinuta);
           setFormData({
@@ -181,29 +181,30 @@ export default function MinutasManager() {
             processId: "",
             tipo: novaMinuta.tipo,
             conteudo: novaMinuta.conteudo,
-            status: novaMinuta.status
+            status: novaMinuta.status,
           });
           setIsDialogOpen(true);
-          
+
           toast.success(`Minuta "${novaMinuta.titulo}" criada pela IA!`);
         } catch (e) {
           toast.error("Erro ao criar documento via IA");
         }
-      }
-
-      else if (toolCall.name === "listDocuments") {
-        // Como o fluxo é unidirecional (server -> client), não podemos "retornar" a lista pro agente imediatamente 
+      } else if (toolCall.name === "listDocuments") {
+        // Como o fluxo é unidirecional (server -> client), não podemos "retornar" a lista pro agente imediatamente
         // na mesma stream http response sem um mecanismo de feedback loop complexo.
         // Porém, podemos exibir pro usuário ou (se implementarmos tool outputs) enviar de volta.
         // Por enquanto, apenas notificamos que a IA tentou listar.
         toast.info(`IA solicitou lista de documentos (${(minutas || []).length} encontrados).`);
-        console.log("Documentos disponíveis:", minutas?.map(m => ({ id: m.id, titulo: m.titulo })));
-      }
-
-      else if (toolCall.name === "openDocument") {
+        console.log(
+          "Documentos disponíveis:",
+          minutas?.map((m) => ({ id: m.id, titulo: m.titulo }))
+        );
+      } else if (toolCall.name === "openDocument") {
         const { id, title } = toolCall.input;
-        const target = (minutas || []).find(m => m.id === id || m.titulo.toLowerCase().includes(title?.toLowerCase()));
-        
+        const target = (minutas || []).find(
+          (m) => m.id === id || m.titulo.toLowerCase().includes(title?.toLowerCase())
+        );
+
         if (target) {
           setEditingMinuta(target);
           setFormData({
@@ -211,7 +212,7 @@ export default function MinutasManager() {
             processId: target.processId || "",
             tipo: target.tipo,
             conteudo: target.conteudo,
-            status: target.status
+            status: target.status,
           });
           setIsDialogOpen(true);
           toast.success(`Abrindo minuta: ${target.titulo}`);
@@ -605,8 +606,8 @@ export default function MinutasManager() {
     }
 
     // Obter schema awareness se disponível
-    const schemaInstructions = aiToolkitRef.current 
-      ? aiToolkitRef.current.getHtmlSchemaAwareness() 
+    const schemaInstructions = aiToolkitRef.current
+      ? aiToolkitRef.current.getHtmlSchemaAwareness()
       : "";
 
     const fullPrompt = `Você é um assistente jurídico especializado em redação de documentos legais brasileiros.
@@ -661,8 +662,8 @@ ${prompt}`;
         // Preservar seleção para o streaming (Selection Awareness)
         aiToolkitRef.current?.setActiveSelection({ from: 0, to: 0 });
 
-        const schemaInstructions = aiToolkitRef.current 
-          ? aiToolkitRef.current.getHtmlSchemaAwareness() 
+        const schemaInstructions = aiToolkitRef.current
+          ? aiToolkitRef.current.getHtmlSchemaAwareness()
           : "Mantenha formatação HTML adequada para o editor (use <p>, <strong>, <em>, <ul>, <li>, <blockquote>).";
 
         await streamChat([
@@ -967,9 +968,12 @@ ${schemaInstructions}`,
                                   const toolkit = getCkEditorAiToolkit(editor);
                                   aiToolkitRef.current = toolkit;
                                   setActiveEditorToolkit(toolkit);
-                                  
+
                                   // TODO: Enviar schemaAwareness para o system prompt do agente
-                                  console.log("Schema Awareness:", toolkit.getHtmlSchemaAwareness());
+                                  console.log(
+                                    "Schema Awareness:",
+                                    toolkit.getHtmlSchemaAwareness()
+                                  );
                                 }}
                                 onAIGenerate={handleAIGenerate}
                                 onAIStream={handleAIStream}

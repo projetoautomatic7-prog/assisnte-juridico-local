@@ -109,8 +109,8 @@ class AiToolkitImpl implements AiToolkit {
       horizontalRule: "<hr>",
       hardBreak: "<br>",
       image: "<img>",
-      taskList: "<ul data-type=\"taskList\">",
-      taskItem: "<li data-type=\"taskItem\">",
+      taskList: '<ul data-type="taskList">',
+      taskItem: '<li data-type="taskItem">',
     };
 
     const allowedNodes = nodeNames
@@ -166,14 +166,14 @@ class AiToolkitImpl implements AiToolkit {
         output: `Unknown tool: ${toolName}`,
         hasError: true,
         unknownTool: true,
-        docChanged: false
+        docChanged: false,
       };
     } catch (error) {
       return {
         output: error instanceof Error ? error.message : "Error executing tool",
         hasError: true,
         unknownTool: false,
-        docChanged: false
+        docChanged: false,
       };
     }
   }
@@ -190,17 +190,16 @@ class AiToolkitImpl implements AiToolkit {
       toolName,
       input,
       chunkSize: options.chunkSize,
-      reviewOptions: options.reviewOptions
+      reviewOptions: options.reviewOptions,
     });
   }
 
   // --- Tool Handlers ---
 
   private handleRead(input: unknown): ExecuteToolResult {
-    const maybe = (input && typeof input === "object" ? (input as Record<string, unknown>) : {}) as Record<
-      string,
-      unknown
-    >;
+    const maybe = (
+      input && typeof input === "object" ? (input as Record<string, unknown>) : {}
+    ) as Record<string, unknown>;
     const from = maybe.from;
     const to = maybe.to;
     let text = "";
@@ -215,50 +214,51 @@ class AiToolkitImpl implements AiToolkit {
       output: text,
       hasError: false,
       unknownTool: false,
-      docChanged: false
+      docChanged: false,
     };
   }
 
   private handleReadSelection(_input: unknown): ExecuteToolResult {
     // Use activeSelection if set, otherwise editor selection
-    const selection = this._activeSelection 
+    const selection = this._activeSelection
       ? { from: this._activeSelection.from, to: this._activeSelection.to }
       : { from: this.editor.state.selection.from, to: this.editor.state.selection.to };
-      
+
     const text = this.editor.state.doc.textBetween(selection.from, selection.to, "\n");
 
     return {
       output: text,
       hasError: false,
       unknownTool: false,
-      docChanged: false
+      docChanged: false,
     };
   }
 
   private handleEdit(input: unknown): ExecuteToolResult {
-    const maybe = (input && typeof input === "object" ? (input as Record<string, unknown>) : {}) as Record<
-      string,
-      unknown
-    >;
+    const maybe = (
+      input && typeof input === "object" ? (input as Record<string, unknown>) : {}
+    ) as Record<string, unknown>;
     const content = maybe.content;
     const from = maybe.from;
     const to = maybe.to;
 
     if (typeof content !== "string" || content.trim().length === 0) {
-       return {
-         output: "No content provided for edit",
-         hasError: true,
-         unknownTool: false,
-         docChanged: false
-       };
+      return {
+        output: "No content provided for edit",
+        hasError: true,
+        unknownTool: false,
+        docChanged: false,
+      };
     }
 
-    const range = (typeof from === "number" && typeof to === "number")
-      ? { from, to }
-      : this._activeSelection || this.editor.state.selection;
+    const range =
+      typeof from === "number" && typeof to === "number"
+        ? { from, to }
+        : this._activeSelection || this.editor.state.selection;
 
     // Use chain to preserve focus or handle history
-    this.editor.chain()
+    this.editor
+      .chain()
       .focus()
       .setTextSelection(range)
       .deleteSelection() // remove existing content in range
@@ -269,7 +269,7 @@ class AiToolkitImpl implements AiToolkit {
       output: "Content updated successfully",
       hasError: false,
       unknownTool: false,
-      docChanged: true
+      docChanged: true,
     };
   }
 }
