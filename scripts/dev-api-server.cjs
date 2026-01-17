@@ -219,6 +219,55 @@ const server = http.createServer((req, res) => {
       return sendJson(200, { ok: true, errors });
     }
 
+    // Lawyers API Mock
+    if (method === "GET" && pathname === "/api/lawyers") {
+      return sendJson(200, {
+        lawyers: [
+          {
+            id: "1",
+            name: "Dr. João Silva",
+            oab: "123456/SP",
+            email: "joao@example.com"
+          }
+        ]
+      });
+    }
+
+    // DJEN Publicações Mock
+    if (method === "GET" && pathname === "/api/djen/publicacoes") {
+      return sendJson(200, {
+        success: true,
+        publicacoes: [],
+        message: "Nenhuma publicação encontrada para hoje"
+      });
+    }
+
+    // LLM Stream Mock
+    if (method === "POST" && pathname === "/api/llm-stream") {
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+      });
+      
+      const message = body.message || "Olá! Como posso ajudar?";
+      const words = message.split(" ");
+      
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < words.length) {
+          res.write(`data: ${JSON.stringify({ chunk: words[i] + " " })}\n\n`);
+          i++;
+        } else {
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+          clearInterval(interval);
+        }
+      }, 100);
+      
+      return;
+    }
+
     sendJson(404, { success: false, error: "Not found" });
   });
 });
