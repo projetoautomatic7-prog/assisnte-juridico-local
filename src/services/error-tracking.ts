@@ -194,7 +194,7 @@ export function initErrorTracking(): void {
       replaysOnErrorSampleRate: 1,
 
       // Debug mode apenas em desenvolvimento
-      debug: APP_ENVIRONMENT === "development",
+      debug: false,
 
       // Máximo de breadcrumbs
       maxBreadcrumbs: 100,
