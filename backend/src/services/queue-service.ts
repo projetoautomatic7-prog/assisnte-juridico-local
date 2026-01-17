@@ -6,24 +6,28 @@ import { Redis } from "@upstash/redis";
  * Eliminates race conditions present in "get-modify-set" patterns.
  */
 export class QueueService {
-  private redis: Redis;
+  private redis: Redis | null = null;
   private queueKey: string;
   private processingKey: string;
 
   constructor(queueName: string = "agent-task-queue") {
-    // Initialize Redis client
+    this.queueKey = queueName;
+    this.processingKey = `${queueName}:processing`;
+  }
+
+  private getRedis(): Redis {
+    if (this.redis) return this.redis;
+
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       this.redis = new Redis({
         url: process.env.UPSTASH_REDIS_REST_URL,
         token: process.env.UPSTASH_REDIS_REST_TOKEN,
       });
+      return this.redis;
     } else {
-      console.warn("[QueueService] Redis credentials missing. Queue will fail.");
+      console.warn("[QueueService] Redis credentials missing.");
       throw new Error("Redis credentials missing");
     }
-
-    this.queueKey = queueName;
-    this.processingKey = `${queueName}:processing`;
   }
 
   /**
@@ -31,10 +35,9 @@ export class QueueService {
    */
   async enqueue(task: any): Promise<number> {
     try {
-      // Use RPUSH for atomic append
-      // We store the task as a JSON string
+      const redis = this.getRedis();
       const taskStr = JSON.stringify(task);
-      const length = await this.redis.rpush(this.queueKey, taskStr);
+      const length = await redis.rpush(this.queueKey, taskStr);
       return length;
     } catch (error) {
       console.error("[QueueService] Enqueue error:", error);
@@ -44,14 +47,11 @@ export class QueueService {
 
   /**
    * Atomically removes and returns the first task from the queue.
-   * Moves it to a 'processing' list for reliability (optional but recommended).
-   * For now, we'll stick to simple LPOP to match the current complexity, 
-   * but ideally, RPOPLPUSH (or LMOVE) should be used.
    */
   async dequeue(): Promise<any | null> {
     try {
-      // Simple LPOP: Removes and returns first element
-      const taskStr = await this.redis.lpop<string>(this.queueKey);
+      const redis = this.getRedis();
+      const taskStr = await redis.lpop<string>(this.queueKey);
       
       if (!taskStr) return null;
 
@@ -66,7 +66,8 @@ export class QueueService {
    * Gets the queue length
    */
   async length(): Promise<number> {
-    return await this.redis.llen(this.queueKey);
+    const redis = this.getRedis();
+    return await redis.llen(this.queueKey);
   }
 
   /**
@@ -74,8 +75,8 @@ export class QueueService {
    */
   async peek(count: number = 10): Promise<any[]> {
     try {
-      // LRANGE 0 count-1
-      const items = await this.redis.lrange(this.queueKey, 0, count - 1);
+      const redis = this.getRedis();
+      const items = await redis.lrange(this.queueKey, 0, count - 1);
       return items.map((item: string) => JSON.parse(item));
     } catch (error) {
       console.error("[QueueService] Peek error:", error);
@@ -87,7 +88,8 @@ export class QueueService {
    * Clears the queue (Use with caution)
    */
   async clear(): Promise<void> {
-    await this.redis.del(this.queueKey);
+    const redis = this.getRedis();
+    await redis.del(this.queueKey);
   }
 }
 
