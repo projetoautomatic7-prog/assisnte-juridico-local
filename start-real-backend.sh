@@ -8,7 +8,6 @@ echo "====================================="
 source .env.production
 
 # Setar variáveis obrigatórias
-export GEMINI_API_KEY=AIzaSyCuSxHIBzV17ceCvexm8iddKXgBpt6PVU4
 export PORT=3001
 export NODE_ENV=development
 export FRONTEND_URL=http://localhost:5000

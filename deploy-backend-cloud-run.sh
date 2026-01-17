@@ -92,10 +92,6 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-env-vars "DJEN_OAB_UF=${DJEN_OAB_UF}" \
   --set-env-vars "DJEN_ADVOGADO_NOME=${DJEN_ADVOGADO_NOME}" \
   --set-env-vars "DJEN_SCHEDULER_ENABLED=${DJEN_SCHEDULER_ENABLED}" \
-  --set-env-vars "VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}" \
-  --set-env-vars "SENTRY_DSN=${SENTRY_DSN:-$VITE_SENTRY_DSN}" \
-  --set-env-vars "VITE_OTLP_ENDPOINT=${VITE_OTLP_ENDPOINT:-}" \
-  --set-env-vars "OTLP_ENDPOINT=${OTLP_ENDPOINT:-$VITE_OTLP_ENDPOINT}" \
   --quiet
 
 echo ""

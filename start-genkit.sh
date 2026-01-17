@@ -1,8 +1,13 @@
 #!/bin/bash
 # Supervisor para manter Genkit + Proxy rodando
 
-export GEMINI_API_KEY=AIzaSyAqoXGdqPaWGvkW5mnl4DAiYETg8Ls8mNA
-export GOOGLE_API_KEY=AIzaSyAqoXGdqPaWGvkW5mnl4DAiYETg8Ls8mNA
+# Carregar variáveis de ambiente
+if [ -f .env.production ]; then
+    source .env.production
+elif [ -f .env ]; then
+    source .env
+fi
+
 export GEMINI_MODEL=gemini-2.0-flash-exp
 
 echo "🚀 Iniciando Genkit + Proxy..."

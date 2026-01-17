@@ -1,0 +1,5 @@
+# Nunca commitar chaves de API
+.env
+.env.local
+.env.production
+.env.*.local
