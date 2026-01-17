@@ -8,6 +8,8 @@ set -euo pipefail
 PROJECT_ID="sonic-terminal-474321-s1"
 SERVICE_NAME="assistente-juridico-backend"
 REGION="southamerica-east1"
+AR_HOSTNAME="southamerica-east1-docker.pkg.dev"
+AR_REPOSITORY="cloud-run-source-deploy"
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 if [[ -z "${GEMINI_API_KEY:-}" ]]; then
@@ -69,12 +71,13 @@ echo "3️⃣ Fazendo deploy do backend..."
 echo "   (Isso pode levar 5-10 minutos...)"
 echo ""
 
-# 1. Build da imagem usando o Dockerfile da raiz
-gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME" .
+# 1. Build da imagem usando o Dockerfile da raiz (Artifact Registry)
+IMAGE_URL="$AR_HOSTNAME/$PROJECT_ID/$AR_REPOSITORY/$SERVICE_NAME:latest"
+gcloud builds submit --tag "$IMAGE_URL" .
 
 # 2. Deploy no Cloud Run a partir da imagem gerada
 gcloud run deploy "$SERVICE_NAME" \
-  --image "gcr.io/$PROJECT_ID/$SERVICE_NAME" \
+  --image "$IMAGE_URL" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
