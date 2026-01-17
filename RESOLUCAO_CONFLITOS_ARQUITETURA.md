@@ -140,69 +140,20 @@ LangGraph Level (dentro Monitor DJEN):
 
 ---
 
-## 🚨 Conflito 3: Chroma vs Qdrant para Vector DB
+## 🚨 Conflito 3: Vector DB para RAG
 
 ### O Problema
 ```
-Ambos armazenam vetores e fazem busca.
-Qual escolher?
-
-Qdrant:
-- Escalável: bilhões de vetores
-- Sparse vectors: suporta BM25-like
-- HNSW: índice ultrarrápido
-- Complexidade: Alta
-
-ChromaDB:
-- Simples: "plug and play"
-- Auto-embedding: automático
-- Menor escala: milhões
-- Complexidade: Baixa
+Precisamos persistir embeddings e fazer busca semântica/híbrida em escala jurídica.
+Qual estratégia de Vector DB adotar para produção?
 ```
 
 ### A Solução: ✅ Qdrant
 
-**Análise de Escala para Jurisprudência**:
-
-```
-STF + STJ jurisprudência brasileira:
-├─ STF: ~400k decisões
-├─ STJ: ~2M decisões
-├─ Tribunais estaduais: ~100M decisões
-├─ Jurisprudência administrativa: ~500M
-└─ Futuro: +1B documentos jurídicos
-
-CRESCIMENTO:
-  Ano 1: 10M vetores → Chroma ✅
-  Ano 2: 100M vetores → Qdrant começa a vencer
-  Ano 3: 1B vetores → Qdrant obrigatório ✅
-```
-
-**Por que Qdrant vence em longo prazo**:
-
-| Critério | Chroma | Qdrant | Jurisprudência |
-|----------|--------|--------|-----------------|
-| **Escala** | <100M | Bilhões | ⭐ Qdrant |
-| **Sparse Vectors** | Recente | Nativo | ⭐ Qdrant |
-| **Hybrid Search** | Manual | Nativo | ⭐ Qdrant |
-| **Self-Hosted** | ✅ Fácil | ✅ Fácil | ⚖️ Ambas |
-| **Custo Escalado** | 💰💰 | 💰 | ⭐ Qdrant |
-| **Setup Inicial** | ✅ Rápido | ⚠️ Médio | ⭐ Chroma |
-
-**Trade-off**:
-- Chroma = Mais rápido no começo
-- Qdrant = Melhor para longo prazo
-
-**Recomendação Pragmática**:
-```
-MVP (Primeiros 3 meses):
-├─ Usar Chroma para prototipagem rápida
-├─ Desenvolver Haystack pipeline com abstração
-
-Produção (Após 3 meses):
-├─ Migrar para Qdrant
-└─ Aproveitar abstração Haystack para trocar backend
-```
+**Por que Qdrant**:
+- Escala para grandes volumes (HNSW)
+- Suporte a busca híbrida (dense + sparse/BM25-like)
+- Operação self-hosted ou gerenciada
 
 ---
 
@@ -413,8 +364,8 @@ connections:
 │ (redundância?)           │              │ Macro    │
 │                          │              │ + Micro  │
 ├──────────────────────────┼──────────────┼──────────┤
-│ Chroma vs Qdrant         │ ✅ Qdrant    │ Escala   │
-│                          │              │ Juridica│
+│ Vector DB (RAG)          │ ✅ Qdrant    │ Escala   │
+│                          │              │ jurídica │
 ├──────────────────────────┼──────────────┼──────────┤
 │ DSPy Python em TS Project│ ✅ Bridge    │ FastAPI  │
 │                          │              │ Pattern  │
@@ -458,8 +409,8 @@ Conflito 1 (AutoGen vs CrewAI)
 Conflito 2 (AutoGen + LangGraph redundância?)
 └─ Usar: Ambos em camadas separadas
 
-Conflito 3 (Chroma vs Qdrant)
-└─ Usar: Qdrant (com fallback Chroma para MVP)
+Conflito 3 (Vector DB para RAG)
+└─ Usar: Qdrant
 
 Conflito 4 (DSPy Python em TypeScript)
 └─ Usar: Bridge FastAPI (desacoplado)
@@ -481,4 +432,3 @@ Todos os conflitos foram **resolvidos** com:
 4. **Roadmap executável** (sem experimentação no ar)
 
 **Próximo Passo**: Iniciar Fase 1 (LangGraph + Monitor DJEN)
-

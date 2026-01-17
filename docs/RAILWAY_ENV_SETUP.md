@@ -21,17 +21,7 @@ railway variables set VITE_GEMINI_API_KEY="sua-chave-aqui"
 railway variables set GEMINI_API_KEY="sua-chave-aqui"
 ```
 
-### 3️⃣ Chroma Cloud (Vector Database) - Opcional
-
-```bash
-# Obtenha em: https://trychroma.com/
-railway variables set CHROMA_API_KEY="ck-xxxxxxxx"
-railway variables set CHROMA_TENANT="seu-tenant-id"
-railway variables set CHROMA_DATABASE="Demo"
-railway variables set CHROMA_COLLECTION_NAME="assistente-juridico-repo"
-```
-
-### 4️⃣ Upstash Redis (Cache/KV) - Opcional
+### 3️⃣ Upstash Redis (Cache/KV) - Opcional
 
 ```bash
 # Obtenha em: https://console.upstash.com/
@@ -39,7 +29,7 @@ railway variables set UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
 railway variables set UPSTASH_REDIS_REST_TOKEN="seu-token"
 ```
 
-### 5️⃣ Datadog APM (Monitoring) - Opcional
+### 4️⃣ Datadog APM (Monitoring) - Opcional
 
 ```bash
 railway variables set DD_API_KEY="sua-chave-datadog"
@@ -51,7 +41,7 @@ railway variables set DD_LOGS_INJECTION="true"
 railway variables set DD_PROFILING_ENABLED="false"
 ```
 
-### 6️⃣ Sentry (Error Tracking) - Opcional
+### 5️⃣ Sentry (Error Tracking) - Opcional
 
 ```bash
 # Obtenha em: https://sentry.io/
@@ -60,7 +50,7 @@ railway variables set VITE_APP_VERSION="1.0.0"
 railway variables set VITE_ENABLE_PII_FILTERING="true"
 ```
 
-### 7️⃣ Rate Limiting (Proteção API)
+### 6️⃣ Rate Limiting (Proteção API)
 
 ```bash
 railway variables set RATE_LIMIT_ENABLED="true"
@@ -69,7 +59,7 @@ railway variables set AI_RATE_LIMIT_MAX_REQUESTS="30"
 railway variables set RATE_LIMIT_WINDOW_MS="900000"
 ```
 
-### 8️⃣ DJEN Scheduler (Opcional)
+### 7️⃣ DJEN Scheduler (Opcional)
 
 ```bash
 railway variables set DJEN_SCHEDULER_ENABLED="false"  # ou "true"
@@ -170,7 +160,6 @@ railway variables | grep -E "(DATABASE_URL|GEMINI_API_KEY|NODE_ENV|PORT)"
 - `RATE_LIMIT_ENABLED` - Segurança
 
 ### 🎁 Opcionais (Features extras)
-- `CHROMA_*` - Busca semântica
 - `UPSTASH_*` - Cache Redis
 - `DD_*` - Monitoramento Datadog
 - `VITE_SENTRY_DSN` - Error tracking
@@ -222,7 +211,6 @@ railway up --detach
 
 - Railway Dashboard: https://railway.app/
 - Obter Gemini API Key: https://aistudio.google.com/app/apikey
-- Obter Chroma Cloud: https://trychroma.com/
 - Obter Upstash Redis: https://console.upstash.com/
 - Obter Datadog: https://www.datadoghq.com/
 - Obter Sentry: https://sentry.io/

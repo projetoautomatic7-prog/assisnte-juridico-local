@@ -2,24 +2,23 @@
 
 ## 📦 O Que Você Recebeu
 
-Análise profunda de **7 frameworks de IA** para construir **arquitetura híbrida multi-agente** para seu **Assistente Jurídico PJe**.
+Análise profunda de **6 frameworks de IA** para construir **arquitetura híbrida multi-agente** para seu **Assistente Jurídico PJe**.
 
 ---
 
 ## 📊 Resultados Entregues
 
-### ✅ Documentos Criados (5 arquivos, ~115 KB)
+### ✅ Documentos Criados
 
 | # | Documento | Tamanho | Público | Tempo |
 |---|-----------|---------|--------|-------|
 | 1️⃣ | **RESUMO_EXECUTIVO_FRAMEWORKS.md** | 14K | Executivos, Stakeholders | 10 min |
-| 2️⃣ | **ANALISE_FRAMEWORKS_HIBRIDOS.json** | 24K | Arquitetos, Tech Leads | 30 min |
-| 3️⃣ | **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** | 20K | Desenvolvedores | 45 min |
-| 4️⃣ | **MATRIZ_DECISAO_FRAMEWORKS.md** | 14K | Revisores, Arquitetos | 1 hora |
-| 5️⃣ | **RESOLUCAO_CONFLITOS_ARQUITETURA.md** | 16K | Tech Leads, Arquitetos | 45 min |
+| 2️⃣ | **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** | 20K | Desenvolvedores | 45 min |
+| 3️⃣ | **MATRIZ_DECISAO_FRAMEWORKS.md** | 14K | Revisores, Arquitetos | 1 hora |
+| 4️⃣ | **RESOLUCAO_CONFLITOS_ARQUITETURA.md** | 16K | Tech Leads, Arquitetos | 45 min |
 | 🗺️ | **INDICE_DOCUMENTOS_FRAMEWORKS.md** | 13K | Navegação | 10 min |
 
-**Total**: 101 KB de documentação estruturada + 305+ padrões de código
+**Total**: documentação estruturada para orientar implementação
 
 ---
 
@@ -98,7 +97,7 @@ Análise profunda de **7 frameworks de IA** para construir **arquitetura híbrid
 - **LangGraph** = Workflows micro (dentro de agente)
 - Separação limpa de conceitos
 
-### ✅ Qdrant sobre ChromaDB
+### ✅ Qdrant (Vector DB)
 - Escala bilhões de precedentes jurídicos
 - Suporte nativo a sparse vectors (BM25-like)
 - Hybrid search (dense + sparse)
@@ -195,9 +194,6 @@ SEMANA 1-3         SEMANA 4-6         SEMANA 7-8         SEMANA 9-10
 
 ├── RESUMO_EXECUTIVO_FRAMEWORKS.md
 │   └─ Visão geral para executivos (10 min)
-│
-├── ANALISE_FRAMEWORKS_HIBRIDOS.json
-│   └─ Análise técnica completa (305+ padrões)
 │
 ├── ROADMAP_IMPLEMENTACAO_HIBRIDA.md
 │   └─ Plano passo-a-passo com código (45 min)
@@ -327,4 +323,3 @@ Você tem em mãos uma **análise profunda, executável e justificada** de como 
 ---
 
 Boa sorte com o **Assistente Jurídico PJe**! 🚀⚖️
-

@@ -48,7 +48,6 @@ Implementar a arquitetura de agentes de última geração, combinando CrewAI, La
 - griptape-ai/griptape — https://github.com/griptape-ai/griptape (execução de ferramentas/agents)
 - Significant-Gravitas/Auto-GPT — https://github.com/Significant-Gravitas/Auto-GPT (agentes autônomos, execução de tarefas)
 - deepset-ai/haystack — https://github.com/deepset-ai/haystack (RAG, pipelines de recuperação)
-- chromadb/chroma — https://github.com/chroma-core/chroma (vector DB)
 - qdrant/qdrant — https://github.com/qdrant/qdrant (vector DB escalável)
 - weaviate/weaviate — https://github.com/semi-technologies/weaviate (vector DB com schemas)
 - Pinecone — https://www.pinecone.io/ (vector DB gerenciado)

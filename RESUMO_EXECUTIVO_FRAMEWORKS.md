@@ -95,7 +95,6 @@
 | **DSPy** | ⭐ | ⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐ | ✅ **Tier 3** |
 | **Haystack** | ⭐ | ⭐⭐ | ⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ **Tier 4 (RAG)** |
 | **Qdrant** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Tier 4 (DB)** |
-| **ChromaDB** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⚠️ Alternativa |
 | **CrewAI** | ⭐⭐⭐ | ⭐⭐ | ⭐ | ⭐ | ⭐ | ⚠️ Não recomendado |
 
 ---
@@ -209,18 +208,16 @@ SEMANA 1-2     SEMANA 3-4     SEMANA 5-6     SEMANA 7-8
 
 | Arquivo | Propósito | Tamanho |
 |---------|-----------|--------|
-| `ANALISE_FRAMEWORKS_HIBRIDOS.json` | Análise técnica completa (305+ padrões de código) | 25 KB |
 | `ROADMAP_IMPLEMENTACAO_HIBRIDA.md` | Plano passo-a-passo com código de exemplo | 20 KB |
 | `MATRIZ_DECISAO_FRAMEWORKS.md` | Justificativa de cada decisão | 18 KB |
-| `RESUMO_EXECUTIVO.md` | Este arquivo (referência visual) | 5 KB |
+| `RESUMO_EXECUTIVO_FRAMEWORKS.md` | Este arquivo (referência visual) | 5 KB |
 
 ---
 
 ## 📞 Próximos Passos Imediatos
 
 ### Hoje
-1. Revisar `ANALISE_FRAMEWORKS_HIBRIDOS.json` - Arquivos chave de cada framework
-2. Ler `MATRIZ_DECISAO_FRAMEWORKS.md` - Entender justificativas
+1. Ler `MATRIZ_DECISAO_FRAMEWORKS.md` - Entender justificativas
 
 ### Esta Semana
 3. Setup inicial LangGraph
@@ -282,7 +279,6 @@ SEMANA 1-2     SEMANA 3-4     SEMANA 5-6     SEMANA 7-8
 
 Todos os arquivos incluem code snippets prontos para uso:
 - ✅ `ROADMAP_IMPLEMENTACAO_HIBRIDA.md` - 15+ exemplos TypeScript
-- ✅ `ANALISE_FRAMEWORKS_HIBRIDOS.json` - 305+ padrões de código
 - ✅ `MATRIZ_DECISAO_FRAMEWORKS.md` - Comparativas lado-a-lado
 
 ---
@@ -308,4 +304,3 @@ Todos os arquivos incluem code snippets prontos para uso:
 
 **Análise concluída em 2024-12-07**  
 **Status**: ✅ Pronto para implementação
-

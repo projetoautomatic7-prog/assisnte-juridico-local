@@ -214,5 +214,5 @@ Ap�s configura��o bem-sucedida:
 
 **Documenta��o relacionada**:
 - `ROADMAP_IMPLEMENTACAO_HIBRIDA.md` - Fase 2 (Integra��o de Retrieval)
-- `MATRIZ_DECISAO_FRAMEWORKS.md` - Decis�o Qdrant vs ChromaDB
+- `MATRIZ_DECISAO_FRAMEWORKS.md` - Decis�o de Vector DB (Qdrant)
 - `src/lib/qdrant-service.ts` - C�digo do servi�o

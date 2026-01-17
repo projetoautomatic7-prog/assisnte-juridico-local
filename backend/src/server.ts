@@ -9,9 +9,10 @@ import {
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import helmet from "helmet";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { inicializarTabelaExpedientes } from "./db/expedientes.js";
 import agentQueueRouter from "./routes/agent-queue.js";
@@ -27,7 +28,6 @@ import llmRouter from "./routes/llm.js";
 import minutasRouter from "./routes/minutas.js";
 import observabilityRouter from "./routes/observability.js";
 import qdrantRouter from "./routes/qdrant.js";
-import ragRouter from "./routes/rag.js";
 import sparkRouter from "./routes/spark.js";
 import { iniciarSchedulerDJEN } from "./services/djen-scheduler.js";
 
@@ -145,14 +145,7 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   // Configuração correta para Cloud Run/Firebase Hosting
   validate: { trustProxy: true },
-  keyGenerator: (req) => {
-    // Cloud Run usa X-Forwarded-For, Firebase Hosting usa Forwarded
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string') {
-      return forwarded.split(',')[0].trim();
-    }
-    return req.ip || req.socket.remoteAddress || 'unknown';
-  },
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? req.socket.remoteAddress ?? "unknown"),
 });
 
 // Rate limiting mais restritivo para endpoints de IA
@@ -165,14 +158,7 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   // Configuração correta para Cloud Run/Firebase Hosting
   validate: { trustProxy: true },
-  keyGenerator: (req) => {
-    // Cloud Run usa X-Forwarded-For, Firebase Hosting usa Forwarded
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string') {
-      return forwarded.split(',')[0].trim();
-    }
-    return req.ip || req.socket.remoteAddress || 'unknown';
-  },
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? req.socket.remoteAddress ?? "unknown"),
 });
 
 logInfo(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
@@ -211,13 +197,11 @@ if (rateLimitEnabled && !isTestEnv) {
   app.use("/api/agents", aiLimiter, agentsRouter);
   app.use("/api/ai", aiLimiter, dynatraceLLMMiddleware, aiCommandsRouter);
   app.use("/api/llm-stream", aiLimiter, dynatraceLLMMiddleware, llmStreamRouter);
-  app.use("/api/rag", aiLimiter, ragRouter);
 } else {
   app.use("/api/llm", dynatraceLLMMiddleware, llmRouter);
   app.use("/api/agents", agentsRouter);
   app.use("/api/ai", dynatraceLLMMiddleware, aiCommandsRouter);
   app.use("/api/llm-stream", dynatraceLLMMiddleware, llmStreamRouter);
-  app.use("/api/rag", ragRouter);
 }
 // Rotas sem rate limiting adicional
 app.use("/api/minutas", minutasRouter);
@@ -233,8 +217,9 @@ const isProduction = process.env.NODE_ENV === "production";
 // In production, compiled server runs from backend/dist/backend/src/server.js
 // So we need to go up 4 levels to reach the root dist/ folder
 const distPath = path.resolve(__dirname, "../../../../dist");
+const indexHtmlPath = path.join(distPath, "index.html");
 
-if (isProduction) {
+if (isProduction && fs.existsSync(distPath) && fs.existsSync(indexHtmlPath)) {
   logInfo(`📂 Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
@@ -242,8 +227,10 @@ if (isProduction) {
     if (req.path.startsWith("/api")) {
       return next();
     }
-    res.sendFile(path.join(distPath, "index.html"));
+    res.sendFile(indexHtmlPath);
   });
+} else if (isProduction) {
+  logInfo(`ℹ️ Static files not found at ${distPath} or index.html missing - Running in API-only mode`);
 }
 
 // 404 handler for API routes

@@ -122,7 +122,6 @@ As seguintes credenciais fornecidas **não são necessárias** para este aplicat
 ❌ ADMIN_PASSWORD=admin123
 ❌ ADMIN_PASSWORD_HASH=...
 ❌ ADMIN_USERNAME=admin
-❌ CHROMA_URL=http://assistentej-chroma:8000
 ❌ DATABASE_URL=...
 ❌ DATAJUD_BASE_URL=https://api-publica.datajud.cnj.jus.br
 ❌ DATAJUD_CACHE_TTL_MS=900000
@@ -144,7 +143,7 @@ As seguintes credenciais fornecidas **não são necessárias** para este aplicat
 
 **Por quê?**
 - Este é um aplicativo **frontend React** que usa **GitHub Spark** para backend
-- Não há servidor Node.js separado, banco de dados PostgreSQL ou ChromaDB
+- Não há servidor Node.js separado ou banco de dados PostgreSQL
 - As funcionalidades de backend são fornecidas por GitHub Spark (LLM, KV storage)
 - A autenticação é feita via Google OAuth no frontend
 
@@ -271,7 +270,7 @@ Para testar localmente antes do deploy:
 
 ### 1. Por que algumas credenciais fornecidas não foram usadas?
 
-Este é um aplicativo **frontend React** que usa **GitHub Spark** para backend. Credenciais como `DATABASE_URL`, `CHROMA_URL`, `JWT_SECRET` etc. são para aplicações com backend Node.js separado, que não é o caso aqui.
+Este é um aplicativo **frontend React** que usa **GitHub Spark** para backend. Credenciais como `DATABASE_URL`, `JWT_SECRET` etc. são para aplicações com backend Node.js separado, que não é o caso aqui.
 
 ### 2. Posso usar um backend separado no futuro?
 

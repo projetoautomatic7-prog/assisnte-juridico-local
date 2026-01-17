@@ -64,15 +64,15 @@
 
 ### 4. **Vector Database para Jurisprudência**
 
-| Aspecto | Qdrant | ChromaDB | Pinecone |
-|---------|--------|----------|----------|
-| **Escala** | Bilhões ✅ | Milhões ⚠️ | Bilhões ✅ |
-| **Sparse Vectors** | ✅ SPLADE/BM25 | ⚠️ Recente | ✅ Sim |
-| **Hybrid Search** | ✅ Dense+Sparse | ✅ Sim | ✅ Sim |
-| **Auto-Embedding** | ❌ Manual | ✅ Automático | ⚠️ Alguns modelos |
-| **Self-Hosted** | ✅ Fácil | ✅ Fácil | ❌ Apenas Cloud |
-| **Custo (Produção)** | 💰 Baixo | 💰 Médio | 💰💰 Alto |
-| **Latência P99** | <10ms ✅ | <50ms | <10ms ✅ |
+| Aspecto | Qdrant | Pinecone |
+|---------|--------|----------|
+| **Escala** | Bilhões ✅ | Bilhões ✅ |
+| **Sparse Vectors** | ✅ SPLADE/BM25 | ✅ Sim |
+| **Hybrid Search** | ✅ Dense+Sparse | ✅ Sim |
+| **Auto-Embedding** | ❌ Manual | ⚠️ Alguns modelos |
+| **Self-Hosted** | ✅ Fácil | ❌ Apenas Cloud |
+| **Custo (Produção)** | 💰 Baixo | 💰💰 Alto |
+| **Latência P99** | <10ms ✅ | <10ms ✅ |
 
 **Recomendação**: **Qdrant para produção jurídica**
 
@@ -81,10 +81,6 @@
 - Sparse vectors críticos para legal search (jurisprudência é texto-heavy)
 - Hybrid search (dense semântico + sparse keyword) é ideal para precedentes
 - Self-hosted reduz dependência de vendors
-
-**ChromaDB como alternativa**:
-- Se começar com volume menor (<100M vetores)
-- Prototipagem rápida é mais importante
 
 ---
 
@@ -316,7 +312,5 @@ Entrada (Processo Jurídico)
 4. **Semana 4**: AutoGen orchestrator com todos agentes
 
 **Docs de referência criados**:
-- ✅ `ANALISE_FRAMEWORKS_HIBRIDOS.json` - Análise técnica completa
 - ✅ `ROADMAP_IMPLEMENTACAO_HIBRIDA.md` - Plano passo-a-passo
 - ✅ `MATRIZ_DECISAO_FRAMEWORKS.md` - Este arquivo (decisões justificadas)
-

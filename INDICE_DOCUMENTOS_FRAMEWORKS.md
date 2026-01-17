@@ -32,46 +32,6 @@
 
 ---
 
-### 2. **ANALISE_FRAMEWORKS_HIBRIDOS.json** 📊 **DOCUMENTAÇÃO TÉCNICA COMPLETA**
-**Para**: Arquitetos, Desenvolvedores Sênior, Tech Leads  
-**Tempo de Leitura**: 30 minutos  
-**Conteúdo**:
-- ✅ 305+ padrões de código extraídos de 7 frameworks
-- ✅ AutoGen: Orquestração + MagenticOne + Handoff
-- ✅ LangGraph: StateGraph + Type-Safety + Middleware
-- ✅ DSPy: Signatures + 4 tipos de Optimizers (MIPRO, COPRO, SIMBA, GEPA)
-- ✅ Haystack: Pipeline + Retrievers + DocumentStore
-- ✅ ChromaDB: Embedding functions (10+) + Collection API
-- ✅ Qdrant: HNSW + Sparse vectors + Query types (6+)
-- ✅ Matriz de integração recomendada
-- ✅ Arquivos críticos para cada framework
-
-**Formato**: JSON estruturado (fácil parsear)
-
-**Use quando**:
-- Você vai implementar e precisa de referência técnica
-- Quer entender padrões de cada framework
-- Precisa citar qual arquivo olhar no repositório oficial
-
-**Estrutura JSON**:
-```json
-{
-  "frameworks": {
-    "autogen": { "repositorio", "status", "uso_recomendado", "arquivos_chave", "forcos", "fracossos" },
-    "langgraph": { ... },
-    "dspy": { ... },
-    "haystack": { ... },
-    "chroma": { ... },
-    "qdrant": { ... },
-    "crewai": { ... }
-  },
-  "recomendacoes_integracao": { ... },
-  "ordem_implementacao": { ... }
-}
-```
-
----
-
 ### 3. **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** 🚀 **PLANO EXECUTÁVEL**
 **Para**: Desenvolvedores, Engenheiros, Product Builders  
 **Tempo de Leitura**: 45 minutos  
@@ -124,7 +84,7 @@
 **Comparativas incluídas**:
 - AutoGen vs CrewAI: Orquestração
 - LangGraph vs Haystack: Workflow vs RAG
-- Qdrant vs Chroma: Escala
+- Vector DB: Qdrant (escala)
 - DSPy vs Fine-tuning manual: Otimização
 - Haystack vs LangChain: RAG especializado
 
@@ -150,7 +110,7 @@
 **Conflitos Resolvidos**:
 1. AutoGen vs CrewAI → AutoGen (handoff + persistence)
 2. AutoGen + LangGraph (redundância?) → Ambos (camadas)
-3. Chroma vs Qdrant → Qdrant (escala jurídica)
+3. Vector DB → Qdrant (escala jurídica)
 4. DSPy Python em TypeScript → Bridge FastAPI
 5. Haystack vs LangChain → Haystack (RAG nativo)
 
@@ -162,19 +122,17 @@
 
 #### 👔 Executivo (C-Level, Product Manager)
 1. Comece: **RESUMO_EXECUTIVO_FRAMEWORKS.md** (10 min)
-2. Referência: Seção "Conclusão" do JSON
+2. Referência: Seção "Conclusão" do **RESUMO_EXECUTIVO_FRAMEWORKS.md**
 
 #### 🏗️ Arquiteto
 1. Comece: **RESUMO_EXECUTIVO_FRAMEWORKS.md** (10 min)
-2. Aprofunde: **ANALISE_FRAMEWORKS_HIBRIDOS.json** (30 min)
-3. Justifique: **MATRIZ_DECISAO_FRAMEWORKS.md** (1 hora)
-4. Resolva conflitos: **RESOLUCAO_CONFLITOS_ARQUITETURA.md** (45 min)
-5. Implemente: **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** (45 min)
+2. Justifique: **MATRIZ_DECISAO_FRAMEWORKS.md** (1 hora)
+3. Resolva conflitos: **RESOLUCAO_CONFLITOS_ARQUITETURA.md** (45 min)
+4. Implemente: **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** (45 min)
 
 #### 👨‍💻 Desenvolvedor/Engenheiro
 1. Comece: **ROADMAP_IMPLEMENTACAO_HIBRIDA.md** (45 min) ← código pronto
-2. Referência: **ANALISE_FRAMEWORKS_HIBRIDOS.json** (buscar padrões)
-3. Quando preso: **RESOLUCAO_CONFLITOS_ARQUITETURA.md** (entender porquê)
+2. Quando preso: **RESOLUCAO_CONFLITOS_ARQUITETURA.md** (entender porquê)
 
 #### 🔍 Revisor/Quality Assurance
 1. Comece: **RESUMO_EXECUTIVO_FRAMEWORKS.md** (10 min) ← visão geral
@@ -198,24 +156,6 @@
 ├── 💾 Arquivos Gerados (este índice)
 ├── 📚 Referências Rápidas
 └── 🎯 Conclusão com Impacto Esperado
-```
-
-### ANALISE_FRAMEWORKS_HIBRIDOS.json
-```
-├── frameworks
-│   ├── autogen: 40+ padrões
-│   ├── langgraph: 70+ padrões
-│   ├── dspy: 60+ padrões
-│   ├── haystack: 50+ padrões
-│   ├── chroma: 40+ padrões
-│   ├── qdrant: 45+ padrões
-│   └── crewai: informações parciais
-├── recomendacoes_integracao
-├── ordem_implementacao (4 fases)
-├── conflitos_e_resolucoes
-├── dependencias_externas
-├── arquivos_a_criar
-└── recursos_referencia
 ```
 
 ### ROADMAP_IMPLEMENTACAO_HIBRIDA.md
@@ -254,7 +194,7 @@
 ├── 🚫 Conflitos e Resoluções
 │   ├── Conflito 1: AutoGen vs CrewAI
 │   ├── Conflito 2: AutoGen + LangGraph
-│   ├── Conflito 3: Chroma vs Qdrant
+│   ├── Conflito 3: Vector DB
 │   ├── Conflito 4: DSPy em TypeScript
 │   └── Conflito 5: Haystack vs LangChain
 ├── 📋 Checklist de Decisão
@@ -271,9 +211,7 @@
 ├── 🚨 Conflito 2: AutoGen + LangGraph (redundância?)
 │   ├── Visualização de Camadas
 │   └── Separação de Conceitos
-├── 🚨 Conflito 3: Chroma vs Qdrant
-│   ├── Análise de Escala
-│   └── Trade-off Análise
+├── 🚨 Conflito 3: Vector DB para RAG
 ├── 🚨 Conflito 4: DSPy Python em TypeScript
 │   ├── Bridge Pattern Detalhado
 │   └── Implementação
@@ -311,7 +249,6 @@ R: Ver MATRIZ_DECISAO_FRAMEWORKS.md → Comparativa Vector DB
 3. Começar Fase 1 com código do roadmap
 4. Se preso: consultar RESOLUCAO_CONFLITOS_ARQUITETURA.md
 5. Se questionar decisão: MATRIZ_DECISAO_FRAMEWORKS.md
-6. Para detalhes: ANALISE_FRAMEWORKS_HIBRIDOS.json
 ```
 
 ---
@@ -320,8 +257,7 @@ R: Ver MATRIZ_DECISAO_FRAMEWORKS.md → Comparativa Vector DB
 
 | Métrica | Valor |
 |---------|-------|
-| **Frameworks Analisados** | 7 (AutoGen, LangGraph, DSPy, Haystack, Chroma, Qdrant, CrewAI) |
-| **Padrões de Código Extraídos** | 305+ |
+| **Frameworks Analisados** | 6 (AutoGen, LangGraph, DSPy, Haystack, Qdrant, CrewAI) |
 | **Documentos Gerados** | 5 |
 | **Páginas Totais** | ~80 |
 | **Exemplos de Código** | 20+ |
@@ -333,8 +269,7 @@ R: Ver MATRIZ_DECISAO_FRAMEWORKS.md → Comparativa Vector DB
 
 ## ✅ Checklist de Validação
 
-- [x] Todos 7 frameworks analisados profundamente
-- [x] 305+ padrões de código documentados
+- [x] Frameworks analisados profundamente
 - [x] 5 conflitos principais resolvidos
 - [x] Roadmap de 10 semanas criado
 - [x] Arquitetura 4-Tier definida
@@ -403,4 +338,3 @@ Ver cada documento para lista completa de referências.
 **Última Atualização**: 2024-12-07  
 **Status**: ✅ Pronto para Implementação  
 **Próximo Review**: Após Fase 1 (Semana 3)
-

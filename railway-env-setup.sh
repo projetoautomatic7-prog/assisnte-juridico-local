@@ -67,27 +67,7 @@ else
 fi
 
 # ============================================
-# 4. CHROMA CLOUD (Vector Database)
-# ============================================
-
-echo ""
-echo "🔍 CONFIGURANDO CHROMA CLOUD..."
-read -p "Digite sua CHROMA_API_KEY (ou pressione Enter para pular): " CHROMA_KEY
-if [ ! -z "$CHROMA_KEY" ]; then
-    railway variables set CHROMA_API_KEY="$CHROMA_KEY"
-    read -p "Digite o CHROMA_TENANT: " CHROMA_TENANT
-    railway variables set CHROMA_TENANT="$CHROMA_TENANT"
-    read -p "Digite o CHROMA_DATABASE: " CHROMA_DATABASE
-    railway variables set CHROMA_DATABASE="$CHROMA_DATABASE"
-    read -p "Digite o CHROMA_COLLECTION_NAME: " CHROMA_COLLECTION
-    railway variables set CHROMA_COLLECTION_NAME="$CHROMA_COLLECTION"
-    echo "✅ Chroma Cloud configurado"
-else
-    echo "⏭️  Pulado"
-fi
-
-# ============================================
-# 5. UPSTASH REDIS (Key-Value Store)
+# 4. UPSTASH REDIS (Key-Value Store)
 # ============================================
 
 echo ""
@@ -103,7 +83,7 @@ else
 fi
 
 # ============================================
-# 6. DATADOG APM (Monitoring)
+# 5. DATADOG APM (Monitoring)
 # ============================================
 
 echo ""

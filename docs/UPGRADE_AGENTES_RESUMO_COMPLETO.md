@@ -1118,7 +1118,6 @@ stanfordnlp/dspy � https://github.com/stanfordnlp/dspy (otimiza��o/compila
 griptape-ai/griptape � https://github.com/griptape-ai/griptape (execu��o de ferramentas/agents)
 Significant-Gravitas/Auto-GPT � https://github.com/Significant-Gravitas/Auto-GPT (agentes aut�nomos, execu��o de tarefas)
 deepset-ai/haystack � https://github.com/deepset-ai/haystack (RAG, pipelines de recupera��o)
-chromadb/chroma � https://github.com/chroma-core/chroma (vector DB)
 qdrant/qdrant � https://github.com/qdrant/qdrant (vector DB escal�vel)
 weaviate/weaviate � https://github.com/semi-technologies/weaviate (vector DB com schemas)
 Pinecone � https://www.pinecone.io/ (vector DB gerenciado)

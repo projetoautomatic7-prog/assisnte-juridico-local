@@ -2,7 +2,7 @@
     🎯 ANÁLISE DE FRAMEWORKS JURÍDICOS - LEIA PRIMEIRO
 ================================================================================
 
-Parabéns! Você recebeu uma análise completa de 7 frameworks de IA para 
+Parabéns! Você recebeu uma análise completa de 6 frameworks de IA para 
 construir um Assistente Jurídico Multi-Agente para o PJe.
 
 ================================================================================
@@ -17,10 +17,9 @@ construir um Assistente Jurídico Multi-Agente para o PJe.
 
 🏗️ SE VOCÊ É ARQUITETO (tempo: 2-3 horas)
     1. Leia: RESUMO_EXECUTIVO_FRAMEWORKS.md (10 min)
-    2. Leia: ANALISE_FRAMEWORKS_HIBRIDOS.json (30 min)
-    3. Leia: MATRIZ_DECISAO_FRAMEWORKS.md (1 hora)
-    4. Leia: RESOLUCAO_CONFLITOS_ARQUITETURA.md (45 min)
-    5. Valide decisões com seu time
+    2. Leia: MATRIZ_DECISAO_FRAMEWORKS.md (1 hora)
+    3. Leia: RESOLUCAO_CONFLITOS_ARQUITETURA.md (45 min)
+    4. Valide decisões com seu time
 
 👨‍💻 SE VOCÊ É DESENVOLVEDOR (tempo: 1-2 horas)
     1. Leia: RESUMO_EXECUTIVO_FRAMEWORKS.md (10 min) - visão geral
@@ -35,7 +34,7 @@ construir um Assistente Jurídico Multi-Agente para o PJe.
     4. Questione decisões se necessário
 
 ================================================================================
-    📚 TODOS OS DOCUMENTOS (7 arquivos, 120 KB)
+    📚 TODOS OS DOCUMENTOS (6 arquivos)
 ================================================================================
 
 1. COMECE_AQUI.md (12 KB)
@@ -44,19 +43,16 @@ construir um Assistente Jurídico Multi-Agente para o PJe.
 2. RESUMO_EXECUTIVO_FRAMEWORKS.md ⭐ (14 KB)
    └─ Visão geral executiva (COMECE AQUI!)
 
-3. ANALISE_FRAMEWORKS_HIBRIDOS.json (24 KB)
-   └─ Análise técnica completa (305+ padrões)
-
-4. ROADMAP_IMPLEMENTACAO_HIBRIDA.md (20 KB)
+3. ROADMAP_IMPLEMENTACAO_HIBRIDA.md (20 KB)
    └─ Plano com código TypeScript pronto (20+ exemplos)
 
-5. MATRIZ_DECISAO_FRAMEWORKS.md (14 KB)
+4. MATRIZ_DECISAO_FRAMEWORKS.md (14 KB)
    └─ Justificativa de cada decisão
 
-6. RESOLUCAO_CONFLITOS_ARQUITETURA.md (16 KB)
+5. RESOLUCAO_CONFLITOS_ARQUITETURA.md (16 KB)
    └─ Resolução de 5 conflitos principais
 
-7. INDICE_DOCUMENTOS_FRAMEWORKS.md (13 KB)
+6. INDICE_DOCUMENTOS_FRAMEWORKS.md (13 KB)
    └─ Mapa de navegação entre documentos
 
 ================================================================================
@@ -98,7 +94,7 @@ ESTA SEMANA:
 ✅ Código TypeScript pronto para copiar
 ✅ Timeline realista (8-10 semanas)
 ✅ Resolução de todos conflitos arquiteturais
-✅ 305+ padrões de código mapeados
+✅ Padrões de arquitetura mapeados
 ✅ Pronto para implementação
 
 ================================================================================

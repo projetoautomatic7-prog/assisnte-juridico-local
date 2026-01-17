@@ -53,7 +53,6 @@ Estas credenciais fornecidas **NÃO são usadas** neste aplicativo:
 ❌ ADMIN_PASSWORD_HASH
 ❌ ADMIN_USERNAME
 ❌ API_KEY
-❌ CHROMA_URL
 ❌ DATABASE_URL
 ❌ DATAJUD_BASE_URL
 ❌ DATAJUD_CACHE_TTL_MS
@@ -78,7 +77,6 @@ Estas credenciais fornecidas **NÃO são usadas** neste aplicativo:
 Este é um aplicativo **frontend React** que usa **GitHub Spark** para funcionalidades de backend. Ele NÃO possui:
 - ❌ Servidor Node.js/Express separado
 - ❌ Banco de dados PostgreSQL
-- ❌ ChromaDB
 - ❌ Sistema de autenticação JWT (usa Google OAuth)
 - ❌ Sistema de login PJE customizado
 

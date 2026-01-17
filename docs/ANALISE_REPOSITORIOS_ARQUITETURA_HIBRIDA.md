@@ -14,9 +14,8 @@ Identificar quais repositórios possuem os melhores arquivos, padrões e impleme
 | 3 | **joaomdmoura/crewai** | Coordenação de crews/teams | ⭐⭐⭐⭐ IMPORTANTE |
 | 4 | **stanfordnlp/dspy** | Otimização automática de prompts | ⭐⭐⭐⭐⭐ CRÍTICO |
 | 5 | **deepset-ai/haystack** | RAG, pipelines de recuperação | ⭐⭐⭐⭐ IMPORTANTE |
-| 6 | **chromadb/chroma** | Vector DB embarcado | ⭐⭐⭐ SECUNDÁRIO |
-| 7 | **qdrant/qdrant** | Vector DB escalável | ⭐⭐⭐⭐ IMPORTANTE |
-| 8 | **griptape-ai/griptape** | Execução de ferramentas/agents | ⭐⭐⭐⭐ IMPORTANTE |
+| 6 | **qdrant/qdrant** | Vector DB escalável | ⭐⭐⭐⭐ IMPORTANTE |
+| 7 | **griptape-ai/griptape** | Execução de ferramentas/agents | ⭐⭐⭐⭐ IMPORTANTE |
 
 ---
 
@@ -263,21 +262,20 @@ haystack/
 
 ---
 
-### 6️⃣ **VECTOR DBS** (Qdrant + Chroma)
+### 6️⃣ **VECTOR DB** (Qdrant)
 **Status:** ⭐⭐⭐⭐ — USAR PARA PERSISTÊNCIA DE EMBEDDINGS
 
-| Aspecto | Chroma | Qdrant |
-|---------|--------|--------|
-| **Deploy** | Embarcado/Gerenciado | Escalável (Docker) |
-| **Performance** | Bom para <1M docs | Excelente para >10M |
-| **Escalabilidade** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Replicação** | Limitada | Full HA |
-| **Para Assistente** | ✅ Começar | ⏳ Escalar depois |
+| Aspecto | Qdrant |
+|---------|--------|
+| **Deploy** | Escalável (Docker/Cloud) |
+| **Performance** | Excelente para >10M |
+| **Escalabilidade** | ⭐⭐⭐⭐⭐ |
+| **Replicação** | Full HA |
+| **Para Assistente** | ✅ Produção |
 
 #### Para Implementar:
 ```typescript
-// Fase 1: Chroma embarcado (protótipo)
-// Fase 2: Qdrant com Docker (produção)
+// Qdrant com Docker (produção)
 
 // Coleções:
 // - jurisprudencias
@@ -400,9 +398,6 @@ griptape/
 
 ### 🟡 SECUNDÁRIO (Terceira fase)
 
-#### De `chromadb/chroma`:
-- [ ] Client embarcado para prototipagem
-
 ---
 
 ## 🔧 Dependências a Adicionar em `package.json`
@@ -417,7 +412,6 @@ griptape/
     "crewai": "^0.1.15",
     "haystack": "^2.0.0",
     "@qdrant/js-client": "^1.8.0",
-    "chromadb": "^0.4.0"
   }
 }
 ```
@@ -442,7 +436,7 @@ griptape/
 - [ ] Criar evaluators jurídicos
 
 ### **Semana 7-8: RAG**
-- [ ] Setup Qdrant (ou Chroma proto)
+- [ ] Setup Qdrant
 - [ ] Criar pipelines Haystack
 - [ ] Carregar jurisprudências
 
@@ -474,11 +468,6 @@ griptape/
 - **Conflito**: Ambos fazem RAG
 - **Solução**: LangChain inline em workflows, Haystack para pipelines
 - **Benefício**: Separação de responsabilidades
-
-### 5. **Qdrant vs Chroma**
-- **Conflito**: Qual vector DB usar?
-- **Solução**: Chroma para proto (embarcado), Qdrant para prod (escalável)
-- **Benefício**: Evolução natural
 
 ---
 

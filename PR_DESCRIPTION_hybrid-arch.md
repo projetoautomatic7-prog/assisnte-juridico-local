@@ -41,7 +41,6 @@ Documentar a visão de arquitetura híbrida de última geração, combinando Cre
 - langchain-ai/langchain
 
 **Vector Databases:**
-- chromadb/chroma
 - qdrant/qdrant
 - weaviate/weaviate
 - Pinecone

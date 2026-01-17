@@ -39,23 +39,39 @@ export function usePJeDocumentSync(): PJeDocumentSync {
   const [extensaoAtivaNoTab, setExtensaoAtivaNoTab] = useState(false);
   const tabIdRef = useRef<number | null>(null);
 
+  type ChromeApi = {
+    tabs?: {
+      query: (queryInfo: {
+        active: boolean;
+        currentWindow: boolean;
+      }) => Promise<Array<{ id?: number }>>;
+      sendMessage: (tabId: number, message: unknown) => Promise<unknown>;
+    };
+    runtime?: {
+      onMessage?: {
+        addListener: (callback: (request: { type: string; data: unknown }) => void) => void;
+        removeListener: (callback: (request: { type: string; data: unknown }) => void) => void;
+      };
+    };
+  };
+
+  const getChromeApi = (): ChromeApi | null =>
+    (globalThis as unknown as { chrome?: ChromeApi }).chrome ?? null;
+
   const hasChromeTabsApi = () => {
-    // @ts-expect-error - chrome API types might be missing in web context
-    return typeof chrome !== "undefined" && Boolean(chrome.tabs);
+    const chromeApi = getChromeApi();
+    return Boolean(chromeApi?.tabs);
   };
 
   const hasChromeRuntimeApi = () => {
-    // @ts-expect-error - chrome API types might be missing in web context
-    return (
-      typeof chrome !== "undefined" &&
-      Boolean(chrome.runtime && chrome.runtime.onMessage)
-    );
+    const chromeApi = getChromeApi();
+    return Boolean(chromeApi?.runtime?.onMessage);
   };
 
   const queryActiveTabId = async (): Promise<number | null> => {
-    if (!hasChromeTabsApi()) return null;
-    // @ts-expect-error - chrome API types might be missing in web context
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const chromeApi = getChromeApi();
+    if (!chromeApi?.tabs) return null;
+    const tabs = await chromeApi.tabs.query({ active: true, currentWindow: true });
     return tabs.length > 0 ? tabs[0].id || null : null;
   };
 
@@ -72,15 +88,20 @@ export function usePJeDocumentSync(): PJeDocumentSync {
   // Verificar se extensão está ativa nesta aba
   const verificarExtensaoAtiva = async () => {
     if (!tabIdRef.current) return;
+    const chromeApi = getChromeApi();
+    if (!chromeApi?.tabs) return;
 
     try {
-      // @ts-expect-error - chrome API types might be missing in web context
-      const response = await chrome.tabs.sendMessage(tabIdRef.current, {
+      const response = await chromeApi.tabs.sendMessage(tabIdRef.current, {
         type: "PING",
         timestamp: Date.now(),
       });
 
-      setExtensaoAtivaNoTab(response?.success && response?.active);
+      const responseObj =
+        typeof response === "object" && response !== null
+          ? (response as Record<string, unknown>)
+          : null;
+      setExtensaoAtivaNoTab(Boolean(responseObj?.success) && Boolean(responseObj?.active));
     } catch {
       setExtensaoAtivaNoTab(false);
     }
@@ -114,23 +135,23 @@ export function usePJeDocumentSync(): PJeDocumentSync {
     };
 
     if (hasChromeRuntimeApi()) {
-      // @ts-expect-error - chrome API types might be missing in web context
-      chrome.runtime.onMessage.addListener(handleMessage);
-      // @ts-expect-error - chrome API types might be missing in web context
-      return () => chrome.runtime.onMessage.removeListener(handleMessage);
+      const chromeApi = getChromeApi();
+      chromeApi?.runtime?.onMessage?.addListener(handleMessage);
+      return () => chromeApi?.runtime?.onMessage?.removeListener(handleMessage);
     }
   }, []);
 
   // Forçar sincronização
   const forcarSincronizacao = async () => {
     if (!tabIdRef.current || carregando) return;
+    const chromeApi = getChromeApi();
+    if (!chromeApi?.tabs) return;
 
     setCarregando(true);
     setProximaSincronizacao(Date.now() + 2000);
 
     try {
-      // @ts-expect-error - chrome API types might be missing in web context
-      await chrome.tabs.sendMessage(tabIdRef.current, {
+      await chromeApi.tabs.sendMessage(tabIdRef.current, {
         type: "FORCE_SYNC",
         timestamp: Date.now(),
       });
