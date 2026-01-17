@@ -271,19 +271,19 @@ app.use(
   }
 );
 
-// Start server - bind to 0.0.0.0 for network accessibility
-app.listen(Number(PORT), "0.0.0.0", async () => {
-  logInfo(`🚀 Backend server is ready on port ${PORT}`);
-  logInfo(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-  logInfo(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
-  logInfo(`✅ Health check: http://localhost:${PORT}/health`);
-
+// 🔧 Inicializar serviços ANTES do app.listen para não bloquear health checks
+async function initializeServices() {
   // 🔍 Inicializar Dynatrace OneAgent SDK
-  initializeDynatrace();
+  try {
+    initializeDynatrace();
+  } catch (error) {
+    logError(`⚠️ Dynatrace init error (non-critical): ${error}`);
+  }
 
   // Inicializar tabela de expedientes
   try {
     await inicializarTabelaExpedientes();
+    logInfo(`✅ Database initialized`);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logError(`❌ Erro ao inicializar banco de dados: ${msg}`);
@@ -291,10 +291,29 @@ app.listen(Number(PORT), "0.0.0.0", async () => {
 
   // Iniciar scheduler DJEN (apenas em produção ou se explicitamente habilitado)
   if (process.env.DJEN_SCHEDULER_ENABLED === "true") {
-    iniciarSchedulerDJEN();
+    try {
+      iniciarSchedulerDJEN();
+      logInfo(`✅ DJEN scheduler started`);
+    } catch (error) {
+      logError(`⚠️ DJEN scheduler error: ${error}`);
+    }
   } else {
     logInfo(`ℹ️ DJEN Scheduler desabilitado (defina DJEN_SCHEDULER_ENABLED=true para ativar)`);
   }
+}
+
+// ⚡ Start server - bind to 0.0.0.0 for network accessibility
+// Servidor inicia IMEDIATAMENTE, serviços são inicializados em background
+app.listen(Number(PORT), "0.0.0.0", () => {
+  logInfo(`🚀 Backend server is ready on port ${PORT}`);
+  logInfo(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
+  logInfo(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
+  logInfo(`✅ Health check: http://localhost:${PORT}/health`);
+  
+  // Inicializar serviços em background (não bloqueia health check)
+  initializeServices().catch((error) => {
+    logError(`⚠️ Background service initialization error: ${error}`);
+  });
 });
 
 export default app;
