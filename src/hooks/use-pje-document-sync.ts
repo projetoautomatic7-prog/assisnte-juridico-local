@@ -49,8 +49,12 @@ export function usePJeDocumentSync(): PJeDocumentSync {
     };
     runtime?: {
       onMessage?: {
-        addListener: (callback: (request: { type: string; data: unknown }) => void) => void;
-        removeListener: (callback: (request: { type: string; data: unknown }) => void) => void;
+        addListener: (
+          callback: (request: { type: string; data: unknown }) => void,
+        ) => void;
+        removeListener: (
+          callback: (request: { type: string; data: unknown }) => void,
+        ) => void;
       };
     };
   };
@@ -71,7 +75,10 @@ export function usePJeDocumentSync(): PJeDocumentSync {
   const queryActiveTabId = async (): Promise<number | null> => {
     const chromeApi = getChromeApi();
     if (!chromeApi?.tabs) return null;
-    const tabs = await chromeApi.tabs.query({ active: true, currentWindow: true });
+    const tabs = await chromeApi.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
     return tabs.length > 0 ? tabs[0].id || null : null;
   };
 
@@ -101,7 +108,9 @@ export function usePJeDocumentSync(): PJeDocumentSync {
         typeof response === "object" && response !== null
           ? (response as Record<string, unknown>)
           : null;
-      setExtensaoAtivaNoTab(Boolean(responseObj?.success) && Boolean(responseObj?.active));
+      setExtensaoAtivaNoTab(
+        Boolean(responseObj?.success) && Boolean(responseObj?.active),
+      );
     } catch {
       setExtensaoAtivaNoTab(false);
     }
