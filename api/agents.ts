@@ -1392,6 +1392,19 @@ async function handleGetMemory(res: VercelResponse): Promise<VercelResponse> {
 }
 
 /**
+ * Handler: GET ?action=status
+ */
+async function handleGetStatus(res: VercelResponse): Promise<VercelResponse> {
+  try {
+    const agents = await fetchAgents();
+    return res.status(200).json({ agents });
+  } catch (error) {
+    logger.error("Failed to fetch agent status", error);
+    return res.status(200).json({ agents: [] });
+  }
+}
+
+/**
  * Verifica se a requisição é de ambiente local/dev
  */
 function isLocalOrDevEnvironment(req: VercelRequest): boolean {
@@ -1528,6 +1541,10 @@ const ROUTE_MAP: Record<string, RouteConfig> = {
     handler: async (_req, res) => handleGetMemory(res),
     eventName: "memory.retrieved",
   },
+  "status:GET": {
+    handler: async (_req, res) => handleGetStatus(res),
+    eventName: "status.retrieved",
+  },
 };
 
 async function handleRoute(
@@ -1538,6 +1555,7 @@ async function handleRoute(
   span: ReturnType<typeof tracingService.startSpan>
 ): Promise<VercelResponse> {
   const routeKey = `${action}:${method}`;
+  logger.info(`Attempting to handle route: ${routeKey} for action: ${action} and method: ${method}`);
   const route = ROUTE_MAP[routeKey];
 
   if (!route) {
@@ -1566,9 +1584,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  const actionParam = req.query.action;
-  const action = Array.isArray(actionParam) ? actionParam[0] : actionParam;
-
+      const actionParam = req.query.action;
+      const action = (Array.isArray(actionParam) ? actionParam[0] : actionParam)?.toLowerCase().trim();
+  
+      logger.info("Debugging action and method", {
+        receivedAction: action,
+        receivedMethod: req.method,
+        userAgent: req.headers["user-agent"],
+      });
   // Em deploy local (Windows 11), a autorização pode ser baseada em API_KEY local ou simplificada
   if (!isAuthorized(req)) {
     return res.status(401).json({

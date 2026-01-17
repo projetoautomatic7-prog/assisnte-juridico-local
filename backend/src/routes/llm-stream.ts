@@ -10,6 +10,7 @@ router.post("/", async (req, res) => {
 
   if (!GEMINI_API_KEY) {
     console.error("[LLM Stream] GEMINI_API_KEY not configured");
+    // Don't set SSE headers for error responses
     return res.status(500).json({ error: "GEMINI_API_KEY não configurada" });
   }
 
@@ -19,13 +20,27 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "messages deve ser um array não vazio" });
   }
 
+  // Validate messages structure
+  for (const msg of messages) {
+    if (!msg.role || !msg.content) {
+      return res.status(400).json({ 
+        error: "Cada mensagem deve ter 'role' e 'content'",
+        receivedMessage: msg 
+      });
+    }
+  }
+
   const systemMessage = messages.find((m: any) => m.role === "system");
   const userMessages = messages.filter((m: any) => m.role !== "system");
+
+  if (userMessages.length === 0) {
+    return res.status(400).json({ error: "Pelo menos uma mensagem de usuário é necessária" });
+  }
 
   const geminiBody: any = {
     contents: userMessages.map((m: any) => ({
       role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
+      parts: [{ text: String(m.content) }],
     })),
     generationConfig: {
       temperature: temperature || 0.7,
@@ -35,7 +50,7 @@ router.post("/", async (req, res) => {
 
   if (systemMessage) {
     geminiBody.systemInstruction = {
-      parts: [{ text: systemMessage.content }],
+      parts: [{ text: String(systemMessage.content) }],
     };
   }
 

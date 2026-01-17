@@ -90,7 +90,7 @@ const EXPECTED_AGENT_COUNT = initializeAgents().length;
 const AGENTS_API = import.meta.env.VITE_AGENTS_API_URL || "/api/agents";
 
 async function fetchAgentsData() {
-  const res = await fetch(`${AGENTS_API}?action=list`).catch(() => null);
+  const res = await fetch(`${AGENTS_API}?action=status`).catch(() => null);
   if (!res?.ok) return null;
   const json = await res.json().catch(() => null);
   if (!json?.ok) return null;

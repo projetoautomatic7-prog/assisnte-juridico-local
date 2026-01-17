@@ -34,12 +34,13 @@ ENV NODE_ENV=production
 
 # Dependências runtime:
 # - root: deps usadas pelos flows (Genkit etc.)
-# - backend: deps específicas do servidor Express
+# - backend: deps específicas do servidor Express (incluindo dotenv que é necessário em produção)
 COPY package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps
 
 COPY backend/package*.json ./backend/
-RUN cd backend && npm ci --omit=dev --legacy-peer-deps
+# Não omitir dev pois dotenv é necessário em produção para ler .env
+RUN cd backend && npm ci --legacy-peer-deps
 
 # Código compilado do backend (inclui lib/ai compilado dentro de backend/dist)
 COPY --from=builder /app/backend/dist ./backend/dist

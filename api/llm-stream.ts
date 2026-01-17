@@ -441,6 +441,7 @@ async function streamOpenAI(
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`[LLM-Stream][OpenAI] Upstream error: ${response.status} - ${errorText}`);
         throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
       }
 
@@ -550,6 +551,7 @@ async function streamGemini(
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[LLM-Stream][Gemini] Upstream error: ${response.status} - ${errorText}`);
       throw new Error(`Gemini error: ${response.status} - ${errorText}`);
     }
 
@@ -640,9 +642,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Verificar provedor disponível
     const openaiKey = process.env.OPENAI_API_KEY;
     const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+    console.log(`[LLM-Stream] OpenAI Key: ${openaiKey ? "Configured" : "NOT Configured"}`);
+    console.log(`[LLM-Stream] Gemini Key: ${geminiKey ? "Configured" : "NOT Configured"}`);
+
     const provider = determineProvider(openaiKey, geminiKey);
 
     if (!provider) {
+      console.error("[LLM-Stream] CRITICAL: No LLM provider configured. Check OPENAI_API_KEY or GEMINI_API_KEY env vars.");
       throw new Error("No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY");
     }
 

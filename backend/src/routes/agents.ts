@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { agentFlow } from '../../../lib/ai/agent-flow.js';
 import { ai, redis } from '../../../lib/ai/genkit.js';
@@ -7,6 +7,8 @@ import { petitionFlow } from '../../../lib/ai/petition-flow.js';
 import { researchFlow } from '../../../lib/ai/research-flow.js';
 import { riskAnalysisFlow } from '../../../lib/ai/risk-flow.js';
 import { strategyFlow } from '../../../lib/ai/strategy-flow.js';
+
+const router = Router();
 
 /**
  * Registro de fluxos Genkit para roteamento dinâmico
@@ -23,7 +25,7 @@ const FLOW_REGISTRY: Record<string, ReturnType<typeof ai.defineFlow>> = {
  * Handler unificado para execução de agentes.
  * Suporta execução inicial e retomada (Human-in-the-loop).
  */
-export async function agentsHandler(req: Request, res: Response) {
+async function agentsHandler(req: Request, res: Response) {
   const { agentId, expedienteId, numeroProcesso, message, resume, sessionId: reqSessionId } = req.body;
   const auditId = uuidv4();
 
@@ -110,4 +112,74 @@ export async function agentsHandler(req: Request, res: Response) {
   }
 }
 
-export default agentsHandler;
+// GET endpoints para status dos agentes
+router.get('/', async (req: Request, res: Response) => {
+  const { action } = req.query;
+
+  try {
+    // Verificar se Redis está disponível
+    const isRedisAvailable = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    switch (action) {
+      case 'list':
+        // Retorna lista de agentes disponíveis
+        let agents = [];
+        let queued = [];
+        let completed = [];
+        
+        if (isRedisAvailable) {
+          try {
+            agents = await redis.get<any[]>('agents:list') || [];
+            queued = await redis.get<any[]>('agents:queue') || [];
+            completed = await redis.get<any[]>('agents:completed') || [];
+          } catch (redisError) {
+            console.warn('[Agents] Redis error, using empty arrays:', redisError);
+          }
+        }
+        
+        return res.json({ ok: true, agents, queued, completed });
+
+      case 'logs':
+        // Retorna logs dos agentes
+        let logs = [];
+        
+        if (isRedisAvailable) {
+          try {
+            logs = await redis.get<any[]>('agents:logs') || [];
+          } catch (redisError) {
+            console.warn('[Agents] Redis error, using empty array:', redisError);
+          }
+        }
+        
+        return res.json({ logs });
+
+      case 'memory':
+        // Retorna memória dos agentes
+        let memory = [];
+        
+        if (isRedisAvailable) {
+          try {
+            memory = await redis.get<any[]>('agents:memory') || [];
+          } catch (redisError) {
+            console.warn('[Agents] Redis error, using empty array:', redisError);
+          }
+        }
+        
+        return res.json({ memory });
+
+      default:
+        return res.status(400).json({ error: 'Invalid action. Use: list, logs, or memory' });
+    }
+  } catch (error: any) {
+    console.error('[Agents GET] Error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST endpoint para execução de agentes
+router.post('/', agentsHandler);
+
+export default router;

@@ -27,11 +27,11 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copiar build compilado
-COPY --from=builder /app/backend/dist ./dist
-COPY --from=builder /app/backend/package*.json ./
+COPY --from=builder /app/backend/dist ./backend/dist
 
-# Instalar apenas dependências de produção
-RUN npm ci --omit=dev --legacy-peer-deps
+# Copiar node_modules COMPLETO do builder (inclui devDeps como dotenv)
+COPY --from=builder /app/backend/node_modules ./backend/node_modules
+COPY --from=builder /app/backend/package*.json ./backend/
 
 # Cloud Run injeta PORT automaticamente
 ENV NODE_ENV=production
@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8080/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"
 
 # Iniciar servidor (SEM datadog - removido conforme solicitado)
-CMD ["node", "dist/backend/src/server.js"]
+CMD ["node", "backend/dist/backend/src/server.js"]

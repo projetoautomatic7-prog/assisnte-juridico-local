@@ -47,13 +47,22 @@ function logError(message: string) {
   process.stderr.write(`${message}\n`);
 }
 
-// Load environment variables
-const envPath = path.resolve(process.cwd(), ".env.local");
-logInfo(`Loading env from: ${envPath}`);
-dotenv.config({ path: envPath });
-dotenv.config(); // Fallback to default .env if needed
+// Load environment variables (opcional em produção - Cloud Run usa env vars nativas)
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  logInfo(`Loading env from: ${envPath}`);
+  dotenv.config({ path: envPath });
+  dotenv.config(); // Fallback to default .env if needed
+} catch (err) {
+  // Em produção (Cloud Run), dotenv pode não estar disponível - isso é OK
+  logInfo("dotenv not available - using system environment variables");
+}
 
 const app = express();
+
+// Trust proxy - necessário para Cloud Run e Firebase Hosting
+app.set('trust proxy', true);
+
 // Cloud Run injeta PORT automaticamente (8080 padrão)
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
 
@@ -132,8 +141,18 @@ const apiLimiter = rateLimit({
   max: apiMaxRequests,
   skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
   message: { error: "Too many requests, please try again later." },
-  standardHeaders: true,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
+  // Configuração correta para Cloud Run/Firebase Hosting
+  validate: { trustProxy: true },
+  keyGenerator: (req) => {
+    // Cloud Run usa X-Forwarded-For, Firebase Hosting usa Forwarded
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
 
 // Rate limiting mais restritivo para endpoints de IA
@@ -142,8 +161,18 @@ const aiLimiter = rateLimit({
   max: aiMaxRequests,
   skip: () => !rateLimitEnabled || isTestEnv, // Skip em testes
   message: { error: "Too many AI requests, please try again later." },
-  standardHeaders: true,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
+  // Configuração correta para Cloud Run/Firebase Hosting
+  validate: { trustProxy: true },
+  keyGenerator: (req) => {
+    // Cloud Run usa X-Forwarded-For, Firebase Hosting usa Forwarded
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
 
 logInfo(`[Rate Limiting] Enabled: ${rateLimitEnabled}`);
