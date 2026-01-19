@@ -4,7 +4,7 @@
 # - Não builda o frontend (frontend é servido via Firebase Hosting)
 # ============================================
 
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ RUN cd backend && npm run build
 # ============================================
 # Stage de produção
 # ============================================
-FROM node:22-alpine
+FROM node:25-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
